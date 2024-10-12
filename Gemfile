@@ -7,9 +7,11 @@ gem "rails", "~> 7.1.4"
 # The original asset pipeline for Rails [https://github.com/rails/sprockets-rails]
 gem "sprockets-rails"
 
-gem "octokit", "~> 5.0"
+gem "octokit"
 gem "faraday-retry"
 gem "kaminari"
+gem "bootstrap"
+gem "sassc-rails"
 
 gem "pg", "~> 1.1"
 gem "puma", ">= 5.0"

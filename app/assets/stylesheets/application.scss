@@ -1,3 +1,6 @@
+// The following line is necessary for the asset pipeline
+@import "bootstrap";
+
 /*
  * This is a manifest file that'll be compiled into application.css, which will include all the files
  * listed below.
@@ -13,3 +16,5 @@
  *= require_tree .
  *= require_self
  */
+
+// You can add your custom styles here
