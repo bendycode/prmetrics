@@ -1,2 +1,9 @@
-<h1>PullRequestUsers#index</h1>
-<p>Find me in app/views/pull_request_users/index.html.erb</p>
+<h1>Users for Pull Request #<%= @pull_request.number %></h1>
+
+<ul>
+  <% @pull_request_users.each do |pull_request_user| %>
+    <li><%= link_to pull_request_user.user.username, user_path(pull_request_user.user) %> (<%= pull_request_user.role %>)</li>
+  <% end %>
+</ul>
+
+<%= paginate @pull_request_users %>

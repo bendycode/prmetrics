@@ -1,2 +1,9 @@
-<h1>PullRequests#index</h1>
-<p>Find me in app/views/pull_requests/index.html.erb</p>
+<h1>Pull Requests for <%= @repository.name %></h1>
+
+<ul>
+  <% @pull_requests.each do |pull_request| %>
+    <li><%= link_to pull_request.title, pull_request_path(pull_request) %></li>
+  <% end %>
+</ul>
+
+<%= paginate @pull_requests %>

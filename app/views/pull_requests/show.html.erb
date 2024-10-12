@@ -1,2 +1,26 @@
-<h1>PullRequests#show</h1>
-<p>Find me in app/views/pull_requests/show.html.erb</p>
+<h1><%= @pull_request.title %></h1>
+
+<p>State: <%= @pull_request.state %></p>
+<p>Created at: <%= @pull_request.created_at %></p>
+
+<h2>Reviews</h2>
+<%= link_to 'All Reviews', pull_request_reviews_path(@pull_request) %>
+
+<ul>
+  <% @reviews.each do |review| %>
+    <li><%= link_to "Review ##{review.id}", review_path(review) %></li>
+  <% end %>
+</ul>
+
+<%= paginate @reviews %>
+
+<h2>Users</h2>
+<%= link_to 'All Users', pull_request_pull_request_users_path(@pull_request) %>
+
+<ul>
+  <% @pull_request_users.each do |pull_request_user| %>
+    <li><%= link_to pull_request_user.user.username, user_path(pull_request_user.user) %> (<%= pull_request_user.role %>)</li>
+  <% end %>
+</ul>
+
+<%= paginate @pull_request_users %>

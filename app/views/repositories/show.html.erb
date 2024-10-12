@@ -1,2 +1,12 @@
-<h1>Repositories#show</h1>
-<p>Find me in app/views/repositories/show.html.erb</p>
+<h1><%= @repository.name %></h1>
+
+<h2>Pull Requests</h2>
+<%= link_to 'All Pull Requests', repository_pull_requests_path(@repository) %>
+
+<ul>
+  <% @pull_requests.each do |pull_request| %>
+    <li><%= link_to pull_request.title, pull_request_path(pull_request) %></li>
+  <% end %>
+</ul>
+
+<%= paginate @pull_requests %>

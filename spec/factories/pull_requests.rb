@@ -1,13 +1,11 @@
 FactoryBot.define do
   factory :pull_request do
-    number { 1 }
-    title { "MyString" }
-    state { "MyString" }
+    repository
+    sequence(:number) { |n| n }
+    sequence(:title) { |n| "Pull Request #{n}" }
+    state { "open" }
     draft { false }
-    created_at { "2024-10-12 13:59:54" }
-    updated_at { "2024-10-12 13:59:54" }
-    merged_at { "2024-10-12 13:59:54" }
-    closed_at { "2024-10-12 13:59:54" }
-    repository { nil }
+    created_at { Time.current }
+    updated_at { Time.current }
   end
 end

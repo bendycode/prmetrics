@@ -9,6 +9,7 @@ gem "sprockets-rails"
 
 gem "octokit", "~> 5.0"
 gem "faraday-retry"
+gem "kaminari"
 
 gem "pg", "~> 1.1"
 gem "puma", ">= 5.0"
