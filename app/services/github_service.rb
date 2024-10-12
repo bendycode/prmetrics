@@ -1,6 +1,7 @@
 class GithubService
   def initialize(access_token)
     @client = Octokit::Client.new(access_token: access_token)
+    @client.auto_paginate = true  # This enables auto-pagination
   end
 
   def fetch_and_store_pull_requests(repo_name)
