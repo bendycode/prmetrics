@@ -106,6 +106,8 @@ GEM
       logger
     faraday-net_http (3.3.0)
       net-http
+    faraday-retry (2.2.1)
+      faraday (~> 2.0)
     globalid (1.2.1)
       activesupport (>= 6.1)
     i18n (1.14.6)
@@ -265,6 +267,7 @@ DEPENDENCIES
   debug
   factory_bot_rails
   faker
+  faraday-retry
   importmap-rails
   jbuilder
   octokit (~> 5.0)
