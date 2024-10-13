@@ -4,10 +4,13 @@ class GithubService
     @client.auto_paginate = false  # We'll handle pagination manually
   end
 
-  def fetch_and_store_pull_requests(repo_name)
+  def fetch_and_store_pull_requests(repo_name, fetch_all: false)
     repository = Repository.find_or_create_by(name: repo_name)
+    last_updated_at = repository.last_fetched_at unless fetch_all
+
     page = 1
     per_page = 100
+    total_processed = 0
 
     loop do
       pull_requests = fetch_pull_requests_page(repo_name, page, per_page)
@@ -17,17 +20,29 @@ class GithubService
         process_pull_request(repository, repo_name, pr)
         print '.'
         $stdout.flush
+        total_processed += 1
       end
 
       page += 1
     end
-    puts
+
+    repository.update(last_fetched_at: Time.current)
+    puts "\nProcessed #{total_processed} pull requests."
   end
 
   private
 
-  def fetch_pull_requests_page(repo_name, page, per_page)
-    @client.pull_requests(repo_name, state: 'all', page: page, per_page: per_page)
+  def fetch_pull_requests_page(repo_name, page, per_page, since = nil)
+    options = {
+      state: 'all',
+      page: page,
+      per_page: per_page,
+      sort: 'updated',
+      direction: 'desc'
+    }
+    options[:since] = since if since
+
+    @client.pull_requests(repo_name, options)
   rescue Octokit::TooManyRequests => e
     puts "\nRate limit exceeded. Waiting for reset..."
     sleep(e.rate_limit.resets_in + 1)

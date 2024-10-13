@@ -1,7 +1,9 @@
 namespace :github do
   desc "Fetch and store pull requests for a repository"
-  task :fetch_pull_requests, [:repo_name] => :environment do |t, args|
+  task :fetch_pull_requests, [:repo_name, :fetch_all] => :environment do |t, args|
     repo_name = args[:repo_name]
+    fetc_all = args[:fetch_all] == 'true'
+
     if repo_name.nil?
       puts "Please provide a repository name. Usage: rake github:fetch_pull_requests['owner/repo']"
     else
@@ -10,7 +12,7 @@ namespace :github do
       puts "Fetching pull requests for #{repo_name}..."
       initial_count = PullRequest.count
 
-      service.fetch_and_store_pull_requests(repo_name)
+      service.fetch_and_store_pull_requests(repo_name, fetch_all: fetch_all)
 
       final_count = PullRequest.count
       new_prs = final_count - initial_count
