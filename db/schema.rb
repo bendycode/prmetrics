@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_10_12_190000) do
+ActiveRecord::Schema[7.1].define(version: 2024_10_13_144040) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -29,11 +29,13 @@ ActiveRecord::Schema[7.1].define(version: 2024_10_12_190000) do
     t.string "title"
     t.string "state"
     t.boolean "draft"
-    t.datetime "merged_at"
-    t.datetime "closed_at"
+    t.datetime "gh_merged_at"
+    t.datetime "gh_closed_at"
     t.bigint "repository_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "gh_created_at", null: false
+    t.datetime "gh_updated_at", null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
     t.index ["repository_id"], name: "index_pull_requests_on_repository_id"
   end
 

@@ -5,7 +5,7 @@ FactoryBot.define do
     sequence(:title) { |n| "Pull Request #{n}" }
     state { "open" }
     draft { false }
-    created_at { Time.current }
-    updated_at { Time.current }
+    gh_created_at { Time.current }
+    gh_updated_at { Time.now }
   end
 end

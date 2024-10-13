@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe Review, type: :model do
   let(:repository) { Repository.create(name: "Test Repo", url: "https://github.com/test/repo") }
-  let(:pull_request) { PullRequest.create(repository: repository, number: 1, title: "Test PR", state: "open") }
+  let(:pull_request) { create :pull_request }
 
   it "is valid with valid attributes" do
     review = Review.new(pull_request: pull_request, state: "approved", submitted_at: Time.current)
