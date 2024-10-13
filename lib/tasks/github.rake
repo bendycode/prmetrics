@@ -1,17 +1,17 @@
 namespace :github do
   desc "Fetch pull requests for a repository. Add 'fetch_all' to fetch all PRs."
-  task :fetch_pull_requests, [:repo_name, :fetch_all] => :environment do |t, args|
-    repo_name = args[:repo_name] || ARGV[1]
-    fetch_all = args[:fetch_all] == 'fetch_all' || ARGV[2] == 'fetch_all'
+  task :fetch_pull_requests => :environment do
+    repo_name = ENV['REPO']
+    fetch_all = ENV['FETCH_ALL'] == 'true'
 
     def print_usage
       puts "Usage:"
-      puts "  rake github:fetch_pull_requests repository_name"
-      puts "  rake github:fetch_pull_requests repository_name fetch_all"
-      puts ""
+      puts "  rake github:fetch_pull_requests REPO=owner/repo"
+      puts "  rake github:fetch_pull_requests REPO=owner/repo FETCH_ALL=true"
+      puts
       puts "Arguments:"
-      puts "  repository_name: Name of the repository (e.g., 'owner/repo')"
-      puts "  fetch_all: Optional. Add 'fetch_all' to fetch all pull requests instead of just new ones."
+      puts "  REPO: Name of the repository (e.g., 'owner/repo')"
+      puts "  FETCH_ALL: Optional. Set to 'true' to fetch all pull requests instead of just new ones."
     end
 
     if repo_name.nil?
@@ -29,6 +29,3 @@ namespace :github do
     puts "Finished fetching pull requests."
   end
 end
-
-# This line allows additional arguments to be passed to the task
-task(:fetch_pull_requests).arg_names << :fetch_all
