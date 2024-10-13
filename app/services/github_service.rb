@@ -11,13 +11,15 @@ class GithubService
     page = 1
     per_page = 100
     total_processed = 0
+    most_recent_update = nil
 
     loop do
-      pull_requests = fetch_pull_requests_page(repo_name, page, per_page)
+      pull_requests = fetch_pull_requests_page(repo_name, page, per_page, last_updated_at)
       break if pull_requests.empty?
 
       pull_requests.each do |pr|
         process_pull_request(repository, repo_name, pr)
+        most_recent_update = [most_recent_update, pr.updated_at].compact.max
         print '.'
         $stdout.flush
         total_processed += 1
@@ -26,8 +28,12 @@ class GithubService
       page += 1
     end
 
-    repository.update(last_fetched_at: Time.current)
+    if most_recent_update
+      repository.update(last_fetched_at: most_recent_update)
+    end
+
     puts "\nProcessed #{total_processed} pull requests."
+    puts "Most recent update: #{most_recent_update}"
   end
 
   private
