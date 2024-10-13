@@ -12,6 +12,8 @@ gem "faraday-retry"
 gem "kaminari"
 gem "bootstrap"
 gem "sassc-rails"
+gem 'jquery-rails'
+gem 'font-awesome-sass'
 
 gem "pg", "~> 1.1"
 gem "puma", ">= 5.0"
