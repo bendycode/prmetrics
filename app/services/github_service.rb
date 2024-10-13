@@ -10,6 +10,9 @@ class GithubService
 
     pull_requests.each do |pr|
       pull_request = repository.pull_requests.find_or_initialize_by(number: pr.number)
+
+      ready_for_review_at = pr.draft ? nil : determine_ready_for_review_at(repo_name, pr.number, pr.created_at)
+
       pull_request.update(
         title: pr.title,
         state: pr.state,
@@ -17,7 +20,8 @@ class GithubService
         gh_created_at: pr.created_at,
         gh_updated_at: pr.updated_at,
         gh_merged_at: pr.merged_at,
-        gh_closed_at: pr.closed_at
+        gh_closed_at: pr.closed_at,
+        ready_for_review_at: ready_for_review_at
       )
 
       fetch_and_store_reviews(pull_request, repo_name, pr.number)
@@ -26,6 +30,17 @@ class GithubService
   end
 
   private
+
+  def determine_ready_for_review_at(repo_name, pr_number, created_at)
+    events = @client.issue_events(repo_name, pr_number)
+    ready_for_review_event = events.find { |e| e.event == 'ready_for_review' }
+
+    if ready_for_review_event
+      ready_for_review_event.created_at
+    else
+      created_at # If no 'ready_for_review' event, assume it was ready at creation
+    end
+  end
 
   def fetch_and_store_reviews(pull_request, repo_name, pr_number)
     reviews = @client.pull_request_reviews(repo_name, pr_number)
