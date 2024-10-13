@@ -1,12 +1,12 @@
 class GithubService
   def initialize(access_token)
     @client = Octokit::Client.new(access_token: access_token)
-    @client.auto_paginate = false  # We'll handle pagination manually
+    @client.auto_paginate = false
   end
 
   def fetch_and_store_pull_requests(repo_name, fetch_all: false)
     repository = Repository.find_or_create_by(name: repo_name)
-    last_updated_at = repository.last_fetched_at unless fetch_all
+    last_fetched_at = fetch_all ? nil : repository.last_fetched_at&.iso8601
 
     page = 1
     per_page = 100
@@ -14,10 +14,14 @@ class GithubService
     most_recent_update = nil
 
     loop do
-      pull_requests = fetch_pull_requests_page(repo_name, page, per_page, last_updated_at)
+      pull_requests = fetch_pull_requests_page(repo_name, page, per_page, last_fetched_at)
       break if pull_requests.empty?
 
-      pull_requests.each do |pr|
+      new_prs = pull_requests.reject { |pr| pr.updated_at <= repository.last_fetched_at } if last_fetched_at
+
+      break if new_prs&.empty?
+
+      (new_prs || pull_requests).each do |pr|
         process_pull_request(repository, repo_name, pr)
         most_recent_update = [most_recent_update, pr.updated_at].compact.max
         print '.'
