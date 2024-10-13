@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>GitHub PR Statistics</title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag 'application', media: 'all', 'data-turbolinks-track': 'reload' %>
+  <%= stylesheet_link_tag 'sb-admin-2.min', media: 'all', 'data-turbolinks-track': 'reload' %>
+  <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
+</head>
+<body id="page-top">
+  <div id="wrapper">
+    <%= render 'shared/sidebar' %>
+    <div id="content-wrapper" class="d-flex flex-column">
+      <div id="content">
+        <%= render 'shared/topbar' %>
+        <div class="container-fluid">
+          <%= yield %>
+        </div>
+      </div>
+      <%= render 'shared/footer' %>
+    </div>
+  </div>
+  <%= render 'shared/scroll_to_top' %>
+  <%= render 'shared/logout_modal' %>
+</body>
+</html>
