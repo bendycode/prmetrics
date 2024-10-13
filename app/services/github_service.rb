@@ -38,6 +38,26 @@ class GithubService
     retry
   end
 
+  def process_pull_request(repository, repo_name, pr)
+    pull_request = repository.pull_requests.find_or_initialize_by(number: pr.number)
+
+    ready_for_review_at = pr.draft ? nil : determine_ready_for_review_at(repo_name, pr.number, pr.created_at)
+
+    pull_request.update(
+      title: pr.title,
+      state: pr.state,
+      draft: pr.draft,
+      gh_created_at: pr.created_at,
+      gh_updated_at: pr.updated_at,
+      gh_merged_at: pr.merged_at,
+      gh_closed_at: pr.closed_at,
+      ready_for_review_at: ready_for_review_at
+    )
+
+    fetch_and_store_reviews(pull_request, repo_name, pr.number)
+    fetch_and_store_users(pull_request, pr)
+  end
+
   def determine_ready_for_review_at(repo_name, pr_number, created_at)
     events = @client.issue_events(repo_name, pr_number)
     ready_for_review_event = events.find { |e| e.event == 'ready_for_review' }
