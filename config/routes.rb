@@ -5,6 +5,14 @@ Rails.application.routes.draw do
     resources :pull_requests, only: [:index]
   end
 
+  resources :repositories do
+    resources :weeks, only: [:index, :show] do
+      member do
+        get 'pr_list'
+      end
+    end
+  end
+
   resources :pull_requests, only: [:show] do
     resources :reviews, only: [:index]
     resources :pull_request_users, only: [:index]

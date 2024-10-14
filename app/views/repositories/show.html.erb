@@ -1,4 +1,27 @@
 <h1><%= @repository.name %></h1>
+<p>URL: <%= link_to @repository.url, @repository.url %></p>
+
+<h2>Weeks</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Week Number</th>
+      <th>Begin Date</th>
+      <th>End Date</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @repository.weeks.ordered.each do |week| %>
+      <tr>
+        <td><%= week.week_number %></td>
+        <td><%= week.begin_date %></td>
+        <td><%= week.end_date %></td>
+        <td><%= link_to 'View Details', repository_week_path(@repository, week) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
 
 <h2>Pull Requests</h2>
 <%= link_to 'All Pull Requests', repository_pull_requests_path(@repository) %>

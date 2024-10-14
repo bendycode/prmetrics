@@ -34,6 +34,8 @@ class GithubService
       page += 1
     end
 
+    WeekStatsService.update_all_weeks
+
     if most_recent_update
       repository.update(last_fetched_at: most_recent_update)
     end
@@ -90,6 +92,7 @@ class GithubService
 
     fetch_and_store_reviews(pull_request, repo_name, pr.number)
     fetch_and_store_users(pull_request, pr)
+    pull_request.update_week_associations
   end
 
   def fetch_and_store_reviews(pull_request, repo_name, pr_number)
