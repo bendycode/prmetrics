@@ -1,0 +1,6 @@
+<% reviews.each do |review| %>
+  <li>
+    <%= review.author.name %> - <%= review.state.titleize %> - 
+    <%= review.submitted_at.strftime("%Y-%m-%d %H:%M:%S") %>
+  </li>
+<% end %>

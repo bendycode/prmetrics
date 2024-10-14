@@ -3,9 +3,10 @@ require 'rails_helper'
 RSpec.describe Review, type: :model do
   let(:repository) { Repository.create(name: "Test Repo", url: "https://github.com/test/repo") }
   let(:pull_request) { create :pull_request }
+  let(:author) { create :user }
 
   it "is valid with valid attributes" do
-    review = Review.new(pull_request: pull_request, state: "approved", submitted_at: Time.current)
+    review = Review.new(pull_request: pull_request, state: "approved", submitted_at: Time.current, author: author)
     expect(review).to be_valid
   end
 

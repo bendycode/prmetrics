@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_10_13_182739) do
+ActiveRecord::Schema[7.1].define(version: 2024_10_14_004701) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -54,6 +54,8 @@ ActiveRecord::Schema[7.1].define(version: 2024_10_13_182739) do
     t.bigint "pull_request_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "author_id"
+    t.index ["author_id"], name: "index_reviews_on_author_id"
     t.index ["pull_request_id"], name: "index_reviews_on_pull_request_id"
   end
 
@@ -69,4 +71,5 @@ ActiveRecord::Schema[7.1].define(version: 2024_10_13_182739) do
   add_foreign_key "pull_request_users", "users"
   add_foreign_key "pull_requests", "repositories"
   add_foreign_key "reviews", "pull_requests"
+  add_foreign_key "reviews", "users", column: "author_id"
 end

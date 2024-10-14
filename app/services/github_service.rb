@@ -97,30 +97,37 @@ class GithubService
   def fetch_and_store_reviews(pull_request, repo_name, pr_number)
     reviews = @client.pull_request_reviews(repo_name, pr_number)
     reviews.each do |review|
+      author = find_or_create_user(review.user)
       pull_request.reviews.find_or_create_by(
         state: review.state,
         submitted_at: review.submitted_at
-      )
+      ) do |r|
+        r.author = author
+      end
     end
   end
 
-  def fetch_and_store_users(pull_request, pr)
-    store_user(pull_request, pr.user, 'author')
-    store_user(pull_request, pr.merged_by, 'merger') if pr.merged_by
+  def find_or_create_user(github_user)
+    User.find_or_create_by(username: github_user.login) do |u|
+      u.name = github_user.name
+      u.email = github_user.email
+    end
   end
 
   def store_user(pull_request, github_user, role)
     return unless github_user
 
-    user = User.find_or_create_by(username: github_user.login) do |u|
-      u.name = github_user.name
-      u.email = github_user.email
-    end
+    user = find_or_create_user(github_user)
 
     PullRequestUser.find_or_create_by(
       pull_request: pull_request,
       user: user,
       role: role
     )
+  end
+
+  def fetch_and_store_users(pull_request, pr)
+    store_user(pull_request, pr.user, 'author')
+    store_user(pull_request, pr.merged_by, 'merger') if pr.merged_by
   end
 end

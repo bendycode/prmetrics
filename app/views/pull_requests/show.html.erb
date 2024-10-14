@@ -4,15 +4,16 @@
 <p>Created at: <%= @pull_request.created_at %></p>
 
 <h2>Reviews</h2>
-<%= link_to 'All Reviews', pull_request_reviews_path(@pull_request) %>
-
-<ul>
-  <% @reviews.each do |review| %>
-    <li><%= link_to "Review ##{review.id}", review_path(review) %></li>
-  <% end %>
-</ul>
-
-<%= paginate @reviews %>
+<% @reviews.each do |review| %>
+  <div class="review">
+    <p>
+      <strong>Author:</strong> <%= review.author.name %>
+      <strong>State:</strong> <%= review.state.titleize %>
+      <strong>Submitted at:</strong> <%= review.submitted_at.strftime("%Y-%m-%d %H:%M:%S") %>
+    </p>
+    <p><%= review.body %></p>
+  </div>
+<% end %>
 
 <h2>Users</h2>
 <%= link_to 'All Users', pull_request_pull_request_users_path(@pull_request) %>
