@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_10_14_004701) do
+ActiveRecord::Schema[7.1].define(version: 2024_10_14_030836) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -67,9 +67,28 @@ ActiveRecord::Schema[7.1].define(version: 2024_10_14_004701) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "weeks", force: :cascade do |t|
+    t.bigint "repository_id", null: false
+    t.integer "week_number"
+    t.date "begin_date"
+    t.date "end_date"
+    t.integer "num_open_prs"
+    t.integer "num_prs_started"
+    t.integer "num_prs_merged"
+    t.integer "num_prs_initially_reviewed"
+    t.integer "num_prs_cancelled"
+    t.decimal "avg_hrs_to_first_review", precision: 10, scale: 2
+    t.decimal "avg_hrs_to_merge", precision: 10, scale: 2
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["repository_id", "week_number"], name: "index_weeks_on_repository_id_and_week_number", unique: true
+    t.index ["repository_id"], name: "index_weeks_on_repository_id"
+  end
+
   add_foreign_key "pull_request_users", "pull_requests"
   add_foreign_key "pull_request_users", "users"
   add_foreign_key "pull_requests", "repositories"
   add_foreign_key "reviews", "pull_requests"
   add_foreign_key "reviews", "users", column: "author_id"
+  add_foreign_key "weeks", "repositories"
 end
