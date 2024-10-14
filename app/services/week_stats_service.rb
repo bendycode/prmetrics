@@ -25,8 +25,11 @@ class WeekStatsService
   private
 
   def calculate_open_prs
-    @repository.pull_requests.where(state: 'open', draft: false)
+    @repository.pull_requests
+               .where(state: 'open', draft: false)
                .where('gh_created_at <= ?', @week.end_date)
+               .where('(gh_closed_at > ? OR gh_closed_at IS NULL)', @week.end_date)
+               .where('(ready_for_review_at <= ? OR ready_for_review_at IS NULL)', @week.end_date)
                .count
   end
 
