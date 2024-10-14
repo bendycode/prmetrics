@@ -1,4 +1,6 @@
 class GithubService
+  MAX_RETRIES = 5
+
   def initialize(access_token)
     @client = Octokit::Client.new(access_token: access_token)
     @client.auto_paginate = false
@@ -52,15 +54,22 @@ class GithubService
     }
     options[:since] = since if since
 
-    @client.pull_requests(repo_name, options)
-  rescue Octokit::TooManyRequests => e
-    puts "\nRate limit exceeded. Waiting for reset..."
-    sleep(e.rate_limit.resets_in + 1)
-    retry
-  rescue Faraday::ConnectionFailed, Net::OpenTimeout => e
-    puts "\nConnection error: #{e.message}. Retrying in 5 seconds..."
-    sleep(5)
-    retry
+    with_rate_limit_handling do
+      @client.pull_requests(repo_name, options)
+    end
+  end
+
+  def determine_ready_for_review_at(repo_name, pr_number, created_at)
+    events = with_rate_limit_handling do
+      @client.issue_events(repo_name, pr_number)
+    end
+    ready_for_review_event = events.find { |e| e.event == 'ready_for_review' }
+
+    if ready_for_review_event
+      ready_for_review_event.created_at
+    else
+      created_at # If no 'ready_for_review' event, assume it was ready at creation
+    end
   end
 
   def process_pull_request(repository, repo_name, pr)
@@ -83,29 +92,20 @@ class GithubService
     fetch_and_store_users(pull_request, pr)
   end
 
-  def determine_ready_for_review_at(repo_name, pr_number, created_at)
-    events = @client.issue_events(repo_name, pr_number)
-    ready_for_review_event = events.find { |e| e.event == 'ready_for_review' }
-
-    if ready_for_review_event
-      ready_for_review_event.created_at
-    else
-      created_at # If no 'ready_for_review' event, assume it was ready at creation
+  def fetch_and_store_reviews(pull_request, repo_name, pr_number)
+    reviews = with_rate_limit_handling do
+      @client.pull_request_reviews(repo_name, pr_number)
+    end
+    reviews.each do |review|
+      author = find_or_create_user(review.user)
+      review_record = pull_request.reviews.find_or_initialize_by(
+        state: review.state,
+        submitted_at: review.submitted_at
+      )
+      review_record.author = author
+      review_record.save!
     end
   end
-
-  def fetch_and_store_reviews(pull_request, repo_name, pr_number)
-  reviews = @client.pull_request_reviews(repo_name, pr_number)
-  reviews.each do |review|
-    author = find_or_create_user(review.user)
-    review_record = pull_request.reviews.find_or_initialize_by(
-      state: review.state,
-      submitted_at: review.submitted_at
-    )
-    review_record.author = author
-    review_record.save!
-  end
-end
 
   def find_or_create_user(github_user)
     User.find_or_create_by(username: github_user.login) do |u|
@@ -129,5 +129,43 @@ end
   def fetch_and_store_users(pull_request, pr)
     store_user(pull_request, pr.user, 'author')
     store_user(pull_request, pr.merged_by, 'merger') if pr.merged_by
+  end
+
+  def with_rate_limit_handling
+    retries = 0
+    begin
+      yield
+    rescue Octokit::TooManyRequests => e
+      if retries < MAX_RETRIES
+        wait_time = calculate_wait_time(e.response_headers, retries)
+        puts "\nRate limit exceeded. Waiting for #{wait_time} seconds before retrying..."
+        sleep(wait_time)
+        retries += 1
+        retry
+      else
+        raise "Max retries reached. Unable to complete the request due to rate limiting."
+      end
+    rescue Faraday::ConnectionFailed, Net::OpenTimeout => e
+      if retries < MAX_RETRIES
+        wait_time = 5 * (2 ** retries) # exponential backoff
+        puts "\nConnection error: #{e.message}. Retrying in #{wait_time} seconds..."
+        sleep(wait_time)
+        retries += 1
+        retry
+      else
+        raise "Max retries reached. Unable to complete the request due to connection issues."
+      end
+    end
+  end
+
+  def calculate_wait_time(headers, retry_count)
+    if headers['retry-after']
+      headers['retry-after'].to_i
+    elsif headers['x-ratelimit-remaining'].to_i == 0
+      reset_time = Time.at(headers['x-ratelimit-reset'].to_i)
+      [reset_time - Time.now, 0].max
+    else
+      60 * (2 ** retry_count) # exponential backoff starting at 1 minute
+    end
   end
 end
