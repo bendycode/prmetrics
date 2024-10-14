@@ -1,0 +1,12 @@
+<div class="pull-request-details">
+  <h2>Pull Request Details</h2>
+  <ul>
+    <li><strong>Created at:</strong> <%= l(@pull_request.gh_created_at, format: :long) if @pull_request.gh_created_at %></li>
+    <li><strong>Ready for review at:</strong> <%= l(@pull_request.ready_for_review_at, format: :long) if @pull_request.ready_for_review_at %></li>
+    <li><strong>First review at:</strong> <%= l(@first_review_time, format: :long) if @first_review_time %></li>
+    <li><strong>Merged at:</strong> <%= l(@pull_request.gh_merged_at, format: :long) if @pull_request.gh_merged_at %></li>
+    <li><strong>Closed at:</strong> <%= l(@pull_request.gh_closed_at, format: :long) if @pull_request.gh_closed_at %></li>
+    <li><strong>Time to first review:</strong> <%= distance_of_time_in_words(@pull_request.ready_for_review_at, @first_review_time) if @pull_request.ready_for_review_at && @first_review_time %></li>
+    <li><strong>Time to merge:</strong> <%= distance_of_time_in_words(@pull_request.ready_for_review_at, @pull_request.gh_merged_at) if @pull_request.ready_for_review_at && @pull_request.gh_merged_at %></li>
+  </ul>
+</div>
