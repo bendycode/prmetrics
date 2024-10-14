@@ -7,11 +7,10 @@
 <% @reviews.each do |review| %>
   <div class="review">
     <p>
-      <strong>Author:</strong> <%= review.author.name %>
+      <strong>Author:</strong> <%= review.author&.name %>
       <strong>State:</strong> <%= review.state.titleize %>
       <strong>Submitted at:</strong> <%= review.submitted_at.strftime("%Y-%m-%d %H:%M:%S") %>
     </p>
-    <p><%= review.body %></p>
   </div>
 <% end %>
 
