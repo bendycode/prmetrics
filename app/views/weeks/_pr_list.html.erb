@@ -1,0 +1,23 @@
+<h3><%= category.titleize %> PRs</h3>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Number</th>
+      <th>Title</th>
+      <th>State</th>
+      <th>Created At</th>
+      <th>Updated At</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% prs.each do |pr| %>
+      <tr>
+        <td><%= link_to "##{pr.number}", github_pr_url(pr), target: "_blank" %></td>
+        <td><%= link_to pr.title, github_pr_url(pr), target: "_blank" %></td>
+        <td><%= pr.state %></td>
+        <td><%= pr.gh_created_at %></td>
+        <td><%= pr.gh_updated_at %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

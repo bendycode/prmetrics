@@ -1,17 +1,18 @@
+<!-- app/views/weeks/show.html.erb -->
 <h1>Week <%= @week.week_number %> for <%= @repository.name %></h1>
 <p>Begin Date: <%= @week.begin_date %></p>
 <p>End Date: <%= @week.end_date %></p>
 
 <h2>Statistics</h2>
 <ul>
-  <li>Open PRs: <%= @week.open_prs.count %> (<a href="#" data-remote="true" data-url="<%= pr_list_repository_week_path(@repository, @week, category: 'open') %>">View PRs</a>)</li>
-  <li>PRs Started: <%= @week.started_prs.count %> (<a href="#" data-remote="true" data-url="<%= pr_list_repository_week_path(@repository, @week, category: 'started') %>">View PRs</a>)</li>
-  <li>PRs First Reviewed: <%= @week.first_review_prs.count %> (<a href="#" data-remote="true" data-url="<%= pr_list_repository_week_path(@repository, @week, category: 'first_reviewed') %>">View PRs</a>)</li>
+  <li>Open PRs: <%= @week.open_prs.count %> (<a href="#" class="view-prs" data-category="open">View PRs</a>)</li>
+  <li>PRs Started: <%= @week.started_prs.count %> (<a href="#" class="view-prs" data-category="started">View PRs</a>)</li>
+  <li>PRs First Reviewed: <%= @week.first_review_prs.count %> (<a href="#" class="view-prs" data-category="first_reviewed">View PRs</a>)</li>
   <li>Avg Hours to First Review: <%= @week.avg_hours_to_first_review&.round(2) || 'N/A' %></li>
-  <li>PRs Merged: <%= @week.merged_prs.count %> (<a href="#" data-remote="true" data-url="<%= pr_list_repository_week_path(@repository, @week, category: 'merged') %>">View PRs</a>)</li>
+  <li>PRs Merged: <%= @week.merged_prs.count %> (<a href="#" class="view-prs" data-category="merged">View PRs</a>)</li>
   <li>Avg Hours to Merge: <%= @week.avg_hours_to_merge&.round(2) || 'N/A' %></li>
-  <li>PRs Cancelled: <%= @week.cancelled_prs.count %> (<a href="#" data-remote="true" data-url="<%= pr_list_repository_week_path(@repository, @week, category: 'cancelled') %>">View PRs</a>)</li>
-  <li>Draft PRs: <%= @week.draft_prs.count %> (<a href="#" data-remote="true" data-url="<%= pr_list_repository_week_path(@repository, @week, category: 'draft') %>">View PRs</a>)</li>
+  <li>PRs Cancelled: <%= @week.cancelled_prs.count %> (<a href="#" class="view-prs" data-category="cancelled">View PRs</a>)</li>
+  <li>Draft PRs: <%= @week.draft_prs.count %> (<a href="#" class="view-prs" data-category="draft">View PRs</a>)</li>
 </ul>
 
 <div id="pr-list-container"></div>
@@ -25,3 +26,27 @@
 <% end %>
 
 <%= link_to 'Back to Repository', repository_path(@repository) %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const prListContainer = document.getElementById('pr-list-container');
+  const viewPrsLinks = document.querySelectorAll('.view-prs');
+
+  viewPrsLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const category = this.dataset.category;
+      fetch('<%= pr_list_repository_week_path(@repository, @week) %>?category=' + category, {
+        headers: {
+          'Accept': 'text/html'
+        }
+      })
+      .then(response => response.text())
+      .then(html => {
+        prListContainer.innerHTML = html;
+      })
+      .catch(error => console.error('Error:', error));
+    });
+  });
+});
+</script>
