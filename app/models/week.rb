@@ -25,11 +25,11 @@ class Week < ApplicationRecord
   end
 
   def open_prs
-    repository.pull_requests.where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)', end_date, end_date)
+    repository.pull_requests.where(draft: false).where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)', end_date, end_date)
   end
 
   def draft_prs
-    open_prs.where(draft: true)
+    repository.pull_requests.where(draft: true).where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)', end_date, end_date)
   end
 
   def started_prs
