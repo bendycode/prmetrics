@@ -25,15 +25,25 @@ class Week < ApplicationRecord
   end
 
   def open_prs
-    repository.pull_requests.where(draft: false).where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)', end_date, end_date)
+    end_time = Time.zone.local(end_date.year, end_date.month, end_date.day, 23, 59, 59)
+    repository.pull_requests
+      .where(draft: false)
+      .where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)',
+            end_time,
+            end_time)
   end
 
   def draft_prs
-    repository.pull_requests.where(draft: true).where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)', end_date, end_date)
+    end_time = Time.zone.local(end_date.year, end_date.month, end_date.day, 23, 59, 59)
+    repository.pull_requests
+      .where(draft: true)
+      .where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)',
+            end_time,
+            end_time)
   end
 
   def started_prs
-    repository.pull_requests.where(gh_created_at: begin_date..end_date)
+    repository.pull_requests.where(gh_created_at: begin_date.in_time_zone.beginning_of_day..end_date.in_time_zone.end_of_day)
   end
 
   def cancelled_prs
