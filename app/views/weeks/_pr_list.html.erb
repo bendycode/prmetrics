@@ -5,8 +5,13 @@
       <th>Number</th>
       <th>Title</th>
       <th>State</th>
-      <th>Created At</th>
-      <th>Updated At</th>
+      <th>Started</th>
+      <th>Ready for Review</th>
+      <th>First Reviewed</th>
+      <th>Merged</th>
+      <th>Cancelled</th>
+      <th>Time to Review</th>
+      <th>Time to Merge</th>
     </tr>
   </thead>
   <tbody>
@@ -15,8 +20,29 @@
         <td><%= link_to "##{pr.number}", github_pr_url(pr), target: "_blank" %></td>
         <td><%= link_to pr.title, github_pr_url(pr), target: "_blank" %></td>
         <td><%= pr.state %></td>
-        <td><%= pr.gh_created_at.in_time_zone('Central Time (US & Canada)').strftime('%m/%d/%y %I:%M%p') %></td>
-        <td><%= pr.gh_updated_at.in_time_zone('Central Time (US & Canada)').strftime('%m/%d/%y %I:%M%p') %></td>
+        <td><%= pr.gh_created_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %></td>
+        <td><%= pr.ready_for_review_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %></td>
+        <td>
+          <% if pr.reviews.any? %>
+            <%= pr.reviews.order(:submitted_at).first.submitted_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %>
+          <% end %>
+        </td>
+        <td><%= pr.gh_merged_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %></td>
+        <td>
+          <% if pr.gh_closed_at && !pr.gh_merged_at %>
+            <%= pr.gh_closed_at.in_time_zone('Central Time (US & Canada)').strftime('%m/%d/%y %I:%M%p') %>
+          <% end %>
+        </td>
+        <td>
+          <% if pr.ready_for_review_at && pr.reviews.any? %>
+            <%= ((pr.reviews.order(:submitted_at).first.submitted_at - pr.ready_for_review_at) / 1.hour).round(2) %> hrs
+          <% end %>
+        </td>
+        <td>
+          <% if pr.ready_for_review_at && pr.gh_merged_at %>
+            <%= ((pr.gh_merged_at - pr.ready_for_review_at) / 1.hour).round(2) %> hrs
+          <% end %>
+        </td>
       </tr>
     <% end %>
   </tbody>
