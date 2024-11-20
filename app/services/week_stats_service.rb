@@ -11,7 +11,6 @@ class WeekStatsService
   end
 
   def update_stats
-
     @week.update(
       num_open_prs: calculate_open_prs,
       num_prs_started: calculate_prs_started,
@@ -60,6 +59,7 @@ class WeekStatsService
     @repository.pull_requests
       .joins(:reviews)
       .where(reviews: { submitted_at: start_timestamp..end_timestamp })
+      .where('reviews.submitted_at > pull_requests.ready_for_review_at')
       .group('pull_requests.id')
       .having('MIN(reviews.submitted_at) BETWEEN ? AND ?', start_timestamp, end_timestamp)
       .count.length
@@ -81,6 +81,7 @@ class WeekStatsService
     prs_with_first_review = @repository.pull_requests
       .joins(:reviews)
       .where(reviews: { submitted_at: start_timestamp..end_timestamp })
+      .where('reviews.submitted_at > pull_requests.ready_for_review_at')
       .where.not(pull_requests: { ready_for_review_at: nil })
       .group('pull_requests.id, pull_requests.ready_for_review_at')
       .having('MIN(reviews.submitted_at) BETWEEN ? AND ?', start_timestamp, end_timestamp)
@@ -91,7 +92,6 @@ class WeekStatsService
     end
 
     count = prs_with_first_review.length
-
     count > 0 ? (total_hours / count).round(2) : nil
   end
 

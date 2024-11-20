@@ -60,9 +60,9 @@ RSpec.describe WeekStatsService do
 
     context 'when calculating num_prs_initially_reviewed' do
       before do
-        pr1 = create(:pull_request, repository: repository)
-        pr2 = create(:pull_request, repository: repository)
-        pr3 = create(:pull_request, repository: repository)
+        pr1 = create(:pull_request, repository: repository, ready_for_review_at: week.begin_date - 2.days)
+        pr2 = create(:pull_request, repository: repository, ready_for_review_at: week.begin_date - 2.days)
+        pr3 = create(:pull_request, repository: repository, ready_for_review_at: week.begin_date - 2.days)
 
         create(:review, pull_request: pr1, submitted_at: week.begin_date.in_time_zone + 1.day)
         create(:review, pull_request: pr1, submitted_at: week.begin_date.in_time_zone + 2.days)

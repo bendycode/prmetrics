@@ -52,19 +52,29 @@ class Week < ApplicationRecord
 
   def avg_hours_to_first_review
     prs_with_first_review = repository.pull_requests
-                                      .joins(:reviews)
-                                      .where(reviews: { submitted_at: begin_date..end_date })
-                                      .where.not(pull_requests: { ready_for_review_at: nil })
-                                      .group('pull_requests.id')
-                                      .having('MIN(reviews.submitted_at) BETWEEN ? AND ?', begin_date, end_date)
-                                      .select('pull_requests.id, pull_requests.ready_for_review_at, MIN(reviews.submitted_at) AS first_review_at')
+      .joins(:reviews)
+      .where(reviews: { submitted_at: begin_date..end_date })
+      .where.not(pull_requests: { ready_for_review_at: nil })
+      .where('reviews.submitted_at > pull_requests.ready_for_review_at')
+      .group('pull_requests.id')
+      .having(
+        'MIN(CASE WHEN reviews.submitted_at > pull_requests.ready_for_review_at
+              THEN reviews.submitted_at END) BETWEEN ? AND ?',
+        begin_date,
+        end_date
+      )
+      .select(
+        'pull_requests.id,
+         pull_requests.ready_for_review_at,
+         MIN(CASE WHEN reviews.submitted_at > pull_requests.ready_for_review_at
+             THEN reviews.submitted_at END) AS first_review_at'
+      )
 
     total_hours = prs_with_first_review.sum do |pr|
       ((pr.first_review_at - pr.ready_for_review_at) / 1.hour).round(2)
     end
 
     count = prs_with_first_review.length
-
     count > 0 ? (total_hours / count).round(2) : nil
   end
 
