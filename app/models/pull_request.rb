@@ -1,13 +1,14 @@
 class PullRequest < ApplicationRecord
   belongs_to :repository
-  has_many :reviews
-  has_many :pull_request_users
-  has_many :users, through: :pull_request_users
-
+  belongs_to :author, class_name: 'GithubUser'
   belongs_to :ready_for_review_week, class_name: 'Week', optional: true
   belongs_to :first_review_week, class_name: 'Week', optional: true
   belongs_to :merged_week, class_name: 'Week', optional: true
   belongs_to :closed_week, class_name: 'Week', optional: true
+
+  has_many :reviews
+  has_many :pull_request_users, dependent: :destroy
+  has_many :users, through: :pull_request_users
 
   validates :number, presence: true
   validates :title, presence: true

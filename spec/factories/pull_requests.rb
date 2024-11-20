@@ -2,6 +2,7 @@ FactoryBot.define do
   factory :pull_request do
     repository
     sequence(:number) { |n| n }
+    author { association :github_user }
     sequence(:title) { |n| "Pull Request #{n}" }
     state { "open" }
     draft { false }

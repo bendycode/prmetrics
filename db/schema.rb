@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_10_14_174252) do
+ActiveRecord::Schema[7.1].define(version: 2024_11_20_163818) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "github_users", force: :cascade do |t|
+    t.string "username", null: false
+    t.string "name"
+    t.string "avatar_url"
+    t.string "github_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["github_id"], name: "index_github_users_on_github_id", unique: true
+    t.index ["username"], name: "index_github_users_on_username"
+  end
 
   create_table "pull_request_users", force: :cascade do |t|
     t.string "role"
@@ -41,6 +52,8 @@ ActiveRecord::Schema[7.1].define(version: 2024_10_14_174252) do
     t.bigint "first_review_week_id"
     t.bigint "merged_week_id"
     t.bigint "closed_week_id"
+    t.bigint "author_id"
+    t.index ["author_id"], name: "index_pull_requests_on_author_id"
     t.index ["closed_week_id"], name: "index_pull_requests_on_closed_week_id"
     t.index ["first_review_week_id"], name: "index_pull_requests_on_first_review_week_id"
     t.index ["merged_week_id"], name: "index_pull_requests_on_merged_week_id"
@@ -95,6 +108,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_10_14_174252) do
 
   add_foreign_key "pull_request_users", "pull_requests"
   add_foreign_key "pull_request_users", "users"
+  add_foreign_key "pull_requests", "github_users", column: "author_id"
   add_foreign_key "pull_requests", "repositories"
   add_foreign_key "pull_requests", "weeks", column: "closed_week_id"
   add_foreign_key "pull_requests", "weeks", column: "first_review_week_id"

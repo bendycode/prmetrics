@@ -68,63 +68,63 @@ RSpec.describe Week, type: :model do
     end
 
     describe '#open_prs' do
-  before { Time.zone = 'Eastern Time (US & Canada)' }
-  after  { Time.zone = 'UTC' }
+      before { Time.zone = 'Eastern Time (US & Canada)' }
+      after  { Time.zone = 'UTC' }
 
-  let(:repository) { create(:repository) }
-  let(:week) { create(:week,
-    repository: repository,
-    begin_date: Time.zone.local(2024, 1, 8),
-    end_date: Time.zone.local(2024, 1, 14)
-  )}
+      let(:repository) { create(:repository) }
+      let(:week) { create(:week,
+        repository: repository,
+        begin_date: Time.zone.local(2024, 1, 8),
+        end_date: Time.zone.local(2024, 1, 14)
+      )}
 
-  let!(:open_pr) {
-    create(:pull_request,
-      repository: repository,
-      draft: false,
-      gh_created_at: week.begin_date
-    )
-  }
+      let!(:open_pr) {
+        create(:pull_request,
+          repository: repository,
+          draft: false,
+          gh_created_at: week.begin_date
+        )
+      }
 
-  let!(:draft_pr) {
-    create(:pull_request,
-      repository: repository,
-      draft: true,
-      gh_created_at: week.begin_date
-    )
-  }
+      let!(:draft_pr) {
+        create(:pull_request,
+          repository: repository,
+          draft: true,
+          gh_created_at: week.begin_date
+        )
+      }
 
-  let!(:pr_closed_end_of_week) do
-    create(:pull_request,
-      repository: repository,
-      draft: false,
-      gh_created_at: week.begin_date,
-      gh_closed_at: Time.zone.local(2024, 1, 14, 23, 59, 59)  # 11:59:59 PM on end date
-    )
-  end
+      let!(:pr_closed_end_of_week) do
+        create(:pull_request,
+          repository: repository,
+          draft: false,
+          gh_created_at: week.begin_date,
+          gh_closed_at: Time.zone.local(2024, 1, 14, 23, 59, 59)  # 11:59:59 PM on end date
+        )
+      end
 
-  let!(:pr_closed_start_of_next_day) do
-    create(:pull_request,
-      repository: repository,
-      draft: false,
-      gh_created_at: week.begin_date,
-      gh_closed_at: Time.zone.local(2024, 1, 15, 0, 1, 0)  # 12:01:00 AM the next day
-    )
-  end
+      let!(:pr_closed_start_of_next_day) do
+        create(:pull_request,
+          repository: repository,
+          draft: false,
+          gh_created_at: week.begin_date,
+          gh_closed_at: Time.zone.local(2024, 1, 15, 0, 1, 0)  # 12:01:00 AM the next day
+        )
+      end
 
-  it 'returns non-draft PRs that were open during the week' do
-    expect(week.open_prs).to include(open_pr)
-    expect(week.open_prs).not_to include(draft_pr)
-  end
+      it 'returns non-draft PRs that were open during the week' do
+        expect(week.open_prs).to include(open_pr)
+        expect(week.open_prs).not_to include(draft_pr)
+      end
 
-  it 'excludes PRs closed at 11:59:59 PM on the end date' do
-    expect(week.open_prs).not_to include(pr_closed_end_of_week)
-  end
+      it 'excludes PRs closed at 11:59:59 PM on the end date' do
+        expect(week.open_prs).not_to include(pr_closed_end_of_week)
+      end
 
-  it 'includes PRs closed at 12:01:00 AM the day after end date' do
-    expect(week.open_prs).to include(pr_closed_start_of_next_day)
-  end
-end
+      it 'includes PRs closed at 12:01:00 AM the day after end date' do
+        expect(week.open_prs).to include(pr_closed_start_of_next_day)
+      end
+    end
 
     describe '#draft_prs' do
       let!(:draft_pr) { create(:pull_request, repository: repository, draft: true, gh_created_at: current_week.begin_date) }

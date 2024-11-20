@@ -11,23 +11,19 @@ RSpec.describe WeekStatsService do
     end
 
     context 'when calculating num_open_prs' do
-      before do
-        # PR open at end of week, closed after end of week
-        create(:pull_request, repository: repository, state: 'open', draft: false, gh_created_at: 2.weeks.ago, gh_closed_at: 1.day.from_now)
+      let!(:closed_after_wk) { create(:pull_request, repository: repository, state: 'open', draft: false, gh_created_at: 2.weeks.ago, gh_closed_at: 1.day.from_now) }
+      let!(:closed_before_wk) { create(:pull_request, repository: repository, state: 'closed', draft: false, gh_created_at: 3.weeks.ago, gh_closed_at: 8.days.ago) }
+      let!(:draft_pr) { create(:pull_request, repository: repository, state: 'open', draft: true, gh_created_at: 2.weeks.ago) }
 
-        # PR closed before beginning of week
-        create(:pull_request, repository: repository, state: 'closed', draft: false, gh_created_at: 3.weeks.ago, gh_closed_at: 8.days.ago)
-
-        # Draft PR
-        create(:pull_request, repository: repository, state: 'open', draft: true, gh_created_at: 2.weeks.ago)
-
+      let!(:draft_removed_after_wk) {
         # PR created as draft during week, draft removed after week
         draft_pr = create(:pull_request, repository: repository, state: 'open', draft: true, gh_created_at: 5.days.ago)
         draft_pr.update(draft: false, ready_for_review_at: 1.day.from_now)
+        draft_pr
+      }
+      let!(:opened_during_wk) { create(:pull_request, repository: repository, state: 'open', draft: false, gh_created_at: 3.days.ago) }
 
-        # PR open within week
-        create(:pull_request, repository: repository, state: 'open', draft: false, gh_created_at: 3.days.ago)
-
+      before do
         service.update_stats
       end
 
@@ -68,10 +64,10 @@ RSpec.describe WeekStatsService do
         pr2 = create(:pull_request, repository: repository)
         pr3 = create(:pull_request, repository: repository)
 
-        create(:review, pull_request: pr1, submitted_at: week.begin_date + 1.day)
-        create(:review, pull_request: pr1, submitted_at: week.begin_date + 2.days)
-        create(:review, pull_request: pr2, submitted_at: week.begin_date - 1.day)
-        create(:review, pull_request: pr3, submitted_at: week.end_date + 1.day)
+        create(:review, pull_request: pr1, submitted_at: week.begin_date.in_time_zone + 1.day)
+        create(:review, pull_request: pr1, submitted_at: week.begin_date.in_time_zone + 2.days)
+        create(:review, pull_request: pr2, submitted_at: week.begin_date.in_time_zone - 1.day)
+        create(:review, pull_request: pr3, submitted_at: week.end_date.in_time_zone + 1.day)
 
         service.update_stats
       end

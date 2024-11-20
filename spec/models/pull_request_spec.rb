@@ -2,10 +2,12 @@ require 'rails_helper'
 
 RSpec.describe PullRequest, type: :model do
   let(:repository) { Repository.create(name: "Test Repo", url: "https://github.com/test/repo") }
+  let(:author) { create :github_user }
 
   it "is valid with valid attributes" do
     pull_request = PullRequest.new(
       repository: repository,
+      author: author,
       number: 1,
       title: "Test PR",
       state: "open",

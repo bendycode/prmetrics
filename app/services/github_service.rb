@@ -76,13 +76,14 @@ class GithubService
 
   def process_pull_request(repository, repo_name, pr)
     pull_request = repository.pull_requests.find_or_initialize_by(number: pr.number)
-
+    author = find_or_create_github_user(pr.user)
     ready_for_review_at = pr.draft ? nil : determine_ready_for_review_at(repo_name, pr.number, pr.created_at)
 
     pull_request.update(
       title: pr.title,
       state: pr.state,
       draft: pr.draft,
+      author: author,
       gh_created_at: pr.created_at,
       gh_updated_at: pr.updated_at,
       gh_merged_at: pr.merged_at,
@@ -93,6 +94,14 @@ class GithubService
     fetch_and_store_reviews(pull_request, repo_name, pr.number)
     fetch_and_store_users(pull_request, pr)
     pull_request.update_week_associations
+  end
+
+  def find_or_create_github_user(github_user)
+    GithubUser.find_or_create_by!(github_id: github_user.id.to_s) do |user|
+     user.username = github_user.login
+     user.name = github_user.name
+     user.avatar_url = github_user.avatar_url
+    end
   end
 
   def fetch_and_store_reviews(pull_request, repo_name, pr_number)
