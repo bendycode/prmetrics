@@ -111,6 +111,7 @@ class GithubService
 
     # Only process reviews that came after ready_for_review_at
     reviews.each do |review|
+      next if review.submitted_at.nil?
       next if pull_request.ready_for_review_at &&
               review.submitted_at <= pull_request.ready_for_review_at
 
