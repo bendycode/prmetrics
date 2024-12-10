@@ -15,13 +15,18 @@ class PullRequest < ApplicationRecord
   validates :state, presence: true
 
   def time_to_first_review
+    return nil unless ready_for_review_at
+
     first_review = reviews
       .where('submitted_at > ?', ready_for_review_at)
       .order(:submitted_at)
       .first
-    return nil unless first_review && ready_for_review_at
 
-    first_review.submitted_at - ready_for_review_at
+    return nil unless first_review
+
+    time_to_review = first_review.submitted_at - ready_for_review_at
+    raise "PR #{self.id} has invalid time to first review: #{time_to_review}" if time_to_review.negative?
+    time_to_review
   end
 
   def update_week_associations

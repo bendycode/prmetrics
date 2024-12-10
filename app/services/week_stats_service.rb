@@ -81,14 +81,16 @@ class WeekStatsService
     prs_with_first_review = @repository.pull_requests
       .joins(:reviews)
       .where(reviews: { submitted_at: start_timestamp..end_timestamp })
-      .where('reviews.submitted_at > pull_requests.ready_for_review_at')
       .where.not(pull_requests: { ready_for_review_at: nil })
+      .where('reviews.submitted_at > pull_requests.ready_for_review_at')
       .group('pull_requests.id, pull_requests.ready_for_review_at')
       .having('MIN(reviews.submitted_at) BETWEEN ? AND ?', start_timestamp, end_timestamp)
       .select('pull_requests.id, pull_requests.ready_for_review_at, MIN(reviews.submitted_at) AS first_review_at')
 
     total_hours = prs_with_first_review.sum do |pr|
-      ((pr.first_review_at - pr.ready_for_review_at) / 1.hour).round(2)
+      time_to_review = ((pr.first_review_at - pr.ready_for_review_at) / 1.hour).round(2)
+      raise "negative time to review for pr #{pr.id}: #{time_to_review} hours" if time_to_review.negative?
+      time_to_review
     end
 
     count = prs_with_first_review.length
