@@ -6,10 +6,6 @@ RSpec.describe WeekStatsService do
   let(:service) { described_class.new(week) }
 
   describe '#update_stats' do
-    before do
-      service.update_stats
-    end
-
     context 'when calculating num_open_prs' do
       let!(:closed_after_wk) { create(:pull_request, repository: repository, state: 'open', draft: false, gh_created_at: 2.weeks.ago, gh_closed_at: 1.day.from_now) }
       let!(:closed_before_wk) { create(:pull_request, repository: repository, state: 'closed', draft: false, gh_created_at: 3.weeks.ago, gh_closed_at: 8.days.ago) }
@@ -21,7 +17,7 @@ RSpec.describe WeekStatsService do
         draft_pr.update(draft: false, ready_for_review_at: 1.day.from_now)
         draft_pr
       }
-      let!(:opened_during_wk) { create(:pull_request, repository: repository, state: 'open', draft: false, gh_created_at: 3.days.ago) }
+      let!(:opened_during_wk) { create(:pull_request, repository: repository, state: 'open', draft: false, gh_created_at: 7.days.ago) }
 
       before do
         service.update_stats
