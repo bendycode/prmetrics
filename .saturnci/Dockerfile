@@ -1,6 +1,6 @@
 # .saturnci/Dockerfile
 
-FROM ruby:3.3.5 # change version to match yours
+FROM ruby:3.0.6
 
 WORKDIR /code
 
