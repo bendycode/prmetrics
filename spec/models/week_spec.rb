@@ -162,7 +162,7 @@ RSpec.describe Week, type: :model do
     end
 
     describe '#avg_hours_to_first_review' do
-      let(:pr) { create(:pull_request, repository: repository, ready_for_review_at: current_week.begin_date + 2.hours) }
+      let(:pr) { create(:pull_request, repository: repository, ready_for_review_at: current_week.begin_date + 2.hours, first_review_week_id: current_week.id) }
 
       context 'with reviews' do
         before do
