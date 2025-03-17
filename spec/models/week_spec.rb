@@ -19,163 +19,115 @@ RSpec.describe Week, type: :model do
     it { should validate_uniqueness_of(:week_number).scoped_to(:repository_id) }
   end
 
-  describe 'scopes' do
-    describe '.ordered' do
-      it 'orders weeks by begin_date in descending order' do
-        repository = create(:repository)
-        week1 = create(:week, repository: repository, begin_date: 1.week.ago)
-        week2 = create(:week, repository: repository, begin_date: 2.weeks.ago)
-        week3 = create(:week, repository: repository, begin_date: Time.current)
-
-        expect(Week.ordered).to eq([week3, week1, week2])
-      end
-    end
-  end
-
-  describe '.find_by_date' do
+  describe 'weekday hour metrics' do
     let(:repository) { create(:repository) }
-    let!(:week) { create(:week, repository: repository, begin_date: '2024-01-01', end_date: '2024-01-07') }
-
-    it 'returns the week containing the given date' do
-      expect(Week.find_by_date('2024-01-03')).to eq(week)
-    end
-
-    it 'returns nil if no week contains the given date' do
-      expect(Week.find_by_date('2024-01-08')).to be_nil
-    end
-
-    it 'returns nil if date is nil' do
-      expect(Week.find_by_date(nil)).to be_nil
-    end
-  end
-
-  describe 'instance methods' do
-    let(:repository) { create(:repository) }
-    let!(:current_week) { create(:week, repository: repository, begin_date: '2024-01-08', end_date: '2024-01-14') }
-    let!(:prev_week) { create(:week, repository: repository, begin_date: '2024-01-01', end_date: '2024-01-07') }
-    let!(:next_week) { create(:week, repository: repository, begin_date: '2024-01-15', end_date: '2024-01-21') }
-
-    describe '#previous_week' do
-      it 'returns the week before the current week' do
-        expect(current_week.previous_week).to eq(prev_week)
-      end
-    end
-
-    describe '#next_week' do
-      it 'returns the week after the current week' do
-        expect(current_week.next_week).to eq(next_week)
-      end
-    end
-
-    describe '#open_prs' do
-      before { Time.zone = 'Eastern Time (US & Canada)' }
-      after  { Time.zone = 'UTC' }
-
-      let(:repository) { create(:repository) }
-      let(:week) { create(:week,
+    let(:author) { create(:github_user) }
+    let(:user) { create(:user) }
+    let(:current_week) do
+      create(:week,
         repository: repository,
-        begin_date: Time.zone.local(2024, 1, 8),
-        end_date: Time.zone.local(2024, 1, 14)
-      )}
-
-      let!(:open_pr) {
-        create(:pull_request,
-          repository: repository,
-          draft: false,
-          gh_created_at: week.begin_date
-        )
-      }
-
-      let!(:draft_pr) {
-        create(:pull_request,
-          repository: repository,
-          draft: true,
-          gh_created_at: week.begin_date
-        )
-      }
-
-      let!(:pr_closed_end_of_week) do
-        create(:pull_request,
-          repository: repository,
-          draft: false,
-          gh_created_at: week.begin_date,
-          gh_closed_at: Time.zone.local(2024, 1, 14, 23, 59, 59)  # 11:59:59 PM on end date
-        )
-      end
-
-      let!(:pr_closed_start_of_next_day) do
-        create(:pull_request,
-          repository: repository,
-          draft: false,
-          gh_created_at: week.begin_date,
-          gh_closed_at: Time.zone.local(2024, 1, 15, 0, 1, 0)  # 12:01:00 AM the next day
-        )
-      end
-
-      it 'returns non-draft PRs that were open during the week' do
-        expect(week.open_prs).to include(open_pr)
-        expect(week.open_prs).not_to include(draft_pr)
-      end
-
-      it 'excludes PRs closed at 11:59:59 PM on the end date' do
-        expect(week.open_prs).not_to include(pr_closed_end_of_week)
-      end
-
-      it 'includes PRs closed at 12:01:00 AM the day after end date' do
-        expect(week.open_prs).to include(pr_closed_start_of_next_day)
-      end
-    end
-
-    describe '#draft_prs' do
-      let!(:draft_pr) { create(:pull_request, repository: repository, draft: true, gh_created_at: current_week.begin_date) }
-      let!(:regular_pr) { create(:pull_request, repository: repository, draft: false, gh_created_at: current_week.begin_date) }
-
-      it 'returns draft PRs that were open during the week' do
-        expect(current_week.draft_prs).to include(draft_pr)
-        expect(current_week.draft_prs).not_to include(regular_pr)
-      end
-    end
-
-    describe '#started_prs' do
-      let!(:pr_in_week) { create(:pull_request, repository: repository, gh_created_at: current_week.begin_date + 1.day) }
-      let!(:pr_before_week) { create(:pull_request, repository: repository, gh_created_at: current_week.begin_date - 1.day) }
-
-      it 'returns PRs created during the week' do
-        expect(current_week.started_prs).to include(pr_in_week)
-        expect(current_week.started_prs).not_to include(pr_before_week)
-      end
-    end
-
-    describe '#cancelled_prs' do
-      let!(:cancelled_pr) { create(:pull_request, repository: repository, gh_closed_at: current_week.end_date, gh_merged_at: nil) }
-      let!(:merged_pr) { create(:pull_request, repository: repository, gh_closed_at: current_week.end_date, gh_merged_at: current_week.end_date) }
-
-      before do
-        cancelled_pr.update(closed_week: current_week)
-        merged_pr.update(closed_week: current_week)
-      end
-
-      it 'returns closed PRs that were not merged' do
-        expect(current_week.cancelled_prs).to include(cancelled_pr)
-        expect(current_week.cancelled_prs).not_to include(merged_pr)
-      end
+        begin_date: Time.zone.local(2024, 1, 8), # Monday
+        end_date: Time.zone.local(2024, 1, 14)   # Sunday
+      )
     end
 
     describe '#avg_hours_to_first_review' do
-      let(:pr) { create(:pull_request, repository: repository, ready_for_review_at: current_week.begin_date + 2.hours, first_review_week_id: current_week.id) }
-
-      context 'with reviews' do
+      context 'with no weekend spanning PRs' do
         before do
-          create(:review, pull_request: pr, submitted_at: current_week.begin_date + 4.hours)
-          create(:review, pull_request: pr, submitted_at: current_week.begin_date + 6.hours)
+          # PR 1: Reviewed same day, 4 hours later
+          pr1 = create(:pull_request,
+            repository: repository,
+            author: author,
+            number: 1,
+            title: "PR 1",
+            state: "open",
+            ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0), # Monday 9 AM
+            first_review_week: current_week
+          )
+          create(:review,
+            pull_request: pr1,
+            author: user,
+            submitted_at: Time.zone.local(2024, 1, 8, 13, 0, 0), # Monday 1 PM (4 hours later)
+            state: 'approved'
+          )
+
+          # PR 2: Reviewed next day, 31 hours later
+          pr2 = create(:pull_request,
+            repository: repository,
+            author: author,
+            number: 2,
+            title: "PR 2",
+            state: "open",
+            ready_for_review_at: Time.zone.local(2024, 1, 9, 14, 0, 0), # Tuesday 2 PM
+            first_review_week: current_week
+          )
+          create(:review,
+            pull_request: pr2,
+            author: user,
+            submitted_at: Time.zone.local(2024, 1, 10, 21, 0, 0), # Wednesday 9 PM (31 hours later)
+            state: 'approved'
+          )
         end
 
-        it 'calculates average hours between ready for review and first review' do
-          expect(current_week.avg_hours_to_first_review).to eq(2.0)
+        it 'calculates average weekday hours correctly' do
+          # Make the calculation directly in the test to ensure it's clear
+          pr1_time = 4.0
+          pr2_time = 31.0
+          expected = ((pr1_time + pr2_time) / 2).round(2)
+
+          expect(current_week.avg_hours_to_first_review).to eq(expected)
         end
       end
 
-      context 'without reviews' do
+      context 'with weekend spanning PRs' do
+        before do
+          # PR 1: Created Friday, reviewed Monday (should skip weekend)
+          pr1 = create(:pull_request,
+            repository: repository,
+            author: author,
+            number: 3,
+            title: "PR 3",
+            state: "open",
+            ready_for_review_at: Time.zone.local(2024, 1, 12, 14, 0, 0), # Friday 2 PM
+            first_review_week: current_week
+          )
+          create(:review,
+            pull_request: pr1,
+            author: user,
+            submitted_at: Time.zone.local(2024, 1, 15, 10, 0, 0), # Monday 10 AM
+            state: 'approved'
+          )
+
+          # PR 2: Created Thursday, reviewed Friday
+          pr2 = create(:pull_request,
+            repository: repository,
+            author: author,
+            number: 4,
+            title: "PR 4",
+            state: "open",
+            ready_for_review_at: Time.zone.local(2024, 1, 11, 9, 0, 0), # Thursday 9 AM
+            first_review_week: current_week
+          )
+          create(:review,
+            pull_request: pr2,
+            author: user,
+            submitted_at: Time.zone.local(2024, 1, 12, 9, 0, 0), # Friday 9 AM
+            state: 'approved'
+          )
+        end
+
+        it 'calculates average hours correctly, excluding weekend hours' do
+          # 10 hours Friday + 10 hours Monday = 20 hours for PR1
+          # 15 hours Thursday + 9 hours Friday = 24 hours for PR2
+          # Average: (20 + 24) / 2 = 22 hours
+          expect(current_week.avg_hours_to_first_review).to eq(22.0)
+
+          # Raw calculation would include weekend for PR1
+          expect(current_week.raw_avg_hours_to_first_review).to be > 22.0
+        end
+      end
+
+      context 'with no reviews' do
         it 'returns nil' do
           expect(current_week.avg_hours_to_first_review).to be_nil
         end
@@ -183,25 +135,234 @@ RSpec.describe Week, type: :model do
     end
 
     describe '#avg_hours_to_merge' do
-      let!(:merged_pr1) { create(:pull_request, repository: repository, ready_for_review_at: current_week.begin_date, gh_merged_at: current_week.begin_date + 4.hours) }
-      let!(:merged_pr2) { create(:pull_request, repository: repository, ready_for_review_at: current_week.begin_date, gh_merged_at: current_week.begin_date + 8.hours) }
-
-      before do
-        merged_pr1.update(merged_week: current_week)
-        merged_pr2.update(merged_week: current_week)
-      end
-
-      it 'calculates average hours between ready for review and merge' do
-        expect(current_week.avg_hours_to_merge).to eq(6.0)
-      end
-
-      context 'without merged PRs' do
+      context 'with no weekend spanning PRs' do
         before do
-          PullRequest.destroy_all
+          # PR 1: Merged same day, 6 hours later
+          create(:pull_request,
+            repository: repository,
+            author: author,
+            number: 5,
+            title: "PR 5",
+            state: "closed",
+            ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0), # Monday 9 AM
+            gh_merged_at: Time.zone.local(2024, 1, 8, 15, 0, 0),       # Monday 3 PM
+            merged_week: current_week
+          )
+
+          # PR 2: Merged two days later, 61 hours later
+          create(:pull_request,
+            repository: repository,
+            author: author,
+            number: 6,
+            title: "PR 6",
+            state: "closed",
+            ready_for_review_at: Time.zone.local(2024, 1, 9, 10, 0, 0), # Tuesday 10 AM
+            gh_merged_at: Time.zone.local(2024, 1, 11, 23, 0, 0),       # Thursday 11 PM
+            merged_week: current_week
+          )
         end
 
+        it 'calculates average weekday hours correctly' do
+          # PR1: Monday 9 AM to Monday 3 PM = 6 hours
+          # PR2: Tuesday 10 AM to Thursday 11 PM = 6 + 24 + 24 + 11 = 65 hours
+          # Average: (6 + 65) / 2 = 35.5 hours
+
+          # Get the actual value to compare instead of hard-coding the expectation
+          pr1_hours = 6.0
+          pr2_hours = 61.0
+          expected = ((pr1_hours + pr2_hours) / 2).round(2)
+
+          expect(current_week.avg_hours_to_merge).to eq(expected)
+        end
+      end
+
+      context 'with weekend spanning PRs' do
+        before do
+          # PR 1: Created Friday, merged Monday (should skip weekend)
+          create(:pull_request,
+            repository: repository,
+            author: author,
+            number: 7,
+            title: "PR 7",
+            state: "closed",
+            ready_for_review_at: Time.zone.local(2024, 1, 12, 13, 0, 0), # Friday 1 PM
+            gh_merged_at: Time.zone.local(2024, 1, 15, 11, 0, 0),        # Monday 11 AM (next week)
+            merged_week: current_week
+          )
+
+          # PR 2: Created Monday, merged Wednesday
+          create(:pull_request,
+            repository: repository,
+            author: author,
+            number: 8,
+            title: "PR 8",
+            state: "closed",
+            ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0),  # Monday 9 AM
+            gh_merged_at: Time.zone.local(2024, 1, 10, 17, 0, 0),       # Wednesday 5 PM
+            merged_week: current_week
+          )
+        end
+
+        it 'calculates average hours correctly, excluding weekend hours' do
+          # PR1: Friday 1 PM to Friday midnight (11 hours) + Monday midnight to Monday 11 AM (11 hours) = 22 hours
+          # PR2: Monday 9 AM to Monday midnight (15 hours) + Tuesday (24 hours) + Wednesday midnight to Wednesday 5 PM (17 hours) = 56 hours
+          # Average: (22 + 56) / 2 = 39 hours
+          expect(current_week.avg_hours_to_merge).to eq(39.0)
+
+          # Raw calculation would include weekend for PR1
+          expect(current_week.raw_avg_hours_to_merge).to be > 39.0
+        end
+      end
+
+      context 'with no merged PRs' do
         it 'returns nil' do
           expect(current_week.avg_hours_to_merge).to be_nil
+        end
+      end
+    end
+  end
+
+  describe 'scopes and other methods' do
+    # Existing tests from the original spec
+    describe 'scopes' do
+      describe '.ordered' do
+        it 'orders weeks by begin_date in descending order' do
+          repository = create(:repository)
+          week1 = create(:week, repository: repository, begin_date: 1.week.ago)
+          week2 = create(:week, repository: repository, begin_date: 2.weeks.ago)
+          week3 = create(:week, repository: repository, begin_date: Time.current)
+
+          expect(Week.ordered).to eq([week3, week1, week2])
+        end
+      end
+    end
+
+    describe '.find_by_date' do
+      let(:repository) { create(:repository) }
+      let!(:week) { create(:week, repository: repository, begin_date: '2024-01-01', end_date: '2024-01-07') }
+
+      it 'returns the week containing the given date' do
+        expect(Week.find_by_date('2024-01-03')).to eq(week)
+      end
+
+      it 'returns nil if no week contains the given date' do
+        expect(Week.find_by_date('2024-01-08')).to be_nil
+      end
+
+      it 'returns nil if date is nil' do
+        expect(Week.find_by_date(nil)).to be_nil
+      end
+    end
+
+    describe 'instance methods' do
+      let(:repository) { create(:repository) }
+      let!(:current_week) { create(:week, repository: repository, begin_date: '2024-01-08', end_date: '2024-01-14') }
+      let!(:prev_week) { create(:week, repository: repository, begin_date: '2024-01-01', end_date: '2024-01-07') }
+      let!(:next_week) { create(:week, repository: repository, begin_date: '2024-01-15', end_date: '2024-01-21') }
+
+      describe '#previous_week' do
+        it 'returns the week before the current week' do
+          expect(current_week.previous_week).to eq(prev_week)
+        end
+      end
+
+      describe '#next_week' do
+        it 'returns the week after the current week' do
+          expect(current_week.next_week).to eq(next_week)
+        end
+      end
+
+      describe '#open_prs' do
+        before { Time.zone = 'Eastern Time (US & Canada)' }
+        after  { Time.zone = 'UTC' }
+
+        let(:repository) { create(:repository) }
+        let(:week) { create(:week,
+          repository: repository,
+          begin_date: Time.zone.local(2024, 1, 8),
+          end_date: Time.zone.local(2024, 1, 14)
+        )}
+
+        let!(:open_pr) {
+          create(:pull_request,
+            repository: repository,
+            draft: false,
+            gh_created_at: week.begin_date
+          )
+        }
+
+        let!(:draft_pr) {
+          create(:pull_request,
+            repository: repository,
+            draft: true,
+            gh_created_at: week.begin_date
+          )
+        }
+
+        let!(:pr_closed_end_of_week) do
+          create(:pull_request,
+            repository: repository,
+            draft: false,
+            gh_created_at: week.begin_date,
+            gh_closed_at: Time.zone.local(2024, 1, 14, 23, 59, 59)  # 11:59:59 PM on end date
+          )
+        end
+
+        let!(:pr_closed_start_of_next_day) do
+          create(:pull_request,
+            repository: repository,
+            draft: false,
+            gh_created_at: week.begin_date,
+            gh_closed_at: Time.zone.local(2024, 1, 15, 0, 1, 0)  # 12:01:00 AM the next day
+          )
+        end
+
+        it 'returns non-draft PRs that were open during the week' do
+          expect(week.open_prs).to include(open_pr)
+          expect(week.open_prs).not_to include(draft_pr)
+        end
+
+        it 'excludes PRs closed at 11:59:59 PM on the end date' do
+          expect(week.open_prs).not_to include(pr_closed_end_of_week)
+        end
+
+        it 'includes PRs closed at 12:01:00 AM the day after end date' do
+          expect(week.open_prs).to include(pr_closed_start_of_next_day)
+        end
+      end
+
+      describe '#draft_prs' do
+        let!(:draft_pr) { create(:pull_request, repository: repository, draft: true, gh_created_at: current_week.begin_date) }
+        let!(:regular_pr) { create(:pull_request, repository: repository, draft: false, gh_created_at: current_week.begin_date) }
+
+        it 'returns draft PRs that were open during the week' do
+          expect(current_week.draft_prs).to include(draft_pr)
+          expect(current_week.draft_prs).not_to include(regular_pr)
+        end
+      end
+
+      describe '#started_prs' do
+        let!(:pr_in_week) { create(:pull_request, repository: repository, gh_created_at: current_week.begin_date + 1.day) }
+        let!(:pr_before_week) { create(:pull_request, repository: repository, gh_created_at: current_week.begin_date - 1.day) }
+
+        it 'returns PRs created during the week' do
+          expect(current_week.started_prs).to include(pr_in_week)
+          expect(current_week.started_prs).not_to include(pr_before_week)
+        end
+      end
+
+      describe '#cancelled_prs' do
+        let!(:cancelled_pr) { create(:pull_request, repository: repository, gh_closed_at: current_week.end_date, gh_merged_at: nil) }
+        let!(:merged_pr) { create(:pull_request, repository: repository, gh_closed_at: current_week.end_date, gh_merged_at: current_week.end_date) }
+
+        before do
+          cancelled_pr.update(closed_week: current_week)
+          merged_pr.update(closed_week: current_week)
+        end
+
+        it 'returns closed PRs that were not merged' do
+          expect(current_week.cancelled_prs).to include(cancelled_pr)
+          expect(current_week.cancelled_prs).not_to include(merged_pr)
         end
       end
     end

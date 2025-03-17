@@ -1,4 +1,6 @@
 class PullRequest < ApplicationRecord
+  include WeekdayHours
+
   belongs_to :repository
   belongs_to :author, class_name: 'GithubUser'
   belongs_to :ready_for_review_week, class_name: 'Week', optional: true
@@ -14,14 +16,34 @@ class PullRequest < ApplicationRecord
   validates :title, presence: true
   validates :state, presence: true
 
+  # Original method that doesn't exclude weekends
+  def raw_time_to_first_review
+    return nil unless ready_for_review_at
+
+    first_review = valid_first_review
+    return nil unless first_review
+
+    # Return in hours instead of seconds for consistency
+    (first_review.submitted_at - ready_for_review_at) / 1.hour
+  end
+
+  # New method that excludes weekends
   def time_to_first_review
     return nil unless ready_for_review_at
 
     first_review = valid_first_review
     return nil unless first_review
 
-    time_to_review = first_review.submitted_at - ready_for_review_at
-    time_to_review
+    # Call the method from the WeekdayHours module directly
+    WeekdayHours.weekday_hours_between(ready_for_review_at, first_review.submitted_at) * 1.hour
+  end
+
+  # New method for weekday hours to merge
+  def weekday_hours_to_merge
+    return nil unless ready_for_review_at && gh_merged_at
+
+    # Call the method from the WeekdayHours module directly
+    WeekdayHours.weekday_hours_between(ready_for_review_at, gh_merged_at) * 1.hour
   end
 
   def valid_first_review
