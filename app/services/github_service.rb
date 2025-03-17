@@ -109,11 +109,9 @@ class GithubService
       @client.pull_request_reviews(repo_name, pr_number)
     end
 
-    # Only process reviews that came after ready_for_review_at
+    # Store all reviews regardless of timing - we'll filter when calculating metrics
     reviews.each do |review|
       next if review.submitted_at.nil?
-      next if pull_request.ready_for_review_at &&
-              review.submitted_at <= pull_request.ready_for_review_at
 
       author = find_or_create_user(review.user)
       review_record = pull_request.reviews.find_or_initialize_by(

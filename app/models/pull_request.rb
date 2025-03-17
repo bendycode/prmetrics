@@ -17,26 +17,28 @@ class PullRequest < ApplicationRecord
   def time_to_first_review
     return nil unless ready_for_review_at
 
-    first_review = reviews
-      .where('submitted_at > ?', ready_for_review_at)
-      .order(:submitted_at)
-      .first
-
+    first_review = valid_first_review
     return nil unless first_review
 
     time_to_review = first_review.submitted_at - ready_for_review_at
-    raise "PR #{self.id} has invalid time to first review: #{time_to_review}" if time_to_review.negative?
     time_to_review
+  end
+
+  def valid_first_review
+    return nil unless ready_for_review_at
+
+    # Only consider reviews that occurred after ready_for_review_at
+    reviews
+      .where('submitted_at > ?', ready_for_review_at)
+      .order(:submitted_at)
+      .first
   end
 
   def update_week_associations
     self.ready_for_review_week = Week.find_by_date(ready_for_review_at)
 
     # Find first valid review after ready_for_review_at
-    first_valid_review = reviews
-      .where('submitted_at > ?', ready_for_review_at)
-      .order(:submitted_at)
-      .first
+    first_valid_review = valid_first_review
 
     self.first_review_week = Week.find_by_date(first_valid_review&.submitted_at)
     self.merged_week = Week.find_by_date(gh_merged_at)

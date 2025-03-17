@@ -25,13 +25,13 @@
         <td><%= pr.gh_created_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %></td>
         <td><%= pr.ready_for_review_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %></td>
         <td>
-          <% if pr.reviews.any? %>
-            <%= pr.reviews.order(:submitted_at).first.submitted_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %>
+          <% if pr.valid_first_review %>
+            <%= pr.valid_first_review&.submitted_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %>
           <% end %>
         </td>
         <td>
-          <% if pr.ready_for_review_at && pr.reviews.any? %>
-            <%= ((pr.reviews.order(:submitted_at).first.submitted_at - pr.ready_for_review_at) / 1.hour).round(2) %> hrs
+          <% if pr.time_to_first_review %>
+            <%= (pr.time_to_first_review / 1.hour).round(2) %> hrs
           <% end %>
         </td>
         <td><%= pr.gh_merged_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %></td>

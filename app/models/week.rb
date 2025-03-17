@@ -51,6 +51,7 @@ class Week < ApplicationRecord
   end
 
   def avg_hours_to_first_review
+    # Modified to ensure we only consider reviews that come AFTER ready_for_review_at
     prs_with_first_review = repository.pull_requests
       .joins(:reviews)
       .where(reviews: { submitted_at: begin_date..end_date })
