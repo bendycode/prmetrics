@@ -162,6 +162,7 @@ class GithubService
         raise "Max retries reached. Unable to complete the request due to rate limiting."
       end
     rescue Faraday::ConnectionFailed, Net::OpenTimeout => e
+      puts "\n\nConnectionFailed or OpenTimeout error caught. retries: #{retries}\n\n"
       if retries < MAX_RETRIES
         wait_time = 5 * (2 ** retries) # exponential backoff
         puts "\nConnection error: #{e.message}. Retrying in #{wait_time} seconds..."
@@ -175,13 +176,31 @@ class GithubService
   end
 
   def calculate_wait_time(headers, retry_count)
+    puts "\n\ncalculate_wait_time:\nheaders: #{headers}\nretry_count: #{retry_count}\n\n"
+
+    if headers.nil?
+      return exponential_backoff_starting_at_one_minute retry_count
+    end
+
     if headers['retry-after']
       headers['retry-after'].to_i
-    elsif headers['x-ratelimit-remaining'].to_i == 0
+    elsif headers['x-ratelimit-remaining'].to_i == 0 && headers['x-ratelimit-reset']
       reset_time = Time.at(headers['x-ratelimit-reset'].to_i)
-      [reset_time - Time.now, 0].max
+      wait_time = [reset_time - Time.now, 0].max
+
+      # If we're still hitting rate limits and wait time is 0,
+      # use exponential backoff instead
+      if wait_time == 0
+        wait_time = exponential_backoff_starting_at_one_minute retry_count
+      end
+
+      wait_time
     else
-      60 * (2 ** retry_count) # exponential backoff starting at 1 minute
+      exponential_backoff_starting_at_one_minute retry_count
     end
+  end
+
+  def exponential_backoff_starting_at_one_minute retry_count
+    60 * (2 ** retry_count)
   end
 end

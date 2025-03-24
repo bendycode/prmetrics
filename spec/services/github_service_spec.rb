@@ -93,4 +93,80 @@ RSpec.describe GithubService do
       service.send(:process_pull_request, repository, 'test/repo', pr_data)
     end
   end
+
+  describe '#calculate_wait_time' do
+    let(:current_time) { Time.new(2025, 3, 24, 17, 38, 29) }
+
+    before do
+      allow(Time).to receive(:now).and_return(current_time)
+    end
+
+    context 'when retry-after header is present' do
+      it 'returns the retry-after value' do
+        headers = { 'retry-after' => '30' }
+        expect(service.send(:calculate_wait_time, headers, 0)).to eq(30)
+      end
+    end
+
+    context 'when rate limit is exceeded' do
+      context 'when reset time is in the future' do
+        it 'calculates wait time based on reset time' do
+          # Reset time is 5 minutes in the future
+          reset_timestamp = current_time.to_i + 300
+          headers = {
+            'x-ratelimit-remaining' => '0',
+            'x-ratelimit-reset' => reset_timestamp.to_s
+          }
+
+          expect(service.send(:calculate_wait_time, headers, 1)).to be_within(1).of(300)
+        end
+      end
+
+      context 'when reset time has passed but still rate limited' do
+        it 'uses exponential backoff based on retry count' do
+          # Reset time is 5 seconds in the past
+          reset_timestamp = current_time.to_i - 5
+          headers = {
+            'x-ratelimit-remaining' => '0',
+            'x-ratelimit-reset' => reset_timestamp.to_s
+          }
+
+          # For retry_count = 0, should be 60 seconds
+          expect(service.send(:calculate_wait_time, headers, 0)).to eq(60)
+
+          # For retry_count = 1, should be 120 seconds
+          expect(service.send(:calculate_wait_time, headers, 1)).to eq(120)
+
+          # For retry_count = 2, should be 240 seconds
+          expect(service.send(:calculate_wait_time, headers, 2)).to eq(240)
+        end
+      end
+    end
+
+    context 'when headers are incomplete' do
+      it 'uses exponential backoff when x-ratelimit-reset is missing' do
+        headers = { 'x-ratelimit-remaining' => '0' }
+        expect(service.send(:calculate_wait_time, headers, 2)).to eq(240) # 60 * (2^2)
+      end
+
+      it 'uses exponential backoff when all rate limit headers are missing' do
+        headers = { 'date' => 'Mon, 24 Mar 2025 17:38:29 GMT' }
+        expect(service.send(:calculate_wait_time, headers, 3)).to eq(480) # 60 * (2^3)
+      end
+    end
+
+    context 'when headers are nil' do
+      it 'uses exponential backoff' do
+        expect(service.send(:calculate_wait_time, nil, 4)).to eq(960) # 60 * (2^4)
+      end
+    end
+
+    context 'when retry count exceeds reasonable limits' do
+      it 'still calculates appropriate wait times for high retry counts' do
+        # This tests that the calculation doesn't overflow or produce unexpected results
+        headers = { 'date' => 'Mon, 24 Mar 2025 17:38:29 GMT' }
+        expect(service.send(:calculate_wait_time, headers, 5)).to eq(1920) # 60 * (2^5)
+      end
+    end
+  end
 end
