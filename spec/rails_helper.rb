@@ -75,4 +75,16 @@ RSpec.configure do |config|
       with.library :rails
     end
   end
+  
+  # Configure Bullet for tests (only if Bullet is available)
+  if defined?(Bullet)
+    config.before(:each) do
+      Bullet.start_request if Bullet.enable?
+    end
+
+    config.after(:each) do
+      Bullet.perform_out_of_channel_notifications if Bullet.enable?
+      Bullet.end_request if Bullet.enable?
+    end
+  end
 end

@@ -17,17 +17,17 @@ class WeeksController < ApplicationController
     @category = params[:category]
     @prs = case @category
            when 'started'
-             @week.started_prs
+             @week.started_prs.includes(:author, :reviews)
            when 'open'
-             @week.open_prs
+             @week.open_prs.includes(:author, :reviews)
            when 'first_reviewed'
-             @week.first_review_prs
+             @week.first_review_prs.includes(:author, :reviews)
            when 'merged'
-             @week.merged_prs
+             @week.merged_prs.includes(:author, :reviews)
            when 'cancelled'
-             @week.cancelled_prs
+             @week.cancelled_prs.includes(:author, :reviews)
            when 'draft'
-             @week.draft_prs
+             @week.draft_prs.includes(:author, :reviews)
            else
              []
            end

@@ -38,15 +38,18 @@ This document outlines potential improvements for the PR Analysis Tool, organize
 ### 1. Database Optimization ✅ COMPLETED
 **Issues**:
 - ~~Missing indexes on foreign keys and frequently queried columns~~ ✅
-- N+1 queries in controllers (especially in weeks#show)
+- ~~N+1 queries in controllers (especially in weeks#show)~~ ✅
 - No query result caching
 
 **Solutions**:
 - ~~Add indexes: `gh_created_at`, `gh_merged_at`, `ready_for_review_at`~~ ✅ Added 14 indexes
-- Use `includes` for eager loading associations
+- ~~Use `includes` for eager loading associations~~ ✅ Fixed N+1 queries
 - Implement Russian Doll caching for week statistics
 
-**Completed**: Added 14 strategic indexes improving query performance by 35-49%
+**Completed**: 
+- Added 14 strategic indexes improving query performance by 35-49%
+- Fixed N+1 queries in WeeksController, PullRequestUsersController, and UsersController
+- Added query optimization tests to prevent regressions
 
 ### 2. Background Processing
 **Problem**: GitHub API calls block web requests, causing timeouts for large repositories.
@@ -145,9 +148,9 @@ This document outlines potential improvements for the PR Analysis Tool, organize
 
 ### Phase 1: Foundation (1-2 weeks)
 1. ~~Add database indexes~~ ✅ COMPLETED
-2. Add Sidekiq for background processing
-3. Implement basic authentication
-4. Fix N+1 queries
+2. ~~Fix N+1 queries~~ ✅ COMPLETED
+3. Add Sidekiq for background processing
+4. Implement basic authentication
 
 ### Phase 2: Core Features (2-4 weeks)
 1. Build analytics dashboard
