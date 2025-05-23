@@ -98,3 +98,11 @@ rake weeks:update_stats
 - FactoryBot for test data generation
 - Faker for realistic test data
 - Test files mirror app structure in spec/ directory
+
+## Code Style Preferences
+
+### Test Output
+- Keep test output clean and succinct - passing tests should only show dots
+- Remove debug output, puts statements, and console logging from production code
+- Reserve verbose output only for test failures
+- Use proper logging levels (Rails.logger) instead of puts when logging is necessary
