@@ -176,8 +176,6 @@ class GithubService
   end
 
   def calculate_wait_time(headers, retry_count)
-    puts "\n\ncalculate_wait_time:\nheaders: #{headers}\nretry_count: #{retry_count}\n\n"
-
     if headers.nil?
       return exponential_backoff_starting_at_one_minute retry_count
     end
