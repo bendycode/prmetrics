@@ -36,3 +36,6 @@
 
 # Ignore MacOS filesystem artifacts
 **/.DS_Store
+
+# Ignore Claude Code local settings
+.claude/
