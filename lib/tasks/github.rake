@@ -23,9 +23,9 @@ namespace :github do
     puts "Fetching pull requests for #{repo_name}..."
     puts fetch_all ? "Fetching all pull requests." : "Fetching only new pull requests."
 
-    service = GithubService.new(ENV['GITHUB_ACCESS_TOKEN'])
-    service.fetch_and_store_pull_requests(repo_name, fetch_all: fetch_all)
-
-    puts "Finished fetching pull requests."
+    # Queue the sync job
+    SyncRepositoryJob.perform_later(repo_name, fetch_all: fetch_all)
+    
+    puts "Repository sync job queued. Check Sidekiq for progress."
   end
 end

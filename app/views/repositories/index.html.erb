@@ -1,7 +1,43 @@
 <h1>Repositories</h1>
 
-<ul>
-  <% @repositories.each do |repository| %>
-    <li><%= link_to repository.name, repository_path(repository) %></li>
-  <% end %>
-</ul>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Repository</th>
+      <th>Last Sync</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @repositories.each do |repository| %>
+      <tr>
+        <td><%= link_to repository.name, repository_path(repository) %></td>
+        <td>
+          <% if repository.last_fetched_at %>
+            <%= repository.last_fetched_at.strftime('%Y-%m-%d %H:%M') %>
+          <% else %>
+            Never
+          <% end %>
+        </td>
+        <td>
+          <% if repository.sync_status.present? %>
+            <span class="badge badge-<%= repository.sync_status == 'completed' ? 'success' : repository.sync_status == 'failed' ? 'danger' : 'warning' %>">
+              <%= repository.sync_status.humanize %>
+            </span>
+          <% end %>
+        </td>
+        <td>
+          <%= button_to 'Sync', sync_repository_path(repository), 
+              method: :post, 
+              class: 'btn btn-sm btn-primary',
+              disabled: repository.sync_status == 'in_progress' %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<p>
+  <%= link_to 'Sidekiq Dashboard', '/sidekiq', target: '_blank', class: 'btn btn-secondary' %>
+</p>

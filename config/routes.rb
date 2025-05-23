@@ -1,7 +1,14 @@
+require 'sidekiq/web'
+
 Rails.application.routes.draw do
+  mount Sidekiq::Web => '/sidekiq'
+  
   root 'repositories#index'
 
   resources :repositories, only: [:index, :show] do
+    member do
+      post :sync
+    end
     resources :pull_requests, only: [:index]
   end
 

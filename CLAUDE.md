@@ -11,6 +11,12 @@ rails server
 # or
 rails s
 
+# Start Sidekiq (in separate terminal)
+bundle exec sidekiq
+
+# Or run both with foreman
+foreman start -f Procfile.dev
+
 # Run Rails console
 rails console
 # or
@@ -67,6 +73,7 @@ rake weeks:update_stats
 - Database: PostgreSQL
 - Ruby version: 3.0.6
 - Rails version: ~> 7.1.4
+- Redis: Required for Sidekiq background jobs
 
 ## Architecture Overview
 
@@ -82,6 +89,7 @@ rake weeks:update_stats
 ### Key Services
 - **GithubService**: Handles GitHub API integration with Octokit, implements rate limiting and retry logic
 - **WeekStatsService**: Calculates weekly statistics and metrics
+- **SyncRepositoryJob**: Background job for asynchronous GitHub data fetching
 
 ### Important Patterns
 - **WeekdayHours concern**: Custom module that calculates business hours excluding weekends

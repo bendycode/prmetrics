@@ -1,5 +1,51 @@
+<% if flash[:notice] %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= flash[:notice] %>
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+<% end %>
+
 <h1><%= @repository.name %></h1>
 <p>URL: <%= link_to @repository.url, @repository.url %></p>
+
+<div class="sync-controls mb-4">
+  <h3>Sync Status</h3>
+  <% if @repository.sync_status.present? %>
+    <p>
+      Status: <strong><%= @repository.sync_status.humanize %></strong>
+      <% if @repository.sync_started_at %>
+        <br>Started: <%= @repository.sync_started_at.strftime('%Y-%m-%d %H:%M:%S') %>
+      <% end %>
+      <% if @repository.sync_completed_at %>
+        <br>Completed: <%= @repository.sync_completed_at.strftime('%Y-%m-%d %H:%M:%S') %>
+      <% end %>
+      <% if @repository.last_sync_error.present? %>
+        <br>Error: <%= @repository.last_sync_error %>
+      <% end %>
+    </p>
+  <% end %>
+  
+  <div class="btn-group" role="group">
+    <%= button_to 'Sync Updates', sync_repository_path(@repository), 
+        method: :post, 
+        class: 'btn btn-primary',
+        disabled: @repository.sync_status == 'in_progress' %>
+    <%= button_to 'Full Sync', sync_repository_path(@repository), 
+        method: :post, 
+        params: { fetch_all: true },
+        class: 'btn btn-warning',
+        disabled: @repository.sync_status == 'in_progress',
+        data: { confirm: 'This will fetch all pull requests. Continue?' } %>
+  </div>
+  
+  <% if @repository.sync_status == 'in_progress' %>
+    <p class="text-muted mt-2">
+      Sync in progress... <%= link_to 'View Sidekiq', '/sidekiq', target: '_blank' %>
+    </p>
+  <% end %>
+</div>
 
 <h2>Weeks</h2>
 <table>
