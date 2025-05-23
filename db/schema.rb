@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_11_20_163818) do
+ActiveRecord::Schema[7.1].define(version: 2025_05_23_202037) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -31,7 +31,9 @@ ActiveRecord::Schema[7.1].define(version: 2024_11_20_163818) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["pull_request_id", "role"], name: "idx_pr_users_pr_role"
     t.index ["pull_request_id"], name: "index_pull_request_users_on_pull_request_id"
+    t.index ["user_id", "role"], name: "idx_pr_users_user_role"
     t.index ["user_id"], name: "index_pull_request_users_on_user_id"
   end
 
@@ -56,8 +58,14 @@ ActiveRecord::Schema[7.1].define(version: 2024_11_20_163818) do
     t.index ["author_id"], name: "index_pull_requests_on_author_id"
     t.index ["closed_week_id"], name: "index_pull_requests_on_closed_week_id"
     t.index ["first_review_week_id"], name: "index_pull_requests_on_first_review_week_id"
+    t.index ["gh_closed_at"], name: "idx_pull_requests_gh_closed"
+    t.index ["gh_created_at"], name: "idx_pull_requests_gh_created"
+    t.index ["gh_merged_at"], name: "idx_pull_requests_gh_merged"
     t.index ["merged_week_id"], name: "index_pull_requests_on_merged_week_id"
+    t.index ["ready_for_review_at"], name: "idx_pull_requests_ready_for_review"
     t.index ["ready_for_review_week_id"], name: "index_pull_requests_on_ready_for_review_week_id"
+    t.index ["repository_id", "number"], name: "idx_pull_requests_repo_number"
+    t.index ["repository_id", "state", "draft"], name: "idx_pull_requests_repo_state_draft"
     t.index ["repository_id"], name: "index_pull_requests_on_repository_id"
   end
 
@@ -67,6 +75,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_11_20_163818) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "last_fetched_at"
+    t.index ["name"], name: "idx_repositories_name"
   end
 
   create_table "reviews", force: :cascade do |t|
@@ -77,7 +86,9 @@ ActiveRecord::Schema[7.1].define(version: 2024_11_20_163818) do
     t.datetime "updated_at", null: false
     t.bigint "author_id"
     t.index ["author_id"], name: "index_reviews_on_author_id"
+    t.index ["pull_request_id", "submitted_at"], name: "idx_reviews_pr_submitted"
     t.index ["pull_request_id"], name: "index_reviews_on_pull_request_id"
+    t.index ["submitted_at"], name: "idx_reviews_submitted_at"
   end
 
   create_table "users", force: :cascade do |t|
@@ -86,6 +97,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_11_20_163818) do
     t.string "email"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["username"], name: "idx_users_username"
   end
 
   create_table "weeks", force: :cascade do |t|
@@ -102,6 +114,8 @@ ActiveRecord::Schema[7.1].define(version: 2024_11_20_163818) do
     t.decimal "avg_hrs_to_merge", precision: 10, scale: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["begin_date", "end_date"], name: "idx_weeks_dates"
+    t.index ["repository_id", "begin_date", "end_date"], name: "idx_weeks_repo_dates"
     t.index ["repository_id", "week_number"], name: "index_weeks_on_repository_id_and_week_number", unique: true
     t.index ["repository_id"], name: "index_weeks_on_repository_id"
   end
