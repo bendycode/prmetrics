@@ -42,6 +42,7 @@ gem "sidekiq", "~> 7.0"
 
 # Authentication
 gem "devise", "~> 4.9"
+gem "devise_invitable", "~> 2.0"
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
@@ -64,6 +65,9 @@ group :development do
   
   # Detect N+1 queries
   gem "bullet"
+  
+  # Preview emails in browser
+  gem "letter_opener"
 
   # Add speed badges [https://github.com/MiniProfiler/rack-mini-profiler]
   # gem "rack-mini-profiler"

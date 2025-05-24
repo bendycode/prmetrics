@@ -130,11 +130,11 @@ This document outlines potential improvements for the PR Analysis Tool, organize
 - ~~Protect all controllers with `before_action :authenticate_admin!`~~ ✅
 - ~~Create simple login page~~ ✅
 
-#### Task 2: Devise Invitable
-- Add devise_invitable gem for secure admin invitations
-- Update Admin model with invitable module
-- Configure mailer settings for invitation emails
-- Test invitation acceptance flow
+#### Task 2: Devise Invitable ✅ COMPLETED
+- ~~Add devise_invitable gem for secure admin invitations~~ ✅
+- ~~Update Admin model with invitable module~~ ✅
+- ~~Configure mailer settings for invitation emails~~ ✅
+- ~~Test invitation acceptance flow~~ ✅
 
 #### Task 3: Admin Management UI
 - Create AdminsController (index, invite, destroy actions)
