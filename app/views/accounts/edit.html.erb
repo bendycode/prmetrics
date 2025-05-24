@@ -1,0 +1,99 @@
+<div class="container-fluid">
+  <!-- Page Heading -->
+  <h1 class="h3 mb-4 text-gray-800">My Account</h1>
+
+  <div class="row">
+    <div class="col-lg-6">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Account Information</h6>
+        </div>
+        <div class="card-body">
+          <%= form_with(model: @admin, url: account_path, method: :patch, local: true) do |form| %>
+            <% if @admin.errors.any? %>
+              <div class="alert alert-danger">
+                <h6 class="alert-heading"><%= pluralize(@admin.errors.count, "error") %> prohibited this account from being saved:</h6>
+                <ul class="mb-0">
+                  <% @admin.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <% if notice.present? %>
+              <div class="alert alert-success">
+                <%= notice %>
+              </div>
+            <% end %>
+
+            <div class="form-group">
+              <%= form.label :email %>
+              <%= form.email_field :email, class: "form-control", placeholder: "Enter email" %>
+            </div>
+
+            <hr>
+            <h6 class="font-weight-bold text-primary mb-3">Change Password</h6>
+            <p class="text-muted small">Leave blank if you don't want to change it</p>
+
+            <div class="form-group">
+              <%= form.label :password, "New Password" %>
+              <%= form.password_field :password, class: "form-control", placeholder: "Enter new password", autocomplete: "new-password" %>
+              <% if @minimum_password_length %>
+                <small class="form-text text-muted">
+                  (<%= @minimum_password_length %> characters minimum)
+                </small>
+              <% end %>
+            </div>
+
+            <div class="form-group">
+              <%= form.label :password_confirmation, "Confirm New Password" %>
+              <%= form.password_field :password_confirmation, class: "form-control", placeholder: "Confirm new password", autocomplete: "new-password" %>
+            </div>
+
+            <div class="form-group">
+              <%= form.label :current_password %>
+              <%= form.password_field :current_password, class: "form-control", placeholder: "Enter current password", autocomplete: "current-password" %>
+              <small class="form-text text-muted">We need your current password to confirm your changes</small>
+            </div>
+
+            <div class="form-group mb-0">
+              <%= form.submit "Update Account", class: "btn btn-primary" %>
+              <%= link_to "Cancel", root_path, class: "btn btn-secondary ml-2" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Account Details</h6>
+        </div>
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-sm-4 font-weight-bold">Email:</div>
+            <div class="col-sm-8"><%= @admin.email %></div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-sm-4 font-weight-bold">Member Since:</div>
+            <div class="col-sm-8"><%= @admin.created_at.strftime("%B %d, %Y") %></div>
+          </div>
+          <% if @admin.sign_in_count.present? %>
+            <div class="row mb-3">
+              <div class="col-sm-4 font-weight-bold">Sign In Count:</div>
+              <div class="col-sm-8"><%= @admin.sign_in_count %></div>
+            </div>
+          <% end %>
+          <% if @admin.last_sign_in_at.present? %>
+            <div class="row mb-3">
+              <div class="col-sm-4 font-weight-bold">Last Sign In:</div>
+              <div class="col-sm-8"><%= @admin.last_sign_in_at.strftime("%B %d, %Y at %I:%M %p") %></div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

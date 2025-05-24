@@ -2,10 +2,15 @@ require 'sidekiq/web'
 
 Rails.application.routes.draw do
   devise_for :admins
-  mount Sidekiq::Web => '/sidekiq'
+  
+  # Secure Sidekiq Web UI with Devise authentication
+  authenticate :admin do
+    mount Sidekiq::Web => '/sidekiq'
+  end
   
   root 'repositories#index'
   
+  resource :account, only: [:edit, :update]
   resources :admins, only: [:index, :new, :create, :destroy]
 
   resources :repositories, only: [:index, :show] do
