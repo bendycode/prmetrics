@@ -2,11 +2,6 @@ require 'rails_helper'
 
 RSpec.describe RepositoriesController, type: :controller do
   let(:admin) { create(:admin) }
-  
-  before do
-    sign_in admin
-  end
-  let(:admin) { create(:admin) }
   let(:repository) { create(:repository) }
   
   before do

@@ -1,0 +1,29 @@
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <h1>Invite New Admin</h1>
+    
+    <%= form_with(model: @admin, local: true) do |form| %>
+      <% if @admin.errors.any? %>
+        <div class="alert alert-danger">
+          <h6><%= pluralize(@admin.errors.count, "error") %> prohibited this admin from being invited:</h6>
+          <ul>
+            <% @admin.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="mb-3">
+        <%= form.label :email, class: "form-label" %>
+        <%= form.email_field :email, class: "form-control", placeholder: "admin@example.com" %>
+        <div class="form-text">An invitation email will be sent to this address.</div>
+      </div>
+
+      <div class="d-flex justify-content-between">
+        <%= form.submit "Send Invitation", class: "btn btn-primary" %>
+        <%= link_to "Cancel", admins_path, class: "btn btn-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -5,6 +5,8 @@ Rails.application.routes.draw do
   mount Sidekiq::Web => '/sidekiq'
   
   root 'repositories#index'
+  
+  resources :admins, only: [:index, :new, :create, :destroy]
 
   resources :repositories, only: [:index, :show] do
     member do
