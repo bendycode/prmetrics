@@ -116,11 +116,46 @@ This document outlines potential improvements for the PR Analysis Tool, organize
 
 ## Security & Authentication
 
-### 1. User Authentication
+### 1. User Authentication 🚧 IN PROGRESS
 **Priority: High**
-- Add Devise for user management
-- Implement team/organization support
-- Role-based access control
+**Problem**: Application is publicly accessible with no access control
+**Solution**: Admin-only authentication with invite system
+
+**Implementation Plan**:
+
+#### Task 1: Basic Devise Setup
+- Add Devise gem
+- Create Admin model (separate from User model for PR reviewers)
+- Implement basic login/logout functionality
+- Protect all controllers with `before_action :authenticate_admin!`
+- Create simple login page
+
+#### Task 2: Devise Invitable
+- Add devise_invitable gem for secure admin invitations
+- Update Admin model with invitable module
+- Configure mailer settings for invitation emails
+- Test invitation acceptance flow
+
+#### Task 3: Admin Management UI
+- Create AdminsController (index, invite, destroy actions)
+- Build admin listing view showing email, status, last login
+- Add invitation form (email only - no password needed)
+- Implement protection against deleting last active admin
+- Add admin management to navigation menu
+
+#### Task 4: Polish & Security
+- Secure Sidekiq Web UI with Devise authentication
+- Add "My Account" section for password changes
+- Track last_sign_in_at and sign_in_count
+- Improve error messages and flash notifications
+- Add comprehensive test coverage
+
+**Design Decisions**:
+- Separate Admin model to avoid confusion with PR reviewer Users
+- Invite-only system (no self-registration)
+- All admins have full access (no roles needed yet)
+- Admins never see each other's passwords
+- Email invitations with secure token for password setup
 
 ### 2. Secure Token Management
 - Encrypt GitHub tokens
@@ -158,7 +193,7 @@ This document outlines potential improvements for the PR Analysis Tool, organize
 1. ~~Add database indexes~~ ✅ COMPLETED
 2. ~~Fix N+1 queries~~ ✅ COMPLETED
 3. ~~Add Sidekiq for background processing~~ ✅ COMPLETED
-4. Implement basic authentication
+4. Implement basic authentication 🚧 IN PROGRESS
 
 ### Phase 2: Core Features (2-4 weeks)
 1. Build analytics dashboard
