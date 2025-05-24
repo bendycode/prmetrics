@@ -1,6 +1,11 @@
 require 'rails_helper'
 
 RSpec.describe ReviewsController, type: :controller do
+  let(:admin) { create(:admin) }
+  
+  before do
+    sign_in admin
+  end
   let(:pull_request) { create :pull_request }
   let(:author) { create :user }
   let(:review) { create :review, pull_request: pull_request, author: author }

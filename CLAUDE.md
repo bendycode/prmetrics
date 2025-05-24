@@ -74,6 +74,7 @@ rake weeks:update_stats
 - Ruby version: 3.0.6
 - Rails version: ~> 7.1.4
 - Redis: Required for Sidekiq background jobs
+- Development admin login: admin@example.com / password123
 
 ## Architecture Overview
 

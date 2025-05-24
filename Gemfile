@@ -40,6 +40,9 @@ gem "sidekiq", "~> 7.0"
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
 
+# Authentication
+gem "devise", "~> 4.9"
+
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 

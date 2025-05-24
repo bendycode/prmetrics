@@ -69,6 +69,10 @@ RSpec.configure do |config|
   # Include FactoryBot methods
   config.include FactoryBot::Syntax::Methods
   
+  # Include Devise test helpers
+  config.include Devise::Test::ControllerHelpers, type: :controller
+  config.include Devise::Test::IntegrationHelpers, type: :request
+  
   # Use inline job processing for tests
   config.before(:each) do
     ActiveJob::Base.queue_adapter = :test

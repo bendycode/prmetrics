@@ -18,7 +18,7 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
+        <ul class="navbar-nav me-auto">
           <li class="nav-item">
             <%= link_to 'Repositories', repositories_path, class: 'nav-link' %>
           </li>
@@ -26,11 +26,41 @@
             <%= link_to 'Users', users_path, class: 'nav-link' %>
           </li>
         </ul>
+        <ul class="navbar-nav">
+          <% if admin_signed_in? %>
+            <li class="nav-item">
+              <span class="navbar-text me-3">
+                <%= current_admin.email %>
+              </span>
+            </li>
+            <li class="nav-item">
+              <%= button_to 'Logout', destroy_admin_session_path, method: :delete, class: 'btn btn-outline-secondary' %>
+            </li>
+          <% else %>
+            <li class="nav-item">
+              <%= link_to 'Login', new_admin_session_path, class: 'nav-link' %>
+            </li>
+          <% end %>
+        </ul>
       </div>
     </div>
   </nav>
 
   <div class="container mt-4">
+    <% if notice.present? %>
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <%= notice %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <% end %>
+    
+    <% if alert.present? %>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <%= alert %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <% end %>
+    
     <%= yield %>
   </div>
 </body>

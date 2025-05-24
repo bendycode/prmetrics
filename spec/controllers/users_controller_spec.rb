@@ -1,6 +1,11 @@
 require 'rails_helper'
 
 RSpec.describe UsersController, type: :controller do
+  let(:admin) { create(:admin) }
+  
+  before do
+    sign_in admin
+  end
   let(:user) { create(:user) }
 
   describe "GET #index" do
