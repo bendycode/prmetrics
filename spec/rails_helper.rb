@@ -9,6 +9,8 @@ abort("The Rails environment is running in production mode!") if Rails.env.produ
 # return unless Rails.env.test?
 require 'rspec/rails'
 # Add additional requires below this line. Rails is not loaded until this point!
+require 'capybara/rails'
+require 'capybara/rspec'
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are
@@ -72,6 +74,7 @@ RSpec.configure do |config|
   # Include Devise test helpers
   config.include Devise::Test::ControllerHelpers, type: :controller
   config.include Devise::Test::IntegrationHelpers, type: :request
+  config.include Devise::Test::IntegrationHelpers, type: :system
   
   # Use inline job processing for tests
   config.before(:each) do
@@ -94,6 +97,21 @@ RSpec.configure do |config|
     config.after(:each) do
       Bullet.perform_out_of_channel_notifications if Bullet.enable?
       Bullet.end_request if Bullet.enable?
+    end
+  end
+  
+  # Configure Capybara for system tests
+  config.before(:each, type: :system) do
+    # Use rack_test for faster system tests without JavaScript
+    driven_by :rack_test
+  end
+  
+  # For tests that specifically need JavaScript, use this tag: js: true
+  config.before(:each, type: :system, js: true) do
+    driven_by :selenium, using: :headless_chrome, screen_size: [1400, 1400] do |driver_opts|
+      driver_opts.add_argument('--no-sandbox')
+      driver_opts.add_argument('--disable-dev-shm-usage')
+      driver_opts.add_argument('--disable-gpu')
     end
   end
 end

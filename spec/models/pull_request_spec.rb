@@ -110,14 +110,19 @@ RSpec.describe PullRequest, type: :model do
     end
 
     it 'should return a positive duration for reviews submitted after ready_for_review_at' do
+      # Use a Monday at 9 AM as ready_for_review_at
+      monday_9am = 1.week.ago.beginning_of_week + 9.hours
+      pull_request.update!(ready_for_review_at: monday_9am)
+      
+      # Review submitted 2 hours later on same Monday
       review = create(:review,
         pull_request: pull_request,
         author: user,
-        submitted_at: Time.current,
+        submitted_at: monday_9am + 2.hours,
         state: 'approved'
       )
 
-      expect(pull_request.time_to_first_review).to be > 0
+      expect(pull_request.time_to_first_review).to be > 0.hours
     end
 
     it 'should return nil when all reviews are submitted before ready_for_review_at' do
@@ -133,25 +138,28 @@ RSpec.describe PullRequest, type: :model do
     end
 
     it 'should ignore reviews submitted before ready_for_review_at when finding first review' do
-      # Earlier invalid review
+      # Use a Monday at 9 AM as ready_for_review_at
+      monday_9am = 1.week.ago.beginning_of_week + 9.hours
+      pull_request.update!(ready_for_review_at: monday_9am)
+      
+      # Earlier invalid review (before ready_for_review_at)
       early_review = create(:review,
         pull_request: pull_request,
         author: user,
-        submitted_at: 2.days.ago,
+        submitted_at: monday_9am - 1.hour,
         state: 'approved'
       )
 
-      # Later valid review - 12 hours after ready_for_review_at
-      ready_time = pull_request.ready_for_review_at
+      # Later valid review - 3 hours after ready_for_review_at
       valid_review = create(:review,
         pull_request: pull_request,
         author: user,
-        submitted_at: ready_time + 12.hours,
+        submitted_at: monday_9am + 3.hours,
         state: 'approved'
       )
 
       # Should use the valid review for calculation, which is > 0
-      expect(pull_request.time_to_first_review).to be > 0
+      expect(pull_request.time_to_first_review).to be > 0.hours
       # Should specifically use the later review
       expect(pull_request.valid_first_review).to eq(valid_review)
     end
