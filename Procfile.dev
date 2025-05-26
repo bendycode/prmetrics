@@ -1,2 +1,2 @@
-web: rails server
+web: rails server -p 3000
 sidekiq: bundle exec sidekiq -C config/sidekiq.yml
