@@ -203,14 +203,14 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: [<%= @latest_weeks.reverse.map { |w| "'Week #{w.week_number}'" }.join(', ').html_safe %>],
             datasets: [{
                 label: 'PRs Started',
-                data: [<%= @latest_weeks.reverse.map(&:prs_started_count).join(', ') %>],
+                data: [<%= @latest_weeks.reverse.map(&:num_prs_started).join(', ') %>],
                 borderColor: '#4e73df',
                 backgroundColor: 'rgba(78, 115, 223, 0.1)',
                 borderWidth: 2,
                 fill: true
             }, {
                 label: 'PRs Merged',
-                data: [<%= @latest_weeks.reverse.map(&:prs_merged_count).join(', ') %>],
+                data: [<%= @latest_weeks.reverse.map(&:num_prs_merged).join(', ') %>],
                 borderColor: '#1cc88a',
                 backgroundColor: 'rgba(28, 200, 138, 0.1)',
                 borderWidth: 2,
