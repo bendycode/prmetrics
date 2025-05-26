@@ -1,6 +1,6 @@
-# PR Analysis Tool - Improvement Opportunities
+# PR Analysis Tool - Development Roadmap
 
-This document outlines potential improvements for the PR Analysis Tool, organized by category and priority.
+This document outlines the development roadmap for the PR Analysis Tool, tracking completed work and planning future enhancements organized by phase and priority.
 
 ## Code Quality & Architecture
 

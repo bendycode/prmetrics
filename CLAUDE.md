@@ -120,3 +120,62 @@ rake weeks:update_stats
 - Remove debug output, puts statements, and console logging from production code
 - Reserve verbose output only for test failures
 - Use proper logging levels (Rails.logger) instead of puts when logging is necessary
+
+## Useful AI Assistant Patterns
+
+### For This Project
+These Claude Code features are particularly useful for PR Analyzer development:
+
+#### 1. **Performance Analysis**
+```
+"Search for N+1 queries in all controllers and views"
+"Analyze database queries in the dashboard for optimization opportunities"
+```
+
+#### 2. **Security Auditing**
+```
+"Check for SQL injection vulnerabilities or unsafe params usage"
+"Search for hardcoded credentials or API keys"
+```
+
+#### 3. **Code Consistency**
+```
+"Find all service objects and verify they follow the same pattern"
+"Check that all controllers properly handle authentication"
+```
+
+#### 4. **Test Coverage**
+```
+"Identify controller actions without system tests"
+"Generate edge case tests for WeekStatsService calculations"
+```
+
+#### 5. **Deployment Preparation**
+```
+"Search for development-specific code that needs configuration"
+"Find all environment variables used in the codebase"
+```
+
+#### 6. **Documentation Generation**
+```
+"Generate API documentation for all public service methods"
+"Create setup instructions based on the codebase structure"
+```
+
+#### 7. **Refactoring Opportunities**
+```
+"Identify duplicate code across models"
+"Find complex methods that could be extracted into services"
+```
+
+#### 8. **Web Search for Best Practices**
+```
+"Search for Rails 7 production deployment checklist 2025"
+"Find current best practices for Sidekiq configuration"
+```
+
+### General Tips
+- Use concurrent tool operations when searching multiple areas
+- Ask for the Agent tool when doing open-ended searches
+- Reference earlier conversation context for consistency
+- Request multi-file edits for coordinated changes
