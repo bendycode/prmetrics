@@ -44,11 +44,11 @@
 
     <!-- Average Time to Review Card -->
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
+        <div class="card border-left-warning shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                             Avg Time to Review (Hours)</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @avg_time_to_review %></div>
                     </div>
@@ -62,11 +62,11 @@
 
     <!-- Average Time to Merge Card -->
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card border-left-success shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                             Avg Time to Merge (Hours)</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @avg_time_to_merge %></div>
                     </div>
@@ -205,6 +205,13 @@
 </div>
 
 <script>
+/*
+ * Dashboard Color Scheme (Consistent across all charts):
+ * Blue (#4e73df): PR Counts/Volume 
+ * Yellow (#f6c23e): Review Time
+ * Green (#1cc88a): Merge Time/Success
+ * Red (#e74a3b): Cancelled/Failed PRs
+ */
 document.addEventListener('DOMContentLoaded', function() {
     // Enhanced PR Velocity Chart
     var ctx1 = document.getElementById('prVelocityChart').getContext('2d');
@@ -283,8 +290,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }, {
                 label: 'Hours to Merge',
                 data: [<%= @chart_weeks.map { |w| w.avg_hrs_to_merge || 0 }.join(', ') %>],
-                borderColor: '#36b9cc',
-                backgroundColor: 'rgba(54, 185, 204, 0.1)',
+                borderColor: '#1cc88a',
+                backgroundColor: 'rgba(28, 200, 138, 0.1)',
                 borderWidth: 3,
                 fill: true,
                 tension: 0.3

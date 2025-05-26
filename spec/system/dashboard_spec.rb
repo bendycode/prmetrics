@@ -175,6 +175,28 @@ RSpec.describe 'Dashboard', type: :system do
       expect(page_source).to include('responsive: true')
       expect(page_source).to include('maintainAspectRatio: false')
     end
+
+    it 'uses consistent color scheme across charts and cards' do
+      visit root_path
+      
+      page_source = page.html
+      
+      # Check color consistency documentation
+      expect(page_source).to include('Dashboard Color Scheme')
+      expect(page_source).to include('Blue (#4e73df): PR Counts/Volume')
+      expect(page_source).to include('Yellow (#f6c23e): Review Time')
+      expect(page_source).to include('Green (#1cc88a): Merge Time/Success')
+      expect(page_source).to include('Red (#e74a3b): Cancelled/Failed PRs')
+      
+      # Check cards use consistent colors
+      expect(page).to have_css('.border-left-warning') # Review time card
+      expect(page).to have_css('.border-left-success') # Merge time card
+      
+      # Check charts use consistent colors
+      expect(page_source).to include("borderColor: '#f6c23e'") # Review time in chart
+      expect(page_source).to include("borderColor: '#1cc88a'") # Merge time in chart
+      expect(page_source).to include("borderColor: '#e74a3b'") # Cancelled PRs
+    end
   end
 
   describe 'performance metrics display' do
