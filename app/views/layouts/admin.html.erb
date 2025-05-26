@@ -9,7 +9,7 @@
   <%= csp_meta_tag %>
   <%= stylesheet_link_tag 'application', media: 'all', 'data-turbolinks-track': 'reload' %>
   <%= stylesheet_link_tag 'sb-admin-2.min', media: 'all', 'data-turbolinks-track': 'reload' %>
-  <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body id="page-top">
   <div id="wrapper">
@@ -26,5 +26,21 @@
   </div>
   <%= render 'shared/scroll_to_top' %>
   <%= render 'shared/logout_modal' %>
+  
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Initialize Bootstrap dropdowns
+      $('.dropdown-toggle').dropdown();
+      
+      // Ensure the entire user dropdown area is clickable
+      $('#userDropdown, #userDropdown span, #userDropdown div').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#userDropdown').next('.dropdown-menu').toggle();
+      });
+    });
+  </script>
 </body>
 </html>

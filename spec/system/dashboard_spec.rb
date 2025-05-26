@@ -222,6 +222,18 @@ RSpec.describe 'Dashboard', type: :system do
       expect(page).to have_current_path(edit_account_path)
       expect(page).to have_content('My Account')
     end
+    
+    it 'opens dropdown when clicking on email address' do
+      visit root_path
+      
+      # Find and click on the email text specifically
+      email_element = find('#userDropdown span', text: admin.email)
+      email_element.click
+      
+      # Should show dropdown menu
+      expect(page).to have_css('.dropdown-menu', visible: true)
+      expect(page).to have_link('My Account')
+    end
   end
 
   describe 'error handling' do

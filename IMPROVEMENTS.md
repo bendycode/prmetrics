@@ -102,8 +102,8 @@ This document outlines potential improvements for the PR Analysis Tool, organize
 - Implement global search
 - Add filters and sorting to all tables
 - ~~Create dashboard homepage~~ ✅ COMPLETED
-- Fix broken user avatar image in top navigation
-- Add user dropdown menu in top navigation with profile/logout options
+- ~~Fix broken user avatar image in top navigation~~ ✅ COMPLETED
+- ~~Add user dropdown menu in top navigation with profile/logout options~~ ✅ COMPLETED
 - Improve admin account management UX (currently requires navigating to separate page)
 
 ### 2. Real-time Features
