@@ -1,9 +1,9 @@
 FactoryBot.define do
   factory :week do
     sequence(:week_number)
-    repository { nil }
-    begin_date { "2024-11-11" }
-    end_date { "2024-11-17" }
+    repository
+    begin_date { 1.week.ago.beginning_of_week }
+    end_date { 1.week.ago.end_of_week }
     num_open_prs { 1 }
     num_prs_started { 1 }
     num_prs_merged { 1 }

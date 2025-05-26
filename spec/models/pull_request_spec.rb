@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe PullRequest, type: :model do
-  let(:repository) { Repository.create(name: "Test Repo", url: "https://github.com/test/repo") }
+  let(:repository) { create(:repository) }
   let(:author) { create :github_user }
 
   describe 'weekday hours calculation' do
