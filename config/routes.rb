@@ -15,7 +15,7 @@ Rails.application.routes.draw do
   resource :account, only: [:edit, :update]
   resources :admins, only: [:index, :new, :create, :destroy]
 
-  resources :repositories, only: [:index, :show] do
+  resources :repositories, only: [:index, :show, :new, :create] do
     member do
       post :sync
     end

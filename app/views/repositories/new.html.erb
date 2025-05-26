@@ -1,0 +1,103 @@
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card shadow">
+      <div class="card-header">
+        <h3 class="mb-0">Add Repository</h3>
+      </div>
+      <div class="card-body">
+        <%= form_with model: @repository, local: true do |form| %>
+          <% if @repository.errors.any? %>
+            <div class="alert alert-danger" role="alert">
+              <h6 class="alert-heading">Please fix the following errors:</h6>
+              <ul class="mb-0">
+                <% @repository.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="form-group">
+            <%= form.label :name, "Repository Name" %>
+            <%= form.text_field :name, 
+                class: "form-control #{'is-invalid' if @repository.errors[:name].any?}",
+                placeholder: "owner/repository",
+                autofocus: true,
+                required: true %>
+            <small class="form-text text-muted">
+              Enter the GitHub repository in the format: owner/repository (e.g., rails/rails)
+            </small>
+            <% if @repository.errors[:name].any? %>
+              <div class="invalid-feedback">
+                <%= @repository.errors[:name].first %>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="form-group">
+            <%= form.label :url, "Repository URL" %>
+            <%= form.text_field :url, 
+                class: "form-control #{'is-invalid' if @repository.errors[:url].any?}",
+                placeholder: "https://github.com/owner/repository",
+                required: true %>
+            <small class="form-text text-muted">
+              Full GitHub repository URL
+            </small>
+            <% if @repository.errors[:url].any? %>
+              <div class="invalid-feedback">
+                <%= @repository.errors[:url].first %>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <strong>Note:</strong> After adding the repository, we'll automatically start syncing pull request data. 
+            This may take a few minutes depending on the repository size.
+          </div>
+
+          <div class="form-group mb-0">
+            <%= form.submit "Add Repository", class: "btn btn-primary" %>
+            <%= link_to "Cancel", repositories_path, class: "btn btn-secondary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-body">
+        <h5 class="card-title">GitHub Access Token</h5>
+        <% if ENV['GITHUB_ACCESS_TOKEN'].present? %>
+          <p class="text-success">
+            <i class="fas fa-check-circle"></i> GitHub token is configured
+          </p>
+        <% else %>
+          <p class="text-danger">
+            <i class="fas fa-exclamation-circle"></i> GitHub token is not configured
+          </p>
+          <p class="small text-muted">
+            To fetch repository data, you need to set a GitHub personal access token with 'repo' scope.
+            Contact your administrator to configure this.
+          </p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const nameField = document.getElementById('repository_name');
+  const urlField = document.getElementById('repository_url');
+  
+  // Auto-populate URL when name is entered
+  if (nameField && urlField) {
+    nameField.addEventListener('input', function() {
+      const name = this.value.trim();
+      if (name && name.includes('/')) {
+        urlField.value = `https://github.com/${name}`;
+      }
+    });
+  }
+});
+</script>

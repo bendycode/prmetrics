@@ -83,13 +83,13 @@ RSpec.describe 'Repository Sync', type: :system do
 
   describe 'repositories index sync' do
     it 'shows sync status for all repositories' do
-      repo1 = create(:repository, name: 'repo1', sync_status: 'completed')
-      repo2 = create(:repository, name: 'repo2', sync_status: 'in_progress')
+      repo1 = create(:repository, name: 'org/repo1', sync_status: 'completed')
+      repo2 = create(:repository, name: 'org/repo2', sync_status: 'in_progress')
       
       visit repositories_path
       
-      expect(page).to have_content('repo1')
-      expect(page).to have_content('repo2')
+      expect(page).to have_content('org/repo1')
+      expect(page).to have_content('org/repo2')
     end
   end
 

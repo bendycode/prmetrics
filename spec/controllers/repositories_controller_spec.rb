@@ -43,4 +43,54 @@ RSpec.describe RepositoriesController, type: :controller do
       end
     end
   end
+
+  describe "GET #new" do
+    it "returns http success" do
+      get :new
+      expect(response).to have_http_status(:success)
+    end
+
+    it "assigns a new repository" do
+      get :new
+      expect(assigns(:repository)).to be_a_new(Repository)
+    end
+  end
+
+  describe "POST #create" do
+    context "with valid params" do
+      let(:valid_attributes) { { name: 'rails/rails', url: 'https://github.com/rails/rails' } }
+
+      it "creates a new Repository" do
+        expect {
+          post :create, params: { repository: valid_attributes }
+        }.to change(Repository, :count).by(1)
+      end
+
+      it "queues a sync job" do
+        expect {
+          post :create, params: { repository: valid_attributes }
+        }.to have_enqueued_job(SyncRepositoryJob).with('rails/rails', fetch_all: true)
+      end
+
+      it "redirects to the created repository" do
+        post :create, params: { repository: valid_attributes }
+        expect(response).to redirect_to(Repository.last)
+      end
+    end
+
+    context "with invalid params" do
+      let(:invalid_attributes) { { name: '', url: '' } }
+
+      it "does not create a new Repository" do
+        expect {
+          post :create, params: { repository: invalid_attributes }
+        }.not_to change(Repository, :count)
+      end
+
+      it "returns unprocessable entity status" do
+        post :create, params: { repository: invalid_attributes }
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
 end
