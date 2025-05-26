@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />
+  </head>
+  <body>
+    <h1>PR Metrics Email Test</h1>
+    
+    <p>This is a test email from PR Metrics to verify email configuration.</p>
+    
+    <p>
+      <strong>Sent to:</strong> <%= @recipient %><br>
+      <strong>Sent at:</strong> <%= @sent_at.strftime('%Y-%m-%d %H:%M:%S %Z') %>
+    </p>
+    
+    <p>If you're receiving this email, your email configuration is working correctly!</p>
+    
+    <hr>
+    
+    <p>
+      <small>
+        This test email was sent from the PR Metrics application.<br>
+        <%= link_to 'Visit PR Metrics', root_url %>
+      </small>
+    </p>
+  </body>
+</html>
