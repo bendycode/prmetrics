@@ -41,10 +41,19 @@
           <% end %>
         </td>
         <td>
-          <%= button_to 'Sync', sync_repository_path(repository), 
-              method: :post, 
-              class: 'btn btn-sm btn-primary',
-              disabled: repository.sync_status == 'in_progress' %>
+          <div class="btn-group" role="group">
+            <%= button_to 'Sync', sync_repository_path(repository), 
+                method: :post, 
+                class: 'btn btn-sm btn-primary',
+                disabled: repository.sync_status == 'in_progress' %>
+            <%= link_to 'Delete', repository_path(repository), 
+                method: :delete,
+                data: { 
+                  turbo_method: :delete,
+                  turbo_confirm: "Are you sure you want to delete '#{repository.name}'? This will permanently delete all associated pull requests, reviews, and statistics." 
+                },
+                class: 'btn btn-sm btn-danger' %>
+          </div>
         </td>
       </tr>
     <% end %>

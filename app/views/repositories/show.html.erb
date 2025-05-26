@@ -7,8 +7,21 @@
   </div>
 <% end %>
 
-<h1><%= @repository.name %></h1>
-<p>URL: <%= link_to @repository.url, @repository.url %></p>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1><%= @repository.name %></h1>
+    <p>URL: <%= link_to @repository.url, @repository.url %></p>
+  </div>
+  <div>
+    <%= link_to 'Delete Repository', repository_path(@repository), 
+        method: :delete,
+        data: { 
+          turbo_method: :delete,
+          turbo_confirm: "Are you sure you want to delete '#{@repository.name}'? This will permanently delete all associated pull requests, reviews, and statistics." 
+        },
+        class: 'btn btn-danger' %>
+  </div>
+</div>
 
 <div class="sync-controls mb-4">
   <h3>Sync Status</h3>

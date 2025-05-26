@@ -1,5 +1,5 @@
 class Repository < ApplicationRecord
-  has_many :pull_requests
+  has_many :pull_requests, dependent: :destroy
   has_many :weeks, dependent: :destroy
 
   validates :name, presence: true, uniqueness: true

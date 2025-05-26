@@ -15,14 +15,11 @@ Rails.application.routes.draw do
   resource :account, only: [:edit, :update]
   resources :admins, only: [:index, :new, :create, :destroy]
 
-  resources :repositories, only: [:index, :show, :new, :create] do
+  resources :repositories, only: [:index, :show, :new, :create, :destroy] do
     member do
       post :sync
     end
     resources :pull_requests, only: [:index]
-  end
-
-  resources :repositories do
     resources :weeks, only: [:index, :show] do
       member do
         get 'pr_list'

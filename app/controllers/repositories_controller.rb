@@ -33,6 +33,14 @@ class RepositoriesController < ApplicationController
     redirect_to @repository, notice: "Sync job queued for #{@repository.name}"
   end
 
+  def destroy
+    @repository = Repository.find(params[:id])
+    repository_name = @repository.name
+    
+    @repository.destroy
+    redirect_to repositories_path, notice: "Repository '#{repository_name}' and all associated data have been deleted."
+  end
+
   private
 
   def repository_params

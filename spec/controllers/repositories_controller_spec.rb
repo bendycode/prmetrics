@@ -93,4 +93,34 @@ RSpec.describe RepositoriesController, type: :controller do
       end
     end
   end
+
+  describe "DELETE #destroy" do
+    let!(:repository_to_delete) { create(:repository, name: 'test/repo') }
+    let!(:pull_request) { create(:pull_request, repository: repository_to_delete) }
+    let!(:review) { create(:review, pull_request: pull_request) }
+    
+    it "destroys the repository" do
+      expect {
+        delete :destroy, params: { id: repository_to_delete.id }
+      }.to change(Repository, :count).by(-1)
+    end
+    
+    it "destroys associated pull requests" do
+      expect {
+        delete :destroy, params: { id: repository_to_delete.id }
+      }.to change(PullRequest, :count).by(-1)
+    end
+    
+    it "destroys associated reviews" do
+      expect {
+        delete :destroy, params: { id: repository_to_delete.id }
+      }.to change(Review, :count).by(-1)
+    end
+    
+    it "redirects to repositories index with notice" do
+      delete :destroy, params: { id: repository_to_delete.id }
+      expect(response).to redirect_to(repositories_path)
+      expect(flash[:notice]).to eq("Repository 'test/repo' and all associated data have been deleted.")
+    end
+  end
 end

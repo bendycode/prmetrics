@@ -8,13 +8,15 @@ class PullRequest < ApplicationRecord
   belongs_to :merged_week, class_name: 'Week', optional: true
   belongs_to :closed_week, class_name: 'Week', optional: true
 
-  has_many :reviews
+  has_many :reviews, dependent: :destroy
   has_many :pull_request_users, dependent: :destroy
   has_many :users, through: :pull_request_users
 
   validates :number, presence: true
   validates :title, presence: true
   validates :state, presence: true
+
+  after_destroy :cleanup_orphaned_github_user
 
   # Original method that doesn't exclude weekends
   def raw_time_to_first_review
@@ -66,5 +68,16 @@ class PullRequest < ApplicationRecord
     self.merged_week = Week.find_by_date(gh_merged_at)
     self.closed_week = Week.find_by_date(gh_closed_at)
     save
+  end
+
+  private
+
+  def cleanup_orphaned_github_user
+    return unless author
+    
+    # Only delete GithubUser if they have no other pull requests
+    if author.authored_pull_requests.empty?
+      author.destroy
+    end
   end
 end
