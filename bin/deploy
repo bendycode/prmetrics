@@ -22,7 +22,11 @@ fi
 echo "🧪 Running tests..."
 bundle exec rspec
 
-# Push to Heroku
+# Push to GitHub first
+echo "📤 Pushing to GitHub..."
+git push origin main
+
+# Then push to Heroku
 echo "📤 Pushing to Heroku..."
 git push heroku main
 
