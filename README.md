@@ -4,6 +4,13 @@
 
 PR Analysis Tool is a Rails application designed to fetch and analyze pull request data from GitHub repositories. It provides insights into team performance and project progress by tracking various metrics related to the pull request workflow.
 
+## Documentation
+
+- [CHANGELOG.md](CHANGELOG.md) - History of changes and completed features
+- [ROADMAP.md](ROADMAP.md) - Future development plans and priorities
+- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture and design decisions
+- [CLAUDE.md](CLAUDE.md) - Development guide for Claude Code
+
 ## Features
 
 - Fetch pull request data from specified GitHub repositories

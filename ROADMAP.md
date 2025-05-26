@@ -1,304 +1,131 @@
 # PR Analysis Tool - Development Roadmap
 
-This document outlines the development roadmap for the PR Analysis Tool, tracking completed work and planning future enhancements organized by phase and priority.
-
-## Code Quality & Architecture
-
-### 1. Consolidate User Models
-**Problem**: Two separate user models (`User` and `GithubUser`) create data redundancy and complex relationships.
-- Duplicate user data storage
-- Confusing relationships in `PullRequestUser`
-- Potential data inconsistency
-
-**Solution**: Merge into a single `User` model with optional GitHub metadata fields.
-
-### 2. Refactor GithubService
-**Problem**: The service violates Single Responsibility Principle by handling:
-- API authentication
-- Rate limiting logic
-- Data fetching
-- Data transformation
-- Database persistence
-
-**Solution**: Extract into focused services:
-- `GithubApiClient` - Handle API communication and authentication
-- `RateLimiter` - Manage rate limit logic
-- `PullRequestImporter` - Handle data transformation and persistence
-
-### 3. Extract Complex Queries
-**Problem**: Business logic queries scattered across models make testing and optimization difficult.
-
-**Solution**: Create query objects:
-- `WeeklyMetricsQuery`
-- `PullRequestStatsQuery`
-- `ReviewerPerformanceQuery`
-
-### 4. Add Code Coverage with Ratcheting
-**Problem**: No visibility into test coverage, risk of coverage regression over time.
-
-**Solution**:
-- Add SimpleCov gem for code coverage reporting
-- Create a test that reads current coverage and fails if new code reduces coverage
-- Store coverage baseline in a file that gets updated when coverage improves
-- This ensures coverage only goes up, never down (ratcheting effect)
-
-### 5. Integrate StandardRB for Code Consistency
-**Problem**: Inconsistent code style across the codebase.
-
-**Solution**:
-- Add StandardRB gem (Ruby style guide, linter, and formatter)
-- Configure as default rake task to run before tests
-- Add to CI pipeline
-- Run initial standardization across codebase
-
-## Performance Improvements
-
-### 1. Database Optimization ✅ COMPLETED
-**Issues**:
-- ~~Missing indexes on foreign keys and frequently queried columns~~ ✅
-- ~~N+1 queries in controllers (especially in weeks#show)~~ ✅
-- No query result caching
-
-**Solutions**:
-- ~~Add indexes: `gh_created_at`, `gh_merged_at`, `ready_for_review_at`~~ ✅ Added 14 indexes
-- ~~Use `includes` for eager loading associations~~ ✅ Fixed N+1 queries
-- Implement Russian Doll caching for week statistics
-
-**Completed**: 
-- Added 14 strategic indexes improving query performance by 35-49%
-- Fixed N+1 queries in WeeksController, PullRequestUsersController, and UsersController
-- Added query optimization tests to prevent regressions
-
-### 2. Background Processing ✅ COMPLETED
-**Problem**: GitHub API calls block web requests, causing timeouts for large repositories.
-
-**Solution**: 
-- ~~Add Sidekiq for background job processing~~ ✅ Added Sidekiq with Redis
-- ~~Create `SyncRepositoryJob` for async fetching~~ ✅ Created background job
-- Implement progress tracking with ActionCable (future enhancement)
-
-**Completed**:
-- Added Sidekiq and Redis for background job processing
-- Created SyncRepositoryJob to handle repository syncing asynchronously
-- Added sync status tracking to repositories (in_progress, completed, failed)
-- Updated UI with sync buttons and status display
-- Modified rake task to use background jobs
-- Added Sidekiq web UI at /sidekiq
-
-### 3. Incremental Statistics Updates
-**Problem**: `WeekStatsService` recalculates all weeks on every update.
-
-**Solution**: 
-- Track last modified timestamp for PRs
-- Only recalculate affected weeks
-- Cache calculated metrics in Redis
-
-### 4. Automatic Cleanup of Cancelled Jobs
-**Problem**: When Sidekiq jobs are cancelled or terminated, repository sync status remains "in progress" indefinitely.
-
-**Solution**:
-- Implement Sidekiq middleware to detect job cancellation/failure
-- Add job lifecycle callbacks to update repository status
-- Create a periodic cleanup job for orphaned "in progress" statuses
-- Add proper error handling to set appropriate status and error messages
-
-## Feature Enhancements
-
-### 1. Analytics Dashboard
-- **Charts & Visualizations**: Replace tables with Chart.js graphs
-- **Trend Analysis**: Show metrics over time
-- **Team Performance**: Compare reviewer performance
-- **PR Complexity**: Track PR size, files changed, comments
-
-### 2. Enhanced GitHub Integration
-- **Webhooks**: Real-time updates instead of polling
-- **PR Labels**: Import and filter by labels
-- **Multiple Repos**: Aggregate stats across repositories
-- **PR Comments**: Track discussion metrics
-
-### 3. Reporting & Export
-- **Custom Date Ranges**: Filter data by specific periods
-- **Export Options**: CSV, PDF reports
-- **Scheduled Reports**: Email weekly summaries
-- **API Endpoints**: JSON API for integrations
-
-## User Experience
-
-### 1. Navigation Improvements
-- Add breadcrumb navigation
-- Implement global search
-- Add filters and sorting to all tables
-- ~~Create dashboard homepage~~ ✅ COMPLETED
-- ~~Fix broken user avatar image in top navigation~~ ✅ COMPLETED
-- ~~Add user dropdown menu in top navigation with profile/logout options~~ ✅ COMPLETED
-- Improve admin account management UX (currently requires navigating to separate page)
-
-### 2. User Avatars
-**Problem**: No visual identification for users in the interface.
-
-**Solution**:
-- Integrate Gravatar.com for default avatar images based on email
-- Add avatar_url field to User model
-- Allow users to upload custom avatar images
-- Store uploaded avatars in Active Storage
-- Display avatars in navigation, user lists, and PR reviews
-
-### 3. Real-time Features
-- Live sync progress indicators
-- WebSocket updates for new PRs
-- Notification system for long reviews
-- Activity feed
-
-### 3. Mobile Responsiveness
-- Optimize tables for mobile views
-- Touch-friendly navigation
-- Progressive web app features
-
-## Security & Authentication
-
-### 1. User Authentication ✅ COMPLETED
-**Priority: High**
-**Problem**: Application is publicly accessible with no access control
-**Solution**: Admin-only authentication with invite system
-
-**Implementation Plan**:
-
-#### Task 1: Basic Devise Setup ✅ COMPLETED
-- ~~Add Devise gem~~ ✅
-- ~~Create Admin model (separate from User model for PR reviewers)~~ ✅
-- ~~Implement basic login/logout functionality~~ ✅
-- ~~Protect all controllers with `before_action :authenticate_admin!`~~ ✅
-- ~~Create simple login page~~ ✅
-
-#### Task 2: Devise Invitable ✅ COMPLETED
-- ~~Add devise_invitable gem for secure admin invitations~~ ✅
-- ~~Update Admin model with invitable module~~ ✅
-- ~~Configure mailer settings for invitation emails~~ ✅
-- ~~Test invitation acceptance flow~~ ✅
-
-#### Task 3: Admin Management UI ✅ COMPLETED
-- ~~Create AdminsController (index, invite, destroy actions)~~ ✅
-- ~~Build admin listing view showing email, status, last login~~ ✅
-- ~~Add invitation form (email only - no password needed)~~ ✅
-- ~~Implement protection against deleting last active admin~~ ✅
-- ~~Add admin management to navigation menu~~ ✅
-
-#### Task 4: Polish & Security ✅ COMPLETED
-- ~~Secure Sidekiq Web UI with Devise authentication~~ ✅
-- ~~Add "My Account" section for password changes~~ ✅
-- Track last_sign_in_at and sign_in_count ✅ (Devise trackable already enabled)
-- Improve error messages and flash notifications ✅ (Added to account updates)
-- Add comprehensive test coverage ✅ (Added tests for account management)
-
-**Design Decisions**:
-- Separate Admin model to avoid confusion with PR reviewer Users
-- Invite-only system (no self-registration)
-- All admins have full access (no roles needed yet)
-- Admins never see each other's passwords
-- Email invitations with secure token for password setup
-
-### 2. Fix Email Delivery for Admin Invites
-**Problem**: Admin invitation emails are not being delivered in production.
-
-**Solution**:
-- Debug production email configuration (SendGrid/Mailgun/SMTP)
-- Verify environment variables are set correctly
-- Add email delivery monitoring/logging
-- Test with ActionMailer preview in production
-- Consider adding email delivery status to admin interface
-
-### 3. Secure Token Management
-- Encrypt GitHub tokens
-- Support OAuth flow
-- Token rotation reminders
-
-### 3. API Security
-- Add rate limiting
-- Implement API authentication
-- Validate all inputs
-
-## Developer Experience
-
-### 1. Development Environment
-- Add Docker Compose setup
-- Create seed data generator
-- Document API endpoints
-- Add development tools (letter_opener, better_errors)
-- ~~Document Ruby 3.3.5 upgrade and DidYouMean deprecation warnings~~ ✅ COMPLETED (in CLAUDE.md)
-
-### 2. Testing Infrastructure
-- Add system tests with Capybara
-- Create fixtures for GitHub API responses
-- Add performance benchmarks
-- Implement CI/CD pipeline
-
-### 3. Monitoring & Logging
-- Integrate Sentry for error tracking
-- Add Skylight for performance monitoring
-- Structured logging with Lograge
-- ~~Health check endpoints~~ ✅ COMPLETED (at /health)
+This document outlines future development plans for the PR Analysis Tool. For completed work, see [CHANGELOG.md](CHANGELOG.md). For architecture decisions and technical debt, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Priority Roadmap
 
-### Phase 1: Foundation (1-2 weeks)
-1. ~~Add database indexes~~ ✅ COMPLETED
-2. ~~Fix N+1 queries~~ ✅ COMPLETED
-3. ~~Add Sidekiq for background processing~~ ✅ COMPLETED
-4. ~~Implement basic authentication~~ ✅ COMPLETED
+### Phase 1: Code Quality & Stability (Next 2-4 weeks)
 
-### Phase 1.5: Production Readiness (Before Client Access)
-1. ~~Complete Task 4 (Polish & Security) - Secure Sidekiq, My Account~~ ✅ COMPLETED
-2. ~~Add Capybara system tests for critical workflows~~ ✅ COMPLETED
-3. ~~Build basic analytics dashboard with charts~~ ✅ COMPLETED
-4. ~~Create deployment readiness configuration~~ ✅ COMPLETED
-   - ~~Added health check endpoint at /health~~ ✅
-   - ~~Configured email settings with environment variables~~ ✅
-   - ~~Replaced hardcoded credentials with env vars~~ ✅
-   - ~~Added comprehensive .env.example file~~ ✅
-   - ~~Created DEPLOYMENT.md checklist~~ ✅
-   - ~~Fixed logging to use Rails.logger~~ ✅
-5. Deploy to Heroku production instance
-6. ~~Configure production email delivery~~ ✅ COMPLETED (via env vars)
-7. Integrate Sentry for error tracking
-8. ~~Improve error handling and user feedback~~ ✅ COMPLETED
-9. Set up database backups
-10. Create basic user documentation
+1. **Add Code Coverage with Ratcheting**
+   - SimpleCov integration with coverage reports
+   - Ratcheting test to prevent coverage regression
+   - Baseline file tracking coverage improvements
 
-### Phase 2: Core Features (2-4 weeks)
-1. Build analytics dashboard
-2. Add caching layer
-3. Implement webhooks
-4. Create API endpoints
+2. **Integrate StandardRB**
+   - Add StandardRB gem for consistent code style
+   - Configure as default rake task
+   - Run initial code standardization
 
-### Phase 3: Polish (4-6 weeks)
-1. Mobile optimization
-2. Advanced reporting
-3. Team features
-4. Performance monitoring
+3. **Fix Email Delivery for Admin Invites**
+   - Debug production email configuration
+   - Add email delivery monitoring
+   - Test ActionMailer in production
 
-### Phase 4: Scale (6+ weeks)
-1. Multi-tenant support
-2. Enterprise features
-3. Advanced analytics
-4. Integration ecosystem
+### Phase 2: Architecture Improvements (4-8 weeks)
 
-## Technical Debt
+1. **Consolidate User Models**
+   - Merge User and GithubUser models
+   - Migrate existing data
+   - Simplify relationships
 
-### Immediate Fixes
-- ~~Add missing database indexes~~ ✅ COMPLETED
-- Fix timestamp naming inconsistency
-- Standardize service object patterns
-- Update deprecated gems
-- Suppress DidYouMean deprecation warnings from test output (harmless gem warnings)
+2. **Refactor GithubService**
+   - Extract GithubApiClient
+   - Create RateLimiter service
+   - Build PullRequestImporter
 
-### Code Cleanup
-- Extract view partials
-- Remove dead code
-- Standardize error handling
-- Improve test coverage
+3. **Implement Query Objects**
+   - WeeklyMetricsQuery
+   - PullRequestStatsQuery
+   - ReviewerPerformanceQuery
 
-### Documentation
-- API documentation
-- Deployment guide
-- Architecture diagrams
-- Contributing guidelines
+### Phase 3: Feature Enhancements (2-3 months)
+
+1. **User Avatars**
+   - Gravatar integration
+   - Custom avatar uploads
+   - Display throughout application
+
+2. **Enhanced GitHub Integration**
+   - Webhook support for real-time updates
+   - PR labels and filtering
+   - Comment metrics tracking
+
+3. **Advanced Analytics**
+   - Custom date range filtering
+   - Export to CSV/PDF
+   - Scheduled email reports
+
+### Phase 4: Performance & Scale (3-6 months)
+
+1. **Caching Implementation**
+   - Russian Doll caching for statistics
+   - Redis caching for expensive queries
+   - API response caching
+
+2. **Real-time Features**
+   - ActionCable for live updates
+   - Progress indicators
+   - Activity feeds
+
+3. **API Development**
+   - RESTful API endpoints
+   - API authentication
+   - Rate limiting
+
+## Feature Backlog
+
+### Analytics & Reporting
+- Team performance comparisons
+- PR complexity metrics (size, files, comments)
+- Trend analysis and predictions
+- Custom metric definitions
+
+### User Experience
+- Breadcrumb navigation
+- Global search functionality
+- Advanced filtering and sorting
+- Mobile-responsive design
+- Progressive Web App features
+
+### Infrastructure
+- Multi-tenant support
+- Horizontal scaling preparation
+- Data archival policies
+- Performance monitoring integration
+
+### Security
+- GitHub token encryption
+- OAuth flow support
+- Token rotation reminders
+- Audit logging
+
+### Integrations
+- Slack notifications
+- JIRA integration
+- CI/CD pipeline metrics
+- Third-party webhooks
+
+## Technical Improvements
+
+### High Priority
+- Incremental statistics updates
+- Automatic cleanup of cancelled jobs
+- Sidekiq job monitoring improvements
+
+### Medium Priority
+- View partial extraction
+- Service object standardization
+- Timestamp naming consistency
+
+### Low Priority
+- Dead code removal
+- Test suite optimization
+- Documentation improvements
+
+## Success Metrics
+
+- Code coverage > 90%
+- Page load times < 200ms
+- Zero N+1 queries
+- 100% uptime for critical paths
+- Sub-second PR data refresh
