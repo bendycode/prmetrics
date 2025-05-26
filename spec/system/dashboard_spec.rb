@@ -33,10 +33,12 @@ RSpec.describe 'Dashboard', type: :system do
       it 'displays charts even with no data' do
         visit root_path
         
-        expect(page).to have_css('canvas#weeklyTrendsChart')
-        expect(page).to have_css('canvas#repositoryActivityChart')
-        expect(page).to have_content('Weekly PR Trends')
-        expect(page).to have_content('Repository Activity')
+        expect(page).to have_css('canvas#prVelocityChart')
+        expect(page).to have_css('canvas#reviewPerformanceChart')
+        expect(page).to have_css('canvas#repositoryComparisonChart')
+        expect(page).to have_content('PR Velocity Trends')
+        expect(page).to have_content('Review Performance')
+        expect(page).to have_content('Repository Performance Comparison')
       end
     end
 
@@ -123,7 +125,7 @@ RSpec.describe 'Dashboard', type: :system do
       expect(page).to have_css('.col-lg-6')
       
       # Check that cards are present
-      expect(page).to have_css('.card', count: 8) # 4 metric cards + 4 chart/data cards
+      expect(page).to have_css('.card', count: 9) # 4 metric cards + 3 chart cards + 2 data cards
     end
   end
 

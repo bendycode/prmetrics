@@ -26,8 +26,7 @@ class GithubService
       (new_prs || pull_requests).each do |pr|
         process_pull_request(repository, repo_name, pr)
         most_recent_update = [most_recent_update, pr.updated_at].compact.max
-        print '.'
-        $stdout.flush
+        Rails.logger.debug "Processed PR ##{pr.number}"
         total_processed += 1
       end
 
@@ -40,8 +39,8 @@ class GithubService
       repository.update(last_fetched_at: most_recent_update)
     end
 
-    puts "\nProcessed #{total_processed} pull requests."
-    puts "Most recent update: #{most_recent_update}"
+    Rails.logger.info "Processed #{total_processed} pull requests for #{repo_name}"
+    Rails.logger.info "Most recent update: #{most_recent_update}"
   end
 
   private
@@ -154,7 +153,7 @@ class GithubService
     rescue Octokit::TooManyRequests => e
       if retries < MAX_RETRIES
         wait_time = calculate_wait_time(e.response_headers, retries)
-        puts "\nRate limit exceeded. Waiting for #{wait_time} seconds before retrying..."
+        Rails.logger.warn "Rate limit exceeded. Waiting for #{wait_time} seconds before retrying..."
         sleep(wait_time)
         retries += 1
         retry
@@ -162,10 +161,10 @@ class GithubService
         raise "Max retries reached. Unable to complete the request due to rate limiting."
       end
     rescue Faraday::ConnectionFailed, Net::OpenTimeout => e
-      puts "\n\nConnectionFailed or OpenTimeout error caught. retries: #{retries}\n\n"
+      Rails.logger.warn "ConnectionFailed or OpenTimeout error caught. retries: #{retries}"
       if retries < MAX_RETRIES
         wait_time = 5 * (2 ** retries) # exponential backoff
-        puts "\nConnection error: #{e.message}. Retrying in #{wait_time} seconds..."
+        Rails.logger.warn "Connection error: #{e.message}. Retrying in #{wait_time} seconds..."
         sleep(wait_time)
         retries += 1
         retry

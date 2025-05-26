@@ -177,6 +177,7 @@ This document outlines the development roadmap for the PR Analysis Tool, trackin
 - Create seed data generator
 - Document API endpoints
 - Add development tools (letter_opener, better_errors)
+- ~~Document Ruby 3.3.5 upgrade and DidYouMean deprecation warnings~~ ✅ COMPLETED (in CLAUDE.md)
 
 ### 2. Testing Infrastructure
 - Add system tests with Capybara
@@ -188,7 +189,7 @@ This document outlines the development roadmap for the PR Analysis Tool, trackin
 - Integrate Sentry for error tracking
 - Add Skylight for performance monitoring
 - Structured logging with Lograge
-- Health check endpoints
+- ~~Health check endpoints~~ ✅ COMPLETED (at /health)
 
 ## Priority Roadmap
 
@@ -202,12 +203,19 @@ This document outlines the development roadmap for the PR Analysis Tool, trackin
 1. ~~Complete Task 4 (Polish & Security) - Secure Sidekiq, My Account~~ ✅ COMPLETED
 2. ~~Add Capybara system tests for critical workflows~~ ✅ COMPLETED
 3. ~~Build basic analytics dashboard with charts~~ ✅ COMPLETED
-4. Deploy to Heroku production instance
-5. Configure production email delivery
-6. Integrate Sentry for error tracking
-7. Improve error handling and user feedback
-8. Set up database backups
-9. Create basic user documentation
+4. ~~Create deployment readiness configuration~~ ✅ COMPLETED
+   - ~~Added health check endpoint at /health~~ ✅
+   - ~~Configured email settings with environment variables~~ ✅
+   - ~~Replaced hardcoded credentials with env vars~~ ✅
+   - ~~Added comprehensive .env.example file~~ ✅
+   - ~~Created DEPLOYMENT.md checklist~~ ✅
+   - ~~Fixed logging to use Rails.logger~~ ✅
+5. Deploy to Heroku production instance
+6. ~~Configure production email delivery~~ ✅ COMPLETED (via env vars)
+7. Integrate Sentry for error tracking
+8. ~~Improve error handling and user feedback~~ ✅ COMPLETED
+9. Set up database backups
+10. Create basic user documentation
 
 ### Phase 2: Core Features (2-4 weeks)
 1. Build analytics dashboard

@@ -10,6 +10,7 @@ Rails.application.routes.draw do
   
   root 'dashboard#index'
   get 'dashboard', to: 'dashboard#index'
+  get 'health', to: 'health#show'
   
   resource :account, only: [:edit, :update]
   resources :admins, only: [:index, :new, :create, :destroy]

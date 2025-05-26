@@ -73,9 +73,25 @@ Rails.application.configure do
 
   config.action_mailer.perform_caching = false
 
+  # Email configuration
+  config.action_mailer.default_url_options = { host: ENV['APPLICATION_HOST'] }
+  config.action_mailer.delivery_method = :smtp
+  
+  if ENV['SMTP_ADDRESS'].present?
+    config.action_mailer.smtp_settings = {
+      address: ENV['SMTP_ADDRESS'],
+      port: ENV['SMTP_PORT'] || 587,
+      domain: ENV['SMTP_DOMAIN'],
+      user_name: ENV['SMTP_USERNAME'],
+      password: ENV['SMTP_PASSWORD'],
+      authentication: :plain,
+      enable_starttls_auto: true
+    }
+  end
+
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
-  # config.action_mailer.raise_delivery_errors = false
+  config.action_mailer.raise_delivery_errors = false
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
@@ -88,10 +104,11 @@ Rails.application.configure do
   config.active_record.dump_schema_after_migration = false
 
   # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
+  if ENV['ALLOWED_HOSTS'].present?
+    allowed_hosts = ENV['ALLOWED_HOSTS'].split(',').map(&:strip)
+    config.hosts = allowed_hosts
+  end
+  
   # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  config.host_authorization = { exclude: ->(request) { request.path.in?(["/up", "/health"]) } }
 end

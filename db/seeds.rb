@@ -10,9 +10,13 @@
 
 # Create a default admin user for development
 if Rails.env.development?
-  Admin.find_or_create_by!(email: 'admin@example.com') do |admin|
-    admin.password = 'password123'
-    admin.password_confirmation = 'password123'
+  admin_email = ENV['SEED_ADMIN_EMAIL'] || 'admin@example.com'
+  admin_password = ENV['SEED_ADMIN_PASSWORD'] || 'password123'
+  
+  Admin.find_or_create_by!(email: admin_email) do |admin|
+    admin.password = admin_password
+    admin.password_confirmation = admin_password
   end
-  puts "Development admin created: admin@example.com / password123"
+  
+  Rails.logger.info "Development admin created: #{admin_email}"
 end
