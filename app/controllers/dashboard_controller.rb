@@ -24,10 +24,10 @@ class DashboardController < ApplicationController
     return 0 if prs_with_first_review.empty?
 
     total_hours = prs_with_first_review.sum do |pr|
-      first_review = pr.reviews.order(:gh_submitted_at).first
-      next 0 unless first_review&.gh_submitted_at && pr.ready_for_review_at
+      first_review = pr.reviews.order(:submitted_at).first
+      next 0 unless first_review&.submitted_at && pr.ready_for_review_at
       
-      WeekdayHours.hours_between(pr.ready_for_review_at, first_review.gh_submitted_at)
+      WeekdayHours.hours_between(pr.ready_for_review_at, first_review.submitted_at)
     end
 
     (total_hours / prs_with_first_review.count).round(1)
