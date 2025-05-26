@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -e
+
+echo "🌐 Custom Domain Setup for PR Analyzer"
+echo "====================================="
+echo ""
+
+# Get domain name from user
+read -p "Enter your domain name (e.g., prmetrics.io): " DOMAIN
+read -p "Include www subdomain? (y/n): " INCLUDE_WWW
+
+# Add domains to Heroku
+echo ""
+echo "📌 Adding domain(s) to Heroku..."
+heroku domains:add $DOMAIN
+
+if [ "$INCLUDE_WWW" = "y" ] || [ "$INCLUDE_WWW" = "Y" ]; then
+  heroku domains:add www.$DOMAIN
+  ALLOWED_HOSTS="$DOMAIN,www.$DOMAIN,pr-analyzer-production-4692dc49e9d6.herokuapp.com"
+else
+  ALLOWED_HOSTS="$DOMAIN,pr-analyzer-production-4692dc49e9d6.herokuapp.com"
+fi
+
+echo ""
+echo "🔧 Updating environment variables..."
+heroku config:set ALLOWED_HOSTS="$ALLOWED_HOSTS"
+heroku config:set APPLICATION_HOST="$DOMAIN"
+heroku config:set DEFAULT_MAILER_SENDER="noreply@$DOMAIN"
+
+echo ""
+echo "📋 DNS Configuration Required"
+echo "============================"
+echo ""
+echo "Add these DNS records at your domain registrar:"
+echo ""
+heroku domains --json | jq -r '.[] | "Type: CNAME (or ALIAS for root domain)\nHost: " + .hostname + "\nTarget: " + .cname + "\n"'
+
+echo ""
+echo "🔒 SSL Certificate"
+echo "================="
+echo "SSL will be automatically provisioned by Heroku after DNS is configured."
+echo "This usually takes 45-60 minutes after DNS propagation."
+echo ""
+
+echo "✅ Next Steps:"
+echo "1. Configure DNS records at your registrar"
+echo "2. Wait for DNS propagation (1-48 hours)"
+echo "3. Check status with: heroku domains"
+echo "4. Verify SSL with: heroku certs:auto"
+echo ""
+echo "Your site will remain accessible at:"
+echo "https://pr-analyzer-production-4692dc49e9d6.herokuapp.com"
+echo ""
+echo "🎉 Domain setup complete! Check CUSTOM_DOMAIN_SETUP.md for detailed instructions."
