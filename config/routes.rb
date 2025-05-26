@@ -8,7 +8,8 @@ Rails.application.routes.draw do
     mount Sidekiq::Web => '/sidekiq'
   end
   
-  root 'repositories#index'
+  root 'dashboard#index'
+  get 'dashboard', to: 'dashboard#index'
   
   resource :account, only: [:edit, :update]
   resources :admins, only: [:index, :new, :create, :destroy]

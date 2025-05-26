@@ -231,6 +231,7 @@ This document outlines potential improvements for the PR Analysis Tool, organize
 - Fix timestamp naming inconsistency
 - Standardize service object patterns
 - Update deprecated gems
+- Suppress DidYouMean deprecation warnings from test output (harmless gem warnings)
 
 ### Code Cleanup
 - Extract view partials
