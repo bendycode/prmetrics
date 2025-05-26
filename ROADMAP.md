@@ -33,6 +33,24 @@ This document outlines the development roadmap for the PR Analysis Tool, trackin
 - `PullRequestStatsQuery`
 - `ReviewerPerformanceQuery`
 
+### 4. Add Code Coverage with Ratcheting
+**Problem**: No visibility into test coverage, risk of coverage regression over time.
+
+**Solution**:
+- Add SimpleCov gem for code coverage reporting
+- Create a test that reads current coverage and fails if new code reduces coverage
+- Store coverage baseline in a file that gets updated when coverage improves
+- This ensures coverage only goes up, never down (ratcheting effect)
+
+### 5. Integrate StandardRB for Code Consistency
+**Problem**: Inconsistent code style across the codebase.
+
+**Solution**:
+- Add StandardRB gem (Ruby style guide, linter, and formatter)
+- Configure as default rake task to run before tests
+- Add to CI pipeline
+- Run initial standardization across codebase
+
 ## Performance Improvements
 
 ### 1. Database Optimization ✅ COMPLETED
@@ -115,7 +133,17 @@ This document outlines the development roadmap for the PR Analysis Tool, trackin
 - ~~Add user dropdown menu in top navigation with profile/logout options~~ ✅ COMPLETED
 - Improve admin account management UX (currently requires navigating to separate page)
 
-### 2. Real-time Features
+### 2. User Avatars
+**Problem**: No visual identification for users in the interface.
+
+**Solution**:
+- Integrate Gravatar.com for default avatar images based on email
+- Add avatar_url field to User model
+- Allow users to upload custom avatar images
+- Store uploaded avatars in Active Storage
+- Display avatars in navigation, user lists, and PR reviews
+
+### 3. Real-time Features
 - Live sync progress indicators
 - WebSocket updates for new PRs
 - Notification system for long reviews
@@ -169,7 +197,17 @@ This document outlines the development roadmap for the PR Analysis Tool, trackin
 - Admins never see each other's passwords
 - Email invitations with secure token for password setup
 
-### 2. Secure Token Management
+### 2. Fix Email Delivery for Admin Invites
+**Problem**: Admin invitation emails are not being delivered in production.
+
+**Solution**:
+- Debug production email configuration (SendGrid/Mailgun/SMTP)
+- Verify environment variables are set correctly
+- Add email delivery monitoring/logging
+- Test with ActionMailer preview in production
+- Consider adding email delivery status to admin interface
+
+### 3. Secure Token Management
 - Encrypt GitHub tokens
 - Support OAuth flow
 - Token rotation reminders
