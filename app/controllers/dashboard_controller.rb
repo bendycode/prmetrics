@@ -8,6 +8,15 @@ class DashboardController < ApplicationController
                        .order(begin_date: :desc)
                        .limit(10)
     
+    # Get data for charts (last 12 weeks for trends)
+    @chart_weeks = Week.includes(:repository)
+                      .order(begin_date: :desc)
+                      .limit(12)
+                      .reverse
+    
+    # Prepare repository comparison data
+    @repository_stats = prepare_repository_stats
+    
     # Calculate overall statistics
     @total_prs = PullRequest.count
     @total_reviews = Review.count
@@ -16,6 +25,28 @@ class DashboardController < ApplicationController
   end
 
   private
+
+  def prepare_repository_stats
+    @repositories.map do |repo|
+      recent_weeks = repo.weeks.order(:begin_date).last(4) # Last 4 weeks
+      next if recent_weeks.empty?
+
+      {
+        name: repo.name,
+        total_prs: recent_weeks.sum(&:num_prs_started),
+        avg_review_time: recent_weeks.map(&:avg_hrs_to_first_review).compact.sum / [recent_weeks.count, 1].max,
+        avg_merge_time: recent_weeks.map(&:avg_hrs_to_merge).compact.sum / [recent_weeks.count, 1].max,
+        merge_rate: calculate_merge_rate(recent_weeks)
+      }
+    end.compact
+  end
+
+  def calculate_merge_rate(weeks)
+    total_started = weeks.sum(&:num_prs_started)
+    total_merged = weeks.sum(&:num_prs_merged)
+    return 0 if total_started == 0
+    ((total_merged.to_f / total_started) * 100).round(1)
+  end
 
   def calculate_avg_time_to_review
     prs_with_first_review = PullRequest.joins(:reviews)

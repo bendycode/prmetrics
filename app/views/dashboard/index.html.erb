@@ -83,42 +83,53 @@
 <!-- Content Row -->
 <div class="row">
 
-    <!-- Weekly Trends Chart -->
+    <!-- Enhanced PR Velocity Chart -->
     <div class="col-xl-8 col-lg-7">
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Weekly PR Trends</h6>
+                <h6 class="m-0 font-weight-bold text-primary">PR Velocity Trends</h6>
+                <small class="text-muted">Last 12 weeks across all repositories</small>
             </div>
             <div class="card-body">
                 <div class="chart-area">
-                    <canvas id="weeklyTrendsChart"></canvas>
+                    <canvas id="prVelocityChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Repository Performance Pie Chart -->
+    <!-- Review Performance Chart -->
     <div class="col-xl-4 col-lg-5">
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Repository Activity</h6>
+                <h6 class="m-0 font-weight-bold text-primary">Review Performance</h6>
+                <small class="text-muted">Average hours (weekdays only)</small>
             </div>
             <div class="card-body">
-                <div class="chart-pie pt-4 pb-2">
-                    <canvas id="repositoryActivityChart"></canvas>
-                </div>
-                <div class="mt-4 text-center small">
-                    <span class="mr-2">
-                        <i class="fas fa-circle text-primary"></i> Active Repos
-                    </span>
-                    <span class="mr-2">
-                        <i class="fas fa-circle text-success"></i> With Recent Activity
-                    </span>
+                <div class="chart-area">
+                    <canvas id="reviewPerformanceChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
+</div>
+
+<!-- Repository Comparison Row -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Repository Performance Comparison</h6>
+                <small class="text-muted">Last 4 weeks average</small>
+            </div>
+            <div class="card-body">
+                <div class="chart-bar">
+                    <canvas id="repositoryComparisonChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Content Row -->
@@ -195,26 +206,36 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Weekly Trends Chart
-    var ctx = document.getElementById('weeklyTrendsChart').getContext('2d');
-    var weeklyTrendsChart = new Chart(ctx, {
+    // Enhanced PR Velocity Chart
+    var ctx1 = document.getElementById('prVelocityChart').getContext('2d');
+    var prVelocityChart = new Chart(ctx1, {
         type: 'line',
         data: {
-            labels: [<%= @latest_weeks.reverse.map { |w| "'Week #{w.week_number}'" }.join(', ').html_safe %>],
+            labels: [<%= @chart_weeks.map { |w| "'#{w.begin_date.strftime('%b %d')}'" }.join(', ').html_safe %>],
             datasets: [{
                 label: 'PRs Started',
-                data: [<%= @latest_weeks.reverse.map(&:num_prs_started).join(', ') %>],
+                data: [<%= @chart_weeks.map(&:num_prs_started).join(', ') %>],
                 borderColor: '#4e73df',
                 backgroundColor: 'rgba(78, 115, 223, 0.1)',
-                borderWidth: 2,
-                fill: true
+                borderWidth: 3,
+                fill: true,
+                tension: 0.3
             }, {
                 label: 'PRs Merged',
-                data: [<%= @latest_weeks.reverse.map(&:num_prs_merged).join(', ') %>],
+                data: [<%= @chart_weeks.map(&:num_prs_merged).join(', ') %>],
                 borderColor: '#1cc88a',
                 backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.3
+            }, {
+                label: 'PRs Cancelled',
+                data: [<%= @chart_weeks.map(&:num_prs_cancelled).join(', ') %>],
+                borderColor: '#e74a3b',
+                backgroundColor: 'rgba(231, 74, 59, 0.1)',
                 borderWidth: 2,
-                fill: true
+                fill: false,
+                tension: 0.3
             }]
         },
         options: {
@@ -222,31 +243,77 @@ document.addEventListener('DOMContentLoaded', function() {
             maintainAspectRatio: false,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    grid: {
+                        color: '#e3e6f0'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: '#e3e6f0'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20
+                    }
                 }
             }
         }
     });
 
-    // Repository Activity Pie Chart
-    var ctx2 = document.getElementById('repositoryActivityChart').getContext('2d');
-    var repositoryActivityChart = new Chart(ctx2, {
-        type: 'doughnut',
+    // Review Performance Chart
+    var ctx2 = document.getElementById('reviewPerformanceChart').getContext('2d');
+    var reviewPerformanceChart = new Chart(ctx2, {
+        type: 'line',
         data: {
-            labels: [<%= @repositories.map { |r| "'#{r.name}'" }.join(', ').html_safe %>],
+            labels: [<%= @chart_weeks.map { |w| "'#{w.begin_date.strftime('%b %d')}'" }.join(', ').html_safe %>],
             datasets: [{
-                data: [<%= @repositories.map { |r| r.pull_requests.count }.join(', ') %>],
-                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'],
-                hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#f4b619', '#e02d1b', '#5a5c69'],
-                hoverBorderColor: "rgba(234, 236, 244, 1)",
-            }],
+                label: 'Hours to First Review',
+                data: [<%= @chart_weeks.map { |w| w.avg_hrs_to_first_review || 0 }.join(', ') %>],
+                borderColor: '#f6c23e',
+                backgroundColor: 'rgba(246, 194, 62, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.3
+            }, {
+                label: 'Hours to Merge',
+                data: [<%= @chart_weeks.map { |w| w.avg_hrs_to_merge || 0 }.join(', ') %>],
+                borderColor: '#36b9cc',
+                backgroundColor: 'rgba(54, 185, 204, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.3
+            }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#e3e6f0'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value + 'h';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: '#e3e6f0'
+                    }
+                }
+            },
             plugins: {
                 legend: {
-                    position: 'bottom',
+                    position: 'top',
                     labels: {
                         usePointStyle: true,
                         padding: 15
@@ -255,5 +322,89 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Repository Comparison Chart
+    <% if @repository_stats.any? %>
+    var ctx3 = document.getElementById('repositoryComparisonChart').getContext('2d');
+    var repositoryComparisonChart = new Chart(ctx3, {
+        type: 'bar',
+        data: {
+            labels: [<%= @repository_stats.map { |r| "'#{r[:name]}'" }.join(', ').html_safe %>],
+            datasets: [{
+                label: 'Total PRs (4 weeks)',
+                data: [<%= @repository_stats.map { |r| r[:total_prs] }.join(', ') %>],
+                backgroundColor: '#4e73df',
+                borderColor: '#4e73df',
+                borderWidth: 1
+            }, {
+                label: 'Avg Review Time (hours)',
+                data: [<%= @repository_stats.map { |r| r[:avg_review_time].round(1) }.join(', ') %>],
+                backgroundColor: '#f6c23e',
+                borderColor: '#f6c23e',
+                borderWidth: 1,
+                yAxisID: 'y1'
+            }, {
+                label: 'Merge Rate (%)',
+                data: [<%= @repository_stats.map { |r| r[:merge_rate] }.join(', ') %>],
+                backgroundColor: '#1cc88a',
+                borderColor: '#1cc88a',
+                borderWidth: 1,
+                yAxisID: 'y2'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    beginAtZero: true,
+                    grid: {
+                        color: '#e3e6f0'
+                    },
+                    title: {
+                        display: true,
+                        text: 'PR Count'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    beginAtZero: true,
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                    title: {
+                        display: true,
+                        text: 'Hours'
+                    }
+                },
+                y2: {
+                    type: 'linear',
+                    display: false,
+                    beginAtZero: true,
+                    max: 100
+                },
+                x: {
+                    grid: {
+                        color: '#e3e6f0'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20
+                    }
+                }
+            }
+        }
+    });
+    <% end %>
 });
 </script>

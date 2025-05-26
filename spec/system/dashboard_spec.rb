@@ -127,24 +127,53 @@ RSpec.describe 'Dashboard', type: :system do
     end
   end
 
-  describe 'chart functionality' do
+  describe 'enhanced chart functionality' do
     let!(:repository) { create(:repository, name: 'test/repo') }
-    let!(:week1) { create(:week, repository: repository, week_number: 1, num_prs_started: 5, num_prs_merged: 3) }
-    let!(:week2) { create(:week, repository: repository, week_number: 2, num_prs_started: 7, num_prs_merged: 4) }
+    let!(:week1) { create(:week, repository: repository, week_number: 1, num_prs_started: 5, num_prs_merged: 3, num_prs_cancelled: 1, avg_hrs_to_first_review: 8.5, avg_hrs_to_merge: 24.0) }
+    let!(:week2) { create(:week, repository: repository, week_number: 2, num_prs_started: 7, num_prs_merged: 4, num_prs_cancelled: 0, avg_hrs_to_first_review: 6.0, avg_hrs_to_merge: 18.5) }
     let!(:pull_request) { create(:pull_request, repository: repository) }
 
-    it 'includes chart data in page JavaScript' do
+    it 'displays enhanced analytics charts' do
       visit root_path
       
-      # Chart.js should be loaded
-      expect(page).to have_css('canvas#weeklyTrendsChart')
-      expect(page).to have_css('canvas#repositoryActivityChart')
+      # Enhanced chart canvases should be present
+      expect(page).to have_css('canvas#prVelocityChart')
+      expect(page).to have_css('canvas#reviewPerformanceChart')
+      expect(page).to have_css('canvas#repositoryComparisonChart')
       
-      # Check that chart data is embedded in the page
+      # Chart titles should be updated
+      expect(page).to have_content('PR Velocity Trends')
+      expect(page).to have_content('Review Performance')
+      expect(page).to have_content('Repository Performance Comparison')
+    end
+
+    it 'includes velocity and performance data in charts' do
+      visit root_path
+      
       page_source = page.html
-      expect(page_source).to include('Week 1')
-      expect(page_source).to include('Week 2')
+      
+      # Should include PR velocity data
+      expect(page_source).to include('PRs Started')
+      expect(page_source).to include('PRs Merged')
+      expect(page_source).to include('PRs Cancelled')
+      
+      # Should include review performance data
+      expect(page_source).to include('Hours to First Review')
+      expect(page_source).to include('Hours to Merge')
+      
+      # Should include repository comparison data
+      expect(page_source).to include('Total PRs (4 weeks)')
+      expect(page_source).to include('Avg Review Time (hours)')
+      expect(page_source).to include('Merge Rate (%)')
+    end
+
+    it 'displays charts with proper Chart.js configuration' do
+      visit root_path
+      
+      page_source = page.html
       expect(page_source).to include('new Chart')
+      expect(page_source).to include('responsive: true')
+      expect(page_source).to include('maintainAspectRatio: false')
     end
   end
 
