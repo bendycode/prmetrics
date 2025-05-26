@@ -144,6 +144,7 @@ GEM
     ffi (1.17.0-x86_64-linux-gnu)
     font-awesome-sass (6.5.2)
       sassc (~> 2.0)
+    foreman (0.88.1)
     globalid (1.2.1)
       activesupport (>= 6.1)
     i18n (1.14.7)
@@ -384,6 +385,7 @@ DEPENDENCIES
   faker
   faraday-retry
   font-awesome-sass
+  foreman
   importmap-rails
   jbuilder
   jquery-rails

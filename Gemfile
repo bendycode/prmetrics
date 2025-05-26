@@ -71,6 +71,9 @@ group :development do
   
   # Preview emails in browser
   gem "letter_opener"
+  
+  # Process management for development
+  gem "foreman"
 
   # Add speed badges [https://github.com/MiniProfiler/rack-mini-profiler]
   # gem "rack-mini-profiler"
