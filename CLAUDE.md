@@ -42,6 +42,8 @@ rails db:reset
 ```bash
 # Run all tests
 bundle exec rspec
+# or
+rake
 
 # Run specific test file
 bundle exec rspec spec/models/pull_request_spec.rb
@@ -52,6 +54,9 @@ bundle exec rspec spec/models/pull_request_spec.rb:42
 # Run tests with specific pattern
 bundle exec rspec spec/models/
 ```
+
+**Note**: Ruby 3.3.5 may show harmless DidYouMean deprecation warnings from upstream gems. 
+These are safe to ignore and will be resolved when gems update their DidYouMean API usage.
 
 ### GitHub Data Fetching
 ```bash
