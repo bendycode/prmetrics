@@ -75,6 +75,15 @@ This document outlines the development roadmap for the PR Analysis Tool, trackin
 - Only recalculate affected weeks
 - Cache calculated metrics in Redis
 
+### 4. Automatic Cleanup of Cancelled Jobs
+**Problem**: When Sidekiq jobs are cancelled or terminated, repository sync status remains "in progress" indefinitely.
+
+**Solution**:
+- Implement Sidekiq middleware to detect job cancellation/failure
+- Add job lifecycle callbacks to update repository status
+- Create a periodic cleanup job for orphaned "in progress" statuses
+- Add proper error handling to set appropriate status and error messages
+
 ## Feature Enhancements
 
 ### 1. Analytics Dashboard
