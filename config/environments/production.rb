@@ -102,7 +102,8 @@ Rails.application.configure do
     }
   else
     # Log warning if no email configuration is present
-    Rails.logger.warn "WARNING: No email configuration found. Email delivery will fail."
+    # Note: Rails.logger may not be available during asset precompilation
+    puts "WARNING: No email configuration found. Email delivery will fail." if defined?(Rails.logger)
   end
 
   # Enable email delivery errors in production for debugging
