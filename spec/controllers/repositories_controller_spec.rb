@@ -26,7 +26,7 @@ RSpec.describe RepositoriesController, type: :controller do
     it "queues a sync job" do
       expect {
         post :sync, params: { id: repository.id }
-      }.to have_enqueued_job(SyncRepositoryJob).with(repository.name, fetch_all: false)
+      }.to have_enqueued_job(SyncRepositoryBatchJob).with(repository.name, page: 1, fetch_all: false)
     end
     
     it "redirects to repository with notice" do
@@ -39,7 +39,7 @@ RSpec.describe RepositoriesController, type: :controller do
       it "queues a full sync job" do
         expect {
           post :sync, params: { id: repository.id, fetch_all: 'true' }
-        }.to have_enqueued_job(SyncRepositoryJob).with(repository.name, fetch_all: true)
+        }.to have_enqueued_job(SyncRepositoryBatchJob).with(repository.name, page: 1, fetch_all: true)
       end
     end
   end
@@ -69,7 +69,7 @@ RSpec.describe RepositoriesController, type: :controller do
       it "queues a sync job" do
         expect {
           post :create, params: { repository: valid_attributes }
-        }.to have_enqueued_job(SyncRepositoryJob).with('rails/rails', fetch_all: true)
+        }.to have_enqueued_job(SyncRepositoryBatchJob).with('rails/rails', page: 1, fetch_all: true)
       end
 
       it "redirects to the created repository" do

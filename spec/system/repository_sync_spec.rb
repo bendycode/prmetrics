@@ -48,9 +48,8 @@ RSpec.describe 'Repository Sync', type: :system do
       
       visit repository_path(repository)
       
-      expect(page).to have_content('Status: Completed')
-      expect(page).to have_content('Started:')
-      expect(page).to have_content('Completed:')
+      expect(page).to have_content('Sync completed')
+      expect(page).to have_content('30 minutes ago')
     end
 
     it 'shows failed sync status with error message' do
@@ -62,8 +61,8 @@ RSpec.describe 'Repository Sync', type: :system do
       
       visit repository_path(repository)
       
-      expect(page).to have_content('Status: Failed')
-      expect(page).to have_content('Error: API rate limit exceeded')
+      expect(page).to have_content('Last sync failed')
+      expect(page).to have_content('API rate limit exceeded')
     end
 
     it 'shows in-progress sync with Sidekiq link' do

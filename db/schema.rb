@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_05_24_150240) do
+ActiveRecord::Schema[7.1].define(version: 2025_05_26_210022) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -107,6 +107,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_05_24_150240) do
     t.datetime "sync_started_at"
     t.datetime "sync_completed_at"
     t.text "last_sync_error"
+    t.integer "sync_progress"
     t.index ["name"], name: "idx_repositories_name"
   end
 

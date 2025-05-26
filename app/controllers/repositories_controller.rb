@@ -16,8 +16,8 @@ class RepositoriesController < ApplicationController
     @repository = Repository.new(repository_params)
     
     if @repository.save
-      # Queue initial sync job
-      SyncRepositoryJob.perform_later(@repository.name, fetch_all: true)
+      # Use sync service to determine best sync strategy
+      RepositorySyncService.new(@repository, fetch_all: true).perform
       redirect_to @repository, notice: "Repository added successfully. Initial sync has been queued."
     else
       render :new, status: :unprocessable_entity
@@ -28,7 +28,7 @@ class RepositoriesController < ApplicationController
     @repository = Repository.find(params[:id])
     fetch_all = params[:fetch_all] == 'true'
     
-    SyncRepositoryJob.perform_later(@repository.name, fetch_all: fetch_all)
+    RepositorySyncService.new(@repository, fetch_all: fetch_all).perform
     
     redirect_to @repository, notice: "Sync job queued for #{@repository.name}"
   end

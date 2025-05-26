@@ -12,17 +12,40 @@
 
 <div class="sync-controls mb-4">
   <h3>Sync Status</h3>
+  
+  <% if @repository.sync_status == 'in_progress' %>
+    <div class="alert alert-info">
+      <div class="d-flex align-items-center">
+        <i class="fas fa-sync-alt fa-spin mr-2"></i>
+        <div>
+          <strong>Sync in progress...</strong>
+          <% if @repository.sync_progress.present? %>
+            <span class="ml-2">(<%= number_with_delimiter(@repository.sync_progress) %> pull requests processed)</span>
+          <% end %>
+          <div class="small">Started <%= time_ago_in_words(@repository.sync_started_at) %> ago</div>
+        </div>
+      </div>
+    </div>
+  <% elsif @repository.sync_status == 'failed' %>
+    <div class="alert alert-danger">
+      <i class="fas fa-exclamation-triangle"></i>
+      <strong>Last sync failed</strong>
+      <div class="small mt-1"><%= @repository.last_sync_error %></div>
+    </div>
+  <% elsif @repository.sync_status == 'completed' %>
+    <div class="alert alert-success">
+      <i class="fas fa-check-circle"></i>
+      <strong>Sync completed</strong>
+      <% if @repository.sync_completed_at %>
+        <span class="small">(<%= time_ago_in_words(@repository.sync_completed_at) %> ago)</span>
+      <% end %>
+    </div>
+  <% end %>
+  
   <% if @repository.sync_status.present? %>
     <p>
-      Status: <strong><%= @repository.sync_status.humanize %></strong>
-      <% if @repository.sync_started_at %>
-        <br>Started: <%= @repository.sync_started_at.strftime('%Y-%m-%d %H:%M:%S') %>
-      <% end %>
-      <% if @repository.sync_completed_at %>
-        <br>Completed: <%= @repository.sync_completed_at.strftime('%Y-%m-%d %H:%M:%S') %>
-      <% end %>
-      <% if @repository.last_sync_error.present? %>
-        <br>Error: <%= @repository.last_sync_error %>
+      <% if @repository.last_fetched_at %>
+        Last sync: <%= @repository.last_fetched_at.strftime('%Y-%m-%d %H:%M:%S') %>
       <% end %>
     </p>
   <% end %>
