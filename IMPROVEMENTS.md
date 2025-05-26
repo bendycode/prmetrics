@@ -197,7 +197,7 @@ This document outlines potential improvements for the PR Analysis Tool, organize
 
 ### Phase 1.5: Production Readiness (Before Client Access)
 1. ~~Complete Task 4 (Polish & Security) - Secure Sidekiq, My Account~~ ✅ COMPLETED
-2. Add Capybara system tests for critical workflows
+2. ~~Add Capybara system tests for critical workflows~~ ✅ COMPLETED
 3. Integrate Sentry for error tracking
 4. Build basic analytics dashboard with charts
 5. Deploy to Heroku production instance
