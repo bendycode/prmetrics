@@ -5,7 +5,7 @@ class DashboardController < ApplicationController
     
     # Get latest week data for overview
     @latest_weeks = Week.includes(:repository)
-                       .order(start_date: :desc)
+                       .order(begin_date: :desc)
                        .limit(10)
     
     # Calculate overall statistics

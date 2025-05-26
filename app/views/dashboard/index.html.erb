@@ -175,7 +175,7 @@
                             <%= link_to "Week #{week.week_number}", repository_week_path(week.repository, week), 
                                 class: "text-decoration-none" %>
                             <div class="small text-gray-500">
-                                <%= week.repository.name %> - <%= week.start_date.strftime("%b %d") %> to <%= week.end_date.strftime("%b %d") %>
+                                <%= week.repository.name %> - <%= week.begin_date.strftime("%b %d") %> to <%= week.end_date.strftime("%b %d") %>
                             </div>
                         </div>
                     </div>
