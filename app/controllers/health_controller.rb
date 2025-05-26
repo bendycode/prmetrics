@@ -45,11 +45,21 @@ class HealthController < ApplicationController
   end
 
   def check_redis
-    redis = Redis.new(url: ENV['REDIS_URL'] || 'redis://localhost:6379/0')
+    redis_url = ENV['REDIS_URL'] || 'redis://localhost:6379/0'
+    redis_config = { url: redis_url }
+    
+    # Handle Heroku Redis SSL
+    if redis_url.start_with?('rediss://')
+      redis_config[:ssl_params] = { verify_mode: OpenSSL::SSL::VERIFY_NONE }
+    end
+    
+    redis = Redis.new(redis_config)
     redis.ping
     { status: 'ok', message: 'Redis connection successful' }
   rescue StandardError => e
     { status: 'error', message: "Redis connection failed: #{e.message}" }
+  ensure
+    redis&.close
   end
 
   def check_github_api

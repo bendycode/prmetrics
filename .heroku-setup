@@ -1,0 +1,63 @@
+# Heroku Setup Checklist
+
+## Required Environment Variables
+Run these commands after creating the Heroku app:
+
+```bash
+# Core Configuration
+heroku config:set RAILS_MASTER_KEY=$(cat config/master.key)
+heroku config:set GITHUB_ACCESS_TOKEN=your-github-token-here
+heroku config:set DEFAULT_MAILER_SENDER=noreply@pr-analyzer.com
+heroku config:set APPLICATION_HOST=pr-analyzer-production.herokuapp.com
+heroku config:set ALLOWED_HOSTS=pr-analyzer-production.herokuapp.com
+
+# Email Configuration (example for SendGrid)
+heroku addons:create sendgrid:starter
+# This automatically sets SENDGRID_USERNAME and SENDGRID_PASSWORD
+
+# Or manual SMTP setup
+heroku config:set SMTP_ADDRESS=smtp.example.com
+heroku config:set SMTP_PORT=587
+heroku config:set SMTP_DOMAIN=pr-analyzer.com
+heroku config:set SMTP_USERNAME=your-smtp-username
+heroku config:set SMTP_PASSWORD=your-smtp-password
+
+# Optional monitoring
+heroku addons:create sentry:f1
+# This sets SENTRY_DSN automatically
+```
+
+## Useful Heroku Commands for Claude Code
+
+### Deployment
+- `bin/deploy` - Run the automated deployment script
+- `git push heroku main` - Deploy code
+- `heroku run rails db:migrate` - Run migrations
+- `heroku run rails db:seed` - Seed database
+
+### Monitoring
+- `heroku logs --tail` - Watch live logs
+- `heroku ps` - Check dyno status
+- `heroku open` - Open app in browser
+- `curl https://pr-analyzer-production.herokuapp.com/health` - Check health
+
+### Debugging
+- `heroku run rails console` - Production console
+- `heroku run bash` - Shell access
+- `heroku releases` - Deployment history
+- `heroku rollback` - Rollback to previous version
+
+### Database
+- `heroku pg:backups:capture` - Manual backup
+- `heroku pg:backups:schedule DATABASE_URL --at '02:00 America/New_York'` - Schedule backups
+- `heroku pg:info` - Database info
+- `heroku pg:credentials:url DATABASE` - Get database URL
+
+### Scaling
+- `heroku ps:scale web=1 worker=1` - Set dyno counts
+- `heroku ps:resize web=standard-1x` - Change dyno size
+
+### Add-ons
+- `heroku addons` - List installed add-ons
+- `heroku addons:open heroku-redis` - Open Redis dashboard
+- `heroku addons:open heroku-postgresql` - Open database dashboard

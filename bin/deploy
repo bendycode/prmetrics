@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -e
+
+echo "🚀 Starting deployment to Heroku..."
+
+# Ensure we're on main branch
+CURRENT_BRANCH=$(git branch --show-current)
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo "❌ Error: You must be on the main branch to deploy"
+  echo "   Current branch: $CURRENT_BRANCH"
+  exit 1
+fi
+
+# Check for uncommitted changes
+if ! git diff-index --quiet HEAD --; then
+  echo "❌ Error: You have uncommitted changes"
+  echo "   Please commit or stash your changes before deploying"
+  exit 1
+fi
+
+# Run tests
+echo "🧪 Running tests..."
+bundle exec rspec
+
+# Push to Heroku
+echo "📤 Pushing to Heroku..."
+git push heroku main
+
+# Run migrations
+echo "🗄️  Running database migrations..."
+heroku run rails db:migrate
+
+# Clear cache
+echo "🧹 Clearing cache..."
+heroku run rails tmp:cache:clear
+
+# Check deployment
+echo "✅ Deployment complete!"
+echo "🔍 Checking application health..."
+heroku run rails runner "puts 'Rails loaded successfully'"
+
+# Show app info
+echo ""
+echo "📊 Application status:"
+heroku ps
+echo ""
+echo "🌐 Application URL:"
+heroku info -s | grep web_url
+
+echo ""
+echo "✨ Deployment successful!"
+echo "💡 Run 'heroku logs --tail' to monitor the application"
