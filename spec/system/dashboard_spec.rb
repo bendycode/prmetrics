@@ -263,6 +263,31 @@ RSpec.describe 'Dashboard', type: :system do
       expect(page).to have_css('.dropdown-menu', visible: true)
       expect(page).to have_link('My Account')
     end
+    
+    it 'allows logout through modal' do
+      visit root_path
+      
+      # Click user dropdown
+      find('#userDropdown').click
+      
+      # Click Logout to open modal  
+      within('#userDropdown + .dropdown-menu') do
+        click_link 'Logout'
+      end
+      
+      # Should show logout modal
+      expect(page).to have_css('#logoutModal', visible: true)
+      expect(page).to have_content('Ready to Leave?')
+      
+      # Click actual Logout button in modal
+      within('#logoutModal') do
+        click_link 'Logout'
+      end
+      
+      # Should be redirected to login page
+      expect(page).to have_current_path(new_admin_session_path)
+      expect(page).to have_content('Admin Login')
+    end
   end
 
   describe 'error handling' do

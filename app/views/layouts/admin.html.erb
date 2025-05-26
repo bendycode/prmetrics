@@ -29,8 +29,12 @@
   
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@rails/ujs@7.0.0/lib/assets/compiled/rails-ujs.js"></script>
   <script>
     $(document).ready(function() {
+      // Initialize Rails UJS for method: :delete links
+      Rails.start();
+      
       // Initialize Bootstrap dropdowns
       $('.dropdown-toggle').dropdown();
       
