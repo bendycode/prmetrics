@@ -187,6 +187,43 @@ RSpec.describe 'Dashboard', type: :system do
     end
   end
 
+  describe 'user navigation' do
+    it 'displays user avatar and dropdown correctly' do
+      visit root_path
+      
+      # Should show user email in topbar
+      expect(page).to have_content(admin.email)
+      
+      # Should have user avatar (Font Awesome icon, not broken image)
+      expect(page).to have_css('.img-profile i.fas.fa-user')
+      expect(page).not_to have_css('img[src*="undraw_profile.svg"]')
+      
+      # Should have user dropdown with proper options
+      expect(page).to have_css('#userDropdown')
+      
+      # Click dropdown to reveal options
+      find('#userDropdown').click
+      
+      # Should show My Account and Logout options
+      expect(page).to have_link('My Account', href: edit_account_path)
+      expect(page).to have_content('Logout')
+    end
+    
+    it 'allows navigation to account settings' do
+      visit root_path
+      
+      # Click user dropdown
+      find('#userDropdown').click
+      
+      # Click My Account
+      click_link 'My Account'
+      
+      # Should navigate to account edit page
+      expect(page).to have_current_path(edit_account_path)
+      expect(page).to have_content('My Account')
+    end
+  end
+
   describe 'error handling' do
     it 'handles database errors gracefully' do
       # This test ensures our fixes work
