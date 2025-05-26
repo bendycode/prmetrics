@@ -187,10 +187,13 @@ RSpec.describe 'Dashboard', type: :system do
       expect(page_source).to include('Yellow (#f6c23e): Review Time')
       expect(page_source).to include('Green (#1cc88a): Merge Time/Success')
       expect(page_source).to include('Red (#e74a3b): Cancelled/Failed PRs')
+      expect(page_source).to include('Cyan (#36b9cc): Repositories/Infrastructure')
       
       # Check cards use consistent colors
-      expect(page).to have_css('.border-left-warning') # Review time card
-      expect(page).to have_css('.border-left-success') # Merge time card
+      expect(page).to have_css('.border-left-info') # Repositories card (cyan)
+      expect(page).to have_css('.border-left-primary') # PR count card (blue)
+      expect(page).to have_css('.border-left-warning') # Review time card (yellow)
+      expect(page).to have_css('.border-left-success') # Merge time card (green)
       
       # Check charts use consistent colors
       expect(page_source).to include("borderColor: '#f6c23e'") # Review time in chart
