@@ -2,26 +2,53 @@ class DashboardController < ApplicationController
   def index
     @repositories = Repository.includes(:weeks).order(:name)
     @total_repositories = @repositories.count
+    @selected_repository_id = params[:repository_id]
+    
+    # Filter by repository if selected
+    weeks_scope = Week.includes(:repository)
+    if @selected_repository_id.present?
+      weeks_scope = weeks_scope.where(repository_id: @selected_repository_id)
+    end
     
     # Get latest week data for overview
-    @latest_weeks = Week.includes(:repository)
-                       .order(begin_date: :desc)
-                       .limit(10)
+    @latest_weeks = weeks_scope
+                      .order(begin_date: :desc)
+                      .limit(10)
     
     # Get data for charts (last 12 weeks for trends)
-    @chart_weeks = Week.includes(:repository)
-                      .order(begin_date: :desc)
-                      .limit(12)
-                      .reverse
+    # When filtering by repository, get all weeks; otherwise limit to 12
+    if @selected_repository_id.present?
+      @chart_weeks = weeks_scope
+                        .order(begin_date: :asc)
+                        .last(12)
+    else
+      # For all repositories, group by week and aggregate
+      @chart_weeks = aggregate_weeks_data(
+        Week.includes(:repository)
+            .order(begin_date: :desc)
+            .group_by(&:begin_date)
+            .values
+            .first(12)
+            .reverse
+      )
+    end
     
     # Prepare repository comparison data
     @repository_stats = prepare_repository_stats
     
-    # Calculate overall statistics
-    @total_prs = PullRequest.count
-    @total_reviews = Review.count
-    @avg_time_to_review = calculate_avg_time_to_review
-    @avg_time_to_merge = calculate_avg_time_to_merge
+    # Calculate overall statistics (filtered by repository if selected)
+    pull_requests_scope = PullRequest.joins(:repository)
+    if @selected_repository_id.present?
+      pull_requests_scope = pull_requests_scope.where(repository_id: @selected_repository_id)
+    end
+    
+    @total_prs = pull_requests_scope.count
+    @total_reviews = Review.joins(pull_request: :repository)
+    @total_reviews = @total_reviews.where(pull_requests: { repository_id: @selected_repository_id }) if @selected_repository_id.present?
+    @total_reviews = @total_reviews.count
+    
+    @avg_time_to_review = calculate_avg_time_to_review(@selected_repository_id)
+    @avg_time_to_merge = calculate_avg_time_to_merge(@selected_repository_id)
   end
 
   private
@@ -48,10 +75,49 @@ class DashboardController < ApplicationController
     ((total_merged.to_f / total_started) * 100).round(1)
   end
 
-  def calculate_avg_time_to_review
+  def aggregate_weeks_data(grouped_weeks)
+    grouped_weeks.map do |weeks_for_date|
+      # Aggregate data from all repositories for this week
+      Week.new(
+        begin_date: weeks_for_date.first.begin_date,
+        end_date: weeks_for_date.first.end_date,
+        week_number: weeks_for_date.first.week_number,
+        num_prs_started: weeks_for_date.sum(&:num_prs_started),
+        num_prs_merged: weeks_for_date.sum(&:num_prs_merged),
+        num_prs_cancelled: weeks_for_date.sum(&:num_prs_cancelled),
+        avg_hrs_to_first_review: calculate_weighted_avg(weeks_for_date, :avg_hrs_to_first_review, :num_prs_started),
+        avg_hrs_to_merge: calculate_weighted_avg(weeks_for_date, :avg_hrs_to_merge, :num_prs_merged)
+      )
+    end
+  end
+
+  def calculate_weighted_avg(weeks, attr, weight_attr)
+    total_weight = 0
+    weighted_sum = 0
+    
+    weeks.each do |week|
+      value = week.send(attr)
+      weight = week.send(weight_attr)
+      
+      if value && weight && weight > 0
+        weighted_sum += value * weight
+        total_weight += weight
+      end
+    end
+    
+    return nil if total_weight == 0
+    (weighted_sum / total_weight).round(1)
+  end
+
+  def calculate_avg_time_to_review(repository_id = nil)
     prs_with_first_review = PullRequest.joins(:reviews)
                                      .where.not(ready_for_review_at: nil)
                                      .distinct
+    
+    if repository_id.present?
+      prs_with_first_review = prs_with_first_review.where(repository_id: repository_id)
+    end
+    
     return 0 if prs_with_first_review.empty?
 
     total_hours = prs_with_first_review.sum do |pr|
@@ -64,8 +130,13 @@ class DashboardController < ApplicationController
     (total_hours / prs_with_first_review.count).round(1)
   end
 
-  def calculate_avg_time_to_merge
+  def calculate_avg_time_to_merge(repository_id = nil)
     merged_prs = PullRequest.where.not(gh_merged_at: nil, ready_for_review_at: nil)
+    
+    if repository_id.present?
+      merged_prs = merged_prs.where(repository_id: repository_id)
+    end
+    
     return 0 if merged_prs.empty?
 
     total_hours = merged_prs.sum do |pr|

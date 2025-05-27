@@ -1,6 +1,17 @@
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+    <div class="repository-filter">
+        <%= form_with url: dashboard_path, method: :get, local: true, class: "form-inline" do |f| %>
+            <%= select_tag :repository_id, 
+                options_for_select(
+                    [["All Repositories", ""]] + @repositories.map { |r| [r.name, r.id] },
+                    @selected_repository_id
+                ),
+                class: "form-control form-control-sm",
+                onchange: "this.form.submit();" %>
+        <% end %>
+    </div>
 </div>
 
 <!-- Content Row -->
@@ -90,7 +101,14 @@
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">PR Velocity Trends</h6>
-                <small class="text-muted">Last 12 weeks across all repositories</small>
+                <small class="text-muted">
+                    Last 12 weeks 
+                    <% if @selected_repository_id.present? %>
+                        for <%= Repository.find(@selected_repository_id).name %>
+                    <% else %>
+                        across all repositories
+                    <% end %>
+                </small>
             </div>
             <div class="card-body">
                 <div class="chart-area">
@@ -105,7 +123,12 @@
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Review Performance</h6>
-                <small class="text-muted">Average hours (weekdays only)</small>
+                <small class="text-muted">
+                    Average hours (weekdays only)
+                    <% if @selected_repository_id.present? %>
+                        <br><%= Repository.find(@selected_repository_id).name %>
+                    <% end %>
+                </small>
             </div>
             <div class="card-body">
                 <div class="chart-area">

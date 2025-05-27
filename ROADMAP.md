@@ -75,6 +75,11 @@ This document outlines future development plans for the PR Analysis Tool. For co
 ## Feature Backlog
 
 ### Analytics & Reporting
+- Multi-repository dashboard visualization
+  - Repository filter dropdown (Option 1 - Quick Fix)
+  - Stacked/grouped charts per repository (Option 2)
+  - Tabbed repository sections (Option 3)
+  - Side-by-side repository comparisons (Option 4)
 - Team performance comparisons
 - PR complexity metrics (size, files, comments)
 - Trend analysis and predictions
