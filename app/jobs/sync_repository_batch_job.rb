@@ -46,7 +46,8 @@ class SyncRepositoryBatchJob < ApplicationJob
   private
   
   def fetch_pull_requests_page(service, repository, page)
-    client = service.send(:client)
+    # We need to directly use Octokit since GithubService doesn't expose the client
+    client = Octokit::Client.new(access_token: ENV['GITHUB_ACCESS_TOKEN'])
     client.pull_requests(
       repository.name,
       state: 'all',
@@ -58,10 +59,48 @@ class SyncRepositoryBatchJob < ApplicationJob
   end
   
   def process_pull_requests(service, repository, pull_requests)
+    # For now, we'll use the existing GithubService logic by calling the full method
+    # This is inefficient but works until we refactor GithubService
     pull_requests.each do |pr_data|
-      # Process each PR (existing logic from GithubService)
-      service.send(:process_pull_request, repository, pr_data)
+      # Recreate the processing logic from GithubService
+      process_single_pull_request(repository, pr_data)
     end
+  end
+  
+  def process_single_pull_request(repository, pr_data)
+    # Handle both Octokit objects and hashes
+    pr_number = pr_data.respond_to?(:number) ? pr_data.number : pr_data[:number]
+    
+    pull_request = repository.pull_requests.find_or_initialize_by(number: pr_number)
+    
+    # Create/update author first if present
+    user_data = pr_data.respond_to?(:user) ? pr_data.user : pr_data[:user]
+    github_user = nil
+    if user_data
+      github_id = user_data.respond_to?(:id) ? user_data.id : user_data[:id]
+      github_user = GithubUser.find_or_create_by(github_id: github_id) do |gu|
+        gu.username = user_data.respond_to?(:login) ? user_data.login : user_data[:login]
+        gu.name = user_data.respond_to?(:name) ? user_data.name : user_data[:name]
+        gu.avatar_url = user_data.respond_to?(:avatar_url) ? user_data.avatar_url : user_data[:avatar_url]
+      end
+    end
+    
+    pull_request.assign_attributes(
+      title: pr_data.respond_to?(:title) ? pr_data.title : pr_data[:title],
+      state: pr_data.respond_to?(:state) ? pr_data.state : pr_data[:state],
+      gh_created_at: pr_data.respond_to?(:created_at) ? pr_data.created_at : pr_data[:created_at],
+      gh_updated_at: pr_data.respond_to?(:updated_at) ? pr_data.updated_at : pr_data[:updated_at],
+      gh_closed_at: pr_data.respond_to?(:closed_at) ? pr_data.closed_at : pr_data[:closed_at],
+      gh_merged_at: pr_data.respond_to?(:merged_at) ? pr_data.merged_at : pr_data[:merged_at],
+      ready_for_review_at: (pr_data.respond_to?(:draft) ? pr_data.draft : pr_data[:draft]) == false ? 
+        (pr_data.respond_to?(:created_at) ? pr_data.created_at : pr_data[:created_at]) : nil,
+      author: github_user
+    )
+    
+    pull_request.save!
+    
+    # Update week associations
+    pull_request.update_week_associations
   end
   
   def update_progress(repository, page, batch_size)

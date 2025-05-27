@@ -2,13 +2,11 @@ require 'rails_helper'
 
 RSpec.describe SyncRepositoryBatchJob, type: :job do
   let(:repository) { create(:repository, name: 'rails/rails') }
-  let(:github_service) { instance_double(GithubService) }
   let(:client) { instance_double(Octokit::Client) }
   
   before do
-    allow(GithubService).to receive(:new).with(ENV['GITHUB_ACCESS_TOKEN']).and_return(github_service)
-    allow(github_service).to receive(:send).with(:client).and_return(client)
-    allow(github_service).to receive(:send).with(:process_pull_request, any_args)
+    allow(Octokit::Client).to receive(:new).with(access_token: ENV['GITHUB_ACCESS_TOKEN']).and_return(client)
+    allow(GithubService).to receive(:new).with(ENV['GITHUB_ACCESS_TOKEN']).and_return(instance_double(GithubService))
   end
   
   describe '#perform' do
@@ -30,8 +28,13 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
           { 
             number: 123, 
             title: 'Test PR', 
+            state: 'open',
+            created_at: 2.days.ago,
             updated_at: 1.day.ago,
-            user: { login: 'user1' }
+            closed_at: nil,
+            merged_at: nil,
+            draft: false,
+            user: { id: 1, login: 'user1', name: 'User One', avatar_url: 'http://example.com/avatar.png' }
           }
         ]
       end
@@ -46,7 +49,8 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
           direction: 'desc'
         ).and_return(pr_data)
         
-        expect(github_service).to receive(:send).with(:process_pull_request, repository, pr_data.first)
+        # Now we process PRs directly in the job
+        expect_any_instance_of(described_class).to receive(:process_single_pull_request).with(repository, pr_data.first)
         
         described_class.perform_now(repository.name, page: 1, fetch_all: false)
       end
@@ -102,9 +106,14 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
       it 'stops fetching when reaching previously fetched PRs' do
         old_pr = { 
           number: 100, 
-          title: 'Old PR', 
+          title: 'Old PR',
+          state: 'closed',
+          created_at: 3.weeks.ago,
           updated_at: 2.weeks.ago,
-          user: { login: 'user1' }
+          closed_at: 2.weeks.ago,
+          merged_at: nil,
+          draft: false,
+          user: { id: 1, login: 'user1', name: 'User One', avatar_url: 'http://example.com/avatar.png' }
         }
         
         allow(client).to receive(:pull_requests).and_return([old_pr])
