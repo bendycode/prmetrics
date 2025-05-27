@@ -121,6 +121,11 @@ This document outlines future development plans for the PR Analysis Tool. For co
 - View partial extraction
 - Service object standardization
 - Timestamp naming consistency
+- Rename project from pr-analyzer to prmetrics
+  - Update GitHub repository name
+  - Update all references in codebase
+  - Update Heroku app name if desired
+  - Update any documentation/URLs
 
 ### Low Priority
 - Dead code removal
