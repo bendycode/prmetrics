@@ -1,0 +1,57 @@
+# Monitor Repository Sync Progress
+
+## Current Status:
+- Local: 2838 PRs (complete)
+- Production: 2174 PRs (76.6% complete)
+- Remaining: ~664 PRs
+
+## Check Real-time Progress:
+```bash
+# Watch the sync progress
+heroku run rails console
+```
+
+Then run:
+```ruby
+repo = Repository.find_by(name: 'PureOxygen/u-app')
+puts "Repository: #{repo.name}"
+puts "Sync Status: #{repo.sync_status}"
+puts "PRs synced: #{repo.pull_requests.count} / ~2838 (#{(repo.pull_requests.count / 2838.0 * 100).round(1)}%)"
+puts "Current batch progress: #{repo.sync_progress || 0}"
+puts "Sync started: #{repo.sync_started_at}"
+puts "Time elapsed: #{Time.current - repo.sync_started_at} seconds" if repo.sync_started_at
+
+# Estimate completion time (rough estimate)
+prs_remaining = 2838 - repo.pull_requests.count
+if repo.sync_started_at && repo.pull_requests.count > 0
+  elapsed = Time.current - repo.sync_started_at
+  rate = repo.pull_requests.count / elapsed.to_f
+  eta = prs_remaining / rate
+  puts "Sync rate: #{(rate * 60).round(1)} PRs/minute"
+  puts "Estimated time remaining: #{(eta / 60).round(1)} minutes"
+end
+```
+
+## Monitor Active Jobs:
+1. Check Sidekiq UI at `/sidekiq`
+   - Look for `SyncRepositoryBatchJob` in the Busy tab
+   - Each job processes 100 PRs
+
+2. Watch logs for activity:
+```bash
+heroku logs -t | grep -E "(Syncing|Fetching|PRs processed)"
+```
+
+## After Sync Completes:
+```bash
+# Generate weeks
+heroku run rake weeks:generate
+
+# Update statistics  
+heroku run rake weeks:update_stats
+```
+
+## Why No Graphs Yet:
+- Week records are generated AFTER all PRs are synced
+- Graphs need week data to display
+- Once sync completes and weeks are generated, graphs will appear

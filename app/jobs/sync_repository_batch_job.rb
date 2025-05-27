@@ -15,7 +15,7 @@ class SyncRepositoryBatchJob < ApplicationJob
       )
     end
     
-    service = GithubService.new
+    service = GithubService.new(ENV['GITHUB_ACCESS_TOKEN'])
     
     # Fetch one page of PRs
     pull_requests = fetch_pull_requests_page(service, repository, page)
