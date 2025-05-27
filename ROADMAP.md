@@ -116,6 +116,10 @@ This document outlines future development plans for the PR Analysis Tool. For co
 ## Technical Improvements
 
 ### High Priority
+- Fix missing u-node data for /dashboard
+  - Investigate why u-node shows zeros in charts
+  - Ensure week statistics are properly calculated for all repositories
+  - Debug Repository Performance Comparison visibility
 - Incremental statistics updates
 - Automatic cleanup of cancelled jobs
 - Sidekiq job monitoring improvements
