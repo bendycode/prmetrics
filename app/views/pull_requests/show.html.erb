@@ -13,8 +13,8 @@
   </div>
 <% end %>
 
-<h2>Users</h2>
-<%= link_to 'All Users', pull_request_pull_request_users_path(@pull_request) %>
+<h2>GitHub Users</h2>
+<%= link_to 'All GitHub Users', pull_request_pull_request_users_path(@pull_request) %>
 
 <ul>
   <% @pull_request_users.each do |pull_request_user| %>

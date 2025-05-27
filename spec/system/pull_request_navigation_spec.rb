@@ -122,7 +122,7 @@ RSpec.describe 'Pull Request Navigation', type: :system do
     it 'allows navigation to all pull request users' do
       visit pull_request_path(pull_request)
       
-      click_link 'All Users'
+      click_link 'All GitHub Users'
       
       expect(page).to have_current_path(pull_request_pull_request_users_path(pull_request))
     end
