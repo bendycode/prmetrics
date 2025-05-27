@@ -80,6 +80,9 @@ This document outlines future development plans for the PR Analysis Tool. For co
   - Stacked/grouped charts per repository (Option 2)
   - Tabbed repository sections (Option 3)
   - Side-by-side repository comparisons (Option 4)
+- Exclude incomplete current week from dashboard
+  - Hide current week if not finished and no data present
+  - Prevents misleading partial week statistics
 - Team performance comparisons
 - PR complexity metrics (size, files, comments)
 - Trend analysis and predictions
