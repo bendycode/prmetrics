@@ -58,11 +58,15 @@ class DashboardController < ApplicationController
       recent_weeks = repo.weeks.order(:begin_date).last(4) # Last 4 weeks
       next if recent_weeks.empty?
 
+      # Calculate averages only from weeks that have data
+      review_times = recent_weeks.map(&:avg_hrs_to_first_review).compact
+      merge_times = recent_weeks.map(&:avg_hrs_to_merge).compact
+      
       {
         name: repo.name,
         total_prs: recent_weeks.sum(&:num_prs_started),
-        avg_review_time: recent_weeks.map(&:avg_hrs_to_first_review).compact.sum / [recent_weeks.count, 1].max,
-        avg_merge_time: recent_weeks.map(&:avg_hrs_to_merge).compact.sum / [recent_weeks.count, 1].max,
+        avg_review_time: review_times.empty? ? 0 : (review_times.sum / review_times.count).round(1),
+        avg_merge_time: merge_times.empty? ? 0 : (merge_times.sum / merge_times.count).round(1),
         merge_rate: calculate_merge_rate(recent_weeks)
       }
     end.compact
