@@ -111,6 +111,11 @@ This document outlines future development plans for the PR Analysis Tool. For co
 - Incremental statistics updates
 - Automatic cleanup of cancelled jobs
 - Sidekiq job monitoring improvements
+- Unified sync command with real-time week generation
+  - Single rake task: `github:sync REPO=owner/repo`
+  - Creates week records during PR processing
+  - Updates statistics incrementally
+  - Shows progress with live graph updates
 
 ### Medium Priority
 - View partial extraction
