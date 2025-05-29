@@ -5,7 +5,12 @@ class UpdateRepositoryStatsJob < ApplicationJob
     repository = Repository.find(repository_id)
     
     # Generate/update week records
-    WeekStatsService.new.generate_weeks_for_repository(repository)
+    WeekStatsService.generate_weeks_for_repository(repository)
+    
+    # Update stats for all weeks of this repository
+    repository.weeks.find_each do |week|
+      WeekStatsService.new(week).update_stats
+    end
     
     # Clean up orphaned data
     cleanup_orphaned_data(repository)
