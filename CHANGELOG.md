@@ -20,6 +20,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Updated footer copyright text
   - Changed navigation bar branding
   - Updated default email sender domain to prmetrics.io
+- Renamed project from pr-analyze/pr-analyzer to prmetrics
+  - Updated all database names to prmetrics_* format
+  - Changed cable channel prefix and ActiveJob queue prefix
+  - Renamed environment variables (PR_ANALYZE_* to PRMETRICS_*)
+  - Updated documentation and configuration files
+  - Changed default admin email domain
+  - Note: Requires database recreation in development
 
 ### Fixed
 - Email delivery for admin invites
