@@ -1,10 +1,16 @@
 namespace :sync do
   desc "Unified sync: fetch PRs, generate weeks, and update stats with real-time progress"
   task :repository, [:repo_name] => :environment do |t, args|
-    unless args[:repo_name]
+    # Handle both bracketed and non-bracketed syntax
+    # Only use ARGV if it looks like a repository name (contains '/')
+    repo_name = args[:repo_name] || (ARGV[1]&.include?('/') ? ARGV[1] : nil)
+    
+    unless repo_name
       puts "Error: Repository name is required"
       puts "Usage: rake sync:repository[owner/repo]"
+      puts "   or: rake sync:repository owner/repo"
       puts "Example: rake sync:repository[rails/rails]"
+      puts "     or: rake sync:repository rails/rails"
       exit 1
     end
     
@@ -15,7 +21,6 @@ namespace :sync do
       exit 1
     end
     
-    repo_name = args[:repo_name]
     fetch_all = ENV['FETCH_ALL'] == 'true'
     
     puts "Starting unified sync for #{repo_name}"
@@ -34,9 +39,14 @@ namespace :sync do
   
   desc "Unified sync with background job (async)"
   task :repository_async, [:repo_name] => :environment do |t, args|
-    unless args[:repo_name]
+    # Handle both bracketed and non-bracketed syntax
+    # Only use ARGV if it looks like a repository name (contains '/')
+    repo_name = args[:repo_name] || (ARGV[1]&.include?('/') ? ARGV[1] : nil)
+    
+    unless repo_name
       puts "Error: Repository name is required"
       puts "Usage: rake sync:repository_async[owner/repo]"
+      puts "   or: rake sync:repository_async owner/repo"
       exit 1
     end
     
@@ -45,7 +55,6 @@ namespace :sync do
       exit 1
     end
     
-    repo_name = args[:repo_name]
     fetch_all = ENV['FETCH_ALL'] == 'true'
     
     # Create/update repository record
@@ -62,16 +71,21 @@ namespace :sync do
   
   desc "Check sync status for a repository"
   task :status, [:repo_name] => :environment do |t, args|
-    unless args[:repo_name]
+    # Handle both bracketed and non-bracketed syntax
+    # Only use ARGV if it looks like a repository name (contains '/')
+    repo_name = args[:repo_name] || (ARGV[1]&.include?('/') ? ARGV[1] : nil)
+    
+    unless repo_name
       puts "Error: Repository name is required"
       puts "Usage: rake sync:status[owner/repo]"
+      puts "   or: rake sync:status owner/repo"
       exit 1
     end
     
-    repository = Repository.find_by(name: args[:repo_name])
+    repository = Repository.find_by(name: repo_name)
     
     unless repository
-      puts "Repository #{args[:repo_name]} not found"
+      puts "Repository #{repo_name} not found"
       exit 1
     end
     

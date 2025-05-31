@@ -62,26 +62,31 @@ prmetrics is a Rails application designed to fetch and analyze pull request data
 The unified sync command combines PR fetching, week generation, and statistics updates into a single command with real-time progress:
 
 ```
+# Both syntaxes work:
 rake sync:repository[owner/repo]
+rake sync:repository owner/repo
 ```
 
 For a full sync (all PRs, not just recent updates):
 
 ```
 FETCH_ALL=true rake sync:repository[owner/repo]
+FETCH_ALL=true rake sync:repository owner/repo
 ```
 
 Additional sync commands:
 
 ```
-# Check sync status for a repository
+# Check sync status for a repository (both syntaxes work)
 rake sync:status[owner/repo]
+rake sync:status owner/repo
 
 # List all repositories and their sync status
 rake sync:list
 
-# Run sync in background (requires Sidekiq)
+# Run sync in background (requires Sidekiq, both syntaxes work)
 rake sync:repository_async[owner/repo]
+rake sync:repository_async owner/repo
 ```
 
 ### Legacy Commands

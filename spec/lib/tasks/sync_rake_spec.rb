@@ -39,6 +39,25 @@ RSpec.describe 'sync:repository rake task' do
       it 'shows error when repository name is missing' do
         expect { Rake::Task['sync:repository'].invoke }.to output(/Error: Repository name is required/).to_stdout.and raise_error(SystemExit)
       end
+      
+      it 'handles repository name from ARGV when brackets not used' do
+        # Test that both syntaxes work:
+        # rake sync:repository[owner/repo] AND rake sync:repository owner/repo
+        original_argv = ARGV.dup
+        ARGV.replace(['sync:repository', 'PureOxygen/u-app'])
+        
+        Rake::Task['sync:repository'].reenable
+        
+        expect(UnifiedSyncService).to receive(:new).with('PureOxygen/u-app', fetch_all: false).and_return(service)
+        expect(service).to receive(:sync!)
+        
+        # Now this should work - repo name taken from ARGV[1]
+        expect { 
+          Rake::Task['sync:repository'].invoke
+        }.to output(/Starting unified sync for PureOxygen\/u-app/).to_stdout
+        
+        ARGV.replace(original_argv)
+      end
     end
     
     context 'without GitHub token' do
