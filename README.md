@@ -57,16 +57,46 @@ prmetrics is a Rails application designed to fetch and analyze pull request data
 
 ## Usage
 
-To fetch pull request data for a repository:
+### Unified Sync (Recommended)
+
+The unified sync command combines PR fetching, week generation, and statistics updates into a single command with real-time progress:
 
 ```
+rake sync:repository[owner/repo]
+```
+
+For a full sync (all PRs, not just recent updates):
+
+```
+FETCH_ALL=true rake sync:repository[owner/repo]
+```
+
+Additional sync commands:
+
+```
+# Check sync status for a repository
+rake sync:status[owner/repo]
+
+# List all repositories and their sync status
+rake sync:list
+
+# Run sync in background (requires Sidekiq)
+rake sync:repository_async[owner/repo]
+```
+
+### Legacy Commands
+
+Individual commands are still available but the unified sync is recommended:
+
+```
+# Fetch pull requests only
 rake github:fetch_pull_requests REPO=owner/repo
-```
 
-To fetch all pull requests (including those that haven't been updated recently):
+# Generate week records
+rake weeks:generate
 
-```
-rake github:fetch_pull_requests REPO=owner/repo FETCH_ALL=true
+# Update statistics
+rake weeks:update_stats
 ```
 
 ## Data Analysis

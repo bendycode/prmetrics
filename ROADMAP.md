@@ -129,11 +129,12 @@ This document outlines future development plans for prmetrics. For completed wor
 - Incremental statistics updates
 - Automatic cleanup of cancelled jobs
 - Sidekiq job monitoring improvements
-- Unified sync command with real-time week generation
-  - Single rake task: `github:sync REPO=owner/repo`
-  - Creates week records during PR processing
+- ✓ Unified sync command with real-time week generation (Completed)
+  - Single rake task: `rake sync:repository[owner/repo]`
+  - Creates week records during PR processing  
   - Updates statistics incrementally
-  - Shows progress with live graph updates
+  - Shows progress with real-time output
+  - Additional commands: `sync:status`, `sync:list`, `sync:repository_async`
 
 ### Medium Priority
 - View partial extraction

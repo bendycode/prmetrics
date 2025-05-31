@@ -5,8 +5,20 @@ class GithubService
     @client = Octokit::Client.new(access_token: access_token)
     @client.auto_paginate = false
   end
+  
+  def get_pull_request_count(repo_name)
+    # Get total count of PRs for progress tracking
+    # Using search API which returns total_count
+    with_rate_limit_handling do
+      result = @client.search_issues("repo:#{repo_name} is:pr", per_page: 1)
+      result.total_count
+    end
+  rescue => e
+    Rails.logger.warn "Could not get PR count: #{e.message}"
+    nil
+  end
 
-  def fetch_and_store_pull_requests(repo_name, fetch_all: false)
+  def fetch_and_store_pull_requests(repo_name, fetch_all: false, processor: nil)
     repository = Repository.find_or_create_by(name: repo_name)
     last_fetched_at = fetch_all ? nil : repository.last_fetched_at&.iso8601
 
@@ -28,12 +40,17 @@ class GithubService
         most_recent_update = [most_recent_update, pr.updated_at].compact.max
         Rails.logger.debug "Processed PR ##{pr.number}"
         total_processed += 1
+        
+        # Call the processor callback if provided
+        processor.call(pr) if processor
       end
 
       page += 1
     end
 
-    WeekStatsService.update_all_weeks
+    # Only update week stats if no processor (legacy behavior)
+    # The unified sync will handle this separately
+    WeekStatsService.update_all_weeks unless processor
 
     if most_recent_update
       repository.update(last_fetched_at: most_recent_update)

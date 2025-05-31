@@ -6,13 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- Unified sync command with real-time progress tracking
+  - New `rake sync:repository[owner/repo]` command combines PR fetch, week generation, and stats updates
+  - UnifiedSyncService orchestrates the entire sync process
+  - Real-time progress output showing PR processing and week creation
+  - Background job support with `rake sync:repository_async[owner/repo]`
+  - Additional utility commands: `sync:status[owner/repo]` and `sync:list`
+  - GithubService enhanced with processor callbacks for real-time updates
+  - Progress tracking stored in repository model (sync_progress field)
+
 ## [2025-05-31]
 
 ### Added
+- prmetrics logo implementation
+  - Added SVG logo to sidebar navigation
+  - Added logo to admin login page
+  - Improved logo visibility with white background and larger size
+  - Added comprehensive branding tests
 - Domain redirect middleware to handle URL transitions
   - Automatic redirects from old pr-analyzer URLs to new prmetrics URLs
   - Support for future custom domain configuration
-  - Comprehensive domain setup documentation (DOMAIN_REDIRECTS.md)
   - Rake tasks for domain configuration verification
 
 ### Changed
@@ -29,7 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Updated documentation and configuration files
   - Changed default admin email domain
   - Note: Requires database recreation in development
-- Updated GitHub repository name from pr-analyze to prmetrics (completed)
+- Updated GitHub repository name from pr-analyze to prmetrics
 - Updated Heroku app name from pr-analyzer-production to prmetrics-production
   - New URL: https://prmetrics-production.herokuapp.com
   - Old URL will redirect automatically during transition period
