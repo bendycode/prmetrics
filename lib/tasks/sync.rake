@@ -1,9 +1,15 @@
+# Define a rule to handle repository names as tasks
+rule(/\A[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+\z/) do |t|
+  # No-op rule to consume repository name arguments
+end
+
 namespace :sync do
   desc "Unified sync: fetch PRs, generate weeks, and update stats with real-time progress"
   task :repository, [:repo_name] => :environment do |t, args|
     # Handle both bracketed and non-bracketed syntax
-    # Only use ARGV if it looks like a repository name (contains '/')
-    repo_name = args[:repo_name] || (ARGV[1]&.include?('/') ? ARGV[1] : nil)
+    # Only use ARGV if it looks like a repository name (owner/repo format, no special chars)
+    argv_repo = ARGV[1] if ARGV[1] && ARGV[1].match?(/\A[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+\z/)
+    repo_name = args[:repo_name] || argv_repo
     
     unless repo_name
       puts "Error: Repository name is required"
@@ -35,13 +41,15 @@ namespace :sync do
       puts "Please check the logs for more details."
       exit 1
     end
+    
   end
   
   desc "Unified sync with background job (async)"
   task :repository_async, [:repo_name] => :environment do |t, args|
     # Handle both bracketed and non-bracketed syntax
-    # Only use ARGV if it looks like a repository name (contains '/')
-    repo_name = args[:repo_name] || (ARGV[1]&.include?('/') ? ARGV[1] : nil)
+    # Only use ARGV if it looks like a repository name (owner/repo format, no special chars)
+    argv_repo = ARGV[1] if ARGV[1] && ARGV[1].match?(/\A[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+\z/)
+    repo_name = args[:repo_name] || argv_repo
     
     unless repo_name
       puts "Error: Repository name is required"
@@ -67,13 +75,15 @@ namespace :sync do
     puts "Job ID: #{job_id}"
     puts "Mode: #{fetch_all ? 'Full sync' : 'Incremental sync'}"
     puts "Check Sidekiq dashboard or logs for progress"
+    
   end
   
   desc "Check sync status for a repository"
   task :status, [:repo_name] => :environment do |t, args|
     # Handle both bracketed and non-bracketed syntax
-    # Only use ARGV if it looks like a repository name (contains '/')
-    repo_name = args[:repo_name] || (ARGV[1]&.include?('/') ? ARGV[1] : nil)
+    # Only use ARGV if it looks like a repository name (owner/repo format, no special chars)
+    argv_repo = ARGV[1] if ARGV[1] && ARGV[1].match?(/\A[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+\z/)
+    repo_name = args[:repo_name] || argv_repo
     
     unless repo_name
       puts "Error: Repository name is required"
@@ -116,6 +126,7 @@ namespace :sync do
     puts "  Pull Requests: #{repository.pull_requests.count}"
     puts "  Weeks: #{repository.weeks.count}"
     puts "  Reviews: #{Review.joins(pull_request: :repository).where(pull_requests: { repository_id: repository.id }).count}"
+    
   end
   
   desc "List all repositories and their sync status"
