@@ -13,6 +13,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [2025-05-31]
 
+### Changed
+- Updated GUI branding from "pr-analyzer" to "prmetrics.io"
+  - Changed page titles in admin and application layouts
+  - Updated sidebar brand text
+  - Updated footer copyright text
+  - Changed navigation bar branding
+  - Updated default email sender domain to prmetrics.io
+
 ### Fixed
 - Email delivery for admin invites
   - Confirmed working in production
