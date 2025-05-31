@@ -2,7 +2,10 @@
   <div class="col-md-4">
     <div class="card mt-5">
       <div class="card-body">
-        <h2 class="card-title text-center mb-4">Admin Login</h2>
+        <div class="text-center mb-4">
+          <%= image_tag "prmetrics_logo.svg", alt: "prmetrics.io", class: "img-fluid mb-3", style: "max-height: 60px;" %>
+          <h2 class="card-title">Admin Login</h2>
+        </div>
 
         <%= form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
           <div class="mb-3">
