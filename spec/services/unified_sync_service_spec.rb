@@ -13,7 +13,7 @@ RSpec.describe UnifiedSyncService do
   end
   
   describe '#sync!' do
-    let(:service) { described_class.new(repo_name) }
+    let(:service) { described_class.new(repo_name, progress_callback: ->(msg) {}) }
     let(:pr_data) { double(number: 123, created_at: 1.week.ago, merged_at: 2.days.ago) }
     let(:pull_request) { create(:pull_request, repository: repository, number: 123, 
                                 gh_created_at: 1.week.ago, gh_merged_at: 2.days.ago) }
@@ -100,7 +100,7 @@ RSpec.describe UnifiedSyncService do
     end
     
     context 'with fetch_all option' do
-      let(:service) { described_class.new(repo_name, fetch_all: true) }
+      let(:service) { described_class.new(repo_name, fetch_all: true, progress_callback: ->(msg) {}) }
       
       it 'passes fetch_all to github service' do
         expect(github_service).to receive(:fetch_and_store_pull_requests).with(
@@ -134,7 +134,7 @@ RSpec.describe UnifiedSyncService do
   end
   
   describe 'progress tracking' do
-    let(:service) { described_class.new(repo_name) }
+    let(:service) { described_class.new(repo_name, progress_callback: ->(msg) {}) }
     let(:pr_data) { double(number: 123) }
     let(:pull_request) { create(:pull_request, repository: repository, number: 123) }
     
