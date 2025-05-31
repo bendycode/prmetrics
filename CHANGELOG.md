@@ -27,6 +27,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Updated documentation and configuration files
   - Changed default admin email domain
   - Note: Requires database recreation in development
+- Updated GitHub repository name from pr-analyze to prmetrics (completed)
+- Updated Heroku app name from pr-analyzer-production to prmetrics-production
+  - New URL: https://prmetrics-production.herokuapp.com
+  - Old URL will redirect automatically during transition period
 
 ### Fixed
 - Email delivery for admin invites
