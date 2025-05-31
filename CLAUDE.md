@@ -124,7 +124,7 @@ rake weeks:update_stats
 ## Useful AI Assistant Patterns
 
 ### For This Project
-These Claude Code features are particularly useful for PR Analyzer development:
+These Claude Code features are particularly useful for prmetrics development:
 
 #### 1. **Performance Analysis**
 ```

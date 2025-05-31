@@ -1,8 +1,8 @@
-# PR Analysis Tool
+# prmetrics
 
 ## Overview
 
-PR Analysis Tool is a Rails application designed to fetch and analyze pull request data from GitHub repositories. It provides insights into team performance and project progress by tracking various metrics related to the pull request workflow.
+prmetrics is a Rails application designed to fetch and analyze pull request data from GitHub repositories. It provides insights into team performance and project progress by tracking various metrics related to the pull request workflow.
 
 ## Documentation
 
@@ -36,8 +36,8 @@ PR Analysis Tool is a Rails application designed to fetch and analyze pull reque
 
 1. Clone the repository:
    ```
-   git clone https://github.com/your-username/pr-analysis-tool.git
-   cd pr-analysis-tool
+   git clone https://github.com/your-username/prmetrics.git
+   cd prmetrics
    ```
 
 2. Install dependencies:

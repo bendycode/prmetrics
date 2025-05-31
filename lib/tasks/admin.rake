@@ -1,7 +1,7 @@
 namespace :admin do
   desc "Create initial admin user"
   task create: :environment do
-    email = ENV['ADMIN_EMAIL'] || 'admin@pr-analyzer.com'
+    email = ENV['ADMIN_EMAIL'] || 'admin@prmetrics.io'
     password = ENV['ADMIN_PASSWORD'] || 'changeme123'
     
     if Admin.exists?(email: email)

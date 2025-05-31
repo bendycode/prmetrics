@@ -1,6 +1,6 @@
 # Deployment Checklist
 
-This checklist ensures a smooth deployment of the PR Analyzer application to production.
+This checklist ensures a smooth deployment of the prmetrics application to production.
 
 ## Pre-Deployment
 

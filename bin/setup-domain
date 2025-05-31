@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🌐 Custom Domain Setup for PR Analyzer"
+echo "🌐 Custom Domain Setup for prmetrics"
 echo "====================================="
 echo ""
 
@@ -16,9 +16,9 @@ heroku domains:add $DOMAIN
 
 if [ "$INCLUDE_WWW" = "y" ] || [ "$INCLUDE_WWW" = "Y" ]; then
   heroku domains:add www.$DOMAIN
-  ALLOWED_HOSTS="$DOMAIN,www.$DOMAIN,pr-analyzer-production-4692dc49e9d6.herokuapp.com"
+  ALLOWED_HOSTS="$DOMAIN,www.$DOMAIN,prmetrics-production.herokuapp.com"
 else
-  ALLOWED_HOSTS="$DOMAIN,pr-analyzer-production-4692dc49e9d6.herokuapp.com"
+  ALLOWED_HOSTS="$DOMAIN,prmetrics-production.herokuapp.com"
 fi
 
 echo ""
@@ -49,6 +49,6 @@ echo "3. Check status with: heroku domains"
 echo "4. Verify SSL with: heroku certs:auto"
 echo ""
 echo "Your site will remain accessible at:"
-echo "https://pr-analyzer-production-4692dc49e9d6.herokuapp.com"
+echo "https://prmetrics-production.herokuapp.com"
 echo ""
 echo "🎉 Domain setup complete! Check CUSTOM_DOMAIN_SETUP.md for detailed instructions."

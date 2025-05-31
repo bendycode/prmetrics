@@ -21,7 +21,7 @@ default: &default
 
 development:
   <<: *default
-  database: pr_analyze_development
+  database: prmetrics_development
 
   # The specified database role being used to connect to PostgreSQL.
   # To create additional roles in PostgreSQL see `$ createuser --help`.
@@ -55,7 +55,7 @@ development:
 # Do not set this db to the same as development or production.
 test:
   <<: *default
-  database: pr_analyze_test
+  database: prmetrics_test
 
 # As with config/credentials.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is
@@ -79,6 +79,6 @@ test:
 #
 production:
   <<: *default
-  database: pr_analyze_production
-  username: pr_analyze
-  password: <%= ENV["PR_ANALYZE_DATABASE_PASSWORD"] %>
+  database: prmetrics_production
+  username: prmetrics
+  password: <%= ENV["PRMETRICS_DATABASE_PASSWORD"] %>
