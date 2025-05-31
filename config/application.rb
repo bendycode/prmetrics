@@ -41,5 +41,9 @@ module PrAnalyze
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+    
+    # Load custom middleware
+    require_relative '../app/middleware/domain_redirect_middleware'
+    config.middleware.use DomainRedirectMiddleware
   end
 end

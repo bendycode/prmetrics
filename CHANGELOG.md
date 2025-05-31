@@ -13,6 +13,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [2025-05-31]
 
+### Added
+- Domain redirect middleware to handle URL transitions
+  - Automatic redirects from old pr-analyzer URLs to new prmetrics URLs
+  - Support for future custom domain configuration
+  - Comprehensive domain setup documentation (DOMAIN_REDIRECTS.md)
+  - Rake tasks for domain configuration verification
+
 ### Changed
 - Updated GUI branding from "pr-analyzer" to "prmetrics.io"
   - Changed page titles in admin and application layouts
