@@ -118,6 +118,10 @@ This document outlines future development plans for prmetrics. For completed wor
 ## Technical Improvements
 
 ### High Priority
+- Suppress autoprefixer warnings in test output
+  - Remove color-adjust deprecation warnings from rake/rspec runs
+  - Options: Update SB Admin 2 theme, patch CSS files, or configure autoprefixer
+  - Critical for maintaining clean test output and catching new warnings
 - Fix missing u-node data for /dashboard
   - Investigate why u-node shows zeros in charts
   - Ensure week statistics are properly calculated for all repositories
