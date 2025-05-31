@@ -1,0 +1,14 @@
+// Logo styling for better visibility
+.sidebar-brand {
+  // Adjust padding to align with navbar
+  padding: 0 !important;
+  height: auto !important;
+  
+  .sidebar-brand-icon {
+    transition: transform 0.2s ease-in-out;
+    
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+}
