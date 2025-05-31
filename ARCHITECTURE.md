@@ -1,10 +1,10 @@
 # Architecture
 
-This document describes the architecture, design decisions, and technical patterns used in the PR Analysis Tool.
+This document describes the architecture, design decisions, and technical patterns used in prmetrics.
 
 ## Overview
 
-The PR Analysis Tool is a Rails application that fetches and analyzes pull request data from GitHub repositories to provide metrics and insights about development velocity and code review performance.
+prmetrics is a Rails application that fetches and analyzes pull request data from GitHub repositories to provide metrics and insights about development velocity and code review performance.
 
 ## Core Architecture
 

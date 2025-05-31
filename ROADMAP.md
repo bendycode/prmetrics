@@ -1,6 +1,6 @@
-# PR Analysis Tool - Development Roadmap
+# prmetrics - Development Roadmap
 
-This document outlines future development plans for the PR Analysis Tool. For completed work, see [CHANGELOG.md](CHANGELOG.md). For architecture decisions and technical debt, see [ARCHITECTURE.md](ARCHITECTURE.md).
+This document outlines future development plans for prmetrics. For completed work, see [CHANGELOG.md](CHANGELOG.md). For architecture decisions and technical debt, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Priority Roadmap
 
@@ -128,11 +128,6 @@ This document outlines future development plans for the PR Analysis Tool. For co
 - View partial extraction
 - Service object standardization
 - Timestamp naming consistency
-- Rename project from pr-analyzer to prmetrics
-  - Update GitHub repository name
-  - Update all references in codebase
-  - Update Heroku app name if desired
-  - Update any documentation/URLs
 
 ### Low Priority
 - Dead code removal
