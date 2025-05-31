@@ -6,11 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Added
-- Code coverage with ratcheting test requirement
-- StandardRB for code consistency
-- User avatar support (Gravatar + custom uploads)
-
 ## [2025-05-31]
 
 ### Added
