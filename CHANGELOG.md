@@ -10,7 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Code coverage with ratcheting test requirement
 - StandardRB for code consistency
 - User avatar support (Gravatar + custom uploads)
-- Email delivery debugging for admin invites
+
+## [2025-05-31]
+
+### Fixed
+- Email delivery for admin invites
+  - Confirmed working in production
+  - Admin invitation emails now successfully sent with "Invitation instructions" subject line
 
 ## [2025-05-26]
 
