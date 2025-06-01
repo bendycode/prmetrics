@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Progress tracking stored in repository model (sync_progress field)
 
 ### Changed
-- Consolidated User and GithubUser models into single Contributor model
+- **Consolidated User Models** - Merged User and GithubUser into single Contributor model
   - Merged User and GithubUser tables into contributors table with unified schema
   - Combined fields: username, name, email (from User) + github_id, avatar_url (from GithubUser)
   - Updated all associations and foreign keys to reference contributors
@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Added Contributor.find_or_create_from_username for legacy user creation
   - Implemented smart cleanup logic for orphaned contributors (authors only, preserves reviewers)
   - Migrated 20 existing users while preserving all 2845 pull request relationships
+  - Simplified associations and eliminated duplication across the codebase
 
 ## [2025-05-31]
 

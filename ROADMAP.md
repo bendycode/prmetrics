@@ -18,17 +18,12 @@ This document outlines future development plans for prmetrics. For completed wor
 
 ### Phase 2: Architecture Improvements (4-8 weeks)
 
-1. **✓ Consolidate User Models** (Completed)
-   - Merged User and GithubUser into Contributor model
-   - Migrated existing data preserving all relationships
-   - Simplified associations and eliminated duplication
-
-2. **Refactor GithubService**
+1. **Refactor GithubService**
    - Extract GithubApiClient
    - Create RateLimiter service
    - Build PullRequestImporter
 
-3. **Implement Query Objects**
+2. **Implement Query Objects**
    - WeeklyMetricsQuery
    - PullRequestStatsQuery
    - ReviewerPerformanceQuery
