@@ -13,9 +13,9 @@ prmetrics is a Rails application that fetches and analyzes pull request data fro
 ```
 Repository (1) ─── (N) PullRequest (1) ─── (N) Review
      │                      │
-     │                      ├─── (N) PullRequestUser ─── (1) User
+     │                      ├─── (N) PullRequestUser ─── (1) Contributor
      │                      │
-     │                      └─── (1) GithubUser (author)
+     │                      └─── (1) Contributor (author)
      │
      └─── (N) Week
 ```
@@ -24,9 +24,8 @@ Repository (1) ─── (N) PullRequest (1) ─── (N) Review
 - **PullRequest**: Central model tracking PR lifecycle with GitHub timestamps
 - **Review**: Individual PR reviews with submission times and states
 - **Week**: Time-based aggregation of PR statistics
-- **User**: Generic user model for reviewers
-- **GithubUser**: GitHub-specific user data for PR authors
-- **PullRequestUser**: Join table linking users to PRs with reviewer/assignee roles
+- **Contributor**: Unified model for all PR participants (authors and reviewers) with GitHub data
+- **PullRequestUser**: Join table linking contributors to PRs with reviewer/assignee roles
 
 ### Key Services
 
@@ -84,12 +83,12 @@ PRs are associated with different weeks based on lifecycle events:
 
 ## Design Decisions
 
-### Separate User Models
-The application maintains two user models:
+### Unified Contributor Model
+The application uses distinct models for different types of users:
 - **Admin**: For application authentication (Devise)
-- **User/GithubUser**: For PR participants
+- **Contributor**: For all PR participants (authors, reviewers, assignees)
 
-**Rationale**: Keeps authentication separate from domain logic, allows for non-GitHub admins.
+**Rationale**: Keeps authentication separate from domain logic, while unifying GitHub user data to eliminate duplication and simplify relationships.
 
 ### Batch Processing for Large Repositories
 Large repository syncs are automatically batched to avoid Heroku's 30-minute timeout.
@@ -102,15 +101,14 @@ Review and merge times exclude weekends by default.
 **Rationale**: Provides more accurate business metrics for team performance.
 
 ### Cascading Deletes
-Repository deletion cascades to all associated data except User records.
+Repository deletion cascades to all associated data with smart contributor cleanup.
 
-**Rationale**: Maintains data integrity while preserving reviewer history across repositories.
+**Rationale**: Maintains data integrity while preserving contributor history. Only orphaned PR authors are deleted; reviewers are preserved for future activity.
 
 ## Technical Debt
 
 ### High Priority
-1. **User Model Consolidation**: Merge User and GithubUser models to reduce complexity
-2. **GithubService Refactoring**: Extract responsibilities into focused services
+1. **GithubService Refactoring**: Extract responsibilities into focused services
    - GithubApiClient for API communication
    - RateLimiter for rate limit logic
    - PullRequestImporter for data transformation
