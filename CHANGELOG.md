@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- Unified sync command with real-time progress tracking
+- **Unified Sync Command** - Real-time week generation with progress tracking
   - New `rake sync:repository[owner/repo]` command combines PR fetch, week generation, and stats updates
   - UnifiedSyncService orchestrates the entire sync process
   - Real-time progress output showing PR processing and week creation
@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Additional utility commands: `sync:status[owner/repo]` and `sync:list`
   - GithubService enhanced with processor callbacks for real-time updates
   - Progress tracking stored in repository model (sync_progress field)
+  - Creates week records during PR processing with incremental statistics updates
 
 ### Changed
 - **Consolidated User Models** - Merged User and GithubUser into single Contributor model
