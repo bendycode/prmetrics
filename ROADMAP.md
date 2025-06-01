@@ -97,6 +97,10 @@ This document outlines future development plans for prmetrics. For completed wor
 - Horizontal scaling preparation
 - Data archival policies
 - Performance monitoring integration
+- Configurable timezone per repository
+  - Support teams in different time zones
+  - Repository-specific business week calculations
+  - Timezone-aware metric displays and week boundaries
 
 ### Security
 - GitHub token encryption

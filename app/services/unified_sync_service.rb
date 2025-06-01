@@ -103,15 +103,18 @@ class UnifiedSyncService
     ].compact
     
     dates.each do |date|
-      week_number = date.strftime('%Y%W').to_i
+      # Convert to Central Time for consistent week calculation
+      ct_date = date.in_time_zone("America/Chicago")
+      week_number = ct_date.strftime('%Y%W').to_i
+      
       week = @repository.weeks.find_or_create_by(week_number: week_number) do |w|
-        w.begin_date = date.beginning_of_week
-        w.end_date = date.end_of_week
+        w.begin_date = ct_date.beginning_of_week.to_date
+        w.end_date = ct_date.end_of_week.to_date
       end
       
       if week.previously_new_record?
         @created_weeks << week
-        log_progress("Created week #{week.begin_date.strftime('%Y-%m-%d')}")
+        log_progress("Created week #{week.begin_date.strftime('%Y-%m-%d')} (CT)")
       end
       
       @updated_weeks << week
