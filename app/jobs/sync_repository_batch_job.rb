@@ -78,10 +78,10 @@ class SyncRepositoryBatchJob < ApplicationJob
     github_user = nil
     if user_data
       github_id = user_data.respond_to?(:id) ? user_data.id : user_data[:id]
-      github_user = GithubUser.find_or_create_by(github_id: github_id) do |gu|
-        gu.username = user_data.respond_to?(:login) ? user_data.login : user_data[:login]
-        gu.name = user_data.respond_to?(:name) ? user_data.name : user_data[:name]
-        gu.avatar_url = user_data.respond_to?(:avatar_url) ? user_data.avatar_url : user_data[:avatar_url]
+      github_user = Contributor.find_or_create_by(github_id: github_id.to_s) do |c|
+        c.username = user_data.respond_to?(:login) ? user_data.login : user_data[:login]
+        c.name = user_data.respond_to?(:name) ? user_data.name : user_data[:name]
+        c.avatar_url = user_data.respond_to?(:avatar_url) ? user_data.avatar_url : user_data[:avatar_url]
       end
     end
     

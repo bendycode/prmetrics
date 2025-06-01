@@ -1,12 +1,12 @@
 require 'rails_helper'
 
-RSpec.describe UsersController, type: :controller do
+RSpec.describe ContributorsController, type: :controller do
   let(:admin) { create(:admin) }
   
   before do
     sign_in admin
   end
-  let(:user) { create(:user) }
+  let(:contributor) { create(:contributor) }
 
   describe "GET #index" do
     it "returns http success" do
@@ -17,7 +17,7 @@ RSpec.describe UsersController, type: :controller do
 
   describe "GET #show" do
     it "returns http success" do
-      get :show, params: { id: user.id }
+      get :show, params: { id: contributor.id }
       expect(response).to have_http_status(:success)
     end
   end

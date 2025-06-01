@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe PullRequestUser, type: :model do
   let(:repository) { Repository.create(name: "Test Repo", url: "https://github.com/test/repo") }
   let(:pull_request) { PullRequest.create(repository: repository, number: 1, title: "Test PR", state: "open", gh_created_at: Time.now, gh_updated_at: Time.now) }
-  let(:user) { User.create(username: "testuser", name: "Test User", email: "test@example.com") }
+  let(:user) { Contributor.create(username: "testuser", name: "Test User", email: "test@example.com", github_id: "12345") }
 
   it "is valid with valid attributes" do
     pull_request_user = PullRequestUser.new(pull_request: pull_request, user: user, role: "author")
@@ -30,8 +30,9 @@ RSpec.describe PullRequestUser, type: :model do
     expect(association.macro).to eq :belongs_to
   end
 
-  it "belongs to a user" do
+  it "belongs to a contributor" do
     association = described_class.reflect_on_association(:user)
     expect(association.macro).to eq :belongs_to
+    expect(association.options[:class_name]).to eq 'Contributor'
   end
 end

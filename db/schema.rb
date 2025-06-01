@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_05_26_210022) do
+ActiveRecord::Schema[7.1].define(version: 2025_06_01_194953) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -42,26 +42,26 @@ ActiveRecord::Schema[7.1].define(version: 2025_05_26_210022) do
     t.index ["reset_password_token"], name: "index_admins_on_reset_password_token", unique: true
   end
 
-  create_table "github_users", force: :cascade do |t|
+  create_table "contributors", force: :cascade do |t|
     t.string "username", null: false
     t.string "name"
+    t.string "email"
     t.string "avatar_url"
     t.string "github_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["github_id"], name: "index_github_users_on_github_id", unique: true
-    t.index ["username"], name: "index_github_users_on_username"
+    t.index ["github_id"], name: "index_contributors_on_github_id", unique: true
+    t.index ["username"], name: "index_contributors_on_username"
   end
 
   create_table "pull_request_users", force: :cascade do |t|
     t.string "role"
     t.bigint "pull_request_id", null: false
-    t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id"
     t.index ["pull_request_id", "role"], name: "idx_pr_users_pr_role"
     t.index ["pull_request_id"], name: "index_pull_request_users_on_pull_request_id"
-    t.index ["user_id", "role"], name: "idx_pr_users_user_role"
     t.index ["user_id"], name: "index_pull_request_users_on_user_id"
   end
 
@@ -124,15 +124,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_05_26_210022) do
     t.index ["submitted_at"], name: "idx_reviews_submitted_at"
   end
 
-  create_table "users", force: :cascade do |t|
-    t.string "username"
-    t.string "name"
-    t.string "email"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["username"], name: "idx_users_username"
-  end
-
   create_table "weeks", force: :cascade do |t|
     t.bigint "repository_id", null: false
     t.integer "week_number"
@@ -153,15 +144,15 @@ ActiveRecord::Schema[7.1].define(version: 2025_05_26_210022) do
     t.index ["repository_id"], name: "index_weeks_on_repository_id"
   end
 
+  add_foreign_key "pull_request_users", "contributors", column: "user_id"
   add_foreign_key "pull_request_users", "pull_requests"
-  add_foreign_key "pull_request_users", "users"
-  add_foreign_key "pull_requests", "github_users", column: "author_id"
+  add_foreign_key "pull_requests", "contributors", column: "author_id"
   add_foreign_key "pull_requests", "repositories"
   add_foreign_key "pull_requests", "weeks", column: "closed_week_id"
   add_foreign_key "pull_requests", "weeks", column: "first_review_week_id"
   add_foreign_key "pull_requests", "weeks", column: "merged_week_id"
   add_foreign_key "pull_requests", "weeks", column: "ready_for_review_week_id"
+  add_foreign_key "reviews", "contributors", column: "author_id"
   add_foreign_key "reviews", "pull_requests"
-  add_foreign_key "reviews", "users", column: "author_id"
   add_foreign_key "weeks", "repositories"
 end

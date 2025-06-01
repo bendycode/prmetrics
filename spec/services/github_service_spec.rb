@@ -23,7 +23,7 @@ RSpec.describe GithubService do
 
       it 'stores all reviews regardless of timing' do
         allow(octokit_client).to receive(:pull_request_reviews).and_return([valid_review, early_review])
-        allow(service).to receive(:find_or_create_user).and_return(create(:user))
+        allow(service).to receive(:find_or_create_contributor).and_return(create(:contributor))
 
         expect {
           service.send(:fetch_and_store_reviews, pull_request, repo_name, pr_number)
@@ -63,7 +63,7 @@ RSpec.describe GithubService do
 
     before do
       allow(service).to receive(:determine_ready_for_review_at).and_return(2.days.ago)
-      allow(service).to receive(:find_or_create_github_user).and_return(create(:github_user))
+      allow(service).to receive(:find_or_create_contributor).and_return(create(:contributor))
       allow(service).to receive(:fetch_and_store_reviews)
       allow(service).to receive(:fetch_and_store_users)
     end

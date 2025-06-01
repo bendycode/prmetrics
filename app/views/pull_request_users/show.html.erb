@@ -1,6 +1,6 @@
-<h1>User: <%= @pull_request_user.user.username %></h1>
+<h1>Contributor: <%= @pull_request_user.user.username %></h1>
 
 <p>Role: <%= @pull_request_user.role %></p>
 <p>Pull Request: <%= link_to @pull_request_user.pull_request.title, pull_request_path(@pull_request_user.pull_request) %></p>
 
-<%= link_to 'Back to User', user_path(@pull_request_user.user) %>
+<%= link_to 'Back to Contributor', contributor_path(@pull_request_user.user) %>

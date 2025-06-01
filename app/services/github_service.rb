@@ -92,7 +92,7 @@ class GithubService
 
   def process_pull_request(repository, repo_name, pr)
     pull_request = repository.pull_requests.find_or_initialize_by(number: pr.number)
-    author = find_or_create_github_user(pr.user)
+    author = Contributor.find_or_create_from_github(pr.user)
     ready_for_review_at = pr.draft ? nil : determine_ready_for_review_at(repo_name, pr.number, pr.created_at)
 
     pull_request.update(
@@ -112,13 +112,6 @@ class GithubService
     pull_request.update_week_associations
   end
 
-  def find_or_create_github_user(github_user)
-    GithubUser.find_or_create_by!(github_id: github_user.id.to_s) do |user|
-     user.username = github_user.login
-     user.name = github_user.name
-     user.avatar_url = github_user.avatar_url
-    end
-  end
 
   def fetch_and_store_reviews(pull_request, repo_name, pr_number)
     reviews = with_rate_limit_handling do
@@ -129,7 +122,7 @@ class GithubService
     reviews.each do |review|
       next if review.submitted_at.nil?
 
-      author = find_or_create_user(review.user)
+      author = find_or_create_contributor(review.user)
       review_record = pull_request.reviews.find_or_initialize_by(
         state: review.state,
         submitted_at: review.submitted_at
@@ -139,21 +132,27 @@ class GithubService
     end
   end
 
-  def find_or_create_user(github_user)
-    User.find_or_create_by(username: github_user.login) do |u|
-      u.name = github_user.name
-      u.email = github_user.email
+  def find_or_create_contributor(github_user)
+    # For API responses that have full data including github_id
+    if github_user.respond_to?(:id) && github_user.id
+      Contributor.find_or_create_from_github(github_user)
+    else
+      # Fallback for cases where we only have username
+      Contributor.find_or_create_from_username(github_user.login, {
+        name: github_user.respond_to?(:name) ? github_user.name : nil,
+        email: github_user.respond_to?(:email) ? github_user.email : nil
+      })
     end
   end
 
   def store_user(pull_request, github_user, role)
     return unless github_user
 
-    user = find_or_create_user(github_user)
+    contributor = find_or_create_contributor(github_user)
 
     PullRequestUser.find_or_create_by(
       pull_request: pull_request,
-      user: user,
+      user: contributor,
       role: role
     )
   end

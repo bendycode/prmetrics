@@ -50,14 +50,14 @@ RSpec.describe "Query Optimization", type: :request do
     end
   end
   
-  describe "UsersController#show" do
-    let(:user) { create(:user) }
+  describe "ContributorsController#show" do
+    let(:contributor) { create(:contributor) }
     let!(:pull_request_users) do
-      3.times.map { create(:pull_request_user, user: user) }
+      3.times.map { create(:pull_request_user, user: contributor) }
     end
     
-    it "loads user's pull requests with includes" do
-      get user_path(user)
+    it "loads contributor's pull requests with includes" do
+      get contributor_path(contributor)
       expect(response).to be_successful
       expect(response.body).to include(pull_request_users.first.pull_request.title)
     end

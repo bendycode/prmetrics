@@ -115,7 +115,7 @@ RSpec.describe 'Pull Request Navigation', type: :system do
       
       click_link 'reviewer1'
       
-      expect(page).to have_current_path(user_path(user))
+      expect(page).to have_current_path(contributor_path(user))
       expect(page).to have_content(user.username)
     end
 

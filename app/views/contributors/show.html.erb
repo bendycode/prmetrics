@@ -1,0 +1,24 @@
+<h1><%= @contributor.username %></h1>
+
+<% if @contributor.avatar_url.present? %>
+  <%= image_tag @contributor.avatar_url, alt: @contributor.username, class: "rounded-circle", style: "width: 50px; height: 50px;" %>
+<% end %>
+
+<p>Name: <%= @contributor.name %></p>
+<p>Email: <%= @contributor.email %></p>
+<% if @contributor.has_github_data? %>
+  <p>GitHub ID: <%= @contributor.github_id %></p>
+<% end %>
+
+<h2>Pull Requests</h2>
+
+<ul>
+  <% @pull_request_users.each do |pull_request_user| %>
+    <li>
+      <%= link_to pull_request_user.pull_request.title, pull_request_path(pull_request_user.pull_request) %>
+      (<%= pull_request_user.role %>)
+    </li>
+  <% end %>
+</ul>
+
+<%= paginate @pull_request_users %>

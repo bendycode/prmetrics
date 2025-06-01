@@ -95,7 +95,7 @@ RSpec.describe 'Dashboard', type: :system do
       
       # Check for navigation links
       expect(page).to have_link('Repositories')
-      expect(page).to have_link('Users') 
+      expect(page).to have_link('Contributors') 
       expect(page).to have_link('Admins')
       
       # Test navigation

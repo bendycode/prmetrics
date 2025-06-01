@@ -1,0 +1,9 @@
+<h1>Contributors</h1>
+
+<ul>
+  <% @contributors.each do |contributor| %>
+    <li><%= link_to contributor.username, contributor_path(contributor) %></li>
+  <% end %>
+</ul>
+
+<%= paginate @contributors %>

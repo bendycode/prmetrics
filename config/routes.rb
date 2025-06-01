@@ -34,7 +34,7 @@ Rails.application.routes.draw do
 
   resources :reviews, only: [:show]
   resources :pull_request_users, only: [:show]
-  resources :users, only: [:index, :show]
+  resources :contributors, only: [:index, :show]
 
   get "up" => "rails/health#show", as: :rails_health_check
 end

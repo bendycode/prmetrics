@@ -2,7 +2,7 @@ class PullRequest < ApplicationRecord
   include WeekdayHours
 
   belongs_to :repository
-  belongs_to :author, class_name: 'GithubUser'
+  belongs_to :author, class_name: 'Contributor'
   belongs_to :ready_for_review_week, class_name: 'Week', optional: true
   belongs_to :first_review_week, class_name: 'Week', optional: true
   belongs_to :merged_week, class_name: 'Week', optional: true
@@ -10,13 +10,13 @@ class PullRequest < ApplicationRecord
 
   has_many :reviews, dependent: :destroy
   has_many :pull_request_users, dependent: :destroy
-  has_many :users, through: :pull_request_users
+  has_many :contributors, through: :pull_request_users, source: :user
 
   validates :number, presence: true
   validates :title, presence: true
   validates :state, presence: true
 
-  after_destroy :cleanup_orphaned_github_user
+  after_destroy :cleanup_orphaned_contributor
 
   # Original method that doesn't exclude weekends
   def raw_time_to_first_review
@@ -72,10 +72,12 @@ class PullRequest < ApplicationRecord
 
   private
 
-  def cleanup_orphaned_github_user
+  def cleanup_orphaned_contributor
     return unless author
     
-    # Only delete GithubUser if they have no other pull requests
+    # Only delete Contributor if they have no other authored pull requests
+    # Don't delete based on reviews or pull_request_users since those are
+    # participation records that shouldn't cause deletion
     if author.authored_pull_requests.empty?
       author.destroy
     end

@@ -37,7 +37,7 @@ RSpec.describe 'Admin Authentication', type: :system do
       visit repositories_path
       expect(page).to have_current_path(new_admin_session_path)
       
-      visit users_path
+      visit contributors_path
       expect(page).to have_current_path(new_admin_session_path)
     end
   end

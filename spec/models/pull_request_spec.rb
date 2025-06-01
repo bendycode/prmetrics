@@ -245,8 +245,8 @@ RSpec.describe PullRequest, type: :model do
     expect(association.macro).to eq :has_many
   end
 
-  it "has many users through pull request users" do
-    association = described_class.reflect_on_association(:users)
+  it "has many contributors through pull request users" do
+    association = described_class.reflect_on_association(:contributors)
     expect(association.macro).to eq :has_many
     expect(association.options[:through]).to eq :pull_request_users
   end
