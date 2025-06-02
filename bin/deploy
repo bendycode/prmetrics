@@ -24,6 +24,18 @@ fi
 CURRENT_BRANCH=$(git branch --show-current)
 echo "📌 Current branch: $CURRENT_BRANCH"
 
+# Verify if pushing from non-main branch is intended
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo "⚠️  Warning: You are deploying from branch '$CURRENT_BRANCH' instead of 'main'"
+  echo "This will deploy $CURRENT_BRANCH to production."
+  echo "Are you sure you want to continue? (y/N)"
+  read -r response
+  if [[ ! "$response" =~ ^[Yy]$ ]]; then
+    echo "🛑 Deployment cancelled"
+    exit 1
+  fi
+fi
+
 # Push to Heroku
 echo "📤 Pushing to Heroku..."
 git push heroku $CURRENT_BRANCH:main
