@@ -16,6 +16,12 @@ This document outlines future development plans for prmetrics. For completed wor
    - Configure as default rake task
    - Run initial code standardization
 
+3. **Add Rails Best Practices**
+   - Integrate rails_best_practices gem
+   - Configure custom rules for the project
+   - Add to CI/CD pipeline
+   - Fix identified code smells and anti-patterns
+
 ### Phase 2: Architecture Improvements (4-8 weeks)
 
 1. **Refactor GithubService**
