@@ -16,6 +16,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - GithubService enhanced with processor callbacks for real-time updates
   - Progress tracking stored in repository model (sync_progress field)
   - Creates week records during PR processing with incremental statistics updates
+- **Cross-Repository Week Association Protection**
+  - Added validation to PullRequest model preventing weeks from different repositories
+  - Updated all week assignment methods to use repository-scoped queries
+  - Added Week.for_repository_and_week_number helper method for safe operations
+  - Comprehensive test coverage for cross-repository protection
+  - Fixed 327 existing cross-repository associations in production data
 
 ### Changed
 - **Consolidated User Models** - Merged User and GithubUser into single Contributor model
@@ -28,6 +34,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Implemented smart cleanup logic for orphaned contributors (authors only, preserves reviewers)
   - Migrated 20 existing users while preserving all 2845 pull request relationships
   - Simplified associations and eliminated duplication across the codebase
+
+### Fixed
+- **Dashboard Data Issues**
+  - Fixed missing u-node repository data on dashboard charts
+  - Corrected week statistics calculations for all repositories
+  - Repository Performance Comparison now properly displays all repository data
+  - Fixed cross-repository week associations preventing proper stats aggregation
 
 ## [2025-05-31]
 
