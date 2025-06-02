@@ -65,73 +65,55 @@ class WeekStatsService
   end
 
   def calculate_prs_started
-    start_timestamp = @week.begin_date.in_time_zone.beginning_of_day
-    end_timestamp = @week.end_date.in_time_zone.end_of_day
-
+    # Use week association for consistency
     @repository.pull_requests.where(draft: false)
-      .where(ready_for_review_at: start_timestamp..end_timestamp)
+      .where(ready_for_review_week_id: @week.id)
       .count
   end
 
   def calculate_prs_merged
-    start_timestamp = @week.begin_date.in_time_zone.beginning_of_day
-    end_timestamp = @week.end_date.in_time_zone.end_of_day
-
-    @repository.pull_requests.where(gh_merged_at: start_timestamp..end_timestamp)
-               .count
+    # Use week association directly for consistency with how PRs are assigned to weeks
+    @repository.pull_requests.where(merged_week_id: @week.id).count
   end
 
   def calculate_num_prs_initially_reviewed
-    start_timestamp = @week.begin_date.in_time_zone.beginning_of_day
-    end_timestamp = @week.end_date.in_time_zone.end_of_day
-
+    # Count PRs that had their first review in this week
     @repository.pull_requests
-      .joins(:reviews)
-      .where(reviews: { submitted_at: start_timestamp..end_timestamp })
-      .where('reviews.submitted_at > pull_requests.ready_for_review_at')
-      .group('pull_requests.id')
-      .having('MIN(reviews.submitted_at) BETWEEN ? AND ?', start_timestamp, end_timestamp)
-      .count.length
+      .where(first_review_week_id: @week.id)
+      .count
   end
 
   def calculate_prs_cancelled
-    start_timestamp = @week.begin_date.in_time_zone.beginning_of_day
-    end_timestamp = @week.end_date.in_time_zone.end_of_day
-
+    # Use week association for consistency
     @repository.pull_requests.where(state: 'closed', gh_merged_at: nil)
-      .where(gh_closed_at: start_timestamp..end_timestamp)
+      .where(closed_week_id: @week.id)
       .count
   end
 
   def calculate_avg_hrs_to_first_review
-    start_timestamp = @week.begin_date.in_time_zone.beginning_of_day
-    end_timestamp = @week.end_date.in_time_zone.end_of_day
-
+    # Calculate average hours for PRs that had their first review in this week
     prs_with_first_review = @repository.pull_requests
-      .joins(:reviews)
-      .where(reviews: { submitted_at: start_timestamp..end_timestamp })
-      .where.not(pull_requests: { ready_for_review_at: nil })
-      .where('reviews.submitted_at > pull_requests.ready_for_review_at')
-      .group('pull_requests.id, pull_requests.ready_for_review_at')
-      .having('MIN(reviews.submitted_at) BETWEEN ? AND ?', start_timestamp, end_timestamp)
-      .select('pull_requests.id, pull_requests.ready_for_review_at, MIN(reviews.submitted_at) AS first_review_at')
+      .where(first_review_week_id: @week.id)
+      .where.not(ready_for_review_at: nil)
+      .includes(:reviews)
 
     total_hours = prs_with_first_review.sum do |pr|
-      time_to_review = ((pr.first_review_at - pr.ready_for_review_at) / 1.hour).round(2)
+      first_review = pr.valid_first_review
+      next 0 unless first_review
+      
+      time_to_review = ((first_review.submitted_at - pr.ready_for_review_at) / 1.hour).round(2)
       raise "negative time to review for pr #{pr.id}: #{time_to_review} hours" if time_to_review.negative?
       time_to_review
     end
 
-    count = prs_with_first_review.length
+    count = prs_with_first_review.count
     count > 0 ? (total_hours / count).round(2) : nil
   end
 
   def calculate_avg_hrs_to_merge
-    start_timestamp = @week.begin_date.in_time_zone.beginning_of_day
-    end_timestamp = @week.end_date.in_time_zone.end_of_day
-
+    # Use week association for consistency
     merged_prs = @repository.pull_requests
-      .where(gh_merged_at: start_timestamp..end_timestamp)
+      .where(merged_week_id: @week.id)
       .where.not(ready_for_review_at: nil)
 
     total_hours = merged_prs.sum do |pr|

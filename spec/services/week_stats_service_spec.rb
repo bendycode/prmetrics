@@ -30,9 +30,13 @@ RSpec.describe WeekStatsService do
 
     context 'when calculating num_prs_started' do
       before do
-        create(:pull_request, repository: repository, draft: false, ready_for_review_at: week.begin_date + 1.day)
-        create(:pull_request, repository: repository, draft: false, ready_for_review_at: week.begin_date - 1.day)
-        create(:pull_request, repository: repository, draft: false, ready_for_review_at: week.end_date + 1.day)
+        pr1 = create(:pull_request, repository: repository, draft: false, ready_for_review_at: week.begin_date + 1.day)
+        pr2 = create(:pull_request, repository: repository, draft: false, ready_for_review_at: week.begin_date - 1.day)
+        pr3 = create(:pull_request, repository: repository, draft: false, ready_for_review_at: week.end_date + 1.day)
+        
+        # Update week associations
+        [pr1, pr2, pr3].each(&:update_week_associations)
+        
         service.update_stats
       end
 
@@ -43,9 +47,13 @@ RSpec.describe WeekStatsService do
 
     context 'when calculating num_prs_merged' do
       before do
-        create(:pull_request, repository: repository, gh_merged_at: week.begin_date + 1.day)
-        create(:pull_request, repository: repository, gh_merged_at: week.begin_date - 1.day)
-        create(:pull_request, repository: repository, gh_merged_at: week.end_date + 1.day)
+        pr1 = create(:pull_request, repository: repository, gh_merged_at: week.begin_date + 1.day)
+        pr2 = create(:pull_request, repository: repository, gh_merged_at: week.begin_date - 1.day)
+        pr3 = create(:pull_request, repository: repository, gh_merged_at: week.end_date + 1.day)
+        
+        # Update week associations
+        [pr1, pr2, pr3].each(&:update_week_associations)
+        
         service.update_stats
       end
 
@@ -65,6 +73,9 @@ RSpec.describe WeekStatsService do
         create(:review, pull_request: pr2, submitted_at: week.begin_date.in_time_zone - 1.day)
         create(:review, pull_request: pr3, submitted_at: week.end_date.in_time_zone + 1.day)
 
+        # Update week associations
+        [pr1, pr2, pr3].each(&:update_week_associations)
+
         service.update_stats
       end
 
@@ -75,10 +86,14 @@ RSpec.describe WeekStatsService do
 
     context 'when calculating num_prs_cancelled' do
       before do
-        create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil, gh_closed_at: week.begin_date + 1.day)
-        create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil, gh_closed_at: week.begin_date - 1.day)
-        create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil, gh_closed_at: week.end_date + 1.day)
-        create(:pull_request, repository: repository, state: 'closed', gh_merged_at: week.begin_date + 1.day, gh_closed_at: week.begin_date + 1.day)
+        pr1 = create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil, gh_closed_at: week.begin_date + 1.day)
+        pr2 = create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil, gh_closed_at: week.begin_date - 1.day)
+        pr3 = create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil, gh_closed_at: week.end_date + 1.day)
+        pr4 = create(:pull_request, repository: repository, state: 'closed', gh_merged_at: week.begin_date + 1.day, gh_closed_at: week.begin_date + 1.day)
+        
+        # Update week associations
+        [pr1, pr2, pr3, pr4].each(&:update_week_associations)
+        
         service.update_stats
       end
 
@@ -95,6 +110,9 @@ RSpec.describe WeekStatsService do
         create(:review, pull_request: pr1, submitted_at: week.begin_date + 2.hours)
         create(:review, pull_request: pr2, submitted_at: week.begin_date + 4.hours)
 
+        # Update week associations
+        [pr1, pr2].each(&:update_week_associations)
+
         service.update_stats
       end
 
@@ -105,8 +123,12 @@ RSpec.describe WeekStatsService do
 
     context 'when calculating avg_hrs_to_merge' do
       before do
-        create(:pull_request, repository: repository, ready_for_review_at: week.begin_date, gh_merged_at: week.begin_date + 3.hours)
-        create(:pull_request, repository: repository, ready_for_review_at: week.begin_date, gh_merged_at: week.begin_date + 9.hours)
+        pr1 = create(:pull_request, repository: repository, ready_for_review_at: week.begin_date, gh_merged_at: week.begin_date + 3.hours)
+        pr2 = create(:pull_request, repository: repository, ready_for_review_at: week.begin_date, gh_merged_at: week.begin_date + 9.hours)
+        
+        # Update week associations
+        [pr1, pr2].each(&:update_week_associations)
+        
         service.update_stats
       end
 
