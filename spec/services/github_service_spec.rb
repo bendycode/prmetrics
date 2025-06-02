@@ -89,7 +89,8 @@ RSpec.describe GithubService do
     end
 
     it 'calls update_week_associations after processing' do
-      expect_any_instance_of(PullRequest).to receive(:update_week_associations)
+      # The service calls it explicitly, and the model callback also calls it
+      expect_any_instance_of(PullRequest).to receive(:update_week_associations).at_least(:once)
       service.send(:process_pull_request, repository, 'test/repo', pr_data)
     end
   end

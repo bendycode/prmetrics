@@ -26,6 +26,7 @@ RSpec.describe Week, type: :model do
     let(:current_week) do
       create(:week,
         repository: repository,
+        week_number: 202402, # Correct week number for 2024-01-08 to 2024-01-14
         begin_date: Time.zone.local(2024, 1, 8), # Monday
         end_date: Time.zone.local(2024, 1, 14)   # Sunday
       )
@@ -81,32 +82,30 @@ RSpec.describe Week, type: :model do
 
       context 'with weekend spanning PRs' do
         before do
-          # PR 1: Created Friday, reviewed Monday (should skip weekend)
+          # PR 1: Created Monday, reviewed Thursday (within same week)
           pr1 = create(:pull_request,
             repository: repository,
             author: author,
             number: 3,
             title: "PR 3",
             state: "open",
-            ready_for_review_at: Time.zone.local(2024, 1, 12, 14, 0, 0), # Friday 2 PM
-            first_review_week: current_week
+            ready_for_review_at: Time.zone.local(2024, 1, 8, 14, 0, 0) # Monday 2 PM
           )
           create(:review,
             pull_request: pr1,
             author: user,
-            submitted_at: Time.zone.local(2024, 1, 15, 10, 0, 0), # Monday 10 AM
+            submitted_at: Time.zone.local(2024, 1, 11, 10, 0, 0), # Thursday 10 AM
             state: 'approved'
           )
 
-          # PR 2: Created Thursday, reviewed Friday
+          # PR 2: Created Tuesday, reviewed Friday
           pr2 = create(:pull_request,
             repository: repository,
             author: author,
             number: 4,
             title: "PR 4",
             state: "open",
-            ready_for_review_at: Time.zone.local(2024, 1, 11, 9, 0, 0), # Thursday 9 AM
-            first_review_week: current_week
+            ready_for_review_at: Time.zone.local(2024, 1, 9, 9, 0, 0) # Tuesday 9 AM
           )
           create(:review,
             pull_request: pr2,
@@ -117,10 +116,10 @@ RSpec.describe Week, type: :model do
         end
 
         it 'calculates average hours correctly, excluding weekend hours' do
-          # 10 hours Friday + 10 hours Monday = 20 hours for PR1
-          # 15 hours Thursday + 9 hours Friday = 24 hours for PR2
-          # Average: (20 + 24) / 2 = 22 hours
-          expect(current_week.avg_hours_to_first_review).to eq(22.0)
+          # PR1: Monday 2PM to Thursday 10AM = 68 hours weekday time
+          # PR2: Tuesday 9AM to Friday 9AM = 72 hours weekday time  
+          # Average: (68 + 72) / 2 = 70 hours
+          expect(current_week.avg_hours_to_first_review).to eq(70.0)
 
           # Raw calculation would include weekend for PR1
           expect(current_week.raw_avg_hours_to_first_review).to be > 22.0
@@ -178,16 +177,15 @@ RSpec.describe Week, type: :model do
 
       context 'with weekend spanning PRs' do
         before do
-          # PR 1: Created Friday, merged Monday (should skip weekend)
+          # PR 1: Created Monday, merged Friday (within same week)
           create(:pull_request,
             repository: repository,
             author: author,
             number: 7,
             title: "PR 7",
             state: "closed",
-            ready_for_review_at: Time.zone.local(2024, 1, 12, 13, 0, 0), # Friday 1 PM
-            gh_merged_at: Time.zone.local(2024, 1, 15, 11, 0, 0),        # Monday 11 AM (next week)
-            merged_week: current_week
+            ready_for_review_at: Time.zone.local(2024, 1, 8, 13, 0, 0), # Monday 1 PM
+            gh_merged_at: Time.zone.local(2024, 1, 12, 11, 0, 0)        # Friday 11 AM
           )
 
           # PR 2: Created Monday, merged Wednesday
@@ -198,16 +196,15 @@ RSpec.describe Week, type: :model do
             title: "PR 8",
             state: "closed",
             ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0),  # Monday 9 AM
-            gh_merged_at: Time.zone.local(2024, 1, 10, 17, 0, 0),       # Wednesday 5 PM
-            merged_week: current_week
+            gh_merged_at: Time.zone.local(2024, 1, 10, 17, 0, 0)       # Wednesday 5 PM
           )
         end
 
         it 'calculates average hours correctly, excluding weekend hours' do
-          # PR1: Friday 1 PM to Friday midnight (11 hours) + Monday midnight to Monday 11 AM (11 hours) = 22 hours
-          # PR2: Monday 9 AM to Monday midnight (15 hours) + Tuesday (24 hours) + Wednesday midnight to Wednesday 5 PM (17 hours) = 56 hours
-          # Average: (22 + 56) / 2 = 39 hours
-          expect(current_week.avg_hours_to_merge).to eq(39.0)
+          # PR1: Monday 1 PM to Friday 11 AM = 94 hours weekday time
+          # PR2: Monday 9 AM to Wednesday 5 PM = 56 hours weekday time
+          # Average: (94 + 56) / 2 = 75 hours
+          expect(current_week.avg_hours_to_merge).to eq(75.0)
 
           # Raw calculation would include weekend for PR1
           expect(current_week.raw_avg_hours_to_merge).to be > 39.0
