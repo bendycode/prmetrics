@@ -37,13 +37,32 @@ This checklist ensures a smooth deployment of the prmetrics application to produ
 
 ## Deployment
 
-### 1. Code Deployment
+### Automated Deployment (Recommended)
+
+For Heroku deployments, use the automated deploy script:
+
+```bash
+bin/deploy
+```
+
+This script automatically:
+- Checks for uncommitted changes
+- Pushes to Heroku
+- Runs database migrations
+- Restarts the app
+- Shows deployment status
+
+### Manual Deployment Steps
+
+If deploying manually or to non-Heroku environments:
+
+#### 1. Code Deployment
 - [ ] Deploy code to production server
 - [ ] Install dependencies: `bundle install --deployment`
 - [ ] Run database migrations: `rails db:migrate RAILS_ENV=production`
 - [ ] Precompile assets: `rails assets:precompile RAILS_ENV=production`
 
-### 2. Service Management
+#### 2. Service Management
 - [ ] Restart Rails application server
 - [ ] Restart Sidekiq workers
 - [ ] Clear Rails cache if needed: `rails tmp:cache:clear RAILS_ENV=production`
