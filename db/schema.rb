@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_06_01_194953) do
+ActiveRecord::Schema[7.1].define(version: 2025_06_02_142236) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -92,7 +92,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_01_194953) do
     t.index ["merged_week_id"], name: "index_pull_requests_on_merged_week_id"
     t.index ["ready_for_review_at"], name: "idx_pull_requests_ready_for_review"
     t.index ["ready_for_review_week_id"], name: "index_pull_requests_on_ready_for_review_week_id"
-    t.index ["repository_id", "number"], name: "idx_pull_requests_repo_number"
+    t.index ["repository_id", "number"], name: "index_pull_requests_on_repository_id_and_number_unique", unique: true
     t.index ["repository_id", "state", "draft"], name: "idx_pull_requests_repo_state_draft"
     t.index ["repository_id"], name: "index_pull_requests_on_repository_id"
   end

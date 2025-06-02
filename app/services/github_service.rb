@@ -91,7 +91,11 @@ class GithubService
   end
 
   def process_pull_request(repository, repo_name, pr)
-    pull_request = repository.pull_requests.find_or_initialize_by(number: pr.number)
+    pull_request = repository.pull_requests.find_or_create_by(number: pr.number) do |new_pr|
+      # Set initial values for new PR to avoid race conditions
+      new_pr.state = pr.state
+      new_pr.title = pr.title
+    end
     author = Contributor.find_or_create_from_github(pr.user)
     ready_for_review_at = pr.draft ? nil : determine_ready_for_review_at(repo_name, pr.number, pr.created_at)
 
