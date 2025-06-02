@@ -15,6 +15,9 @@ class PullRequest < ApplicationRecord
   validates :number, presence: true
   validates :title, presence: true
   validates :state, presence: true
+  
+  # Prevent cross-repository week associations
+  validate :weeks_belong_to_same_repository
 
   after_destroy :cleanup_orphaned_contributor
   after_save :update_week_associations_if_needed, unless: :skip_week_association_update
@@ -60,14 +63,15 @@ class PullRequest < ApplicationRecord
   end
 
   def update_week_associations
-    self.ready_for_review_week = Week.find_by_date(ready_for_review_at)
+    # Use repository-scoped week lookups to prevent cross-repository associations
+    self.ready_for_review_week = repository.weeks.find_by_date(ready_for_review_at)
 
     # Find first valid review after ready_for_review_at
     first_valid_review = valid_first_review
 
-    self.first_review_week = Week.find_by_date(first_valid_review&.submitted_at)
-    self.merged_week = Week.find_by_date(gh_merged_at)
-    self.closed_week = Week.find_by_date(gh_closed_at)
+    self.first_review_week = repository.weeks.find_by_date(first_valid_review&.submitted_at)
+    self.merged_week = repository.weeks.find_by_date(gh_merged_at)
+    self.closed_week = repository.weeks.find_by_date(gh_closed_at)
     save
   end
 
@@ -99,6 +103,21 @@ class PullRequest < ApplicationRecord
     # participation records that shouldn't cause deletion
     if author.authored_pull_requests.empty?
       author.destroy
+    end
+  end
+  
+  def weeks_belong_to_same_repository
+    week_associations = {
+      ready_for_review_week: ready_for_review_week,
+      first_review_week: first_review_week,
+      merged_week: merged_week,
+      closed_week: closed_week
+    }
+    
+    week_associations.each do |association_name, week|
+      if week && week.repository_id != repository_id
+        errors.add(association_name, "must belong to the same repository as the pull request")
+      end
     end
   end
 end

@@ -20,6 +20,26 @@ class Week < ApplicationRecord
     lookup_date = date.respond_to?(:to_date) ? date.to_date : date
     where('begin_date <= ? AND end_date >= ?', lookup_date, lookup_date).first
   end
+  
+  # Find or create week for a specific repository and week number
+  # This ensures we never get weeks from other repositories
+  def self.for_repository_and_week_number(repository, week_number)
+    return nil unless repository && week_number
+    
+    repository.weeks.find_or_create_by(week_number: week_number) do |week|
+      # Set begin and end dates based on week number
+      year = week_number / 100
+      week_of_year = week_number % 100
+      
+      # Calculate the start of the week (Monday)
+      jan_first = Date.new(year, 1, 1)
+      days_to_first_monday = (8 - jan_first.wday) % 7
+      first_monday = jan_first + days_to_first_monday
+      
+      week.begin_date = first_monday + ((week_of_year - 1) * 7).days
+      week.end_date = week.begin_date + 6.days
+    end
+  end
 
   def previous_week
     repository.weeks.where('begin_date < ?', begin_date).order(begin_date: :desc).first

@@ -31,7 +31,8 @@ class Review < ApplicationRecord
     
     # Find the first valid review and update the week association
     first_review = pull_request.valid_first_review
-    new_week = first_review ? Week.find_by_date(first_review.submitted_at) : nil
+    # Use repository-scoped week lookup to prevent cross-repository associations
+    new_week = first_review ? pull_request.repository.weeks.find_by_date(first_review.submitted_at) : nil
     
     if pull_request.first_review_week != new_week
       pull_request.update_column(:first_review_week_id, new_week&.id)
