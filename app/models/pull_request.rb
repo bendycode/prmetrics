@@ -17,6 +17,7 @@ class PullRequest < ApplicationRecord
   validates :state, presence: true
 
   after_destroy :cleanup_orphaned_contributor
+  after_save :update_week_associations_if_needed
 
   # Original method that doesn't exclude weekends
   def raw_time_to_first_review
@@ -71,6 +72,16 @@ class PullRequest < ApplicationRecord
   end
 
   private
+
+  def update_week_associations_if_needed
+    # Only update if lifecycle dates changed to avoid unnecessary work
+    if saved_change_to_ready_for_review_at? || 
+       saved_change_to_gh_merged_at? || 
+       saved_change_to_gh_closed_at? ||
+       saved_change_to_gh_created_at?
+      update_week_associations
+    end
+  end
 
   def cleanup_orphaned_contributor
     return unless author

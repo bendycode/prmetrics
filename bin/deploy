@@ -48,6 +48,14 @@ heroku run rails db:migrate
 echo "✅ Checking migration status..."
 heroku run rails db:migrate:status | tail -20
 
+# Run data integrity checks
+echo "🔍 Running data integrity checks..."
+if heroku run rake ci:data_integrity; then
+  echo "✅ Data integrity checks passed"
+else
+  echo "⚠️  Data integrity issues detected - check Heroku logs for details"
+fi
+
 # Restart to ensure all changes take effect
 echo "🔄 Restarting app..."
 heroku restart

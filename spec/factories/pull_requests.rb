@@ -8,5 +8,10 @@ FactoryBot.define do
     draft { false }
     gh_created_at { Time.current }
     gh_updated_at { Time.now }
+    
+    # Ensure week associations are set after creation
+    after(:create) do |pull_request|
+      pull_request.update_week_associations
+    end
   end
 end
