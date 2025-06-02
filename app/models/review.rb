@@ -11,11 +11,18 @@ class Review < ApplicationRecord
     message: "review already exists for this pull request, author, and state combination"
   }
 
-  # TODO: Re-enable after fixing test isolation issues
-  # after_save :update_pull_request_first_review_week
-  # after_destroy :update_pull_request_first_review_week
+  after_save :update_pull_request_first_review_week, unless: :skip_week_association_update
+  after_destroy :update_pull_request_first_review_week, unless: :skip_week_association_update
 
   scope :ordered, -> { order(submitted_at: :desc) }
+
+  def skip_week_association_update
+    @skip_week_association_update || false
+  end
+
+  def skip_week_association_update!
+    @skip_week_association_update = true
+  end
 
   private
 

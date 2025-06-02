@@ -15,9 +15,10 @@ class Week < ApplicationRecord
 
   def self.find_by_date(date)
     return nil unless date
-    # Convert to Central Time date for consistent lookup
-    ct_date = date.in_time_zone("America/Chicago").to_date
-    where('begin_date <= ? AND end_date >= ?', ct_date, ct_date).first
+    # Convert to date for consistent lookup - use the date in the original timezone
+    # to avoid edge cases where timezone conversion changes the date
+    lookup_date = date.respond_to?(:to_date) ? date.to_date : date
+    where('begin_date <= ? AND end_date >= ?', lookup_date, lookup_date).first
   end
 
   def previous_week
