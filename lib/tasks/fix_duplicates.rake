@@ -1,5 +1,5 @@
 namespace :fix do
-  desc "Remove duplicate pull request records"
+  desc "Remove duplicate pull request and review records"
   task duplicates: :environment do
     puts "🔍 Finding duplicate pull request records..."
     
@@ -36,8 +36,39 @@ namespace :fix do
     end
     
     puts "\n✅ Removed #{total_removed} duplicate PR records"
-    puts "\n⚠️  Remember to add a unique constraint to prevent future duplicates:"
-    puts "   add_index :pull_requests, [:repository_id, :number], unique: true"
+    
+    # Now handle review duplicates
+    puts "\n🔍 Finding duplicate review records..."
+    review_duplicates_removed = 0
+    
+    # Find all reviews grouped by uniqueness criteria
+    duplicate_reviews = Review.select(:pull_request_id, :author_id, :submitted_at, :state)
+                             .group(:pull_request_id, :author_id, :submitted_at, :state)
+                             .having("COUNT(*) > 1")
+    
+    duplicate_reviews.each do |dup|
+      reviews = Review.where(
+        pull_request_id: dup.pull_request_id,
+        author_id: dup.author_id,
+        submitted_at: dup.submitted_at,
+        state: dup.state
+      ).order(:created_at)
+      
+      keeper = reviews.first
+      to_remove = reviews - [keeper]
+      
+      if to_remove.any?
+        pr = PullRequest.find(dup.pull_request_id)
+        author = Contributor.find_by(id: dup.author_id)
+        puts "  PR ##{pr.number}, Author: #{author&.username || 'unknown'}, Time: #{dup.submitted_at}: removing #{to_remove.size} duplicates"
+        
+        to_remove.each(&:destroy)
+        review_duplicates_removed += to_remove.size
+      end
+    end
+    
+    puts "\n✅ Removed #{review_duplicates_removed} duplicate review records"
+    puts "\n📊 Total duplicates removed: #{total_removed + review_duplicates_removed}"
   end
   
   desc "Preview duplicate pull requests without removing them"

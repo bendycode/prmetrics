@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_06_02_142236) do
+ActiveRecord::Schema[7.1].define(version: 2025_06_02_145647) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -119,6 +119,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_02_142236) do
     t.datetime "updated_at", null: false
     t.bigint "author_id"
     t.index ["author_id"], name: "index_reviews_on_author_id"
+    t.index ["pull_request_id", "author_id", "submitted_at", "state"], name: "index_reviews_uniqueness", unique: true, comment: "Prevents duplicate reviews from same author at same time with same state"
     t.index ["pull_request_id", "submitted_at"], name: "idx_reviews_pr_submitted"
     t.index ["pull_request_id"], name: "index_reviews_on_pull_request_id"
     t.index ["submitted_at"], name: "idx_reviews_submitted_at"

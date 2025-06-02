@@ -129,9 +129,9 @@ class GithubService
       author = find_or_create_contributor(review.user)
       review_record = pull_request.reviews.find_or_initialize_by(
         state: review.state,
-        submitted_at: review.submitted_at
+        submitted_at: review.submitted_at,
+        author: author
       )
-      review_record.author = author
       review_record.save!
     end
   end
