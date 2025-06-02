@@ -136,6 +136,10 @@ This document outlines future development plans for prmetrics. For completed wor
 - Sidekiq job monitoring improvements
 
 ### Medium Priority
+- Improve rate limit messaging
+  - Convert seconds to human-readable format (e.g., "39 minutes 47 seconds")
+  - Add context about what's happening during the wait
+  - Consider showing progress or estimated completion time
 - View partial extraction
 - Service object standardization
 - Timestamp naming consistency
