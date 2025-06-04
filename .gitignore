@@ -39,3 +39,7 @@
 
 # Ignore Claude Code local settings
 .claude/
+
+# Ignore SimpleCov coverage reports (but keep baseline)
+/coverage/
+!.coverage_baseline

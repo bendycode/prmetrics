@@ -62,6 +62,12 @@ group :development, :test do
   gem 'selenium-webdriver'
 end
 
+group :test do
+  # Code coverage
+  gem 'simplecov', require: false
+  gem 'simplecov-console', require: false
+end
+
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"

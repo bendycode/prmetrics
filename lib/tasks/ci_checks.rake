@@ -1,4 +1,12 @@
 namespace :ci do
+  desc "Run all CI checks (coverage and data integrity)"
+  task all: [:coverage_check, :data_integrity]
+  
+  desc "Run coverage ratcheting check for CI"
+  task coverage_check: :environment do
+    Rake::Task['coverage:ratchet'].invoke
+  end
+  
   desc "Run data integrity checks suitable for CI/CD pipeline"
   task data_integrity: :environment do
     puts "🔍 Running data integrity checks..."
