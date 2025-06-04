@@ -6,7 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2025-06-03]
+
 ### Added
+- **Code Coverage with Ratcheting System**
+  - SimpleCov integration with HTML and console coverage reports
+  - Ratcheting system prevents coverage regression and auto-updates baseline
+  - Current coverage baseline established at 77.88% (771/990 lines)
+  - CI integration with `rake coverage:ratchet` and `rake ci:all` commands
+  - Coverage trend tracking and baseline management
+  - Comprehensive rake tasks: status, trend, update_baseline
+  - COVERAGE.md documentation with usage instructions
+- **Favicon Implementation**
+  - Multi-size favicon generated from prmetrics logo SVG
+  - White background for visibility on dark browser themes
+  - Progressive Web App support with site.webmanifest
+  - Apple touch icons and Android Chrome icons (192x192, 512x512)
+  - Comprehensive system tests for favicon presence and functionality
+  - Updated application and admin layouts with favicon meta tags
+
+### Fixed
+- **Full Sync Validation Errors**
+  - Fixed "Ready for review week must belong to the same repository" errors during Full Sync
+  - Added `ensure_weeks_exist_and_update_associations` method to create missing weeks before associations
+  - GithubService now skips week updates when UnifiedSyncService processor is provided
+  - UnifiedSyncService handles week creation and associations after PR processing
+  - Updated rake tasks and batch jobs to use new week creation method
+
+## [Previous Releases]
+
+### Added (Unreleased items moved to 2025-06-03)
 - **Unified Sync Command** - Real-time week generation with progress tracking
   - New `rake sync:repository[owner/repo]` command combines PR fetch, week generation, and stats updates
   - UnifiedSyncService orchestrates the entire sync process

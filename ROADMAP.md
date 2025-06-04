@@ -6,17 +6,12 @@ This document outlines future development plans for prmetrics. For completed wor
 
 ### Phase 1: Code Quality & Stability (Next 2-4 weeks)
 
-1. **Add Code Coverage with Ratcheting**
-   - SimpleCov integration with coverage reports
-   - Ratcheting test to prevent coverage regression
-   - Baseline file tracking coverage improvements
-
-2. **Integrate StandardRB**
+1. **Integrate StandardRB**
    - Add StandardRB gem for consistent code style
    - Configure as default rake task
    - Run initial code standardization
 
-3. **Add Rails Best Practices**
+2. **Add Rails Best Practices**
    - Integrate rails_best_practices gem
    - Configure custom rules for the project
    - Add to CI/CD pipeline
