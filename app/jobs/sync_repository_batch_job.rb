@@ -100,7 +100,7 @@ class SyncRepositoryBatchJob < ApplicationJob
     pull_request.save!
     
     # Update week associations
-    pull_request.update_week_associations
+    pull_request.ensure_weeks_exist_and_update_associations
   end
   
   def update_progress(repository, page, batch_size)

@@ -7,7 +7,7 @@ namespace :fix do
     updated = 0
     
     PullRequest.includes(:repository).find_each.with_index do |pr, index|
-      pr.update_week_associations
+      pr.ensure_weeks_exist_and_update_associations
       updated += 1
       
       if (index + 1) % 100 == 0

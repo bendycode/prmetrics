@@ -21,6 +21,9 @@ class GithubService
   def fetch_and_store_pull_requests(repo_name, fetch_all: false, processor: nil)
     repository = Repository.find_or_create_by(name: repo_name)
     last_fetched_at = fetch_all ? nil : repository.last_fetched_at&.iso8601
+    
+    # Skip week associations if processor provided (unified sync handles it)
+    @skip_week_associations = processor.present?
 
     page = 1
     per_page = 100
@@ -113,7 +116,11 @@ class GithubService
 
     fetch_and_store_reviews(pull_request, repo_name, pr.number)
     fetch_and_store_users(pull_request, pr)
-    pull_request.update_week_associations
+    
+    # Skip week associations during unified sync - the processor will handle it
+    unless @skip_week_associations
+      pull_request.ensure_weeks_exist_and_update_associations
+    end
   end
 
 

@@ -81,8 +81,11 @@ class UnifiedSyncService
     pull_request = @repository.pull_requests.find_by(number: pr_number)
     
     if pull_request
-      # Create week records for this PR's lifecycle dates
-      create_weeks_for_pull_request(pull_request)
+      # Create week records and update associations for this PR
+      pull_request.ensure_weeks_exist_and_update_associations
+      
+      # Track created weeks
+      track_created_weeks(pull_request)
       
       # Update progress
       update_progress
@@ -94,29 +97,20 @@ class UnifiedSyncService
     end
   end
   
-  def create_weeks_for_pull_request(pull_request)
-    dates = [
-      pull_request.gh_created_at,
-      pull_request.ready_for_review_at,
-      pull_request.gh_merged_at,
-      pull_request.gh_closed_at
-    ].compact
+  def track_created_weeks(pull_request)
+    # Track all weeks associated with this PR for stats update
+    weeks = [
+      pull_request.ready_for_review_week,
+      pull_request.first_review_week,
+      pull_request.merged_week,
+      pull_request.closed_week
+    ].compact.uniq
     
-    dates.each do |date|
-      # Convert to Central Time for consistent week calculation
-      ct_date = date.in_time_zone("America/Chicago")
-      week_number = ct_date.strftime('%Y%W').to_i
-      
-      week = @repository.weeks.find_or_create_by(week_number: week_number) do |w|
-        w.begin_date = ct_date.beginning_of_week.to_date
-        w.end_date = ct_date.end_of_week.to_date
-      end
-      
-      if week.previously_new_record?
+    weeks.each do |week|
+      if week.created_at >= 1.minute.ago
         @created_weeks << week
         log_progress("Created week #{week.begin_date.strftime('%Y-%m-%d')} (CT)")
       end
-      
       @updated_weeks << week
     end
   end

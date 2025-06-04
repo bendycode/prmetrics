@@ -75,6 +75,24 @@ class PullRequest < ApplicationRecord
     save
   end
 
+  def ensure_weeks_exist_and_update_associations
+    # First ensure all required weeks exist
+    dates = [ready_for_review_at, valid_first_review&.submitted_at, gh_merged_at, gh_closed_at].compact
+    
+    dates.each do |date|
+      ct_date = date.in_time_zone("America/Chicago")
+      week_number = ct_date.strftime('%Y%W').to_i
+      
+      repository.weeks.find_or_create_by(week_number: week_number) do |w|
+        w.begin_date = ct_date.beginning_of_week.to_date
+        w.end_date = ct_date.end_of_week.to_date
+      end
+    end
+    
+    # Now update associations - weeks will exist
+    update_week_associations
+  end
+
   def skip_week_association_update
     @skip_week_association_update || false
   end
