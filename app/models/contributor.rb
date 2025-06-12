@@ -8,7 +8,7 @@ class Contributor < ApplicationRecord
   has_many :reviews, foreign_key: 'author_id', dependent: :destroy
   
   # Validations
-  validates :username, presence: true
+  validates :username, presence: true, uniqueness: true
   validates :github_id, presence: true, uniqueness: true
   
   # Scopes

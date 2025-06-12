@@ -3,4 +3,5 @@ class PullRequestUser < ApplicationRecord
   belongs_to :user, class_name: 'Contributor'
 
   validates :role, presence: true
+  validates :user_id, uniqueness: { scope: [:pull_request_id, :role] }
 end

@@ -12,7 +12,7 @@ class PullRequest < ApplicationRecord
   has_many :pull_request_users, dependent: :destroy
   has_many :contributors, through: :pull_request_users, source: :user
 
-  validates :number, presence: true
+  validates :number, presence: true, uniqueness: { scope: :repository_id }
   validates :title, presence: true
   validates :state, presence: true
   

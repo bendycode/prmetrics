@@ -230,6 +230,20 @@ RSpec.describe PullRequest, type: :model do
     expect(pull_request).to_not be_valid
   end
 
+  it "validates uniqueness of number scoped to repository" do
+    create(:pull_request, repository: repository, number: 123)
+    duplicate = build(:pull_request, repository: repository, number: 123)
+    expect(duplicate).to_not be_valid
+    expect(duplicate.errors[:number]).to include("has already been taken")
+  end
+
+  it "allows same number in different repositories" do
+    other_repository = create(:repository, name: "other/repo")
+    create(:pull_request, repository: repository, number: 123)
+    different_repo_pr = build(:pull_request, repository: other_repository, number: 123)
+    expect(different_repo_pr).to be_valid
+  end
+
   it "belongs to a repository" do
     association = described_class.reflect_on_association(:repository)
     expect(association.macro).to eq :belongs_to

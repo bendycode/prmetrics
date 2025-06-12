@@ -35,6 +35,13 @@ RSpec.describe Contributor, type: :model do
       duplicate = build(:contributor, github_id: "12345")
       expect(duplicate).to_not be_valid
     end
+    
+    it "validates uniqueness of username" do
+      create(:contributor, username: "testuser")
+      duplicate = build(:contributor, username: "testuser", github_id: "different_id")
+      expect(duplicate).to_not be_valid
+      expect(duplicate.errors[:username]).to include("has already been taken")
+    end
   end
 
   describe 'associations' do
