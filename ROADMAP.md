@@ -136,11 +136,6 @@ This document outlines future development plans for prmetrics. For completed wor
 - Sidekiq job monitoring improvements
 
 ### Medium Priority
-- Add uniqueness validation to all models
-  - Review each model for fields requiring uniqueness
-  - Add model-level validations to match database constraints
-  - Ensure proper error handling for uniqueness violations
-  - Consider scoped uniqueness where appropriate
 - Improve rate limit messaging
   - Convert seconds to human-readable format (e.g., "39 minutes 47 seconds")
   - Add context about what's happening during the wait
