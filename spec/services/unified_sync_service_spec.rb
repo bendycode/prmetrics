@@ -21,6 +21,7 @@ RSpec.describe UnifiedSyncService do
     before do
       allow(github_service).to receive(:get_pull_request_count).and_return(10)
       allow(github_service).to receive(:fetch_and_store_pull_requests)
+      allow(github_service).to receive(:fetch_recent_review_activity).and_return(0)
       allow(repository).to receive(:pull_requests).and_return(PullRequest.where(repository: repository))
     end
     
@@ -140,6 +141,7 @@ RSpec.describe UnifiedSyncService do
     
     it 'updates sync_progress during PR processing' do
       allow(github_service).to receive(:get_pull_request_count).and_return(100)
+      allow(github_service).to receive(:fetch_recent_review_activity).and_return(0)
       
       # Capture the processor and simulate PR processing
       processor = nil

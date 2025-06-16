@@ -62,12 +62,20 @@ class UnifiedSyncService
     @total_prs = estimate_total_prs(github_service)
     log_progress("Estimated #{@total_prs} pull requests to process")
     
-    # Fetch PRs with our custom processor
+    # Step 1: Fetch PRs with our custom processor
     github_service.fetch_and_store_pull_requests(
       @repo_name,
       fetch_all: @fetch_all,
       processor: method(:process_pull_request)
     )
+    
+    # Step 2: Fetch recent review activity (only for incremental sync)
+    # This catches PRs that got new reviews but weren't updated themselves
+    unless @fetch_all
+      log_progress("Fetching recent review activity...")
+      review_comments_processed = github_service.fetch_recent_review_activity(@repo_name)
+      log_progress("Processed #{review_comments_processed} recent review comments")
+    end
   end
   
   def process_pull_request(pr_data)
@@ -107,7 +115,7 @@ class UnifiedSyncService
     ].compact.uniq
     
     weeks.each do |week|
-      if week.created_at >= 1.minute.ago
+      if week.created_at >= 1.minute.ago && !@created_weeks.include?(week)
         @created_weeks << week
         log_progress("Created week #{week.begin_date.strftime('%Y-%m-%d')} (CT)")
       end
