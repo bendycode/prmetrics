@@ -86,9 +86,9 @@ class DashboardController < ApplicationController
         begin_date: weeks_for_date.first.begin_date,
         end_date: weeks_for_date.first.end_date,
         week_number: weeks_for_date.first.week_number,
-        num_prs_started: weeks_for_date.sum(&:num_prs_started),
-        num_prs_merged: weeks_for_date.sum(&:num_prs_merged),
-        num_prs_cancelled: weeks_for_date.sum(&:num_prs_cancelled),
+        num_prs_started: weeks_for_date.sum { |w| w.num_prs_started || 0 },
+        num_prs_merged: weeks_for_date.sum { |w| w.num_prs_merged || 0 },
+        num_prs_cancelled: weeks_for_date.sum { |w| w.num_prs_cancelled || 0 },
         avg_hrs_to_first_review: calculate_weighted_avg(weeks_for_date, :avg_hrs_to_first_review, :num_prs_started),
         avg_hrs_to_merge: calculate_weighted_avg(weeks_for_date, :avg_hrs_to_merge, :num_prs_merged)
       )
