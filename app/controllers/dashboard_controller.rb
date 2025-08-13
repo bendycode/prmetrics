@@ -64,7 +64,7 @@ class DashboardController < ApplicationController
       
       {
         name: repo.name,
-        total_prs: recent_weeks.sum(&:num_prs_started),
+        total_prs: recent_weeks.sum { |w| w.num_prs_started || 0 },
         avg_review_time: review_times.empty? ? 0 : (review_times.sum / review_times.count).round(1),
         avg_merge_time: merge_times.empty? ? 0 : (merge_times.sum / merge_times.count).round(1),
         merge_rate: calculate_merge_rate(recent_weeks)
@@ -73,8 +73,8 @@ class DashboardController < ApplicationController
   end
 
   def calculate_merge_rate(weeks)
-    total_started = weeks.sum(&:num_prs_started)
-    total_merged = weeks.sum(&:num_prs_merged)
+    total_started = weeks.sum { |w| w.num_prs_started || 0 }
+    total_merged = weeks.sum { |w| w.num_prs_merged || 0 }
     return 0 if total_started == 0
     ((total_merged.to_f / total_started) * 100).round(1)
   end

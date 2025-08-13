@@ -43,5 +43,46 @@ RSpec.describe DashboardController, type: :controller do
         expect(chart_weeks).not_to include(week2)
       end
     end
+    
+    context "with nil values in week records" do
+      let!(:repo_with_nils) { create(:repository, name: 'test/nil-values') }
+      let!(:week_with_nils) { create(:week, repository: repo_with_nils, begin_date: 1.week.ago, 
+                                     num_prs_started: nil, num_prs_merged: nil, num_prs_cancelled: nil) }
+      let!(:normal_week) { create(:week, repository: repo_with_nils, begin_date: 2.weeks.ago,
+                                  num_prs_started: 5, num_prs_merged: 3, num_prs_cancelled: 1) }
+      
+      it "handles nil values without crashing" do
+        expect {
+          get :index, params: { repository_id: repo_with_nils.id }
+        }.not_to raise_error
+        expect(response).to have_http_status(:success)
+      end
+      
+      it "treats nil values as zero in aggregations" do
+        get :index, params: { repository_id: repo_with_nils.id }
+        
+        # Should not crash and should handle nils as zeros
+        expect(response).to have_http_status(:success)
+        
+        # Repository stats should handle nils properly
+        repo_stats = assigns(:repository_stats)
+        test_repo_stat = repo_stats.find { |stat| stat[:name] == 'test/nil-values' }
+        expect(test_repo_stat[:total_prs]).to eq(5) # Only the normal week's value
+      end
+      
+      it "handles all nil weeks without crashing" do
+        # Create a repository with only nil weeks
+        all_nil_repo = create(:repository, name: 'test/all-nils')
+        create(:week, repository: all_nil_repo, begin_date: 1.week.ago,
+               num_prs_started: nil, num_prs_merged: nil, num_prs_cancelled: nil)
+        create(:week, repository: all_nil_repo, begin_date: 2.weeks.ago,
+               num_prs_started: nil, num_prs_merged: nil, num_prs_cancelled: nil)
+        
+        expect {
+          get :index, params: { repository_id: all_nil_repo.id }
+        }.not_to raise_error
+        expect(response).to have_http_status(:success)
+      end
+    end
   end
 end
