@@ -140,6 +140,10 @@ This document outlines future development plans for prmetrics. For completed wor
   - Set up cron jobs to sync all repositories automatically
   - Ensure consistent data freshness without manual intervention
   - Configure appropriate scheduling to avoid GitHub rate limits
+- **Add rubocop to our default rake tasks**
+  - Include rubocop linting in the standard rake task
+  - Ensure code style checks run automatically with tests
+  - Fix asdf environment issues preventing rubocop execution
 - Suppress autoprefixer warnings in test output
   - Remove color-adjust deprecation warnings from rake/rspec runs
   - Options: Update SB Admin 2 theme, patch CSS files, or configure autoprefixer
