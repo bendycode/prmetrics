@@ -58,6 +58,8 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
       it 'queues next page when batch is full' do
         full_batch = Array.new(100) { pr_data.first }
         allow(client).to receive(:pull_requests).and_return(full_batch)
+        allow(client).to receive(:issue_events).and_return([])
+        allow(client).to receive(:pull_request_reviews).and_return([])
         
         expect(SyncRepositoryBatchJob).to receive(:perform_later).with(
           repository.name, 
@@ -117,6 +119,8 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
         }
         
         allow(client).to receive(:pull_requests).and_return([old_pr])
+        allow(client).to receive(:issue_events).and_return([])
+        allow(client).to receive(:pull_request_reviews).and_return([])
         
         # Should not queue next page
         expect(SyncRepositoryBatchJob).not_to receive(:perform_later)

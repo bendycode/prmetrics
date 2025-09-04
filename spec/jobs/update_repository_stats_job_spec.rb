@@ -43,7 +43,7 @@ RSpec.describe UpdateRepositoryStatsJob, type: :job do
     end
 
     it 'logs completion message' do
-      expect(Rails.logger).to receive(:info).with("Updated stats for #{repository.name}")
+      expect(Rails.logger).to receive(:info).with("Updated stats for #{repository.name} and all related repositories")
       job.perform(repository.id)
     end
 
@@ -62,7 +62,7 @@ RSpec.describe UpdateRepositoryStatsJob, type: :job do
       end
 
       it 'still logs completion' do
-        expect(Rails.logger).to receive(:info).with("Updated stats for #{empty_repository.name}")
+        expect(Rails.logger).to receive(:info).with("Updated stats for #{empty_repository.name} and all related repositories")
         job.perform(empty_repository.id)
       end
     end
