@@ -1,11 +1,7 @@
 # SimpleCov configuration - must be at the very top
 require 'simplecov'
-require 'simplecov-console'
 
-SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-  SimpleCov::Formatter::HTMLFormatter,
-  SimpleCov::Formatter::Console
-])
+SimpleCov.formatter = SimpleCov::Formatter::HTMLFormatter
 
 SimpleCov.start 'rails' do
   add_filter '/spec/'
