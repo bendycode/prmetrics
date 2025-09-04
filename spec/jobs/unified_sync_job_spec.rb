@@ -44,8 +44,25 @@ RSpec.describe UnifiedSyncJob, type: :job do
       job = described_class.new(repo_name)
       expect(job.logger).to receive(:info).with(/Starting unified sync/)
       expect(job.logger).to receive(:info).with(/Unified sync completed/)
-      
+
       job.perform(repo_name)
+    end
+
+    it 'provides progress callback that logs with UnifiedSync prefix' do
+      callback_captured = nil
+
+      allow(UnifiedSyncService).to receive(:new) do |*args|
+        options = args.last
+        callback_captured = options[:progress_callback]
+        service
+      end
+
+      job = described_class.new(repo_name)
+      job.perform(repo_name)
+
+      # Test that the callback logs with the expected prefix
+      expect(job.logger).to receive(:info).with("[UnifiedSync] Test progress message")
+      callback_captured.call("Test progress message") if callback_captured
     end
   end
   

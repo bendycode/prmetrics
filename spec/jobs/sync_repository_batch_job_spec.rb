@@ -404,6 +404,42 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
       backoff_time = job.send(:exponential_backoff_starting_at_one_minute, 2)
       expect(backoff_time).to eq(240)  # 60 * (2 ** 2)
     end
+
+    it 'handles large retry counts' do
+      backoff_time = job.send(:exponential_backoff_starting_at_one_minute, 3)
+      expect(backoff_time).to eq(480)  # 60 * (2 ** 3)
+    end
+  end
+
+  describe 'error edge cases' do
+    let(:job) { described_class.new }
+    let(:repository) { create(:repository, name: 'rails/rails') }
+
+    it 'handles process_single_pull_request with minimal pr_data' do
+      minimal_pr_data = {
+        number: 999,
+        title: 'Minimal PR',
+        state: 'open',
+        draft: false,
+        created_at: 1.day.ago,
+        updated_at: 1.day.ago,
+        closed_at: nil,
+        merged_at: nil,
+        user: { id: 123, login: 'testuser', name: 'Test User', avatar_url: 'http://avatar.url' }
+      }
+
+      allow(client).to receive(:issue_events).and_return([])
+      allow(client).to receive(:pull_request_reviews).and_return([])
+
+      expect {
+        job.send(:process_single_pull_request, repository, minimal_pr_data)
+      }.to change { repository.pull_requests.count }.by(1)
+
+      pr = repository.pull_requests.last
+      expect(pr.number).to eq(999)
+      expect(pr.author.username).to eq('testuser')
+    end
+
   end
 
   describe 'integration with process_single_pull_request' do
