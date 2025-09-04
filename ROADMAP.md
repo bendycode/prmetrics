@@ -132,6 +132,14 @@ This document outlines future development plans for prmetrics. For completed wor
   - Updated Gemfile, .ruby-version, Dockerfile
   - Tested compatibility with all gems and Rails 7.1.4
   - All tests passing (312 examples, 0 failures)
+- **Fix UI sync state bug**
+  - Repository sync buttons remain disabled after sync completion/failure
+  - Clear sync status flags when background jobs finish
+  - Prevent UI from showing "in progress" when no Sidekiq jobs are running
+- **Implement automated nightly sync jobs**
+  - Set up cron jobs to sync all repositories automatically
+  - Ensure consistent data freshness without manual intervention
+  - Configure appropriate scheduling to avoid GitHub rate limits
 - Suppress autoprefixer warnings in test output
   - Remove color-adjust deprecation warnings from rake/rspec runs
   - Options: Update SB Admin 2 theme, patch CSS files, or configure autoprefixer
