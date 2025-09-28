@@ -4,59 +4,54 @@ RSpec.describe 'Dashboard Approved PRs Chart', type: :system, js: true do
   let(:admin) { create(:admin) }
   let(:repository) { create(:repository, name: 'test/repo') }
 
-  before do
-    sign_in admin
+  before { sign_in admin }
+
+  shared_examples 'displays approved PRs in chart' do
+    it 'includes PRs Approved dataset in chart legend and data' do
+      expect(page).to have_content('PR Velocity Trends')
+      expect(page).to have_css('canvas#prVelocityChart')
+      expect(page.html).to include('PRs Approved')
+    end
   end
 
   describe 'PR Velocity Trends chart with approved PRs' do
     context 'with approved PRs data' do
-      let!(:week1) { create(:week, repository: repository, week_number: 202401, begin_date: Date.new(2024, 1, 8), end_date: Date.new(2024, 1, 14)) }
-      let!(:week2) { create(:week, repository: repository, week_number: 202402, begin_date: Date.new(2024, 1, 15), end_date: Date.new(2024, 1, 21)) }
+      let!(:weeks) { create_list(:week, 2, repository: repository).tap do |weeks|
+        weeks[0].update!(week_number: 202401, begin_date: Date.new(2024, 1, 8), end_date: Date.new(2024, 1, 14))
+        weeks[1].update!(week_number: 202402, begin_date: Date.new(2024, 1, 15), end_date: Date.new(2024, 1, 21))
+      end }
 
-      let!(:approved_pr_week1) { create(:pull_request, :approved, repository: repository, gh_created_at: week1.begin_date) }
-      let!(:approved_pr_week2_a) { create(:pull_request, :approved, repository: repository, gh_created_at: week2.begin_date) }
-      let!(:approved_pr_week2_b) { create(:pull_request, :approved, repository: repository, gh_created_at: week2.begin_date) }
-      let!(:unapproved_pr) { create(:pull_request, :with_comments, repository: repository, gh_created_at: week1.begin_date) }
-
-      it 'displays approved PRs dataset in chart legend' do
-        visit root_path
-
-        expect(page).to have_content('PR Velocity Trends')
-        # Check that PRs Approved is in the JavaScript chart configuration
-        expect(page.html).to include('PRs Approved')
+      before do
+        # Create test data: 1 approved PR in week1, 2 approved PRs in week2, 1 unapproved
+        create(:pull_request, :approved, repository: repository, gh_created_at: weeks[0].begin_date)
+        create_list(:pull_request, 2, :approved, repository: repository, gh_created_at: weeks[1].begin_date)
+        create(:pull_request, :with_comments, repository: repository, gh_created_at: weeks[0].begin_date)
       end
 
-      it 'includes approved PR data in chart datasets' do
-        visit root_path
-
-        # Check that the chart canvas exists
-        expect(page).to have_css('canvas#prVelocityChart')
-
-        # The JavaScript should include approved data
-        # We expect 1 approved PR in week1 and 2 approved PRs in week2
-        page_content = page.html
-        expect(page_content).to include('PRs Approved')
+      describe 'dashboard view' do
+        before { visit root_path }
+        include_examples 'displays approved PRs in chart'
       end
 
-      it 'shows correct approved counts when filtering by repository' do
-        visit dashboard_path(repository_id: repository.id)
+      describe 'repository filtered view' do
+        before { visit dashboard_path(repository_id: repository.id) }
 
-        expect(page).to have_content('PR Velocity Trends')
-        expect(page).to have_content("for #{repository.name}")
-        expect(page.html).to include('PRs Approved')
+        include_examples 'displays approved PRs in chart'
+
+        it 'shows repository-specific context' do
+          expect(page).to have_content("for #{repository.name}")
+        end
       end
     end
 
     context 'with no approved PRs' do
-      let!(:week) { create(:week, repository: repository, week_number: 202401, begin_date: Date.new(2024, 1, 8), end_date: Date.new(2024, 1, 14)) }
-      let!(:unapproved_pr) { create(:pull_request, :with_comments, repository: repository, gh_created_at: week.begin_date) }
-
-      it 'still shows approved PRs dataset with zero data' do
+      before do
+        create(:week, repository: repository, week_number: 202401, begin_date: Date.new(2024, 1, 8), end_date: Date.new(2024, 1, 14))
+        create(:pull_request, :with_comments, repository: repository, gh_created_at: Date.new(2024, 1, 8))
         visit root_path
-
-        expect(page).to have_content('PR Velocity Trends')
-        expect(page.html).to include('PRs Approved')
       end
+
+      include_examples 'displays approved PRs in chart'
     end
   end
 end

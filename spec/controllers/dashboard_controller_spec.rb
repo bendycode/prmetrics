@@ -35,7 +35,7 @@ RSpec.describe DashboardController, type: :controller do
         get :index, params: { repository_id: repo1.id }
         expect(assigns(:selected_repository_id)).to eq(repo1.id.to_s)
       end
-      
+
       it "shows filtered week data" do
         get :index, params: { repository_id: repo1.id }
         chart_weeks = assigns(:chart_weeks)
@@ -86,48 +86,39 @@ RSpec.describe DashboardController, type: :controller do
     end
 
     context "approved PRs aggregation" do
-      let!(:repo1) { create(:repository, name: 'test/repo1') }
-      let!(:repo2) { create(:repository, name: 'test/repo2') }
-      let!(:week_date) { Date.new(2024, 1, 8) }
-      let!(:week1_repo1) { create(:week, repository: repo1, begin_date: week_date, week_number: 202402) }
-      let!(:week1_repo2) { create(:week, repository: repo2, begin_date: week_date, week_number: 202402) }
+      let(:week_date) { Date.new(2024, 1, 8) }
+      let!(:repos) { create_list(:repository, 2) }
+      let!(:weeks) do
+        repos.map { |repo| create(:week, repository: repo, begin_date: week_date, week_number: 202402) }
+      end
 
       before do
-        # Create approved PRs for aggregation testing
-        create(:pull_request, :approved, repository: repo1, gh_created_at: week_date)
-        create(:pull_request, :approved, repository: repo1, gh_created_at: week_date)
-        create(:pull_request, :approved, repository: repo2, gh_created_at: week_date)
-        create(:pull_request, :with_comments, repository: repo1, gh_created_at: week_date) # unapproved
+        # Create approved PRs: 2 from first repo, 1 from second repo, plus 1 unapproved
+        create_list(:pull_request, 2, :approved, repository: repos[0], gh_created_at: week_date)
+        create(:pull_request, :approved, repository: repos[1], gh_created_at: week_date)
+        create(:pull_request, :with_comments, repository: repos[0], gh_created_at: week_date)
       end
 
       it "aggregates approved PRs from multiple repositories" do
         get :index
-        chart_weeks = assigns(:chart_weeks)
 
-        # Find the aggregated week for our test date
-        aggregated_week = chart_weeks.find { |w| w.begin_date == week_date }
+        aggregated_week = assigns(:chart_weeks).find { |w| w.begin_date == week_date }
         expect(aggregated_week).to be_present
-        expect(aggregated_week.num_prs_approved).to eq(3) # 2 from repo1 + 1 from repo2
+        expect(aggregated_week.num_prs_approved).to eq(3)
       end
 
-      it "handles nil values in approved aggregation" do
-        # Create weeks with mixed approved/nil scenarios
-        nil_week = create(:week, repository: repo1, begin_date: 2.weeks.ago, week_number: 202350)
-
+      it "handles nil values gracefully in approved aggregation" do
         allow_any_instance_of(Week).to receive(:num_prs_approved).and_return(nil)
 
-        expect {
-          get :index
-        }.not_to raise_error
-        expect(response).to have_http_status(:success)
+        expect { get :index }.not_to raise_error
+        expect(response).to be_successful
       end
 
-      it "includes num_prs_approved method on aggregated weeks" do
+      it "ensures aggregated weeks respond to num_prs_approved" do
         get :index
-        chart_weeks = assigns(:chart_weeks)
 
-        aggregated_week = chart_weeks.first
-        expect(aggregated_week).to respond_to(:num_prs_approved)
+        chart_weeks = assigns(:chart_weeks)
+        expect(chart_weeks).to all(respond_to(:num_prs_approved))
       end
     end
   end
