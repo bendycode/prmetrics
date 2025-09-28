@@ -1,0 +1,193 @@
+require 'rails_helper'
+
+RSpec.describe 'User Role Authorization', type: :system, js: true do
+  # These specs test the core authorization patterns we'll implement
+  # They will fail initially and pass as we build the role system
+
+  describe 'Admin user access' do
+    let(:admin_user) { create(:user, role: :admin) }
+
+    before do
+      sign_in admin_user
+    end
+
+    it 'can access all repository management functions' do
+      visit repositories_path
+
+      # Admin should see add repository button
+      expect(page).to have_link('Add Repository')
+
+      # Admin should see delete buttons for repositories (when they exist)
+      # This will be tested more thoroughly when we have test repositories
+    end
+
+    it 'can access admin management section' do
+      visit root_path
+
+      # Admin should see ADMINISTRATION section in sidebar
+      expect(page).to have_content('Administration')
+      expect(page).to have_link('Admins')
+
+      # Admin should be able to access admin management
+      click_link 'Admins'
+      expect(page).to have_current_path(admins_path)
+      expect(page).to have_content('Admin Management')
+    end
+
+    it 'can invite new users' do
+      visit admins_path
+
+      # Admin should see invite button and role selection
+      expect(page).to have_link('Invite New Admin')
+
+      click_link 'Invite New Admin'
+      expect(page).to have_content('Admin')
+      expect(page).to have_field('admin_role_admin', type: 'checkbox')
+    end
+
+    it 'can access Sidekiq dashboard' do
+      visit repositories_path
+
+      # Admin should see Sidekiq link
+      expect(page).to have_link('Sidekiq Dashboard')
+    end
+  end
+
+  describe 'Regular user access' do
+    let(:regular_user) { create(:user, role: :regular_user) }
+
+    before do
+      sign_in regular_user
+    end
+
+    it 'can view repositories but not modify them' do
+      visit repositories_path
+
+      # Regular user should NOT see add repository button
+      expect(page).not_to have_link('Add Repository')
+
+      # Regular user should NOT see delete buttons for repositories
+      # This will be tested more thoroughly when we have test repositories
+    end
+
+    it 'cannot access admin management section' do
+      visit root_path
+
+      # Regular user should NOT see ADMINISTRATION section in sidebar
+      expect(page).not_to have_content('Administration')
+      expect(page).not_to have_link('Admins')
+    end
+
+    it 'cannot directly access admin management' do
+      # Regular user should be redirected or see 403 when trying direct access
+      visit admins_path
+
+      # Should be redirected away from admin management
+      expect(page).not_to have_content('Admin Management')
+      # Will implement proper 403/redirect behavior with Pundit
+    end
+
+    it 'cannot access Sidekiq dashboard' do
+      visit repositories_path
+
+      # Regular user should NOT see Sidekiq link
+      expect(page).not_to have_link('Sidekiq Dashboard')
+    end
+
+    it 'can view all data and metrics' do
+      visit root_path
+
+      # Regular user should see dashboard
+      expect(page).to have_content('Dashboard')
+
+      # Regular user should see repositories (read-only)
+      expect(page).to have_link('Repositories')
+
+      # Regular user should see contributors
+      expect(page).to have_link('Contributors')
+    end
+  end
+
+  describe 'Invitation system with roles' do
+    let(:admin_user) { create(:user, role: :admin) }
+
+    before do
+      sign_in admin_user
+    end
+
+    it 'allows admin to invite regular users' do
+      visit new_admin_path
+
+      # Should have email field
+      expect(page).to have_field('Email')
+
+      # Should have Admin checkbox (unchecked by default for regular users)
+      expect(page).to have_field('admin_role_admin', type: 'checkbox', checked: false)
+
+      # Fill out form for regular user
+      fill_in 'Email', with: 'regular@example.com'
+      # Leave Admin checkbox unchecked
+
+      click_button 'Send Invitation'
+
+      # Should create regular user
+      expect(page).to have_content('regular@example.com')
+      # User should be regular_user role by default
+    end
+
+    it 'allows admin to invite admin users' do
+      visit new_admin_path
+
+      # Fill out form for admin user
+      fill_in 'Email', with: 'newadmin@example.com'
+      check 'Admin' # Check the admin checkbox
+
+      click_button 'Send Invitation'
+
+      # Should create admin user
+      expect(page).to have_content('newadmin@example.com')
+      # User should have admin role
+    end
+  end
+
+  describe 'User dropdown and authentication' do
+    it 'shows current user email for both admin and regular users' do
+      admin_user = create(:user, role: :admin, email: 'admin@test.com')
+      sign_in admin_user
+
+      visit root_path
+      expect(page).to have_content('admin@test.com')
+
+      sign_out admin_user
+
+      regular_user = create(:user, role: :regular_user, email: 'user@test.com')
+      sign_in regular_user
+
+      visit root_path
+      expect(page).to have_content('user@test.com')
+    end
+  end
+
+  describe 'Authorization edge cases' do
+    let(:regular_user) { create(:user, role: :regular_user) }
+
+    before do
+      sign_in regular_user
+    end
+
+    it 'prevents regular users from accessing admin-only routes via direct URL' do
+      # Test various admin-only routes
+      admin_only_paths = [
+        new_repository_path,
+        new_admin_path
+      ]
+
+      admin_only_paths.each do |path|
+        visit path
+        # Should be redirected or see authorization error
+        expect(page).not_to have_content('Add Repository')
+        expect(page).not_to have_content('Invite New Admin')
+      end
+    end
+  end
+end
