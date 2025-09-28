@@ -41,6 +41,9 @@ gem "sidekiq", "~> 7.0"
 gem "devise", "~> 4.9"
 gem "devise_invitable", "~> 2.0"
 
+# Authorization
+gem "pundit"
+
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
