@@ -22,6 +22,8 @@ class WeeksController < ApplicationController
              @week.open_prs.includes(:author, :reviews)
            when 'first_reviewed'
              @week.first_review_prs.includes(:author, :reviews)
+           when 'approved'
+             @week.approved_prs.includes(:author, :reviews)
            when 'merged'
              @week.merged_prs.includes(:author, :reviews)
            when 'cancelled'

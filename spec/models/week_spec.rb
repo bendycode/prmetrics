@@ -350,6 +350,30 @@ RSpec.describe Week, type: :model do
         end
       end
 
+      describe '#approved_prs' do
+        let!(:approved_pr) { create(:pull_request, repository: repository, gh_created_at: current_week.begin_date) }
+        let!(:unapproved_pr) { create(:pull_request, repository: repository, gh_created_at: current_week.begin_date) }
+        let!(:draft_approved_pr) { create(:pull_request, repository: repository, draft: true, gh_created_at: current_week.begin_date) }
+
+        before do
+          create(:review, pull_request: approved_pr)  # defaults to 'approved' state
+          create(:review, pull_request: unapproved_pr, state: 'COMMENTED')
+          create(:review, pull_request: draft_approved_pr)  # approved but draft PR
+        end
+
+        it 'returns non-draft PRs with approved reviews that were open during the week' do
+          expect(current_week.approved_prs).to include(approved_pr)
+          expect(current_week.approved_prs).not_to include(unapproved_pr)
+          expect(current_week.approved_prs).not_to include(draft_approved_pr)
+        end
+
+        it 'handles PRs with multiple reviews correctly' do
+          create(:review, pull_request: approved_pr, state: 'COMMENTED')
+
+          expect(current_week.approved_prs).to include(approved_pr)
+        end
+      end
+
       describe '#started_prs' do
         let!(:pr_in_week) { create(:pull_request, repository: repository, gh_created_at: current_week.begin_date + 1.day) }
         let!(:pr_before_week) { create(:pull_request, repository: repository, gh_created_at: current_week.begin_date - 1.day) }

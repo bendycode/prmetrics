@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :review do
     pull_request
-    state { "approved" }
+    state { "APPROVED" }
     submitted_at { Time.current }
     author { create :user }
   end
