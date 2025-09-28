@@ -11,10 +11,11 @@ This document outlines future development plans for prmetrics. For completed wor
    - Implement more robust incremental sync logic
    - Add validation for sync completeness
 
-2. **Integrate StandardRB**
-   - Add StandardRB gem for consistent code style
-   - Configure as default rake task
-   - Run initial code standardization
+2. **Integrate Linting (StandardRB or RuboCop)**
+   - Evaluate and choose between StandardRB or RuboCop for consistent code style
+   - Add chosen linter gem and configure as default rake task
+   - Run initial code standardization across entire codebase
+   - Ensure linting passes in CI/CD pipeline
 
 3. **Add Rails Best Practices**
    - Integrate rails_best_practices gem
@@ -66,6 +67,29 @@ This document outlines future development plans for prmetrics. For completed wor
    - Custom date range filtering
    - Export to CSV/PDF
    - Scheduled email reports
+
+4. **Median Review Metrics Enhancement**
+   - **Add median calculations to Week model**
+     - Calculate median hours to first review (complement to existing average)
+     - Calculate median hours to merge (complement to existing average)
+     - Cache median values in database following established caching pattern
+
+   - **Enhance week show page with median data**
+     - Display both average and median review metrics
+     - Allow user to toggle between showing average-only, median-only, or both simultaneously
+     - Clear labeling to distinguish between average and median values
+
+   - **Upgrade dashboard "Review Performance" chart**
+     - Add median datasets to complement existing average lines
+     - Implement user toggle controls for avg/median/both display modes
+     - Maintain visual consistency with established chart styling patterns
+     - Consider dual-axis if both metrics are shown simultaneously
+
+   - **UI/UX considerations**
+     - Decide on default view (average-only for consistency vs both for completeness)
+     - Design clear toggle interface that doesn't clutter existing layouts
+     - Add tooltips explaining difference between average vs median metrics
+     - Ensure responsive design works with additional chart complexity
 
 ### Phase 4: Performance & Scale (3-6 months)
 
