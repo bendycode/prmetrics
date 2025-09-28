@@ -11,6 +11,7 @@ RSpec.describe 'sync:repository rake task' do
     Rake::Task['sync:repository'].reenable
     Rake::Task['sync:status'].reenable
     Rake::Task['sync:list'].reenable
+    Rake::Task['sync:all_repositories'].reenable
     allow(ENV).to receive(:[]).and_call_original
     allow(ENV).to receive(:[]).with('GITHUB_ACCESS_TOKEN').and_return('test_token')
   end
@@ -111,7 +112,75 @@ RSpec.describe 'sync:repository rake task' do
       expect { Rake::Task['sync:list'].invoke }.to output(/No repositories found/).to_stdout.and raise_error(SystemExit)
     end
   end
-  
+
+  describe 'sync:all_repositories' do
+    let(:service1) { instance_double(UnifiedSyncService) }
+    let(:service2) { instance_double(UnifiedSyncService) }
+    let!(:repo1) { create(:repository, name: 'rails/rails') }
+    let!(:repo2) { create(:repository, name: 'ruby/ruby') }
+
+    context 'with valid setup' do
+      it 'syncs all repositories successfully' do
+        expect(UnifiedSyncService).to receive(:new).with('rails/rails', fetch_all: false).and_return(service1)
+        expect(service1).to receive(:sync!)
+        expect(UnifiedSyncService).to receive(:new).with('ruby/ruby', fetch_all: false).and_return(service2)
+        expect(service2).to receive(:sync!)
+
+        output = capture_stdout { Rake::Task['sync:all_repositories'].invoke }
+
+        expect(output).to include('Starting sync for all repositories')
+        expect(output).to include('Repositories to sync: 2')
+        expect(output).to include('Syncing rails/rails')
+        expect(output).to include('Syncing ruby/ruby')
+        expect(output).to include('All repositories synced successfully!')
+        expect(output).to include('Successful: 2')
+        expect(output).to include('Failed: 0')
+      end
+
+      it 'respects FETCH_ALL environment variable' do
+        allow(ENV).to receive(:[]).with('FETCH_ALL').and_return('true')
+        expect(UnifiedSyncService).to receive(:new).with('rails/rails', fetch_all: true).and_return(service1)
+        expect(service1).to receive(:sync!)
+        expect(UnifiedSyncService).to receive(:new).with('ruby/ruby', fetch_all: true).and_return(service2)
+        expect(service2).to receive(:sync!)
+
+        output = capture_stdout { Rake::Task['sync:all_repositories'].invoke }
+
+        expect(output).to include('Full sync (all PRs)')
+      end
+
+      it 'continues processing other repositories when one fails' do
+        expect(UnifiedSyncService).to receive(:new).with('rails/rails', fetch_all: false).and_return(service1)
+        expect(service1).to receive(:sync!).and_raise(StandardError.new('API error'))
+        expect(UnifiedSyncService).to receive(:new).with('ruby/ruby', fetch_all: false).and_return(service2)
+        expect(service2).to receive(:sync!)
+
+        expect(Rails.logger).to receive(:error).with(/Sync failed for rails\/rails: API error/)
+        expect(Rails.logger).to receive(:error).with(String)
+
+        expect {
+          capture_stdout { Rake::Task['sync:all_repositories'].invoke }
+        }.to raise_error(SystemExit)
+      end
+    end
+
+    context 'with no repositories' do
+      it 'exits gracefully when no repositories exist' do
+        Repository.destroy_all
+
+        expect { Rake::Task['sync:all_repositories'].invoke }.to output(/No repositories found to sync/).to_stdout.and raise_error(SystemExit)
+      end
+    end
+
+    context 'without GitHub token' do
+      it 'shows error when GITHUB_ACCESS_TOKEN is not set' do
+        allow(ENV).to receive(:[]).with('GITHUB_ACCESS_TOKEN').and_return(nil)
+
+        expect { Rake::Task['sync:all_repositories'].invoke }.to output(/GITHUB_ACCESS_TOKEN environment variable is not set/).to_stdout.and raise_error(SystemExit)
+      end
+    end
+  end
+
   private
   
   def capture_stdout

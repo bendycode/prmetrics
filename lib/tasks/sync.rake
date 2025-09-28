@@ -132,25 +132,96 @@ namespace :sync do
   desc "List all repositories and their sync status"
   task list: :environment do
     repositories = Repository.order(:name)
-    
+
     if repositories.empty?
       puts "No repositories found"
       exit 0
     end
-    
+
     puts "%-40s %-15s %-20s %-10s" % ["Repository", "Status", "Last Sync", "Progress"]
     puts "-" * 90
-    
+
     repositories.each do |repo|
       last_sync = repo.sync_completed_at ? repo.sync_completed_at.strftime('%Y-%m-%d %H:%M') : 'Never'
       progress = repo.sync_status == 'in_progress' ? "#{repo.sync_progress || 0}%" : '-'
-      
+
       puts "%-40s %-15s %-20s %-10s" % [
         repo.name,
         repo.sync_status || 'never synced',
         last_sync,
         progress
       ]
+    end
+  end
+
+  desc "Sync all repositories with incremental updates (for nightly cron jobs)"
+  task all_repositories: :environment do
+    unless ENV['GITHUB_ACCESS_TOKEN']
+      puts "Error: GITHUB_ACCESS_TOKEN environment variable is not set"
+      puts "Please set your GitHub personal access token:"
+      puts "  export GITHUB_ACCESS_TOKEN=your_token_here"
+      exit 1
+    end
+
+    fetch_all = ENV['FETCH_ALL'] == 'true'
+    repositories = Repository.order(:name)
+
+    if repositories.empty?
+      puts "No repositories found to sync"
+      exit 0
+    end
+
+    puts "Starting sync for all repositories"
+    puts "Mode: #{fetch_all ? 'Full sync (all PRs)' : 'Incremental sync (recent updates only)'}"
+    puts "Repositories to sync: #{repositories.count}"
+    puts "=" * 80
+
+    total_repos = repositories.count
+    success_count = 0
+    error_count = 0
+    start_time = Time.current
+
+    repositories.each_with_index do |repository, index|
+      repo_start_time = Time.current
+
+      puts "\n[#{index + 1}/#{total_repos}] Syncing #{repository.name}..."
+
+      begin
+        service = UnifiedSyncService.new(repository.name, fetch_all: fetch_all)
+        service.sync!
+
+        repo_duration = Time.current - repo_start_time
+        success_count += 1
+
+        puts "  ✓ Completed #{repository.name} in #{repo_duration.round(2)}s"
+
+      rescue => e
+        repo_duration = Time.current - repo_start_time
+        error_count += 1
+
+        puts "  ✗ Failed #{repository.name} after #{repo_duration.round(2)}s: #{e.message}"
+        Rails.logger.error "Sync failed for #{repository.name}: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
+
+        # Continue with next repository instead of exiting
+      end
+    end
+
+    total_duration = Time.current - start_time
+
+    puts "\n" + "=" * 80
+    puts "Sync Summary:"
+    puts "  Total repositories: #{total_repos}"
+    puts "  Successful: #{success_count}"
+    puts "  Failed: #{error_count}"
+    puts "  Total time: #{total_duration.round(2)}s"
+    puts "  Average time per repo: #{(total_duration / total_repos).round(2)}s"
+
+    if error_count > 0
+      puts "\nWarning: #{error_count} repositories failed to sync. Check logs for details."
+      exit 1
+    else
+      puts "\nAll repositories synced successfully!"
     end
   end
 end
