@@ -82,7 +82,7 @@ class DashboardController < ApplicationController
   def aggregate_weeks_data(grouped_weeks)
     grouped_weeks.map do |weeks_for_date|
       # Aggregate data from all repositories for this week
-      Week.new(
+      aggregated_week = Week.new(
         begin_date: weeks_for_date.first.begin_date,
         end_date: weeks_for_date.first.end_date,
         week_number: weeks_for_date.first.week_number,
@@ -92,6 +92,12 @@ class DashboardController < ApplicationController
         avg_hrs_to_first_review: calculate_weighted_avg(weeks_for_date, :avg_hrs_to_first_review, :num_prs_started),
         avg_hrs_to_merge: calculate_weighted_avg(weeks_for_date, :avg_hrs_to_merge, :num_prs_merged)
       )
+
+      # Add computed num_prs_approved as an instance variable since it's not a database column
+      aggregated_approved_count = weeks_for_date.sum { |w| w.num_prs_approved || 0 }
+      aggregated_week.define_singleton_method(:num_prs_approved) { aggregated_approved_count }
+
+      aggregated_week
     end
   end
 
