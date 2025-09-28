@@ -262,6 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fill: true,
                 tension: 0.3
             }, {
+                // Cancelled PRs styled as unfilled line to visually de-emphasize negative metric
                 label: 'PRs Cancelled',
                 data: [<%= @chart_weeks.map(&:num_prs_cancelled).join(', ') %>],
                 borderColor: '#e74a3b',
@@ -270,6 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fill: false,
                 tension: 0.3
             }, {
+                // Approved PRs styled consistently with other positive metrics (filled areas)
                 label: 'PRs Approved',
                 data: [<%= @chart_weeks.map { |w| w.num_prs_approved || 0 }.join(', ') %>],
                 borderColor: '#6f42c1',
