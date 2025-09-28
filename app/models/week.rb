@@ -68,7 +68,7 @@ class Week < ApplicationRecord
   end
 
   def approved_prs
-    open_prs.joins(:reviews).where(reviews: { state: 'APPROVED' }).distinct
+    open_prs.joins(:reviews).merge(Review.approved).distinct
   end
 
   def started_prs

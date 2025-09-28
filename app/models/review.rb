@@ -15,6 +15,7 @@ class Review < ApplicationRecord
   after_destroy :update_pull_request_first_review_week, unless: :skip_week_association_update
 
   scope :ordered, -> { order(submitted_at: :desc) }
+  scope :approved, -> { where(state: 'APPROVED') }
 
   def skip_week_association_update
     @skip_week_association_update || false

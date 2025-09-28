@@ -351,15 +351,9 @@ RSpec.describe Week, type: :model do
       end
 
       describe '#approved_prs' do
-        let!(:approved_pr) { create(:pull_request, repository: repository, gh_created_at: current_week.begin_date) }
-        let!(:unapproved_pr) { create(:pull_request, repository: repository, gh_created_at: current_week.begin_date) }
-        let!(:draft_approved_pr) { create(:pull_request, repository: repository, draft: true, gh_created_at: current_week.begin_date) }
-
-        before do
-          create(:review, pull_request: approved_pr)  # defaults to 'approved' state
-          create(:review, pull_request: unapproved_pr, state: 'COMMENTED')
-          create(:review, pull_request: draft_approved_pr)  # approved but draft PR
-        end
+        let(:approved_pr) { create(:pull_request, :approved, repository: repository, gh_created_at: current_week.begin_date) }
+        let(:unapproved_pr) { create(:pull_request, :with_comments, repository: repository, gh_created_at: current_week.begin_date) }
+        let(:draft_approved_pr) { create(:pull_request, :draft, :approved, repository: repository, gh_created_at: current_week.begin_date) }
 
         it 'returns non-draft PRs with approved reviews that were open during the week' do
           expect(current_week.approved_prs).to include(approved_pr)
@@ -368,7 +362,7 @@ RSpec.describe Week, type: :model do
         end
 
         it 'handles PRs with multiple reviews correctly' do
-          create(:review, pull_request: approved_pr, state: 'COMMENTED')
+          create(:review, :commented, pull_request: approved_pr)
 
           expect(current_week.approved_prs).to include(approved_pr)
         end

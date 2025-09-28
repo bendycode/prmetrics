@@ -18,7 +18,7 @@ SimpleCov.start 'rails' do
   add_group 'Views', 'app/views'
   
   # Set minimum coverage threshold
-  minimum_coverage 78.81
+  minimum_coverage 78.83
 end
 
 # This file is copied to spec/ when you run 'rails generate rspec:install'

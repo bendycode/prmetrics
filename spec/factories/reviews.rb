@@ -3,6 +3,14 @@ FactoryBot.define do
     pull_request
     state { "APPROVED" }
     submitted_at { Time.current }
-    author { create :user }
+    author { association :user }
+
+    trait :commented do
+      state { "COMMENTED" }
+    end
+
+    trait :changes_requested do
+      state { "CHANGES_REQUESTED" }
+    end
   end
 end

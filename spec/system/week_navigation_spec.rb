@@ -10,13 +10,8 @@ RSpec.describe 'Week Navigation', type: :system, js: true do
   end
 
   describe 'approved PRs functionality' do
-    let!(:approved_pr) { create(:pull_request, repository: repository, title: 'Approved Feature', gh_created_at: week.begin_date) }
-    let!(:unapproved_pr) { create(:pull_request, repository: repository, title: 'Unapproved Feature', gh_created_at: week.begin_date) }
-
-    before do
-      create(:review, pull_request: approved_pr)  # defaults to 'approved' state
-      create(:review, pull_request: unapproved_pr, state: 'COMMENTED')
-    end
+    let!(:approved_pr) { create(:pull_request, :approved, repository: repository, title: 'Approved Feature', gh_created_at: week.begin_date) }
+    let!(:unapproved_pr) { create(:pull_request, :with_comments, repository: repository, title: 'Unapproved Feature', gh_created_at: week.begin_date) }
 
     it 'displays approved PR count and allows viewing approved PRs' do
       visit repository_week_path(repository, week)
@@ -48,13 +43,8 @@ RSpec.describe 'Week Navigation', type: :system, js: true do
   end
 
   describe 'integration with other PR categories' do
-    let!(:unapproved_open_pr) { create(:pull_request, repository: repository, title: 'Unapproved Open PR', gh_created_at: week.begin_date) }
-    let!(:approved_open_pr) { create(:pull_request, repository: repository, title: 'Approved Open PR', gh_created_at: week.begin_date) }
-
-    before do
-      create(:review, pull_request: approved_open_pr)
-      create(:review, pull_request: unapproved_open_pr, state: 'COMMENTED')
-    end
+    let!(:unapproved_open_pr) { create(:pull_request, :with_comments, repository: repository, title: 'Unapproved Open PR', gh_created_at: week.begin_date) }
+    let!(:approved_open_pr) { create(:pull_request, :approved, repository: repository, title: 'Approved Open PR', gh_created_at: week.begin_date) }
 
     it 'allows switching between different PR categories' do
       visit repository_week_path(repository, week)
