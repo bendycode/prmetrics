@@ -84,5 +84,51 @@ RSpec.describe DashboardController, type: :controller do
         expect(response).to have_http_status(:success)
       end
     end
+
+    context "approved PRs aggregation" do
+      let!(:repo1) { create(:repository, name: 'test/repo1') }
+      let!(:repo2) { create(:repository, name: 'test/repo2') }
+      let!(:week_date) { Date.new(2024, 1, 8) }
+      let!(:week1_repo1) { create(:week, repository: repo1, begin_date: week_date, week_number: 202402) }
+      let!(:week1_repo2) { create(:week, repository: repo2, begin_date: week_date, week_number: 202402) }
+
+      before do
+        # Create approved PRs for aggregation testing
+        create(:pull_request, :approved, repository: repo1, gh_created_at: week_date)
+        create(:pull_request, :approved, repository: repo1, gh_created_at: week_date)
+        create(:pull_request, :approved, repository: repo2, gh_created_at: week_date)
+        create(:pull_request, :with_comments, repository: repo1, gh_created_at: week_date) # unapproved
+      end
+
+      it "aggregates approved PRs from multiple repositories" do
+        get :index
+        chart_weeks = assigns(:chart_weeks)
+
+        # Find the aggregated week for our test date
+        aggregated_week = chart_weeks.find { |w| w.begin_date == week_date }
+        expect(aggregated_week).to be_present
+        expect(aggregated_week.num_prs_approved).to eq(3) # 2 from repo1 + 1 from repo2
+      end
+
+      it "handles nil values in approved aggregation" do
+        # Create weeks with mixed approved/nil scenarios
+        nil_week = create(:week, repository: repo1, begin_date: 2.weeks.ago, week_number: 202350)
+
+        allow_any_instance_of(Week).to receive(:num_prs_approved).and_return(nil)
+
+        expect {
+          get :index
+        }.not_to raise_error
+        expect(response).to have_http_status(:success)
+      end
+
+      it "includes num_prs_approved method on aggregated weeks" do
+        get :index
+        chart_weeks = assigns(:chart_weeks)
+
+        aggregated_week = chart_weeks.first
+        expect(aggregated_week).to respond_to(:num_prs_approved)
+      end
+    end
   end
 end
