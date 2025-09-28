@@ -29,7 +29,28 @@ This document outlines future development plans for prmetrics. For completed wor
    - Create RateLimiter service
    - Build PullRequestImporter
 
-2. **Implement Query Objects**
+2. **Standardize Database Statistics Caching**
+   - **Add missing cached columns to Week model**
+     - Add `num_prs_approved` column to cache approved PR counts
+     - Start using existing `num_open_prs` column (currently ignored by model methods)
+     - Audit other dynamic calculations that should be cached for performance
+
+   - **Update WeekStatsService for complete caching**
+     - Add `calculate_num_prs_approved` method
+     - Ensure `calculate_open_prs` populates and is used consistently
+     - Verify all Week model cached columns are populated during sync
+
+   - **Migrate dashboard from dynamic to cached calculations**
+     - Update dashboard controller to use cached values exclusively
+     - Remove complex `includes()` optimizations (no longer needed)
+     - Simplify view templates to trust cached data
+
+   - **Establish caching-first pattern for future metrics**
+     - Document that all rake tasks must end with cache refresh
+     - Create guidelines: new metrics should be cached unless real-time required
+     - Rationale: Zero-cost caching since data only changes during controlled sync jobs
+
+3. **Implement Query Objects**
    - WeeklyMetricsQuery
    - PullRequestStatsQuery
    - ReviewerPerformanceQuery
