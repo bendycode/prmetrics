@@ -60,16 +60,27 @@ These are safe to ignore and will be resolved when gems update their DidYouMean 
 
 ### GitHub Data Fetching
 ```bash
-# Fetch pull requests for a repository (incremental)
+# Sync all repositories (incremental, ideal for nightly cron jobs)
+rake sync:all_repositories
+
+# Sync all repositories with full refresh
+rake sync:all_repositories FETCH_ALL=true
+
+# Sync individual repository (incremental)
+rake sync:repository[owner/repo]
+
+# Sync individual repository with full refresh
+rake sync:repository[owner/repo] FETCH_ALL=true
+
+# Check sync status for a repository
+rake sync:status[owner/repo]
+
+# List all repositories and their sync status
+rake sync:list
+
+# Legacy commands (still available)
 rake github:fetch_pull_requests REPO=owner/repo
-
-# Fetch all pull requests (full refresh)
-rake github:fetch_pull_requests REPO=owner/repo FETCH_ALL=true
-
-# Generate week records for all repositories
 rake weeks:generate
-
-# Update week statistics
 rake weeks:update_stats
 ```
 
