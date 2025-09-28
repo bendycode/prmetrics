@@ -71,6 +71,10 @@ class Week < ApplicationRecord
     open_prs.joins(:reviews).merge(Review.approved).distinct
   end
 
+  def num_prs_approved
+    approved_prs.count
+  end
+
   def started_prs
     repository.pull_requests.where(gh_created_at: begin_date.in_time_zone.beginning_of_day..end_date.in_time_zone.end_of_day)
   end
