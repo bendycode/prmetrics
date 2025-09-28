@@ -71,6 +71,8 @@ class Week < ApplicationRecord
     open_prs.joins(:reviews).merge(Review.approved).distinct
   end
 
+  # Returns count of PRs that have received approval but remain unmerged
+  # These are PRs that are still open (not closed/merged) but have at least one approved review
   def num_prs_approved
     approved_prs.count
   end
