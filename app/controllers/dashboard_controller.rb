@@ -95,7 +95,7 @@ class DashboardController < ApplicationController
       )
 
       # Add aggregated approved count as singleton method
-      aggregated_approved_count = weeks_for_date.sum { |w| w.num_prs_approved || 0 }
+      aggregated_approved_count = weeks_for_date.sum(&:num_prs_approved)
       aggregated_week.define_singleton_method(:num_prs_approved) { aggregated_approved_count }
 
       aggregated_week

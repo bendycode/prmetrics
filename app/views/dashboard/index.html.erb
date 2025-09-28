@@ -273,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }, {
                 // Approved PRs styled consistently with other positive metrics (filled areas)
                 label: 'PRs Approved',
-                data: [<%= @chart_weeks.map { |w| w.num_prs_approved || 0 }.join(', ') %>],
+                data: [<%= @chart_weeks.map(&:num_prs_approved).join(', ') %>],
                 borderColor: '#6f42c1',
                 backgroundColor: 'rgba(111, 66, 193, 0.1)',
                 borderWidth: 3,

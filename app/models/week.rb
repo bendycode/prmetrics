@@ -73,8 +73,9 @@ class Week < ApplicationRecord
 
   # Returns count of PRs that have received approval but remain unmerged
   # These are PRs that are still open (not closed/merged) but have at least one approved review
+  # Always returns an integer (never nil)
   def num_prs_approved
-    approved_prs.count
+    approved_prs.count || 0
   end
 
   def started_prs
