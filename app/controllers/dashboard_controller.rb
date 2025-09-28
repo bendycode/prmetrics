@@ -19,12 +19,14 @@ class DashboardController < ApplicationController
     # When filtering by repository, get all weeks; otherwise limit to 12
     if @selected_repository_id.present?
       @chart_weeks = weeks_scope
+                        .includes(repository: {pull_requests: :reviews})
                         .order(begin_date: :asc)
                         .last(12)
     else
       # For all repositories, group by week and aggregate
+      # Preload associations needed for approved_prs calculation
       @chart_weeks = aggregate_weeks_data(
-        Week.includes(:repository)
+        Week.includes(repository: {pull_requests: :reviews})
             .order(begin_date: :desc)
             .group_by(&:begin_date)
             .values
