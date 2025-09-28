@@ -193,8 +193,38 @@ These Claude Code features are particularly useful for prmetrics development:
 
 ## Production Deployment
 
-### Heroku Scheduler Setup for Nightly Sync
-To enable automatic nightly syncing of all repositories on Heroku:
+### GitHub Actions for Nightly Sync (Recommended - Free!)
+To enable automatic nightly syncing using GitHub Actions (saves $25/month vs Heroku Scheduler):
+
+#### 1. GitHub Secrets Setup
+1. Get Heroku API token: `heroku authorizations:create --description "GitHub Actions Sync"`
+2. Go to GitHub repository → Settings → Secrets and variables → Actions
+3. Add secret:
+   - **Name**: `HEROKU_API_KEY`
+   - **Value**: Your Heroku API token
+
+#### 2. Workflow Configuration
+The workflow is already configured in `.github/workflows/nightly-sync.yml`:
+- **Schedule**: Daily at 2 AM CT (7:00 UTC)
+- **Command**: `heroku run --app prmetrics-production bundle exec rake sync:all_repositories`
+- **Manual trigger**: Available from GitHub Actions UI
+
+#### 3. Manual Testing
+```bash
+# Trigger workflow manually
+gh workflow run "nightly-sync.yml" --repo bendycode/prmetrics
+
+# View workflow runs
+open https://github.com/bendycode/prmetrics/actions
+```
+
+#### 4. Monitoring
+- **View logs**: GitHub Actions → "Nightly Repository Sync" workflow
+- **Check failures**: GitHub will email you on workflow failures
+- **Manual runs**: Use "Run workflow" button in GitHub UI
+
+### Heroku Scheduler Setup (Alternative - $25/month)
+If you prefer Heroku Scheduler instead of GitHub Actions:
 
 #### 1. Add Heroku Scheduler Add-on
 ```bash
