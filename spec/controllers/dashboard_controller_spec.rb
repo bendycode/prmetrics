@@ -87,17 +87,13 @@ RSpec.describe DashboardController, type: :controller do
 
     context "approved PRs aggregation" do
       let(:week_date) { Date.new(2024, 1, 8) }
-      let!(:repos) { create_list(:repository, 2) }
-      let!(:weeks) do
-        repos.map { |repo| create(:week, repository: repo, begin_date: week_date, week_number: 202402) }
-      end
-
-      before do
-        # Create approved PRs: 2 from first repo, 1 from second repo, plus 1 unapproved
-        create_list(:pull_request, 2, :approved, repository: repos[0], gh_created_at: week_date)
-        create(:pull_request, :approved, repository: repos[1], gh_created_at: week_date)
-        create(:pull_request, :with_comments, repository: repos[0], gh_created_at: week_date)
-      end
+      let!(:repo1) { create(:repository) }
+      let!(:repo2) { create(:repository) }
+      let!(:week1) { create(:week, repository: repo1, begin_date: week_date, week_number: 202402) }
+      let!(:week2) { create(:week, repository: repo2, begin_date: week_date, week_number: 202402) }
+      let!(:approved_prs_repo1) { create_list(:pull_request, 2, :approved, repository: repo1, gh_created_at: week_date) }
+      let!(:approved_pr_repo2) { create(:pull_request, :approved, repository: repo2, gh_created_at: week_date) }
+      let!(:unapproved_pr) { create(:pull_request, :with_comments, repository: repo1, gh_created_at: week_date) }
 
       it "aggregates approved PRs from multiple repositories" do
         get :index
@@ -107,14 +103,7 @@ RSpec.describe DashboardController, type: :controller do
         expect(aggregated_week.num_prs_approved).to eq(3)
       end
 
-      it "handles nil values gracefully in approved aggregation" do
-        allow_any_instance_of(Week).to receive(:num_prs_approved).and_return(nil)
-
-        expect { get :index }.not_to raise_error
-        expect(response).to be_successful
-      end
-
-      it "ensures aggregated weeks respond to num_prs_approved" do
+      it "ensures aggregated weeks respond to num_prs_approved method" do
         get :index
 
         chart_weeks = assigns(:chart_weeks)

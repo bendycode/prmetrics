@@ -396,22 +396,27 @@ RSpec.describe Week, type: :model do
       describe '#num_prs_approved' do
         subject(:approved_count) { current_week.num_prs_approved }
 
-        context 'with approved PRs' do
+        context 'with approved and unapproved PRs' do
           let!(:approved_pr) { create(:pull_request, :approved, repository: repository, gh_created_at: current_week.begin_date) }
           let!(:unapproved_pr) { create(:pull_request, :with_comments, repository: repository, gh_created_at: current_week.begin_date) }
 
-          it { is_expected.to eq(1) }
+          it 'counts only approved PRs' do
+            expect(approved_count).to eq(1)
+          end
         end
 
-        context 'without approved PRs' do
-          before { create(:pull_request, :with_comments, repository: repository, gh_created_at: current_week.begin_date) }
+        context 'with only unapproved PRs' do
+          let!(:unapproved_pr) { create(:pull_request, :with_comments, repository: repository, gh_created_at: current_week.begin_date) }
 
-          it { is_expected.to eq(0) }
+          it 'returns zero' do
+            expect(approved_count).to eq(0)
+          end
         end
 
-        it 'delegates to approved_prs.count' do
-          allow(current_week).to receive(:approved_prs).and_return(double(count: 5))
-          expect(approved_count).to eq(5)
+        context 'with no PRs' do
+          it 'returns zero' do
+            expect(approved_count).to eq(0)
+          end
         end
       end
     end
