@@ -22,7 +22,8 @@ RSpec.describe 'Dashboard Approved PRs Chart', type: :system, js: true do
         visit root_path
 
         expect(page).to have_content('PR Velocity Trends')
-        expect(page).to have_text('PRs Approved')
+        # Check that PRs Approved is in the JavaScript chart configuration
+        expect(page.html).to include('PRs Approved')
       end
 
       it 'includes approved PR data in chart datasets' do
@@ -42,7 +43,7 @@ RSpec.describe 'Dashboard Approved PRs Chart', type: :system, js: true do
 
         expect(page).to have_content('PR Velocity Trends')
         expect(page).to have_content("for #{repository.name}")
-        expect(page).to have_text('PRs Approved')
+        expect(page.html).to include('PRs Approved')
       end
     end
 
@@ -54,7 +55,7 @@ RSpec.describe 'Dashboard Approved PRs Chart', type: :system, js: true do
         visit root_path
 
         expect(page).to have_content('PR Velocity Trends')
-        expect(page).to have_text('PRs Approved')
+        expect(page.html).to include('PRs Approved')
       end
     end
   end

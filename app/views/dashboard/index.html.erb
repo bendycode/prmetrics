@@ -269,6 +269,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 borderWidth: 2,
                 fill: false,
                 tension: 0.3
+            }, {
+                label: 'PRs Approved',
+                data: [<%= @chart_weeks.map { |w| w.num_prs_approved || 0 }.join(', ') %>],
+                borderColor: '#6f42c1',
+                backgroundColor: 'rgba(111, 66, 193, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.3
             }]
         },
         options: {
