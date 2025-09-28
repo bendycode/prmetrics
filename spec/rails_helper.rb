@@ -8,7 +8,7 @@ SimpleCov.start 'rails' do
   add_filter '/config/'
   add_filter '/vendor/'
   add_filter '/db/'
-  
+
   add_group 'Controllers', 'app/controllers'
   add_group 'Models', 'app/models'
   add_group 'Services', 'app/services'
@@ -16,9 +16,13 @@ SimpleCov.start 'rails' do
   add_group 'Helpers', 'app/helpers'
   add_group 'Mailers', 'app/mailers'
   add_group 'Views', 'app/views'
-  
-  # Set minimum coverage threshold
-  minimum_coverage 78.92
+
+  # Only enforce minimum coverage when running full test suite
+  # Check if we're running all specs (via rake or rspec without specific files)
+  running_full_suite = ARGV.empty? || ARGV.any? { |arg| arg.include?('spec/**') || arg == 'spec' }
+  if running_full_suite
+    minimum_coverage 78.92
+  end
 end
 
 # This file is copied to spec/ when you run 'rails generate rspec:install'
