@@ -50,11 +50,6 @@ This document outlines future development plans for prmetrics. For completed wor
      - Create guidelines: new metrics should be cached unless real-time required
      - Rationale: Zero-cost caching since data only changes during controlled sync jobs
 
-3. **Implement Query Objects**
-   - WeeklyMetricsQuery
-   - PullRequestStatsQuery
-   - ReviewerPerformanceQuery
-
 ### Phase 3: Feature Enhancements (2-3 months)
 
 1. **User Avatars**
