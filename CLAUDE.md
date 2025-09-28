@@ -190,3 +190,64 @@ These Claude Code features are particularly useful for prmetrics development:
 - Ask for the Agent tool when doing open-ended searches
 - Reference earlier conversation context for consistency
 - Request multi-file edits for coordinated changes
+
+## Production Deployment
+
+### Heroku Scheduler Setup for Nightly Sync
+To enable automatic nightly syncing of all repositories on Heroku:
+
+#### 1. Add Heroku Scheduler Add-on
+```bash
+# Add the scheduler add-on ($25/month)
+heroku addons:create scheduler:standard
+
+# Open scheduler dashboard
+heroku addons:open scheduler
+```
+
+#### 2. Configure Scheduled Job
+In the Heroku Scheduler dashboard:
+- **Task**: `bundle exec rake sync:all_repositories`
+- **Dyno Size**: Standard-1X (recommended)
+- **Frequency**: Daily
+- **Time**: 02:00 UTC (or preferred time)
+- **Time Zone**: UTC
+
+#### 3. Environment Variables
+Ensure these environment variables are set in Heroku:
+```bash
+# Required for GitHub API access
+heroku config:set GITHUB_ACCESS_TOKEN=your_github_token_here
+
+# Optional: Force full sync instead of incremental
+heroku config:set FETCH_ALL=false
+```
+
+#### 4. Monitoring
+```bash
+# View scheduler logs
+heroku logs --ps scheduler --tail
+
+# Check recent runs
+heroku logs --ps scheduler | grep "sync:all_repositories"
+
+# Monitor Sidekiq jobs (if using async processing)
+heroku logs --ps worker --tail
+```
+
+#### 5. Manual Testing
+Test the scheduled task manually:
+```bash
+# Run the same command that scheduler will execute
+heroku run bundle exec rake sync:all_repositories
+
+# Check sync status for all repos
+heroku run bundle exec rake sync:list
+```
+
+**Benefits of Heroku Scheduler:**
+- Heroku-managed reliability and retry logic
+- Integrated with Heroku logs and monitoring
+- Automatic environment variable injection
+- No additional dyno management required
+- Built-in error reporting
