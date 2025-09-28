@@ -2,9 +2,9 @@ name: Nightly Repository Sync
 
 on:
   schedule:
-    # TESTING: Run at 1:30 PM CT (18:30 UTC) for today's test
+    # TESTING: Run at 1:15 PM CT (18:15 UTC) for today's test
     # TODO: Change to '0 7 * * *' for 2 AM CT (7:00 UTC) after testing
-    - cron: '30 18 * * *'
+    - cron: '15 18 * * *'
   workflow_dispatch:  # Allow manual runs from GitHub UI
 
 jobs:
