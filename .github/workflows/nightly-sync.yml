@@ -1,0 +1,43 @@
+name: Nightly Repository Sync
+
+on:
+  schedule:
+    # TESTING: Run at 1:30 PM CT (18:30 UTC) for today's test
+    # TODO: Change to '0 7 * * *' for 2 AM CT (7:00 UTC) after testing
+    - cron: '30 18 * * *'
+  workflow_dispatch:  # Allow manual runs from GitHub UI
+
+jobs:
+  sync-repositories:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Authenticate with Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          if [ -z "$HEROKU_API_KEY" ]; then
+            echo "ERROR: HEROKU_API_KEY secret not set"
+            exit 1
+          fi
+          echo "Heroku CLI authenticated"
+
+      - name: Run sync on Heroku production
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          echo "Starting nightly repository sync on Heroku..."
+          heroku run --app prmetrics-production bundle exec rake sync:all_repositories
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "🚨 Nightly sync failed! Check the logs above for details."
+          # Optional: Add notification service here if needed
