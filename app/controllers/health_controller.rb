@@ -1,5 +1,5 @@
 class HealthController < ApplicationController
-  skip_before_action :authenticate_admin!, only: [:show]
+  skip_before_action :authenticate_user!, only: [:show]
 
   def show
     health_status = check_health_status
