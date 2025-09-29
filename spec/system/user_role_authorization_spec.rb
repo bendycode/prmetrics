@@ -42,7 +42,7 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
 
       click_link 'Invite User'
       expect(page).to have_content('Admin')
-      expect(page).to have_field('admin_role_admin', type: 'checkbox')
+      expect(page).to have_field('user_admin_role_admin', type: 'checkbox')
     end
 
     it 'can access Sidekiq dashboard' do
@@ -122,7 +122,7 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
       expect(page).to have_field('Email')
 
       # Should have Admin checkbox (unchecked by default for regular users)
-      expect(page).to have_field('admin_role_admin', type: 'checkbox', checked: false)
+      expect(page).to have_field('user_admin_role_admin', type: 'checkbox', checked: false)
 
       # Fill out form for regular user
       fill_in 'Email', with: 'regular@example.com'
