@@ -1,13 +1,13 @@
 require 'rails_helper'
 
 RSpec.describe ReviewsController, type: :controller do
-  let(:admin) { create(:admin) }
-  
+  let(:user) { create(:user, :admin) }
+
   before do
-    sign_in admin
+    sign_in user
   end
   let(:pull_request) { create :pull_request }
-  let(:author) { create :user }
+  let(:author) { create :contributor }
   let(:review) { create :review, pull_request: pull_request, author: author }
 
   describe "GET #index" do

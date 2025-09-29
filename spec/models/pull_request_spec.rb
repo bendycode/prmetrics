@@ -3,9 +3,9 @@ require 'rails_helper'
 RSpec.describe PullRequest, type: :model do
   let(:repository) { create(:repository) }
   let(:author) { create :github_user }
+  let(:contributor) { create(:contributor) }
 
   describe 'weekday hours calculation' do
-    let(:user) { create(:user) }
     let(:pull_request) do
       create(:pull_request,
         repository: repository,
@@ -18,7 +18,7 @@ RSpec.describe PullRequest, type: :model do
       it 'calculates weekday hours correctly for same day review' do
         review = create(:review,
           pull_request: pull_request,
-          author: user,
+          author: contributor,
           submitted_at: Time.zone.local(2024, 1, 8, 17, 0, 0), # Monday 5 PM
           state: 'approved'
         )
@@ -31,7 +31,7 @@ RSpec.describe PullRequest, type: :model do
       it 'excludes weekend hours for review spanning a weekend' do
         review = create(:review,
           pull_request: pull_request,
-          author: user,
+          author: contributor,
           submitted_at: Time.zone.local(2024, 1, 15, 13, 0, 0), # Next Monday 1 PM
           state: 'approved'
         )
@@ -54,7 +54,7 @@ RSpec.describe PullRequest, type: :model do
 
         review = create(:review,
           pull_request: weekend_pr,
-          author: user,
+          author: contributor,
           submitted_at: Time.zone.local(2024, 1, 8, 14, 0, 0), # Monday 2 PM
           state: 'approved'
         )
@@ -117,7 +117,7 @@ RSpec.describe PullRequest, type: :model do
       # Review submitted 2 hours later on same Monday
       review = create(:review,
         pull_request: pull_request,
-        author: user,
+        author: contributor,
         submitted_at: monday_9am + 2.hours,
         state: 'approved'
       )
@@ -128,7 +128,7 @@ RSpec.describe PullRequest, type: :model do
     it 'should return nil when all reviews are submitted before ready_for_review_at' do
       review = create(:review,
         pull_request: pull_request,
-        author: user,
+        author: contributor,
         submitted_at: 2.days.ago,
         state: 'approved'
       )
@@ -145,7 +145,7 @@ RSpec.describe PullRequest, type: :model do
       # Earlier invalid review (before ready_for_review_at)
       early_review = create(:review,
         pull_request: pull_request,
-        author: user,
+        author: contributor,
         submitted_at: monday_9am - 1.hour,
         state: 'approved'
       )
@@ -153,7 +153,7 @@ RSpec.describe PullRequest, type: :model do
       # Later valid review - 3 hours after ready_for_review_at
       valid_review = create(:review,
         pull_request: pull_request,
-        author: user,
+        author: contributor,
         submitted_at: monday_9am + 3.hours,
         state: 'approved'
       )
@@ -170,7 +170,7 @@ RSpec.describe PullRequest, type: :model do
       # Earlier invalid review
       early_review = create(:review,
         pull_request: pull_request,
-        author: user,
+        author: contributor,
         submitted_at: 2.days.ago,
         state: 'approved'
       )
@@ -181,7 +181,7 @@ RSpec.describe PullRequest, type: :model do
       # Add a valid review
       valid_review = create(:review,
         pull_request: pull_request,
-        author: user,
+        author: contributor,
         submitted_at: 12.hours.ago,
         state: 'approved'
       )
@@ -199,7 +199,7 @@ RSpec.describe PullRequest, type: :model do
 
       review = create(:review,
         pull_request: pr_without_ready,
-        author: user,
+        author: contributor,
         submitted_at: Time.current,
         state: 'approved'
       )

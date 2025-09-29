@@ -1,14 +1,14 @@
 require 'rails_helper'
 
 RSpec.describe 'Dashboard', type: :system do
-  let!(:admin) { create(:admin, email: 'admin@example.com', password: 'password123') }
-  
+  let!(:admin) { create(:user, :admin, email: 'admin@example.com', password: 'password123') }
+
   before do
     # Log in admin
-    visit new_admin_session_path
+    visit new_user_session_path
     fill_in 'Email', with: admin.email
     fill_in 'Password', with: 'password123'
-    click_button 'Log in'
+    click_button 'Sign in'
   end
 
   describe 'homepage dashboard' do
@@ -46,7 +46,7 @@ RSpec.describe 'Dashboard', type: :system do
       let!(:repository) { create(:repository, name: 'test/repo') }
       let!(:week) { create(:week, repository: repository, week_number: 1) }
       let!(:pull_request) { create(:pull_request, repository: repository, number: 123) }
-      let!(:user) { create(:user, username: 'testuser') }
+      let!(:user) { create(:contributor, username: 'testuser') }
       let!(:review) { create(:review, pull_request: pull_request, author: user) }
 
       it 'displays dashboard with data' do
@@ -96,7 +96,7 @@ RSpec.describe 'Dashboard', type: :system do
       # Check for navigation links
       expect(page).to have_link('Repositories')
       expect(page).to have_link('Contributors') 
-      expect(page).to have_link('Admins')
+      expect(page).to have_link('Users')
       
       # Test navigation
       click_link 'Repositories'
@@ -222,7 +222,7 @@ RSpec.describe 'Dashboard', type: :system do
                ready_for_review_at: 2.days.ago,
                gh_merged_at: 1.day.ago)
       end
-      let!(:user) { create(:user) }
+      let!(:user) { create(:contributor) }
       let!(:review) do
         create(:review, 
                pull_request: pr_with_review,
@@ -312,8 +312,8 @@ RSpec.describe 'Dashboard', type: :system do
       end
       
       # Should be redirected to login page
-      expect(page).to have_current_path(new_admin_session_path)
-      expect(page).to have_content('Admin Login')
+      expect(page).to have_current_path(new_user_session_path)
+      expect(page).to have_content('Sign In')
     end
   end
 

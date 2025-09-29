@@ -78,7 +78,7 @@
   
   <% if @repository.sync_status == 'in_progress' %>
     <p class="text-muted mt-2">
-      Sync in progress... <%= link_to 'View Sidekiq', '/sidekiq', target: '_blank' %>
+      Sync in progress...<% if current_user&.admin? %> <%= link_to 'View Sidekiq', '/sidekiq', target: '_blank' %><% end %>
     </p>
   <% end %>
 </div>

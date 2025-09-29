@@ -3,10 +3,10 @@ require 'rails_helper'
 RSpec.describe 'Branding', type: :system do
   describe 'Logo display' do
     context 'when logged in' do
-      let(:admin) { create(:admin) }
-      
+      let(:admin) { create(:user, :admin) }
+
       before do
-        login_as(admin, scope: :admin)
+        login_as(admin, scope: :user)
       end
       
       it 'displays the logo in the sidebar' do
@@ -31,7 +31,7 @@ RSpec.describe 'Branding', type: :system do
     
     context 'on the login page' do
       it 'displays the logo above the login form' do
-        visit new_admin_session_path
+        visit new_user_session_path
         
         # Check that the logo is present on the login page
         expect(page).to have_css('img[alt="prmetrics.io"]')

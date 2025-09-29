@@ -1,0 +1,76 @@
+<div class="row">
+  <div class="col-md-12">
+    <h1>User Management</h1>
+
+    <div class="mb-3">
+      <%= link_to 'Invite User', new_user_path, class: 'btn btn-primary' %>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Invited By</th>
+          <th>Invitation Sent</th>
+          <th>Last Sign In</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each do |user| %>
+          <tr>
+            <td>
+              <%= user.email %>
+              <% if user == current_user %>
+                <span class="badge bg-secondary">You</span>
+              <% end %>
+            </td>
+            <td>
+              <% if user.admin? %>
+                <span class="badge bg-danger">Admin</span>
+              <% else %>
+                <span class="badge bg-info">Regular User</span>
+              <% end %>
+            </td>
+            <td>
+              <% if user.invitation_accepted_at.present? %>
+                <span class="badge bg-success">Active</span>
+              <% else %>
+                <span class="badge bg-warning">Pending Invitation</span>
+              <% end %>
+            </td>
+            <td>
+              <%= user.invited_by&.email %>
+            </td>
+            <td>
+              <%= user.invitation_sent_at&.strftime('%Y-%m-%d %H:%M') %>
+            </td>
+            <td>
+              <%= user.last_sign_in_at&.strftime('%Y-%m-%d %H:%M') if user.respond_to?(:last_sign_in_at) %>
+            </td>
+            <td>
+              <% if user != current_user %>
+                <%= button_to 'Remove', user_path(user),
+                    method: :delete,
+                    class: 'btn btn-sm btn-danger',
+                    data: { confirm: 'Are you sure?' } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <% active_count = @users.where.not(invitation_accepted_at: nil).count %>
+    <% pending_count = @users.where(invitation_accepted_at: nil).count %>
+    <% admin_count = @users.admin.count %>
+    <% regular_count = @users.regular_user.count %>
+    <p class="text-muted">
+      Total: <%= @users.count %> users
+      (<%= active_count %> active, <%= pending_count %> pending)
+      · <%= admin_count %> admins, <%= regular_count %> regular users
+    </p>
+  </div>
+</div>

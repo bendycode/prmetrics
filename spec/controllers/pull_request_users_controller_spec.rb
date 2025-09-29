@@ -1,10 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe PullRequestUsersController, type: :controller do
-  let(:admin) { create(:admin) }
-  
+  let(:user) { create(:user, :admin) }
+
   before do
-    sign_in admin
+    sign_in user
   end
   let(:pull_request) { create(:pull_request) }
   let(:pull_request_user) { create(:pull_request_user, pull_request: pull_request) }

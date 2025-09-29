@@ -2,19 +2,19 @@ require 'rails_helper'
 
 RSpec.describe 'Admin Authentication', type: :system do
   describe 'login flow' do
-    let(:admin) { create(:admin, email: 'admin@example.com', password: 'password123') }
+    let(:admin) { create(:user, :admin, email: 'admin@example.com', password: 'password123') }
 
     it 'allows admin to log in with valid credentials' do
       visit root_path
-      
+
       # Should redirect to login page
-      expect(page).to have_current_path(new_admin_session_path)
-      expect(page).to have_content('Admin Login')
+      expect(page).to have_current_path(new_user_session_path)
+      expect(page).to have_content('Sign In')
       
       # Fill in login form
       fill_in 'Email', with: admin.email
       fill_in 'Password', with: 'password123'
-      click_button 'Log in'
+      click_button 'Sign in'
       
       # Should be logged in and redirected to root (repositories)
       expect(page).to have_current_path(root_path)
@@ -22,28 +22,28 @@ RSpec.describe 'Admin Authentication', type: :system do
     end
 
     it 'rejects invalid credentials' do
-      visit new_admin_session_path
+      visit new_user_session_path
       
       fill_in 'Email', with: 'invalid@example.com'
       fill_in 'Password', with: 'wrongpassword'
-      click_button 'Log in'
+      click_button 'Sign in'
       
       # Should remain on login page with login form
-      expect(page).to have_content('Admin Login')
+      expect(page).to have_content('Sign In')
       expect(page).to have_field('Email')
     end
 
     it 'redirects unauthenticated users to login' do
       visit repositories_path
-      expect(page).to have_current_path(new_admin_session_path)
+      expect(page).to have_current_path(new_user_session_path)
       
       visit contributors_path
-      expect(page).to have_current_path(new_admin_session_path)
+      expect(page).to have_current_path(new_user_session_path)
     end
   end
 
   describe 'logout flow' do
-    let(:admin) { create(:admin) }
+    let(:admin) { create(:user, :admin) }
 
     it 'allows admin to log out' do
       sign_in admin
@@ -54,15 +54,15 @@ RSpec.describe 'Admin Authentication', type: :system do
       
       # Try to access protected page
       visit repositories_path
-      expect(page).to have_current_path(new_admin_session_path)
+      expect(page).to have_current_path(new_user_session_path)
     end
   end
 
   describe 'password reset flow' do
-    let(:admin) { create(:admin, email: 'admin@example.com') }
+    let(:admin) { create(:user, :admin, email: 'admin@example.com') }
 
     it 'sends password reset instructions' do
-      visit new_admin_session_path
+      visit new_user_session_path
       click_link 'Forgot your password?'
       
       expect(page).to have_content('Forgot your password?')
@@ -71,7 +71,7 @@ RSpec.describe 'Admin Authentication', type: :system do
       click_button 'Send me reset password instructions'
       
       # Should redirect back to login page
-      expect(page).to have_content('Admin Login')
+      expect(page).to have_content('Sign In')
     end
   end
 end

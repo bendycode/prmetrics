@@ -1,10 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe AccountsController, type: :controller do
-  let(:admin) { create(:admin, email: 'admin@example.com', password: 'password123') }
+  let(:user) { create(:user, :admin, email: 'admin@example.com', password: 'password123') }
 
   before do
-    sign_in admin
+    sign_in user
   end
 
   describe "GET #edit" do
@@ -13,9 +13,9 @@ RSpec.describe AccountsController, type: :controller do
       expect(response).to be_successful
     end
 
-    it "assigns the current admin" do
+    it "assigns the current user" do
       get :edit
-      expect(assigns(:admin)).to eq(admin)
+      expect(assigns(:user)).to eq(user)
     end
   end
 
@@ -24,19 +24,19 @@ RSpec.describe AccountsController, type: :controller do
       context "when updating email only" do
         let(:new_attributes) { { email: 'newemail@example.com' } }
 
-        it "updates the admin's email" do
-          patch :update, params: { admin: new_attributes }
-          admin.reload
-          expect(admin.email).to eq('newemail@example.com')
+        it "updates the user's email" do
+          patch :update, params: { user: new_attributes }
+          user.reload
+          expect(user.email).to eq('newemail@example.com')
         end
 
         it "redirects to the edit page" do
-          patch :update, params: { admin: new_attributes }
+          patch :update, params: { user: new_attributes }
           expect(response).to redirect_to(edit_account_path)
         end
 
         it "shows a success notice" do
-          patch :update, params: { admin: new_attributes }
+          patch :update, params: { user: new_attributes }
           expect(flash[:notice]).to eq('Account was successfully updated.')
         end
       end
@@ -50,14 +50,14 @@ RSpec.describe AccountsController, type: :controller do
           }
         end
 
-        it "updates the admin's password" do
-          patch :update, params: { admin: new_attributes }
-          admin.reload
-          expect(admin.valid_password?('newpassword123')).to be true
+        it "updates the user's password" do
+          patch :update, params: { user: new_attributes }
+          user.reload
+          expect(user.valid_password?('newpassword123')).to be true
         end
 
         it "redirects to the edit page" do
-          patch :update, params: { admin: new_attributes }
+          patch :update, params: { user: new_attributes }
           expect(response).to redirect_to(edit_account_path)
         end
       end
@@ -73,14 +73,14 @@ RSpec.describe AccountsController, type: :controller do
           }
         end
 
-        it "does not update the admin" do
-          patch :update, params: { admin: invalid_attributes }
-          admin.reload
-          expect(admin.valid_password?('newpassword123')).to be false
+        it "does not update the user" do
+          patch :update, params: { user: invalid_attributes }
+          user.reload
+          expect(user.valid_password?('newpassword123')).to be false
         end
 
         it "renders the edit template" do
-          patch :update, params: { admin: invalid_attributes }
+          patch :update, params: { user: invalid_attributes }
           expect(response).to render_template(:edit)
         end
       end
@@ -94,14 +94,14 @@ RSpec.describe AccountsController, type: :controller do
           }
         end
 
-        it "does not update the admin" do
-          patch :update, params: { admin: invalid_attributes }
-          admin.reload
-          expect(admin.valid_password?('newpassword123')).to be false
+        it "does not update the user" do
+          patch :update, params: { user: invalid_attributes }
+          user.reload
+          expect(user.valid_password?('newpassword123')).to be false
         end
 
         it "renders the edit template" do
-          patch :update, params: { admin: invalid_attributes }
+          patch :update, params: { user: invalid_attributes }
           expect(response).to render_template(:edit)
         end
       end
@@ -109,14 +109,14 @@ RSpec.describe AccountsController, type: :controller do
       context "when email is invalid" do
         let(:invalid_attributes) { { email: 'invalid-email' } }
 
-        it "does not update the admin" do
-          patch :update, params: { admin: invalid_attributes }
-          admin.reload
-          expect(admin.email).to eq('admin@example.com')
+        it "does not update the user" do
+          patch :update, params: { user: invalid_attributes }
+          user.reload
+          expect(user.email).to eq('admin@example.com')
         end
 
         it "renders the edit template" do
-          patch :update, params: { admin: invalid_attributes }
+          patch :update, params: { user: invalid_attributes }
           expect(response).to render_template(:edit)
         end
       end
@@ -124,9 +124,9 @@ RSpec.describe AccountsController, type: :controller do
   end
 
   describe "authorization" do
-    it "ensures admin can only edit their own account" do
+    it "ensures user can only edit their own account" do
       get :edit
-      expect(assigns(:admin)).to eq(admin)
+      expect(assigns(:user)).to eq(user)
     end
   end
 end

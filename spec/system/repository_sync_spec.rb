@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Repository Sync', type: :system do
-  let(:admin) { create(:admin) }
+  let(:admin) { create(:user, :admin) }
   let(:repository) { create(:repository, name: 'test/repo', url: 'https://github.com/test/repo') }
 
   before do

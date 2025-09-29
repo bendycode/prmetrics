@@ -1,10 +1,10 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
-  devise_for :admins
-  
+  devise_for :users
+
   # Secure Sidekiq Web UI with Devise authentication
-  authenticate :admin do
+  authenticate :user do
     mount Sidekiq::Web => '/sidekiq'
   end
   
@@ -13,7 +13,7 @@ Rails.application.routes.draw do
   get 'health', to: 'health#show'
   
   resource :account, only: [:edit, :update]
-  resources :admins, only: [:index, :new, :create, :destroy]
+  resources :users, only: [:index, :new, :create, :destroy]
 
   resources :repositories, only: [:index, :show, :new, :create, :destroy] do
     member do

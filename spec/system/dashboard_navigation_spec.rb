@@ -1,10 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe 'Dashboard navigation', type: :system do
-  let(:admin) { create(:admin) }
-  
+  let(:admin) { create(:user, :admin) }
+
   before do
-    login_as(admin, scope: :admin)
+    login_as(admin, scope: :user)
   end
   
   describe 'Total Repositories card' do
@@ -29,7 +29,7 @@ RSpec.describe 'Dashboard navigation', type: :system do
       # Verify we're on the repositories page
       expect(page).to have_current_path(repositories_path)
       expect(page).to have_content('Repositories')
-      expect(page).to have_link('Add Repository')
+      expect(page).to have_button('Add Repository')
     end
     
     it 'has the card wrapped in a link with proper styling' do

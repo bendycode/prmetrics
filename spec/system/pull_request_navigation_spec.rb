@@ -1,10 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe 'Pull Request Navigation', type: :system do
-  let(:admin) { create(:admin) }
+  let(:admin) { create(:user, :admin) }
   let(:repository) { create(:repository, name: 'test/repo') }
   let(:github_user) { create(:github_user, username: 'testuser') }
-  let(:user) { create(:user, username: 'reviewer1') }
+  let(:user) { create(:contributor, username: 'reviewer1') }
   
   before do
     sign_in admin

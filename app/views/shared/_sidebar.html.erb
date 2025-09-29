@@ -39,20 +39,22 @@
             <span>Contributors</span></a>
     </li>
 
-    <!-- Divider -->
-    <hr class="sidebar-divider">
+    <% if user_signed_in? && current_user.admin? %>
+      <!-- Divider -->
+      <hr class="sidebar-divider">
 
-    <!-- Heading -->
-    <div class="sidebar-heading">
-        Administration
-    </div>
+      <!-- Heading -->
+      <div class="sidebar-heading">
+          Administration
+      </div>
 
-    <!-- Nav Item - Admins -->
-    <li class="nav-item">
-        <a class="nav-link" href="<%= admins_path %>">
-            <i class="fas fa-fw fa-user-shield"></i>
-            <span>Admins</span></a>
-    </li>
+      <!-- Nav Item - Users -->
+      <li class="nav-item">
+          <a class="nav-link" href="<%= users_path %>">
+              <i class="fas fa-fw fa-user-shield"></i>
+              <span>Users</span></a>
+      </li>
+    <% end %>
 
     <!-- Divider -->
     <hr class="sidebar-divider d-none d-md-block">

@@ -1,6 +1,13 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h1>Repositories</h1>
-  <%= link_to 'Add Repository', new_repository_path, class: 'btn btn-primary' %>
+  <div>
+    <% if policy(Repository).new? && @repositories.any? %>
+      <%= button_to 'Sync All', '#', method: :post, class: 'btn btn-outline-primary me-2' %>
+    <% end %>
+    <% if policy(Repository).new? %>
+      <%= button_to 'Add Repository', new_repository_path, method: :get, class: 'btn btn-primary' %>
+    <% end %>
+  </div>
 </div>
 
 <% if @repositories.empty? %>
@@ -9,7 +16,9 @@
       <i class="fas fa-code-branch fa-3x text-gray-300 mb-3"></i>
       <h4>No repositories yet</h4>
       <p class="text-muted">Add your first repository to start tracking pull request metrics.</p>
-      <%= link_to 'Add Repository', new_repository_path, class: 'btn btn-primary' %>
+      <% if policy(Repository).new? %>
+        <%= button_to 'Add Repository', new_repository_path, method: :get, class: 'btn btn-primary' %>
+      <% end %>
     </div>
   </div>
 <% else %>
@@ -42,17 +51,21 @@
         </td>
         <td>
           <div class="btn-group" role="group">
-            <%= button_to 'Sync', sync_repository_path(repository), 
-                method: :post, 
-                class: 'btn btn-sm btn-primary',
-                disabled: repository.sync_status == 'in_progress' %>
-            <%= link_to 'Delete', repository_path(repository), 
-                method: :delete,
-                data: { 
-                  turbo_method: :delete,
-                  turbo_confirm: "Are you sure you want to delete '#{repository.name}'? This will permanently delete all associated pull requests, reviews, and statistics." 
-                },
-                class: 'btn btn-sm btn-danger' %>
+            <% if policy(repository).sync? %>
+              <%= button_to 'Sync', sync_repository_path(repository),
+                  method: :post,
+                  class: 'btn btn-sm btn-primary',
+                  disabled: repository.sync_status == 'in_progress' %>
+            <% end %>
+            <% if policy(repository).destroy? %>
+              <%= link_to 'Delete', repository_path(repository),
+                  method: :delete,
+                  data: {
+                    turbo_method: :delete,
+                    turbo_confirm: "Are you sure you want to delete '#{repository.name}'? This will permanently delete all associated pull requests, reviews, and statistics."
+                  },
+                  class: 'btn btn-sm btn-danger' %>
+            <% end %>
           </div>
         </td>
       </tr>
@@ -61,6 +74,8 @@
   </table>
 <% end %>
 
-<div class="mt-3">
-  <%= link_to 'Sidekiq Dashboard', '/sidekiq', target: '_blank', class: 'btn btn-secondary' %>
-</div>
+<% if current_user&.admin? %>
+  <div class="mt-3">
+    <%= link_to 'Sidekiq Dashboard', '/sidekiq', target: '_blank', class: 'btn btn-secondary' %>
+  </div>
+<% end %>

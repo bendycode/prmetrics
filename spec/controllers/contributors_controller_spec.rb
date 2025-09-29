@@ -1,10 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe ContributorsController, type: :controller do
-  let(:admin) { create(:admin) }
-  
+  let(:user) { create(:user, :admin) }
+
   before do
-    sign_in admin
+    sign_in user
   end
   let(:contributor) { create(:contributor) }
 
