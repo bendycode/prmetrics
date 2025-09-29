@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Dashboard Approved PRs Chart', type: :system, js: true do
-  let(:admin) { create(:admin) }
+  let(:admin) { create(:user, :admin) }
 
   before { sign_in admin }
 

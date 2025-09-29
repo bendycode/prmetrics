@@ -22,7 +22,7 @@ RSpec.describe Week, type: :model do
   describe 'weekday hour metrics' do
     let(:repository) { create(:repository) }
     let(:author) { create(:github_user) }
-    let(:user) { create(:user) }
+    let(:contributor) { create(:contributor) }
     let(:current_week) do
       create(:week,
         repository: repository,
@@ -47,7 +47,7 @@ RSpec.describe Week, type: :model do
           )
           create(:review,
             pull_request: pr1,
-            author: user,
+            author: contributor,
             submitted_at: Time.zone.local(2024, 1, 8, 13, 0, 0), # Monday 1 PM (4 hours later)
             state: 'approved'
           )
@@ -64,7 +64,7 @@ RSpec.describe Week, type: :model do
           )
           create(:review,
             pull_request: pr2,
-            author: user,
+            author: contributor,
             submitted_at: Time.zone.local(2024, 1, 10, 21, 0, 0), # Wednesday 9 PM (31 hours later)
             state: 'approved'
           )
@@ -96,7 +96,7 @@ RSpec.describe Week, type: :model do
           )
           create(:review,
             pull_request: pr1,
-            author: user,
+            author: contributor,
             submitted_at: Time.zone.local(2024, 1, 11, 10, 0, 0), # Thursday 10 AM
             state: 'approved'
           )
@@ -112,7 +112,7 @@ RSpec.describe Week, type: :model do
           )
           create(:review,
             pull_request: pr2,
-            author: user,
+            author: contributor,
             submitted_at: Time.zone.local(2024, 1, 12, 9, 0, 0), # Friday 9 AM
             state: 'approved'
           )

@@ -184,6 +184,12 @@ This document outlines future development plans for prmetrics. For completed wor
   - Include rubocop linting in the standard rake task
   - Ensure code style checks run automatically with tests
   - Fix asdf environment issues preventing rubocop execution
+- **Rename user associations to contributor where it really meant contributor**
+  - Update PullRequestUser model to use `contributor` association instead of `user`
+  - Rename PullRequestUser model to ContributorPullRequest since it's joining with contributors, not users
+  - Change association references from `user` to `contributor` throughout codebase where that's appropriate
+  - Update corresponding controller logic and view references for clarity
+  - Ensure semantic consistency: User model for authentication, Contributor for PR participation
 - Suppress autoprefixer warnings in test output
   - Remove color-adjust deprecation warnings from rake/rspec runs
   - Options: Update SB Admin 2 theme, patch CSS files, or configure autoprefixer

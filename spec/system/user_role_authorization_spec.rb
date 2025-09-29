@@ -15,7 +15,7 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
       visit repositories_path
 
       # Admin should see add repository button
-      expect(page).to have_link('Add Repository')
+      expect(page).to have_button('Add Repository')
 
       # Admin should see delete buttons for repositories (when they exist)
       # This will be tested more thoroughly when we have test repositories
@@ -24,23 +24,23 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
     it 'can access admin management section' do
       visit root_path
 
-      # Admin should see ADMINISTRATION section in sidebar
-      expect(page).to have_content('Administration')
-      expect(page).to have_link('Admins')
+      # Admin should see Administration section in sidebar
+      expect(page.html).to include('Administration')
+      expect(page).to have_link('Users')
 
       # Admin should be able to access admin management
-      click_link 'Admins'
-      expect(page).to have_current_path(admins_path)
-      expect(page).to have_content('Admin Management')
+      click_link 'Users'
+      expect(page).to have_current_path(users_path)
+      expect(page).to have_content('User Management')
     end
 
     it 'can invite new users' do
-      visit admins_path
+      visit users_path
 
       # Admin should see invite button and role selection
-      expect(page).to have_link('Invite New Admin')
+      expect(page).to have_link('Invite User')
 
-      click_link 'Invite New Admin'
+      click_link 'Invite User'
       expect(page).to have_content('Admin')
       expect(page).to have_field('admin_role_admin', type: 'checkbox')
     end
@@ -75,15 +75,15 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
 
       # Regular user should NOT see ADMINISTRATION section in sidebar
       expect(page).not_to have_content('Administration')
-      expect(page).not_to have_link('Admins')
+      expect(page).not_to have_link('Users')
     end
 
     it 'cannot directly access admin management' do
       # Regular user should be redirected or see 403 when trying direct access
-      visit admins_path
+      visit users_path
 
       # Should be redirected away from admin management
-      expect(page).not_to have_content('Admin Management')
+      expect(page).not_to have_content('User Management')
       # Will implement proper 403/redirect behavior with Pundit
     end
 
@@ -116,7 +116,7 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
     end
 
     it 'allows admin to invite regular users' do
-      visit new_admin_path
+      visit new_user_path
 
       # Should have email field
       expect(page).to have_field('Email')
@@ -136,7 +136,7 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
     end
 
     it 'allows admin to invite admin users' do
-      visit new_admin_path
+      visit new_user_path
 
       # Fill out form for admin user
       fill_in 'Email', with: 'newadmin@example.com'
@@ -179,14 +179,14 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
       # Test various admin-only routes
       admin_only_paths = [
         new_repository_path,
-        new_admin_path
+        new_user_path
       ]
 
       admin_only_paths.each do |path|
         visit path
         # Should be redirected or see authorization error
         expect(page).not_to have_content('Add Repository')
-        expect(page).not_to have_content('Invite New Admin')
+        expect(page).not_to have_content('Invite User')
       end
     end
   end

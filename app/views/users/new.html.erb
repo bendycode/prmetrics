@@ -1,13 +1,13 @@
 <div class="row justify-content-center">
   <div class="col-md-6">
-    <h1>Invite New Admin</h1>
+    <h1>Invite User</h1>
     
-    <%= form_with(model: @admin, local: true) do |form| %>
-      <% if @admin.errors.any? %>
+    <%= form_with(model: @user, local: true) do |form| %>
+      <% if @user.errors.any? %>
         <div class="alert alert-danger">
-          <h6><%= pluralize(@admin.errors.count, "error") %> prohibited this admin from being invited:</h6>
+          <h6><%= pluralize(@user.errors.count, "error") %> prohibited this user from being invited:</h6>
           <ul>
-            <% @admin.errors.full_messages.each do |message| %>
+            <% @user.errors.full_messages.each do |message| %>
               <li><%= message %></li>
             <% end %>
           </ul>
@@ -22,7 +22,7 @@
 
       <div class="d-flex justify-content-between">
         <%= form.submit "Send Invitation", class: "btn btn-primary" %>
-        <%= link_to "Cancel", admins_path, class: "btn btn-secondary" %>
+        <%= link_to "Cancel", users_path, class: "btn btn-secondary" %>
       </div>
     <% end %>
   </div>

@@ -1,12 +1,12 @@
 require 'rails_helper'
 
 RSpec.describe "Query Optimization", type: :request do
-  let(:admin) { create(:admin) }
+  let(:user) { create(:user, :admin) }
   let(:repository) { create(:repository) }
   let(:week) { create(:week, repository: repository) }
-  
+
   before do
-    sign_in admin
+    sign_in user
   end
   
   describe "WeeksController#pr_list" do

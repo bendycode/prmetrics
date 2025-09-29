@@ -6,10 +6,6 @@ FactoryBot.define do
     sequence(:github_id) { |n| "github_#{n}" }
     sequence(:avatar_url) { |n| "https://github.com/avatars/#{n}.png" }
     
-    # Alias for backward compatibility with existing tests
-    factory :user do
-      # This is a contributor with user-like attributes
-    end
     
     # Factory for GitHub users (PR authors with full GitHub data)
     factory :github_user, aliases: [:author] do

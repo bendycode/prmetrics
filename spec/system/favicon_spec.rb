@@ -23,9 +23,9 @@ RSpec.describe 'Favicon', type: :system do
     end
     
     it 'includes all favicon variants on the admin pages' do
-      admin = create(:admin)
+      admin = create(:user, :admin)
       sign_in admin
-      visit admins_path
+      visit users_path
       
       # Check for standard favicon
       expect(page).to have_css('link[rel="icon"][type="image/x-icon"][href="/favicon.ico"]', visible: false)

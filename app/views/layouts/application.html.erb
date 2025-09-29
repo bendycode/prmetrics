@@ -33,25 +33,28 @@
           <li class="nav-item">
             <%= link_to 'Contributors', contributors_path, class: 'nav-link' %>
           </li>
-          <% if admin_signed_in? %>
+          <% if user_signed_in? && current_user.admin? %>
             <li class="nav-item">
-              <%= link_to 'Admins', admins_path, class: 'nav-link' %>
+              <span class="navbar-text me-2">ADMINISTRATION</span>
+            </li>
+            <li class="nav-item">
+              <%= link_to 'Users', users_path, class: 'nav-link' %>
             </li>
           <% end %>
         </ul>
         <ul class="navbar-nav">
-          <% if admin_signed_in? %>
+          <% if user_signed_in? %>
             <li class="nav-item">
               <span class="navbar-text me-3">
-                <%= current_admin.email %>
+                <%= current_user.email %>
               </span>
             </li>
             <li class="nav-item">
-              <%= button_to 'Logout', destroy_admin_session_path, method: :delete, class: 'btn btn-outline-secondary' %>
+              <%= button_to 'Logout', destroy_user_session_path, method: :delete, class: 'btn btn-outline-secondary' %>
             </li>
           <% else %>
             <li class="nav-item">
-              <%= link_to 'Login', new_admin_session_path, class: 'nav-link' %>
+              <%= link_to 'Login', new_user_session_path, class: 'nav-link' %>
             </li>
           <% end %>
         </ul>

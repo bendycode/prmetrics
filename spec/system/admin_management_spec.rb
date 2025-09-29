@@ -1,9 +1,9 @@
 require 'rails_helper'
 
-RSpec.describe 'Admin Management', type: :system do
-  let(:admin) { create(:admin, email: 'admin@example.com') }
-  let(:other_admin) { create(:admin, email: 'other@example.com', invitation_accepted_at: 1.day.ago) }
-  let(:pending_admin) { create(:admin, email: 'pending@example.com', invitation_accepted_at: nil) }
+RSpec.describe 'User Management', type: :system do
+  let(:admin) { create(:user, :admin, email: 'admin@example.com') }
+  let(:other_admin) { create(:user, :admin, email: 'other@example.com', invitation_accepted_at: 1.day.ago) }
+  let(:pending_admin) { create(:user, :admin, email: 'pending@example.com', invitation_accepted_at: nil) }
 
   before do
     sign_in admin
@@ -16,9 +16,9 @@ RSpec.describe 'Admin Management', type: :system do
     end
 
     it 'displays all admins with their status' do
-      visit admins_path
+      visit users_path
       
-      expect(page).to have_content('Admin Management')
+      expect(page).to have_content('User Management')
       expect(page).to have_content('admin@example.com')
       expect(page).to have_content('other@example.com')
       expect(page).to have_content('pending@example.com')
@@ -29,7 +29,7 @@ RSpec.describe 'Admin Management', type: :system do
     end
 
     it 'shows current admin with "You" badge' do
-      visit admins_path
+      visit users_path
       
       within('tr', text: admin.email) do
         expect(page).to have_content('You')
@@ -37,14 +37,14 @@ RSpec.describe 'Admin Management', type: :system do
     end
 
     it 'displays admin statistics' do
-      visit admins_path
+      visit users_path
       
-      expect(page).to have_content('Total: 3 admins')
+      expect(page).to have_content('Total: 3 users')
       expect(page).to have_content('2 active, 1 pending')
     end
 
     it 'shows invitation details for pending admins' do
-      visit admins_path
+      visit users_path
       
       within('tr', text: pending_admin.email) do
         expect(page).to have_content('Pending Invitation')
@@ -52,7 +52,7 @@ RSpec.describe 'Admin Management', type: :system do
     end
 
     it 'prevents current admin from removing themselves' do
-      visit admins_path
+      visit users_path
       
       within('tr', text: admin.email) do
         expect(page).not_to have_button('Remove')
@@ -60,7 +60,7 @@ RSpec.describe 'Admin Management', type: :system do
     end
 
     it 'allows removing other admins' do
-      visit admins_path
+      visit users_path
       
       within('tr', text: other_admin.email) do
         expect(page).to have_button('Remove')
@@ -74,37 +74,37 @@ RSpec.describe 'Admin Management', type: :system do
 
   describe 'inviting new admin' do
     it 'allows navigation to invitation form' do
-      visit admins_path
+      visit users_path
       
-      click_link 'Invite New Admin'
+      click_link 'Invite User'
       
-      expect(page).to have_current_path(new_admin_path)
-      expect(page).to have_content('Invite New Admin')
+      expect(page).to have_current_path(new_user_path)
+      expect(page).to have_content('Invite User')
     end
 
     it 'successfully invites a new admin' do
-      visit new_admin_path
+      visit new_user_path
       
       fill_in 'Email', with: 'newadmin@example.com'
       click_button 'Send Invitation'
       
-      expect(page).to have_current_path(admins_path)
+      expect(page).to have_current_path(users_path)
       expect(page).to have_content('newadmin@example.com')
       expect(page).to have_content('Pending Invitation')
     end
 
     it 'validates email presence' do
-      visit new_admin_path
+      visit new_user_path
       
       fill_in 'Email', with: ''
       click_button 'Send Invitation'
       
       expect(page).to have_content("Email can't be blank")
-      expect(page).to have_current_path(admins_path) # Form posts to create action
+      expect(page).to have_current_path(users_path) # Form posts to create action
     end
 
     it 'validates email format' do
-      visit new_admin_path
+      visit new_user_path
       
       fill_in 'Email', with: 'invalid-email'
       click_button 'Send Invitation'
@@ -113,7 +113,7 @@ RSpec.describe 'Admin Management', type: :system do
     end
 
     it 'prevents duplicate email invitations' do
-      visit new_admin_path
+      visit new_user_path
       
       fill_in 'Email', with: admin.email
       click_button 'Send Invitation'
@@ -122,11 +122,11 @@ RSpec.describe 'Admin Management', type: :system do
     end
 
     it 'allows canceling invitation form' do
-      visit new_admin_path
+      visit new_user_path
       
       click_link 'Cancel'
       
-      expect(page).to have_current_path(admins_path)
+      expect(page).to have_current_path(users_path)
     end
   end
 
@@ -135,7 +135,7 @@ RSpec.describe 'Admin Management', type: :system do
       # Make current admin the only active admin
       other_admin.update!(invitation_accepted_at: nil)
       
-      visit admins_path
+      visit users_path
       
       # Should not have remove button for current admin
       within('tr', text: admin.email) do
@@ -151,15 +151,15 @@ RSpec.describe 'Admin Management', type: :system do
 
   describe 'navigation integration' do
     it 'provides access to admin management' do
-      visit admins_path
+      visit users_path
       
-      expect(page).to have_content('Admin Management')
+      expect(page).to have_content('User Management')
     end
   end
 
   describe 'responsive layout' do
     it 'displays admin table properly on different screen sizes' do
-      visit admins_path
+      visit users_path
       
       # Check that table headers are present
       expect(page).to have_content('Email')
@@ -173,7 +173,7 @@ RSpec.describe 'Admin Management', type: :system do
 
   describe 'error handling' do
     it 'handles invalid email gracefully' do
-      visit new_admin_path
+      visit new_user_path
       
       fill_in 'Email', with: 'invalid-email'
       click_button 'Send Invitation'
