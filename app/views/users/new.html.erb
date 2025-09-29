@@ -20,6 +20,14 @@
         <div class="form-text">An invitation email will be sent to this address.</div>
       </div>
 
+      <div class="mb-3">
+        <div class="form-check">
+          <%= form.check_box :admin_role_admin, { class: "form-check-input" }, "admin", "regular_user" %>
+          <%= form.label :admin_role_admin, "Admin", class: "form-check-label" %>
+          <div class="form-text">Admin users can manage repositories and invite other users.</div>
+        </div>
+      </div>
+
       <div class="d-flex justify-content-between">
         <%= form.submit "Send Invitation", class: "btn btn-primary" %>
         <%= link_to "Cancel", users_path, class: "btn btn-secondary" %>

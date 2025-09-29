@@ -190,6 +190,7 @@ This document outlines future development plans for prmetrics. For completed wor
   - Change association references from `user` to `contributor` throughout codebase where that's appropriate
   - Update corresponding controller logic and view references for clarity
   - Ensure semantic consistency: User model for authentication, Contributor for PR participation
+  - **Note**: This item identified during multi-user access control implementation (Phase 1 complete)
 - Suppress autoprefixer warnings in test output
   - Remove color-adjust deprecation warnings from rake/rspec runs
   - Options: Update SB Admin 2 theme, patch CSS files, or configure autoprefixer
