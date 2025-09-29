@@ -121,6 +121,23 @@ RSpec.describe UsersController, type: :controller do
           expect(assigns(:user).errors).not_to be_empty
         end
       end
+
+      context 'with duplicate email' do
+        let!(:existing_user) { create(:user, email: 'existing@example.com') }
+        let(:duplicate_params) { { user: { email: 'existing@example.com', admin_role_admin: 'regular_user' } } }
+
+        it 'does not create a user' do
+          expect {
+            post :create, params: duplicate_params
+          }.not_to change(User, :count)
+        end
+
+        it 'renders new template with error' do
+          post :create, params: duplicate_params
+          expect(response).to render_template(:new)
+          expect(assigns(:user).errors[:email]).to include('has already been taken')
+        end
+      end
     end
 
     context 'with regular user' do
