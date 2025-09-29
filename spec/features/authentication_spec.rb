@@ -179,6 +179,28 @@ RSpec.describe 'Authentication', type: :feature do
 
         expect(page).to have_content('You will receive an email')
       end
+
+      it 'allows invited but not yet accepted admin user to reset password' do
+        invited_admin = User.invite!(email: 'pending-admin@example.com', role: :admin)
+
+        visit new_user_session_path
+        click_link 'Forgot your password?'
+        fill_in 'Email', with: invited_admin.email
+        click_button 'Send me reset password instructions'
+
+        expect(page).to have_content('You will receive an email')
+      end
+
+      it 'allows invited but not yet accepted regular user to reset password' do
+        invited_regular = User.invite!(email: 'pending-regular@example.com', role: :regular_user)
+
+        visit new_user_session_path
+        click_link 'Forgot your password?'
+        fill_in 'Email', with: invited_regular.email
+        click_button 'Send me reset password instructions'
+
+        expect(page).to have_content('You will receive an email')
+      end
     end
   end
 end
