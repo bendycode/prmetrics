@@ -281,3 +281,4 @@ heroku run bundle exec rake sync:list
 - Automatic environment variable injection
 - No additional dyno management required
 - Built-in error reporting
+- Use bin/deploy for deploying to production. Script remembers extra support work, such as pending migrations.
