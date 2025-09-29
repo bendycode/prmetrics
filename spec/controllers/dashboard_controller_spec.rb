@@ -39,8 +39,7 @@ RSpec.describe DashboardController, type: :controller do
       it "shows filtered week data" do
         get :index, params: { repository_id: repo1.id }
         chart_weeks = assigns(:chart_weeks)
-        expect(chart_weeks).to include(week1)
-        expect(chart_weeks).not_to include(week2)
+        expect(chart_weeks).to match_array([week1])
       end
     end
     

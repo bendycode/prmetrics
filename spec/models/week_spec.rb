@@ -327,8 +327,7 @@ RSpec.describe Week, type: :model do
         end
 
         it 'returns non-draft PRs that were open during the week' do
-          expect(week.open_prs).to include(open_pr)
-          expect(week.open_prs).not_to include(draft_pr)
+          expect(week.open_prs).to match_array([open_pr, pr_closed_start_of_next_day])
         end
 
         it 'excludes PRs closed at 11:59:59 PM on the end date' do
@@ -345,8 +344,7 @@ RSpec.describe Week, type: :model do
         let!(:regular_pr) { create(:pull_request, repository: repository, draft: false, gh_created_at: current_week.begin_date) }
 
         it 'returns draft PRs that were open during the week' do
-          expect(current_week.draft_prs).to include(draft_pr)
-          expect(current_week.draft_prs).not_to include(regular_pr)
+          expect(current_week.draft_prs).to match_array([draft_pr])
         end
       end
 
@@ -356,9 +354,7 @@ RSpec.describe Week, type: :model do
         let(:draft_approved_pr) { create(:pull_request, :draft, :approved, repository: repository, gh_created_at: current_week.begin_date) }
 
         it 'returns non-draft PRs with approved reviews that were open during the week' do
-          expect(current_week.approved_prs).to include(approved_pr)
-          expect(current_week.approved_prs).not_to include(unapproved_pr)
-          expect(current_week.approved_prs).not_to include(draft_approved_pr)
+          expect(current_week.approved_prs).to match_array([approved_pr])
         end
 
         it 'handles PRs with multiple reviews correctly' do
@@ -373,8 +369,7 @@ RSpec.describe Week, type: :model do
         let!(:pr_before_week) { create(:pull_request, repository: repository, gh_created_at: current_week.begin_date - 1.day) }
 
         it 'returns PRs created during the week' do
-          expect(current_week.started_prs).to include(pr_in_week)
-          expect(current_week.started_prs).not_to include(pr_before_week)
+          expect(current_week.started_prs).to match_array([pr_in_week])
         end
       end
 
@@ -388,8 +383,7 @@ RSpec.describe Week, type: :model do
         end
 
         it 'returns closed PRs that were not merged' do
-          expect(current_week.cancelled_prs).to include(cancelled_pr)
-          expect(current_week.cancelled_prs).not_to include(merged_pr)
+          expect(current_week.cancelled_prs).to match_array([cancelled_pr])
         end
       end
 
