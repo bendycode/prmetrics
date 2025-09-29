@@ -251,7 +251,8 @@ RSpec.describe 'Dashboard', type: :system do
       expect(page).to have_content(admin.email)
       
       # Should have user avatar (Font Awesome icon, not broken image)
-      expect(page).to have_css('.img-profile i.fas.fa-user')
+      # Admin user should have shield icon
+      expect(page).to have_css('.img-profile i.fas.fa-user-shield')
       expect(page).not_to have_css('img[src*="undraw_profile.svg"]')
       
       # Should have user dropdown with proper options
