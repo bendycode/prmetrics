@@ -7,7 +7,6 @@ class User < ApplicationRecord
   validates :role, presence: true
 
   def self.last_admin?(user)
-    return false unless user&.admin?
-    admin.count == 1
+    user&.admin? && admin.count <= 1
   end
 end

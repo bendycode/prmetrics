@@ -19,10 +19,6 @@ class UserPolicy < ApplicationPolicy
     admin? && !user_owns_record?
   end
 
-  def admin?
-    user&.admin?
-  end
-
   def invite?
     admin?
   end

@@ -21,35 +21,16 @@ RSpec.describe User, type: :model do
   end
 
   describe 'devise modules' do
-    it 'includes invitable module' do
-      expect(User.devise_modules).to include(:invitable)
-    end
-
-    it 'includes database_authenticatable module' do
-      expect(User.devise_modules).to include(:database_authenticatable)
-    end
-
-    it 'includes recoverable module' do
-      expect(User.devise_modules).to include(:recoverable)
-    end
-
-    it 'includes rememberable module' do
-      expect(User.devise_modules).to include(:rememberable)
-    end
-
-    it 'includes validatable module' do
-      expect(User.devise_modules).to include(:validatable)
-    end
-
-    it 'includes trackable module' do
-      expect(User.devise_modules).to include(:trackable)
+    it 'includes required devise modules' do
+      expected_modules = [:invitable, :database_authenticatable, :recoverable,
+                         :rememberable, :validatable, :trackable]
+      expect(User.devise_modules).to include(*expected_modules)
     end
   end
 
   describe 'default values' do
-    it 'defaults role to regular_user' do
-      user = User.new
-      expect(user.role).to eq('regular_user')
+    it 'defaults to regular_user role' do
+      expect(build(:user).role).to eq('regular_user')
     end
   end
 
