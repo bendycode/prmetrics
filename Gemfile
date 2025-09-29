@@ -66,6 +66,7 @@ group :test do
   # Code coverage
   gem 'simplecov', require: false
   gem 'simplecov-console', require: false
+  gem 'pundit-matchers'
 end
 
 group :development do
