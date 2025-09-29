@@ -24,6 +24,8 @@ prmetrics is a Rails application designed to fetch and analyze pull request data
   - Hours to PR merge
 - Store data locally to reduce API calls and enable offline analysis
 - Incremental updates to minimize data transfer and processing time
+- Multi-user access control with role-based authorization
+- User invitation system for team collaboration
 
 ## Prerequisites
 
@@ -54,6 +56,42 @@ prmetrics is a Rails application designed to fetch and analyze pull request data
    ```
    export GITHUB_ACCESS_TOKEN=your_token_here
    ```
+
+5. Create an initial admin user:
+   ```
+   rails console
+   User.create!(email: 'admin@example.com', password: 'password123', role: :admin)
+   ```
+
+## User Roles and Authorization
+
+prmetrics implements role-based access control with two user roles:
+
+### Admin Role
+- **Full access** to all application features
+- Can manage repositories (add, edit, delete)
+- Can invite new users with either role
+- Can view all data and metrics
+- Default development login: `admin@example.com` / `password123`
+
+### Regular User Role
+- **Read-only access** to repository data and metrics
+- Cannot manage repositories or invite users
+- Can view dashboards and reports
+- Suitable for team members who need visibility but not management access
+
+### Authorization Model
+The application uses [Pundit](https://github.com/varvet/pundit) for authorization:
+- `RepositoryPolicy` - Controls repository management access
+- `UserPolicy` - Controls user management and invitation features
+- All controller actions are properly authorized
+- UI elements are conditionally shown based on user permissions
+
+### User Management
+- Admins can invite new users via the `/users/invitations/new` page
+- Invited users receive email invitations to set up their accounts
+- Role assignment happens during the invitation process
+- Users authenticate via email/password through Devise
 
 ## Usage
 
