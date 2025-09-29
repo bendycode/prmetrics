@@ -21,7 +21,7 @@ SimpleCov.start 'rails' do
   # Check if we're running all specs (via rake or rspec without specific files)
   running_full_suite = ARGV.empty? || ARGV.any? { |arg| arg.include?('spec/**') || arg == 'spec' }
   if running_full_suite
-    minimum_coverage 79.46
+    minimum_coverage 80.07
   end
 end
 
