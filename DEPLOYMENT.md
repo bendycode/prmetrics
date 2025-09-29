@@ -116,7 +116,7 @@ If deploying manually or to non-Heroku environments:
 ### Admin User Management
 - Create admin users via Rails console:
   ```ruby
-  Admin.create!(email: 'admin@example.com', password: 'secure_password')
+  User.create!(email: 'admin@example.com', password: 'secure_password', role: :admin)
   ```
 - Or use the invitation system through the UI
 

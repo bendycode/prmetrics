@@ -12,11 +12,12 @@
 if Rails.env.development?
   admin_email = ENV['SEED_ADMIN_EMAIL'] || 'admin@example.com'
   admin_password = ENV['SEED_ADMIN_PASSWORD'] || 'password123'
-  
-  Admin.find_or_create_by!(email: admin_email) do |admin|
-    admin.password = admin_password
-    admin.password_confirmation = admin_password
+
+  User.find_or_create_by!(email: admin_email) do |user|
+    user.password = admin_password
+    user.password_confirmation = admin_password
+    user.role = :admin
   end
-  
-  Rails.logger.info "Development admin created: #{admin_email}"
+
+  Rails.logger.info "Development admin user created: #{admin_email}"
 end
