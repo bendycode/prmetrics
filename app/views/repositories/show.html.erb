@@ -13,75 +13,79 @@
     <p>URL: <%= link_to @repository.url, @repository.url %></p>
   </div>
   <div>
-    <%= link_to 'Delete Repository', repository_path(@repository), 
-        method: :delete,
-        data: { 
-          turbo_method: :delete,
-          turbo_confirm: "Are you sure you want to delete '#{@repository.name}'? This will permanently delete all associated pull requests, reviews, and statistics." 
-        },
-        class: 'btn btn-danger' %>
+    <% if policy(@repository).destroy? %>
+      <%= link_to 'Delete Repository', repository_path(@repository),
+          method: :delete,
+          data: {
+            turbo_method: :delete,
+            turbo_confirm: "Are you sure you want to delete '#{@repository.name}'? This will permanently delete all associated pull requests, reviews, and statistics."
+          },
+          class: 'btn btn-danger' %>
+    <% end %>
   </div>
 </div>
 
-<div class="sync-controls mb-4">
-  <h3>Sync Status</h3>
-  
-  <% if @repository.sync_status == 'in_progress' %>
-    <div class="alert alert-info">
-      <div class="d-flex align-items-center">
-        <i class="fas fa-sync-alt fa-spin mr-2"></i>
-        <div>
-          <strong>Sync in progress...</strong>
-          <% if @repository.sync_progress.present? %>
-            <span class="ml-2">(<%= number_with_delimiter(@repository.sync_progress) %> pull requests processed)</span>
-          <% end %>
-          <div class="small">Started <%= time_ago_in_words(@repository.sync_started_at) %> ago</div>
+<% if policy(@repository).sync? %>
+  <div class="sync-controls mb-4">
+    <h3>Sync Status</h3>
+
+    <% if @repository.sync_status == 'in_progress' %>
+      <div class="alert alert-info">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-sync-alt fa-spin mr-2"></i>
+          <div>
+            <strong>Sync in progress...</strong>
+            <% if @repository.sync_progress.present? %>
+              <span class="ml-2">(<%= number_with_delimiter(@repository.sync_progress) %> pull requests processed)</span>
+            <% end %>
+            <div class="small">Started <%= time_ago_in_words(@repository.sync_started_at) %> ago</div>
+          </div>
         </div>
       </div>
+    <% elsif @repository.sync_status == 'failed' %>
+      <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Last sync failed</strong>
+        <div class="small mt-1"><%= @repository.last_sync_error %></div>
+      </div>
+    <% elsif @repository.sync_status == 'completed' %>
+      <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i>
+        <strong>Sync completed</strong>
+        <% if @repository.sync_completed_at %>
+          <span class="small">(<%= time_ago_in_words(@repository.sync_completed_at) %> ago)</span>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if @repository.sync_status.present? %>
+      <p>
+        <% if @repository.last_fetched_at %>
+          Last sync: <%= @repository.last_fetched_at.strftime('%Y-%m-%d %H:%M:%S') %>
+        <% end %>
+      </p>
+    <% end %>
+
+    <div class="btn-group" role="group">
+      <%= button_to 'Sync Updates', sync_repository_path(@repository),
+          method: :post,
+          class: 'btn btn-primary',
+          disabled: @repository.sync_status == 'in_progress' %>
+      <%= button_to 'Full Sync', sync_repository_path(@repository),
+          method: :post,
+          params: { fetch_all: true },
+          class: 'btn btn-warning',
+          disabled: @repository.sync_status == 'in_progress',
+          data: { confirm: 'This will fetch all pull requests. Continue?' } %>
     </div>
-  <% elsif @repository.sync_status == 'failed' %>
-    <div class="alert alert-danger">
-      <i class="fas fa-exclamation-triangle"></i>
-      <strong>Last sync failed</strong>
-      <div class="small mt-1"><%= @repository.last_sync_error %></div>
-    </div>
-  <% elsif @repository.sync_status == 'completed' %>
-    <div class="alert alert-success">
-      <i class="fas fa-check-circle"></i>
-      <strong>Sync completed</strong>
-      <% if @repository.sync_completed_at %>
-        <span class="small">(<%= time_ago_in_words(@repository.sync_completed_at) %> ago)</span>
-      <% end %>
-    </div>
-  <% end %>
-  
-  <% if @repository.sync_status.present? %>
-    <p>
-      <% if @repository.last_fetched_at %>
-        Last sync: <%= @repository.last_fetched_at.strftime('%Y-%m-%d %H:%M:%S') %>
-      <% end %>
-    </p>
-  <% end %>
-  
-  <div class="btn-group" role="group">
-    <%= button_to 'Sync Updates', sync_repository_path(@repository), 
-        method: :post, 
-        class: 'btn btn-primary',
-        disabled: @repository.sync_status == 'in_progress' %>
-    <%= button_to 'Full Sync', sync_repository_path(@repository), 
-        method: :post, 
-        params: { fetch_all: true },
-        class: 'btn btn-warning',
-        disabled: @repository.sync_status == 'in_progress',
-        data: { confirm: 'This will fetch all pull requests. Continue?' } %>
+
+    <% if @repository.sync_status == 'in_progress' %>
+      <p class="text-muted mt-2">
+        Sync in progress...<% if current_user&.admin? %> <%= link_to 'View Sidekiq', '/sidekiq', target: '_blank' %><% end %>
+      </p>
+    <% end %>
   </div>
-  
-  <% if @repository.sync_status == 'in_progress' %>
-    <p class="text-muted mt-2">
-      Sync in progress...<% if current_user&.admin? %> <%= link_to 'View Sidekiq', '/sidekiq', target: '_blank' %><% end %>
-    </p>
-  <% end %>
-</div>
+<% end %>
 
 <h2>Weeks</h2>
 <table>

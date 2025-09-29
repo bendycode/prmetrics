@@ -12,13 +12,28 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
     end
 
     it 'can access all repository management functions' do
+      repository = create(:repository, name: 'test/repo')
       visit repositories_path
 
       # Admin should see add repository button
       expect(page).to have_button('Add Repository')
 
-      # Admin should see delete buttons for repositories (when they exist)
-      # This will be tested more thoroughly when we have test repositories
+      # Admin should see sync and delete buttons for repositories
+      expect(page).to have_button('Sync')
+      expect(page).to have_link('Delete')
+    end
+
+    it 'can access sync and delete actions on repository show page' do
+      repository = create(:repository, name: 'test/repo')
+      visit repository_path(repository)
+
+      # Admin should see sync controls section
+      expect(page).to have_content('Sync Status')
+      expect(page).to have_button('Sync Updates')
+      expect(page).to have_button('Full Sync')
+
+      # Admin should see delete button
+      expect(page).to have_link('Delete Repository')
     end
 
     it 'can access admin management section' do
@@ -61,13 +76,36 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
     end
 
     it 'can view repositories but not modify them' do
+      repository = create(:repository, name: 'test/repo')
       visit repositories_path
 
       # Regular user should NOT see add repository button
-      expect(page).not_to have_link('Add Repository')
+      expect(page).not_to have_button('Add Repository')
 
-      # Regular user should NOT see delete buttons for repositories
-      # This will be tested more thoroughly when we have test repositories
+      # Regular user should NOT see sync or delete buttons for repositories
+      expect(page).not_to have_button('Sync')
+      expect(page).not_to have_link('Delete')
+    end
+
+    it 'cannot access sync or delete actions on repository show page' do
+      repository = create(:repository, name: 'test/repo')
+      visit repository_path(repository)
+
+      # Regular user should NOT see sync controls section
+      expect(page).not_to have_content('Sync Status')
+      expect(page).not_to have_button('Sync Updates')
+      expect(page).not_to have_button('Full Sync')
+
+      # Regular user should NOT see delete button
+      expect(page).not_to have_link('Delete Repository')
+    end
+
+    it 'is redirected when accessing sync action via direct URL navigation' do
+      repository = create(:repository, name: 'test/repo')
+
+      # Attempt to navigate to sync URL directly - should be redirected/blocked
+      visit sync_repository_path(repository)
+      expect(page).not_to have_content('Sync job queued')
     end
 
     it 'cannot access admin management section' do
