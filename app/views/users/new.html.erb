@@ -21,11 +21,17 @@
       </div>
 
       <div class="mb-3">
-        <div class="form-check">
-          <%= form.check_box :admin_role_admin, { class: "form-check-input" }, "admin", "regular_user" %>
-          <%= form.label :admin_role_admin, "Admin", class: "form-check-label" %>
-          <div class="form-text">Admin users can manage repositories and invite other users.</div>
-        </div>
+        <fieldset>
+          <legend class="form-label">User Role</legend>
+          <div class="form-check">
+            <%= form.check_box :admin_role_admin, { class: "form-check-input" }, "admin", "regular_user" %>
+            <%= form.label :admin_role_admin, "Admin", class: "form-check-label" %>
+          </div>
+          <div class="form-text">
+            <strong>Admin:</strong> Full access to all features including repository management, user invitations, and all data.<br>
+            <strong>Regular User:</strong> Read-only access to dashboards, metrics, and reports. Cannot manage repositories or invite users.
+          </div>
+        </fieldset>
       </div>
 
       <div class="d-flex justify-content-between">

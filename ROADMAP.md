@@ -125,6 +125,11 @@ This document outlines future development plans for prmetrics. For completed wor
 - Custom metric definitions
 
 ### User Experience
+- **User Role Management**
+  - Add ability to edit user roles after invitation/registration
+  - Implement user edit functionality with role switching
+  - Add proper authorization for role changes (admin-only)
+  - Include role change audit logging for security
 - Breadcrumb navigation
 - Global search functionality
 - Advanced filtering and sorting
