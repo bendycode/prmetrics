@@ -1,8 +1,10 @@
 FactoryBot.define do
   factory :user do
+    PASSWORD = "password123".freeze
+
     sequence(:email) { |n| "user#{n}@example.com" }
-    password { "password123" }
-    password_confirmation { "password123" }
+    password { PASSWORD }
+    password_confirmation { password }
     invitation_accepted_at { Time.current }
     role { :regular_user }
 

@@ -34,8 +34,6 @@ class ApplicationPolicy
     false
   end
 
-  private
-
   def admin?
     user&.admin?
   end
@@ -43,6 +41,8 @@ class ApplicationPolicy
   def regular_user?
     user&.regular_user?
   end
+
+  private
 
   def user_owns_record?
     user == record

@@ -13,8 +13,7 @@ class UsersController < ApplicationController
 
   def create
     authorize User
-    role = params[:user][:admin_role_admin] == 'admin' ? :admin : :regular_user
-    @user = User.invite!(user_params.except(:admin_role_admin).merge(role: role), current_user)
+    @user = User.invite!(user_params, current_user)
 
     if @user.errors.empty?
       redirect_to users_path, notice: "Invitation sent to #{@user.email}"
@@ -40,7 +39,9 @@ class UsersController < ApplicationController
   end
 
   def user_params
-    params.require(:user).permit(:email, :admin_role_admin)
+    permitted = params.require(:user).permit(:email, :admin_role_admin)
+    permitted[:role] = permitted.delete(:admin_role_admin) == 'admin' ? :admin : :regular_user
+    permitted
   end
 
   def can_delete_user?
