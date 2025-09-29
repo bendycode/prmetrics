@@ -7,7 +7,7 @@ RSpec.describe UserPolicy, type: :policy do
   let(:regular_user) { build(:user, role: :regular_user) }
   let(:target_user) { build(:user, role: :regular_user) }
 
-  permissions :show? do
+  describe '#show?' do
     it 'allows admin users to view other users' do
       expect(subject).to permit(admin_user, target_user)
     end
@@ -21,7 +21,7 @@ RSpec.describe UserPolicy, type: :policy do
     end
   end
 
-  permissions :index? do
+  describe '#index?' do
     it 'allows admin users to view user list' do
       expect(subject).to permit(admin_user, User)
     end
@@ -31,7 +31,7 @@ RSpec.describe UserPolicy, type: :policy do
     end
   end
 
-  permissions :create? do
+  describe '#create?' do
     it 'allows admin users to create new users' do
       expect(subject).to permit(admin_user, User)
     end
@@ -41,7 +41,7 @@ RSpec.describe UserPolicy, type: :policy do
     end
   end
 
-  permissions :new? do
+  describe '#new?' do
     it 'allows admin users to access new user form' do
       expect(subject).to permit(admin_user, User)
     end
@@ -51,7 +51,7 @@ RSpec.describe UserPolicy, type: :policy do
     end
   end
 
-  permissions :update? do
+  describe '#update?' do
     it 'allows admin users to update other users' do
       expect(subject).to permit(admin_user, target_user)
     end
@@ -65,7 +65,7 @@ RSpec.describe UserPolicy, type: :policy do
     end
   end
 
-  permissions :edit? do
+  describe '#edit?' do
     it 'allows admin users to edit other users' do
       expect(subject).to permit(admin_user, target_user)
     end
@@ -79,7 +79,7 @@ RSpec.describe UserPolicy, type: :policy do
     end
   end
 
-  permissions :destroy? do
+  describe '#destroy?' do
     it 'allows admin users to destroy other users' do
       expect(subject).to permit(admin_user, target_user)
     end
@@ -93,7 +93,7 @@ RSpec.describe UserPolicy, type: :policy do
     end
   end
 
-  permissions :admin? do
+  describe '#admin?' do
     it 'allows admin users' do
       expect(subject).to permit(admin_user, nil)
     end
@@ -103,7 +103,7 @@ RSpec.describe UserPolicy, type: :policy do
     end
   end
 
-  permissions :invite? do
+  describe '#invite?' do
     it 'allows admin users to invite new users' do
       expect(subject).to permit(admin_user, User)
     end
@@ -113,7 +113,7 @@ RSpec.describe UserPolicy, type: :policy do
     end
   end
 
-  permissions :change_role? do
+  describe '#change_role?' do
     it 'allows admin users to change user roles' do
       expect(subject).to permit(admin_user, target_user)
     end
@@ -130,7 +130,7 @@ RSpec.describe UserPolicy, type: :policy do
   describe 'admin protection logic' do
     let(:other_admin) { build(:user, role: :admin) }
 
-    permissions :destroy? do
+    describe '#destroy?' do
       context 'when target is an admin' do
         it 'allows admin to destroy other admins if not the last admin' do
           expect(subject).to permit(admin_user, other_admin)

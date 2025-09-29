@@ -7,7 +7,7 @@ RSpec.describe RepositoryPolicy, type: :policy do
   let(:regular_user) { build(:user, role: :regular_user) }
   let(:repository) { build(:repository) }
 
-  permissions :show? do
+  describe '#show?' do
     it 'allows admin users to view repositories' do
       expect(subject).to permit(admin_user, repository)
     end
@@ -17,7 +17,7 @@ RSpec.describe RepositoryPolicy, type: :policy do
     end
   end
 
-  permissions :index? do
+  describe '#index?' do
     it 'allows admin users to view repository list' do
       expect(subject).to permit(admin_user, Repository)
     end
@@ -27,7 +27,7 @@ RSpec.describe RepositoryPolicy, type: :policy do
     end
   end
 
-  permissions :create? do
+  describe '#create?' do
     it 'allows admin users to create repositories' do
       expect(subject).to permit(admin_user, Repository)
     end
@@ -37,7 +37,7 @@ RSpec.describe RepositoryPolicy, type: :policy do
     end
   end
 
-  permissions :new? do
+  describe '#new?' do
     it 'allows admin users to access new repository form' do
       expect(subject).to permit(admin_user, Repository)
     end
@@ -47,7 +47,7 @@ RSpec.describe RepositoryPolicy, type: :policy do
     end
   end
 
-  permissions :update? do
+  describe '#update?' do
     it 'allows admin users to update repositories' do
       expect(subject).to permit(admin_user, repository)
     end
@@ -57,7 +57,7 @@ RSpec.describe RepositoryPolicy, type: :policy do
     end
   end
 
-  permissions :edit? do
+  describe '#edit?' do
     it 'allows admin users to edit repositories' do
       expect(subject).to permit(admin_user, repository)
     end
@@ -67,7 +67,7 @@ RSpec.describe RepositoryPolicy, type: :policy do
     end
   end
 
-  permissions :destroy? do
+  describe '#destroy?' do
     it 'allows admin users to destroy repositories' do
       expect(subject).to permit(admin_user, repository)
     end
@@ -77,7 +77,7 @@ RSpec.describe RepositoryPolicy, type: :policy do
     end
   end
 
-  permissions :sync? do
+  describe '#sync?' do
     it 'allows admin users to sync repositories' do
       expect(subject).to permit(admin_user, repository)
     end
