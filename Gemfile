@@ -44,9 +44,6 @@ gem "devise_invitable", "~> 2.0"
 # Authorization
 gem "pundit"
 
-# Data migrations
-gem "data_migrate"
-
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
