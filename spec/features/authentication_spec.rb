@@ -128,6 +128,28 @@ RSpec.describe 'Authentication', type: :feature do
         end
       end
 
+      it 'shows admin badge and shield icon for admin users' do
+        sign_in admin_user
+        visit root_path
+
+        within('.navbar') do
+          expect(page).to have_content('Admin')
+          expect(page).to have_css('.fa-user-shield')
+          expect(page).to have_css('.bg-warning')
+        end
+      end
+
+      it 'shows user badge and regular user icon for regular users' do
+        sign_in regular_user
+        visit root_path
+
+        within('.navbar') do
+          expect(page).to have_content('User')
+          expect(page).to have_css('.fa-user')
+          expect(page).to have_css('.bg-primary')
+        end
+      end
+
       it 'allows user logout' do
         sign_in regular_user
         visit root_path

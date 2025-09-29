@@ -15,9 +15,16 @@
         <li class="nav-item dropdown no-arrow">
             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <span class="mr-2 d-none d-lg-inline text-gray-600 small"><%= current_user&.email %></span>
-                <div class="img-profile rounded-circle bg-primary d-flex align-items-center justify-content-center" style="height: 2rem; width: 2rem;">
-                    <i class="fas fa-user text-white"></i>
+                <span class="mr-2 d-none d-lg-inline text-gray-600 small">
+                    <%= current_user&.email %>
+                    <% if current_user&.admin? %>
+                        <span class="badge badge-primary ml-1">Admin</span>
+                    <% else %>
+                        <span class="badge badge-secondary ml-1">User</span>
+                    <% end %>
+                </span>
+                <div class="img-profile rounded-circle <%= current_user&.admin? ? 'bg-warning' : 'bg-primary' %> d-flex align-items-center justify-content-center" style="height: 2rem; width: 2rem;">
+                    <i class="fas <%= current_user&.admin? ? 'fa-user-shield' : 'fa-user' %> text-white"></i>
                 </div>
             </a>
             <!-- Dropdown - User Information -->
