@@ -208,6 +208,77 @@ RSpec.describe PullRequest, type: :model do
     end
   end
 
+  describe '#days_since_first_approval' do
+    let(:pr) { create(:pull_request, repository: repository) }
+
+    context 'with no approved reviews' do
+      it 'returns 0' do
+        week = create(:week, repository: repository, end_date: Date.today)
+        expect(pr.days_since_first_approval(week.end_date)).to eq(0)
+      end
+    end
+
+    context 'with one approved review' do
+      let!(:review) { create(:review, pull_request: pr, submitted_at: 10.days.ago) }
+
+      it 'calculates days since that approval' do
+        expect(pr.days_since_first_approval(Time.current)).to be_within(1).of(10)
+      end
+    end
+
+    context 'with multiple approved reviews' do
+      let!(:first_review) { create(:review, pull_request: pr, submitted_at: 15.days.ago) }
+      let!(:second_review) { create(:review, pull_request: pr, submitted_at: 5.days.ago) }
+
+      it 'uses the FIRST approval' do
+        expect(pr.days_since_first_approval(Time.current)).to be_within(1).of(15)
+      end
+    end
+
+    context 'timezone edge cases' do
+      it 'handles approval at 11:59 PM boundary' do
+        reference_date = Time.zone.local(2024, 1, 15, 0, 0, 0) # Midnight
+        approval_time = Time.zone.local(2024, 1, 8, 23, 59, 59) # 11:59:59 PM 7 days earlier
+        create(:review, pull_request: pr, submitted_at: approval_time)
+
+        expect(pr.days_since_first_approval(reference_date)).to eq(7)
+      end
+    end
+  end
+
+  describe 'scopes' do
+    describe '.approved' do
+      let!(:approved_pr) { create(:pull_request, :approved, repository: repository) }
+      let!(:unapproved_pr) { create(:pull_request, repository: repository) }
+
+      it 'returns only PRs with approved reviews' do
+        expect(PullRequest.approved).to contain_exactly(approved_pr)
+      end
+    end
+
+    describe '.open_at' do
+      let(:timestamp) { Time.zone.local(2024, 1, 15, 23, 59, 59) }
+      let!(:open_pr) { create(:pull_request, repository: repository, gh_created_at: 1.day.ago, gh_closed_at: nil) }
+      let!(:closed_pr) { create(:pull_request, repository: repository, gh_created_at: 1.day.ago, gh_closed_at: 1.day.ago) }
+
+      it 'returns PRs that were open at the timestamp' do
+        expect(PullRequest.open_at(timestamp)).to include(open_pr)
+        expect(PullRequest.open_at(timestamp)).not_to include(closed_pr)
+      end
+    end
+
+    describe '.unmerged_at' do
+      let(:timestamp) { Time.zone.local(2024, 1, 15, 23, 59, 59) }
+      let!(:unmerged_pr) { create(:pull_request, repository: repository, gh_merged_at: nil) }
+      let!(:merged_pr) { create(:pull_request, repository: repository, gh_merged_at: 1.day.ago) }
+
+      it 'returns PRs that were unmerged at the timestamp' do
+        expect(PullRequest.unmerged_at(timestamp)).to include(unmerged_pr)
+        expect(PullRequest.unmerged_at(timestamp)).not_to include(merged_pr)
+      end
+    end
+  end
+
   it "is valid with valid attributes" do
     pull_request = PullRequest.new(
       repository: repository,

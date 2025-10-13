@@ -413,6 +413,79 @@ RSpec.describe Week, type: :model do
           end
         end
       end
+
+      describe '#late_prs and #stale_prs' do
+        let(:repository) { create(:repository) }
+        let(:week) { create(:week, repository: repository, end_date: Date.new(2024, 1, 14)) }
+
+        context 'with PRs approved at different times' do
+          let!(:fresh_pr) {
+            create(:pull_request, :approved_days_ago, days_ago: 5,
+                   repository: repository, gh_created_at: week.begin_date)
+          }
+          let!(:late_pr1) {
+            create(:pull_request, :approved_days_ago, days_ago: 10,
+                   repository: repository, gh_created_at: week.begin_date)
+          }
+          let!(:late_pr2) {
+            create(:pull_request, :approved_days_ago, days_ago: 27,
+                   repository: repository, gh_created_at: week.begin_date)
+          }
+          let!(:stale_pr) {
+            create(:pull_request, :approved_days_ago, days_ago: 40,
+                   repository: repository, gh_created_at: week.begin_date)
+          }
+
+          it '#late_prs returns PRs approved 8-27 days ago relative to week end_date' do
+            # Dynamic calculation using week.end_date
+            expect(week.late_prs).to contain_exactly(late_pr1, late_pr2)
+          end
+
+          it '#stale_prs returns PRs approved 28+ days ago relative to week end_date' do
+            # Dynamic calculation using week.end_date
+            expect(week.stale_prs).to contain_exactly(stale_pr)
+          end
+        end
+
+        describe 'boundary conditions' do
+          it 'PR approved exactly 7 days before week end is NOT late' do
+            pr = create(:pull_request, :approved_days_ago, days_ago: 7,
+                        repository: repository, gh_created_at: week.begin_date)
+            expect(week.late_prs).not_to include(pr)
+          end
+
+          it 'PR approved exactly 8 days before week end IS late' do
+            pr = create(:pull_request, :approved_days_ago, days_ago: 8,
+                        repository: repository, gh_created_at: week.begin_date)
+            expect(week.late_prs).to include(pr)
+          end
+
+          it 'PR approved exactly 27 days before week end IS still late' do
+            pr = create(:pull_request, :approved_days_ago, days_ago: 27,
+                        repository: repository, gh_created_at: week.begin_date)
+            expect(week.late_prs).to include(pr)
+          end
+
+          it 'PR approved exactly 28 days before week end IS stale (not late)' do
+            pr = create(:pull_request, :approved_days_ago, days_ago: 28,
+                        repository: repository, gh_created_at: week.begin_date)
+            expect(week.stale_prs).to include(pr)
+            expect(week.late_prs).not_to include(pr)
+          end
+        end
+      end
+
+      describe 'cached columns' do
+        let(:week) { create(:week, repository: repository) }
+
+        it 'has num_prs_late column with default 0' do
+          expect(week.num_prs_late).to eq(0)
+        end
+
+        it 'has num_prs_stale column with default 0' do
+          expect(week.num_prs_stale).to eq(0)
+        end
+      end
     end
   end
 end
