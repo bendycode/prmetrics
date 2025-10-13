@@ -31,6 +31,9 @@ gem "stimulus-rails"
 gem "redis", ">= 4.0.1"
 gem "sidekiq", "~> 7.0"
 
+# Data migrations - run after schema migrations for backfilling
+gem "data_migrate", "~> 11.0"
+
 # Use Kredis to get higher-level data types in Redis [https://github.com/rails/kredis]
 # gem "kredis"
 
