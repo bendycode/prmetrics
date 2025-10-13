@@ -185,6 +185,11 @@ This document outlines future development plans for prmetrics. For completed wor
   - Set up cron jobs to sync all repositories automatically
   - Ensure consistent data freshness without manual intervention
   - Configure appropriate scheduling to avoid GitHub rate limits
+- **Review and streamline deployment methods**
+  - Evaluate duplication between Procfile release phase and bin/deploy script
+  - Consider consolidating migration logic to single source of truth
+  - Simplify manual deployment workflow while maintaining safety checks
+  - Document recommended deployment practices and when to use each method
 - **Add rubocop to our default rake tasks**
   - Include rubocop linting in the standard rake task
   - Ensure code style checks run automatically with tests

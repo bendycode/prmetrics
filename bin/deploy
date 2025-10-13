@@ -44,6 +44,10 @@ git push heroku $CURRENT_BRANCH:main
 echo "🗄️  Running database migrations..."
 heroku run rails db:migrate
 
+# Run data migrations
+echo "📊 Running data migrations..."
+heroku run rails db:migrate:with_data
+
 # Check migration status
 echo "✅ Checking migration status..."
 heroku run rails db:migrate:status | tail -20
