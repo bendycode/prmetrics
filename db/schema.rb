@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_09_29_181019) do
+ActiveRecord::Schema[7.1].define(version: 2025_10_13_204816) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -24,6 +24,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_09_29_181019) do
     t.datetime "updated_at", null: false
     t.index ["github_id"], name: "index_contributors_on_github_id", unique: true
     t.index ["username"], name: "index_contributors_on_username"
+  end
+
+  create_table "data_migrations", primary_key: "version", id: :string, force: :cascade do |t|
   end
 
   create_table "pull_request_users", force: :cascade do |t|
@@ -141,6 +144,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_09_29_181019) do
     t.decimal "avg_hrs_to_merge", precision: 10, scale: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "num_prs_late", default: 0, null: false, comment: "Cached count of PRs approved > 1 week and < 4 weeks ago (8-27 days)"
+    t.integer "num_prs_stale", default: 0, null: false, comment: "Cached count of PRs approved ≥ 4 weeks ago (28+ days)"
     t.index ["begin_date", "end_date"], name: "idx_weeks_dates"
     t.index ["repository_id", "begin_date", "end_date"], name: "idx_weeks_repo_dates"
     t.index ["repository_id", "week_number"], name: "index_weeks_on_repository_id_and_week_number", unique: true
