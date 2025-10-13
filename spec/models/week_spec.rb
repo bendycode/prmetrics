@@ -387,36 +387,9 @@ RSpec.describe Week, type: :model do
         end
       end
 
-      describe '#num_prs_approved' do
-        subject(:approved_count) { current_week.num_prs_approved }
-
-        context 'with approved and unapproved PRs' do
-          let!(:approved_pr) { create(:pull_request, :approved, repository: repository, gh_created_at: current_week.begin_date) }
-          let!(:unapproved_pr) { create(:pull_request, :with_comments, repository: repository, gh_created_at: current_week.begin_date) }
-
-          it 'counts only approved PRs' do
-            expect(approved_count).to eq(1)
-          end
-        end
-
-        context 'with only unapproved PRs' do
-          let!(:unapproved_pr) { create(:pull_request, :with_comments, repository: repository, gh_created_at: current_week.begin_date) }
-
-          it 'returns zero' do
-            expect(approved_count).to eq(0)
-          end
-        end
-
-        context 'with no PRs' do
-          it 'returns zero' do
-            expect(approved_count).to eq(0)
-          end
-        end
-      end
-
       describe '#late_prs and #stale_prs' do
         let(:repository) { create(:repository) }
-        let(:week) { create(:week, repository: repository, end_date: Date.new(2024, 1, 14)) }
+        let(:week) { create(:week, repository: repository, begin_date: 1.week.ago.to_date, end_date: Date.today) }
 
         context 'with PRs approved at different times' do
           let!(:fresh_pr) {

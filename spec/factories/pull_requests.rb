@@ -29,7 +29,7 @@ FactoryBot.define do
 
       after(:create) do |pr, evaluator|
         create(:review, pull_request: pr,
-               submitted_at: evaluator.days_ago.days.ago)
+               submitted_at: Time.current - evaluator.days_ago.days)
       end
     end
 
