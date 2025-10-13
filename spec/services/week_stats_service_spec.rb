@@ -130,5 +130,71 @@ RSpec.describe WeekStatsService do
         expect(week.reload.avg_hrs_to_merge).to eq(6.0)
       end
     end
+
+    describe '#calculate_num_prs_late' do
+      context 'with PRs at various approval ages' do
+        before do
+          create(:pull_request, :approved_days_ago, days_ago: 2, repository: repository,
+                 gh_created_at: week.begin_date)
+          create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
+                 gh_created_at: week.begin_date)
+          create(:pull_request, :approved_days_ago, days_ago: 15, repository: repository,
+                 gh_created_at: week.begin_date)
+          create(:pull_request, :approved_days_ago, days_ago: 30, repository: repository,
+                 gh_created_at: week.begin_date)
+        end
+
+        it 'counts only PRs approved 8-27 days ago' do
+          expect(service.send(:calculate_num_prs_late)).to eq(2)
+        end
+      end
+
+      context 'edge cases' do
+        it 'excludes merged PRs' do
+          create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
+                 gh_created_at: week.begin_date, gh_merged_at: 1.day.ago)
+          expect(service.send(:calculate_num_prs_late)).to eq(0)
+        end
+
+        it 'excludes closed (unmerged) PRs' do
+          create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
+                 gh_created_at: week.begin_date, gh_closed_at: 1.day.ago, gh_merged_at: nil)
+          expect(service.send(:calculate_num_prs_late)).to eq(0)
+        end
+
+        it 'excludes draft PRs even if approved' do
+          create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
+                 gh_created_at: week.begin_date, draft: true)
+          expect(service.send(:calculate_num_prs_late)).to eq(0)
+        end
+      end
+    end
+
+    describe '#calculate_num_prs_stale' do
+      it 'counts only PRs approved 28+ days ago' do
+        create(:pull_request, :approved_days_ago, days_ago: 27, repository: repository,
+               gh_created_at: week.begin_date)
+        create(:pull_request, :approved_days_ago, days_ago: 28, repository: repository,
+               gh_created_at: week.begin_date)
+        create(:pull_request, :approved_days_ago, days_ago: 60, repository: repository,
+               gh_created_at: week.begin_date)
+
+        expect(service.send(:calculate_num_prs_stale)).to eq(2)
+      end
+    end
+
+    describe '#update_stats' do
+      it 'populates num_prs_late and num_prs_stale columns' do
+        create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
+               gh_created_at: week.begin_date)
+        create(:pull_request, :approved_days_ago, days_ago: 35, repository: repository,
+               gh_created_at: week.begin_date)
+
+        service.update_stats
+
+        expect(week.reload.num_prs_late).to eq(1)
+        expect(week.reload.num_prs_stale).to eq(1)
+      end
+    end
   end
 end

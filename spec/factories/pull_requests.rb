@@ -22,6 +22,17 @@ FactoryBot.define do
       end
     end
 
+    trait :approved_days_ago do
+      transient do
+        days_ago { 10 }
+      end
+
+      after(:create) do |pr, evaluator|
+        create(:review, pull_request: pr,
+               submitted_at: evaluator.days_ago.days.ago)
+      end
+    end
+
     trait :with_comments do
       after(:create) do |pr|
         create(:review, :commented, pull_request: pr)
