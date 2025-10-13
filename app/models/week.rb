@@ -71,11 +71,33 @@ class Week < ApplicationRecord
     open_prs.joins(:reviews).merge(Review.approved).distinct
   end
 
-  # Returns count of PRs that have received approval but remain unmerged
-  # These are PRs that are still open (not closed/merged) but have at least one approved review
-  # Always returns an integer (never nil)
-  def num_prs_approved
-    approved_prs.count || 0
+  # Cached columns (num_prs_late, num_prs_stale) represent historical snapshot at end_date
+  # Dynamic methods (late_prs, stale_prs) calculate relative to end_date for consistency
+  # This ensures historical weeks show accurate data for that time period
+
+  # Cached values - populated by WeekStatsService during sync
+  def num_prs_late
+    read_attribute(:num_prs_late) || 0
+  end
+
+  def num_prs_stale
+    read_attribute(:num_prs_stale) || 0
+  end
+
+  # Dynamic queries for "View PRs" functionality
+  # Uses end_date for historical consistency (not Time.current)
+  def late_prs
+    approved_prs.select do |pr|
+      days_since_approval = pr.days_since_first_approval(end_date)
+      days_since_approval > 7 && days_since_approval < 28
+    end
+  end
+
+  def stale_prs
+    approved_prs.select do |pr|
+      days_since_approval = pr.days_since_first_approval(end_date)
+      days_since_approval >= 28
+    end
   end
 
   def started_prs

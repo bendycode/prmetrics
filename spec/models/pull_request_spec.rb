@@ -258,8 +258,8 @@ RSpec.describe PullRequest, type: :model do
 
     describe '.open_at' do
       let(:timestamp) { Time.zone.local(2024, 1, 15, 23, 59, 59) }
-      let!(:open_pr) { create(:pull_request, repository: repository, gh_created_at: 1.day.ago, gh_closed_at: nil) }
-      let!(:closed_pr) { create(:pull_request, repository: repository, gh_created_at: 1.day.ago, gh_closed_at: 1.day.ago) }
+      let!(:open_pr) { create(:pull_request, repository: repository, gh_created_at: Time.zone.local(2024, 1, 10), gh_closed_at: nil) }
+      let!(:closed_pr) { create(:pull_request, repository: repository, gh_created_at: Time.zone.local(2024, 1, 10), gh_closed_at: Time.zone.local(2024, 1, 12)) }
 
       it 'returns PRs that were open at the timestamp' do
         expect(PullRequest.open_at(timestamp)).to include(open_pr)
@@ -269,8 +269,8 @@ RSpec.describe PullRequest, type: :model do
 
     describe '.unmerged_at' do
       let(:timestamp) { Time.zone.local(2024, 1, 15, 23, 59, 59) }
-      let!(:unmerged_pr) { create(:pull_request, repository: repository, gh_merged_at: nil) }
-      let!(:merged_pr) { create(:pull_request, repository: repository, gh_merged_at: 1.day.ago) }
+      let!(:unmerged_pr) { create(:pull_request, repository: repository, gh_created_at: Time.zone.local(2024, 1, 10), gh_merged_at: nil) }
+      let!(:merged_pr) { create(:pull_request, repository: repository, gh_created_at: Time.zone.local(2024, 1, 10), gh_merged_at: Time.zone.local(2024, 1, 12)) }
 
       it 'returns PRs that were unmerged at the timestamp' do
         expect(PullRequest.unmerged_at(timestamp)).to include(unmerged_pr)

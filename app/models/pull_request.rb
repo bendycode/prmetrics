@@ -15,7 +15,21 @@ class PullRequest < ApplicationRecord
   validates :number, presence: true, uniqueness: { scope: :repository_id }
   validates :title, presence: true
   validates :state, presence: true
-  
+
+  # Scopes for querying approved/open/unmerged PRs
+  scope :approved, -> {
+    joins(:reviews).merge(Review.where(state: 'APPROVED')).distinct
+  }
+
+  scope :open_at, ->(timestamp) {
+    where('gh_created_at <= ?', timestamp)
+      .where('(gh_closed_at IS NULL OR gh_closed_at > ?)', timestamp)
+  }
+
+  scope :unmerged_at, ->(timestamp) {
+    where('(gh_merged_at IS NULL OR gh_merged_at > ?)', timestamp)
+  }
+
   # Prevent cross-repository week associations
   validate :weeks_belong_to_same_repository
 
@@ -60,6 +74,22 @@ class PullRequest < ApplicationRecord
       .where('submitted_at > ?', ready_for_review_at)
       .order(:submitted_at)
       .first
+  end
+
+  # Calculate days since first approval relative to a reference date
+  # @param reference_date [Time/Date] The date to calculate from (defaults to current time)
+  # @return [Integer] Number of days since first approval, or 0 if no approved reviews
+  def days_since_first_approval(reference_date = Time.current)
+    first_approved_review = reviews
+      .where(state: 'APPROVED')
+      .order(:submitted_at)
+      .first
+
+    return 0 unless first_approved_review
+
+    # Use end_of_day for reference_date to be consistent with week boundaries
+    reference_timestamp = reference_date.in_time_zone.end_of_day
+    ((reference_timestamp - first_approved_review.submitted_at) / 1.day).to_i
   end
 
   def update_week_associations
