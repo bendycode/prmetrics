@@ -84,30 +84,5 @@ RSpec.describe DashboardController, type: :controller do
       end
     end
 
-    context "approved PRs aggregation" do
-      let(:week_date) { Date.new(2024, 1, 8) }
-      let!(:repo1) { create(:repository) }
-      let!(:repo2) { create(:repository) }
-      let!(:week1) { create(:week, repository: repo1, begin_date: week_date, week_number: 202402) }
-      let!(:week2) { create(:week, repository: repo2, begin_date: week_date, week_number: 202402) }
-      let!(:approved_prs_repo1) { create_list(:pull_request, 2, :approved, repository: repo1, gh_created_at: week_date) }
-      let!(:approved_pr_repo2) { create(:pull_request, :approved, repository: repo2, gh_created_at: week_date) }
-      let!(:unapproved_pr) { create(:pull_request, :with_comments, repository: repo1, gh_created_at: week_date) }
-
-      it "aggregates approved PRs from multiple repositories" do
-        get :index
-
-        aggregated_week = assigns(:chart_weeks).find { |w| w.begin_date == week_date }
-        expect(aggregated_week).to be_present
-        expect(aggregated_week.num_prs_approved).to eq(3)
-      end
-
-      it "ensures aggregated weeks respond to num_prs_approved method" do
-        get :index
-
-        chart_weeks = assigns(:chart_weeks)
-        expect(chart_weeks).to all(respond_to(:num_prs_approved))
-      end
-    end
   end
 end

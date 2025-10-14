@@ -96,9 +96,11 @@ class DashboardController < ApplicationController
         avg_hrs_to_merge: calculate_weighted_avg(weeks_for_date, :avg_hrs_to_merge, :num_prs_merged)
       )
 
-      # Add aggregated approved count as singleton method
-      aggregated_approved_count = weeks_for_date.sum(&:num_prs_approved)
-      aggregated_week.define_singleton_method(:num_prs_approved) { aggregated_approved_count }
+      # Add aggregated late and stale counts as singleton methods
+      aggregated_late_count = weeks_for_date.sum(&:num_prs_late)
+      aggregated_stale_count = weeks_for_date.sum(&:num_prs_stale)
+      aggregated_week.define_singleton_method(:num_prs_late) { aggregated_late_count }
+      aggregated_week.define_singleton_method(:num_prs_stale) { aggregated_stale_count }
 
       aggregated_week
     end

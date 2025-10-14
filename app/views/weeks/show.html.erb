@@ -9,7 +9,8 @@
   <li>PRs Started: <%= @week.started_prs.count %> (<a href="#" class="view-prs" data-category="started">View PRs</a>)</li>
   <li>PRs First Reviewed: <%= @week.first_review_prs.count %> (<a href="#" class="view-prs" data-category="first_reviewed">View PRs</a>)</li>
   <li>Avg Hours to First Review: <%= @week.avg_hours_to_first_review&.round(2) || 'N/A' %> hrs</li>
-  <li>Approved but Unmerged PRs: <%= @week.approved_prs.count %> (<a href="#" class="view-prs" data-category="approved">View PRs</a>)</li>
+  <li>Late PRs: <%= @week.num_prs_late %> (<a href="#" class="view-prs" data-category="late">View PRs</a>)</li>
+  <li>Stale PRs: <%= @week.num_prs_stale %> (<a href="#" class="view-prs" data-category="stale">View PRs</a>)</li>
   <li>PRs Merged: <%= @week.merged_prs.count %> (<a href="#" class="view-prs" data-category="merged">View PRs</a>)</li>
   <li>Avg Hours to Merge: <%= @week.avg_hours_to_merge&.round(2) || 'N/A' %> hrs</li>
   <li>PRs Cancelled: <%= @week.cancelled_prs.count %> (<a href="#" class="view-prs" data-category="cancelled">View PRs</a>)</li>

@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe WeekStatsService do
   let(:repository) { create(:repository) }
-  let(:week) { create(:week, repository: repository, begin_date: 1.week.ago.beginning_of_week, end_date: 1.week.ago.end_of_week) }
+  let(:week) { create(:week, repository: repository, begin_date: 1.week.ago.to_date, end_date: Date.today) }
   let(:service) { described_class.new(week) }
 
   describe '#update_stats' do
@@ -135,13 +135,13 @@ RSpec.describe WeekStatsService do
       context 'with PRs at various approval ages' do
         before do
           create(:pull_request, :approved_days_ago, days_ago: 2, repository: repository,
-                 gh_created_at: week.begin_date)
+                 gh_created_at: 90.days.ago)
           create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
-                 gh_created_at: week.begin_date)
+                 gh_created_at: 90.days.ago)
           create(:pull_request, :approved_days_ago, days_ago: 15, repository: repository,
-                 gh_created_at: week.begin_date)
+                 gh_created_at: 90.days.ago)
           create(:pull_request, :approved_days_ago, days_ago: 30, repository: repository,
-                 gh_created_at: week.begin_date)
+                 gh_created_at: 90.days.ago)
         end
 
         it 'counts only PRs approved 8-27 days ago' do
@@ -152,19 +152,19 @@ RSpec.describe WeekStatsService do
       context 'edge cases' do
         it 'excludes merged PRs' do
           create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
-                 gh_created_at: week.begin_date, gh_merged_at: 1.day.ago)
+                 gh_created_at: 90.days.ago, gh_merged_at: 1.day.ago)
           expect(service.send(:calculate_num_prs_late)).to eq(0)
         end
 
         it 'excludes closed (unmerged) PRs' do
           create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
-                 gh_created_at: week.begin_date, gh_closed_at: 1.day.ago, gh_merged_at: nil)
+                 gh_created_at: 90.days.ago, gh_closed_at: 1.day.ago, gh_merged_at: nil)
           expect(service.send(:calculate_num_prs_late)).to eq(0)
         end
 
         it 'excludes draft PRs even if approved' do
           create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
-                 gh_created_at: week.begin_date, draft: true)
+                 gh_created_at: 90.days.ago, draft: true)
           expect(service.send(:calculate_num_prs_late)).to eq(0)
         end
       end
@@ -172,12 +172,14 @@ RSpec.describe WeekStatsService do
 
     describe '#calculate_num_prs_stale' do
       it 'counts only PRs approved 28+ days ago' do
-        create(:pull_request, :approved_days_ago, days_ago: 27, repository: repository,
-               gh_created_at: week.begin_date)
-        create(:pull_request, :approved_days_ago, days_ago: 28, repository: repository,
-               gh_created_at: week.begin_date)
-        create(:pull_request, :approved_days_ago, days_ago: 60, repository: repository,
-               gh_created_at: week.begin_date)
+        pr1 = create(:pull_request, repository: repository, gh_created_at: 90.days.ago)
+        create(:review, pull_request: pr1, state: 'APPROVED', submitted_at: week.end_date - 27.days)
+
+        pr2 = create(:pull_request, repository: repository, gh_created_at: 90.days.ago)
+        create(:review, pull_request: pr2, state: 'APPROVED', submitted_at: week.end_date - 28.days)
+
+        pr3 = create(:pull_request, repository: repository, gh_created_at: 90.days.ago)
+        create(:review, pull_request: pr3, state: 'APPROVED', submitted_at: week.end_date - 60.days)
 
         expect(service.send(:calculate_num_prs_stale)).to eq(2)
       end
@@ -186,9 +188,9 @@ RSpec.describe WeekStatsService do
     describe '#update_stats' do
       it 'populates num_prs_late and num_prs_stale columns' do
         create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
-               gh_created_at: week.begin_date)
+               gh_created_at: 90.days.ago)
         create(:pull_request, :approved_days_ago, days_ago: 35, repository: repository,
-               gh_created_at: week.begin_date)
+               gh_created_at: 90.days.ago)
 
         service.update_stats
 
