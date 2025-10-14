@@ -326,16 +326,10 @@ RSpec.describe Week, type: :model do
           )
         end
 
-        it 'returns non-draft PRs that were open during the week' do
+        it 'returns non-draft PRs open during the week, excluding those closed at end-of-day boundary' do
+          # Tests important boundary: PRs closed at 11:59:59 PM on end_date are excluded,
+          # but PRs closed after midnight are included
           expect(week.open_prs).to match_array([open_pr, pr_closed_start_of_next_day])
-        end
-
-        it 'excludes PRs closed at 11:59:59 PM on the end date' do
-          expect(week.open_prs).not_to include(pr_closed_end_of_week)
-        end
-
-        it 'includes PRs closed at 12:01:00 AM the day after end date' do
-          expect(week.open_prs).to include(pr_closed_start_of_next_day)
         end
       end
 
@@ -442,8 +436,10 @@ RSpec.describe Week, type: :model do
           it 'PR approved exactly 28 days before week end IS stale (not late)' do
             pr = create(:pull_request, :approved_before_week_end,
                         repository: repository, week: week, days_before_week_end: 28)
-            expect(week.stale_prs).to include(pr)
-            expect(week.late_prs).not_to include(pr)
+
+            # Should be in stale_prs and NOT in late_prs
+            expect(week.stale_prs).to contain_exactly(pr)
+            expect(week.late_prs).to be_empty
           end
         end
       end
