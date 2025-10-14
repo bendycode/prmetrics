@@ -13,15 +13,15 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', type: :system, js: true do
 
       before do
         # Week 1: 1 late PR, 1 stale PR
-        create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository, gh_created_at: week1.begin_date)
-        create(:pull_request, :approved_days_ago, days_ago: 35, repository: repository, gh_created_at: week1.begin_date)
+        create(:pull_request, :approved_before_week_end, week: week1, days_before_week_end: 10, repository: repository)
+        create(:pull_request, :approved_before_week_end, week: week1, days_before_week_end: 35, repository: repository)
 
         # Week 2: 2 late PRs, 1 stale PR
-        create_list(:pull_request, 2, :approved_days_ago, days_ago: 15, repository: repository, gh_created_at: week2.begin_date)
-        create(:pull_request, :approved_days_ago, days_ago: 40, repository: repository, gh_created_at: week2.begin_date)
+        create_list(:pull_request, 2, :approved_before_week_end, week: week2, days_before_week_end: 15, repository: repository)
+        create(:pull_request, :approved_before_week_end, week: week2, days_before_week_end: 40, repository: repository)
 
         # Fresh PR (not late or stale)
-        create(:pull_request, :approved_days_ago, days_ago: 3, repository: repository, gh_created_at: week1.begin_date)
+        create(:pull_request, :approved_before_week_end, week: week1, days_before_week_end: 3, repository: repository)
 
         # Populate cached values
         WeekStatsService.new(week1).update_stats
@@ -68,7 +68,7 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', type: :system, js: true do
 
       before do
         # Only fresh PRs (approved within last week)
-        create(:pull_request, :approved_days_ago, days_ago: 3, repository: repository, gh_created_at: week.begin_date)
+        create(:pull_request, :approved_before_week_end, week: week, days_before_week_end: 3, repository: repository)
         WeekStatsService.new(week).update_stats
       end
 
