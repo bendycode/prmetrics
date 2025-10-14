@@ -400,7 +400,7 @@ DEPENDENCIES
   bootstrap
   bullet
   capybara
-  data_migrate (~> 11.0)
+  data_migrate
   debug
   devise (~> 4.9)
   devise_invitable (~> 2.0)
