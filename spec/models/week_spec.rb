@@ -394,19 +394,19 @@ RSpec.describe Week, type: :model do
         context 'with PRs approved at different times' do
           let!(:fresh_pr) {
             create(:pull_request, :approved_days_ago, days_ago: 5,
-                   repository: repository, gh_created_at: week.begin_date)
+                   repository: repository, gh_created_at: 60.days.ago)
           }
           let!(:late_pr1) {
             create(:pull_request, :approved_days_ago, days_ago: 10,
-                   repository: repository, gh_created_at: week.begin_date)
+                   repository: repository, gh_created_at: 60.days.ago)
           }
           let!(:late_pr2) {
             create(:pull_request, :approved_days_ago, days_ago: 27,
-                   repository: repository, gh_created_at: week.begin_date)
+                   repository: repository, gh_created_at: 60.days.ago)
           }
           let!(:stale_pr) {
             create(:pull_request, :approved_days_ago, days_ago: 40,
-                   repository: repository, gh_created_at: week.begin_date)
+                   repository: repository, gh_created_at: 60.days.ago)
           }
 
           it '#late_prs returns PRs approved 8-27 days ago relative to week end_date' do
@@ -422,26 +422,26 @@ RSpec.describe Week, type: :model do
 
         describe 'boundary conditions' do
           it 'PR approved exactly 7 days before week end is NOT late' do
-            pr = create(:pull_request, :approved_days_ago, days_ago: 7,
-                        repository: repository, gh_created_at: week.begin_date)
+            pr = create(:pull_request, repository: repository, gh_created_at: 60.days.ago)
+            create(:review, pull_request: pr, state: 'APPROVED', submitted_at: week.end_date - 7.days)
             expect(week.late_prs).not_to include(pr)
           end
 
           it 'PR approved exactly 8 days before week end IS late' do
-            pr = create(:pull_request, :approved_days_ago, days_ago: 8,
-                        repository: repository, gh_created_at: week.begin_date)
+            pr = create(:pull_request, repository: repository, gh_created_at: 60.days.ago)
+            create(:review, pull_request: pr, state: 'APPROVED', submitted_at: week.end_date - 8.days)
             expect(week.late_prs).to include(pr)
           end
 
           it 'PR approved exactly 27 days before week end IS still late' do
-            pr = create(:pull_request, :approved_days_ago, days_ago: 27,
-                        repository: repository, gh_created_at: week.begin_date)
+            pr = create(:pull_request, repository: repository, gh_created_at: 60.days.ago)
+            create(:review, pull_request: pr, state: 'APPROVED', submitted_at: week.end_date - 27.days)
             expect(week.late_prs).to include(pr)
           end
 
           it 'PR approved exactly 28 days before week end IS stale (not late)' do
-            pr = create(:pull_request, :approved_days_ago, days_ago: 28,
-                        repository: repository, gh_created_at: week.begin_date)
+            pr = create(:pull_request, repository: repository, gh_created_at: 60.days.ago)
+            create(:review, pull_request: pr, state: 'APPROVED', submitted_at: week.end_date - 28.days)
             expect(week.stale_prs).to include(pr)
             expect(week.late_prs).not_to include(pr)
           end

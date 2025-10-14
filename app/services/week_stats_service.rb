@@ -46,6 +46,8 @@ class WeekStatsService
       num_prs_merged: calculate_prs_merged,
       num_prs_initially_reviewed: calculate_num_prs_initially_reviewed,
       num_prs_cancelled: calculate_prs_cancelled,
+      num_prs_late: calculate_num_prs_late,
+      num_prs_stale: calculate_num_prs_stale,
       avg_hrs_to_first_review: calculate_avg_hrs_to_first_review,
       avg_hrs_to_merge: calculate_avg_hrs_to_merge
     )
@@ -123,5 +125,33 @@ class WeekStatsService
     count = merged_prs.count
 
     count > 0 ? (total_hours / count).round(2) : nil
+  end
+
+  def calculate_num_prs_late
+    # PRs approved 8-27 days ago (relative to week end_date)
+    # Must be open, not merged, and not draft
+    end_timestamp = @week.end_date.in_time_zone.end_of_day
+
+    @repository.pull_requests
+      .approved
+      .open_at(end_timestamp)
+      .unmerged_at(end_timestamp)
+      .where(draft: false)
+      .select { |pr| (8..27).cover?(pr.days_since_first_approval(@week.end_date)) }
+      .count
+  end
+
+  def calculate_num_prs_stale
+    # PRs approved 28+ days ago (relative to week end_date)
+    # Must be open, not merged, and not draft
+    end_timestamp = @week.end_date.in_time_zone.end_of_day
+
+    @repository.pull_requests
+      .approved
+      .open_at(end_timestamp)
+      .unmerged_at(end_timestamp)
+      .where(draft: false)
+      .select { |pr| pr.days_since_first_approval(@week.end_date) >= 28 }
+      .count
   end
 end

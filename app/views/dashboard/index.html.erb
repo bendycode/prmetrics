@@ -271,11 +271,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 fill: false,
                 tension: 0.3
             }, {
-                // Approved PRs styled consistently with other positive metrics (filled areas)
-                label: 'PRs Approved',
-                data: [<%= @chart_weeks.map(&:num_prs_approved).join(', ') %>],
-                borderColor: '#6f42c1',
-                backgroundColor: 'rgba(111, 66, 193, 0.1)',
+                // Late PRs (approved 8-27 days ago) styled in orange to indicate warning
+                label: 'Late PRs',
+                data: [<%= @chart_weeks.map(&:num_prs_late).join(', ') %>],
+                borderColor: '#f6c23e',
+                backgroundColor: 'rgba(246, 194, 62, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.3
+            }, {
+                // Stale PRs (approved 28+ days ago) styled in red to indicate urgency
+                label: 'Stale PRs',
+                data: [<%= @chart_weeks.map(&:num_prs_stale).join(', ') %>],
+                borderColor: '#e74a3b',
+                backgroundColor: 'rgba(231, 74, 59, 0.2)',
                 borderWidth: 3,
                 fill: true,
                 tension: 0.3
