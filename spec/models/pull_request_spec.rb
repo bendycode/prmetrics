@@ -266,6 +266,15 @@ RSpec.describe PullRequest, type: :model do
       end
     end
 
+    describe '.unmerged' do
+      let!(:unmerged_pr) { create(:pull_request, repository: repository, gh_merged_at: nil) }
+      let!(:merged_pr) { create(:pull_request, repository: repository, gh_merged_at: Time.zone.local(2024, 1, 12)) }
+
+      it 'returns only PRs with nil gh_merged_at' do
+        expect(PullRequest.unmerged).to contain_exactly(unmerged_pr)
+      end
+    end
+
     describe '.unmerged_at' do
       let(:timestamp) { Time.zone.local(2024, 1, 15, 23, 59, 59) }
       let!(:unmerged_pr) { create(:pull_request, repository: repository, gh_created_at: Time.zone.local(2024, 1, 10), gh_merged_at: nil) }

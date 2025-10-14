@@ -442,6 +442,24 @@ RSpec.describe Week, type: :model do
             expect(week.late_prs).to be_empty
           end
         end
+
+        context 'with merged PRs' do
+          it 'excludes merged PRs from late_prs even if approved long ago' do
+            merged_pr = create(:pull_request, :approved_before_week_end,
+                               repository: repository, week: week, days_before_week_end: 15,
+                               gh_merged_at: 5.days.ago)
+
+            expect(week.late_prs).not_to include(merged_pr)
+          end
+
+          it 'excludes merged PRs from stale_prs even if approved long ago' do
+            merged_pr = create(:pull_request, :approved_before_week_end,
+                               repository: repository, week: week, days_before_week_end: 35,
+                               gh_merged_at: 5.days.ago)
+
+            expect(week.stale_prs).not_to include(merged_pr)
+          end
+        end
       end
 
       describe 'cached columns' do

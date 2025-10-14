@@ -87,14 +87,14 @@ class Week < ApplicationRecord
   # Dynamic queries for "View PRs" functionality
   # Uses end_date for historical consistency (not Time.current)
   def late_prs
-    approved_prs.select do |pr|
+    approved_prs.unmerged.select do |pr|
       days_since_approval = pr.days_since_first_approval(end_date)
       days_since_approval > 7 && days_since_approval < 28
     end
   end
 
   def stale_prs
-    approved_prs.select do |pr|
+    approved_prs.unmerged.select do |pr|
       days_since_approval = pr.days_since_first_approval(end_date)
       days_since_approval >= 28
     end

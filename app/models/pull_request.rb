@@ -26,6 +26,10 @@ class PullRequest < ApplicationRecord
       .where('(gh_closed_at IS NULL OR gh_closed_at > ?)', timestamp)
   }
 
+  scope :unmerged, -> {
+    where(gh_merged_at: nil)
+  }
+
   scope :unmerged_at, ->(timestamp) {
     where('(gh_merged_at IS NULL OR gh_merged_at > ?)', timestamp)
   }
