@@ -31,13 +31,14 @@ This document outlines future development plans for prmetrics. For completed wor
    - Build PullRequestImporter
 
 2. **Standardize Database Statistics Caching**
-   - **Add missing cached columns to Week model**
-     - Add `num_prs_approved` column to cache approved PR counts
-     - Start using existing `num_open_prs` column (currently ignored by model methods)
-     - Audit other dynamic calculations that should be cached for performance
+   - ✅ **Add cached columns for PR aging metrics** (Completed)
+     - Added `num_prs_late` column to cache PRs approved 8-27 days ago
+     - Added `num_prs_stale` column to cache PRs approved 28+ days ago
+     - Replaced generic "approved but unmerged" with actionable late/stale categories
+     - All cached columns use historical `end_date` for consistency
 
-   - **Update WeekStatsService for complete caching**
-     - Add `calculate_num_prs_approved` method
+   - **Continue caching pattern for remaining metrics**
+     - Audit other dynamic calculations that should be cached for performance
      - Ensure `calculate_open_prs` populates and is used consistently
      - Verify all Week model cached columns are populated during sync
 

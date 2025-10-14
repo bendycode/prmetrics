@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **Late and Stale PR Tracking** (feature/late-and-stale-prs)
+  - Replaced generic "Approved but Unmerged PRs" metric with actionable categories
+  - Added `num_prs_late` column: PRs approved 8-27 days ago (warning state)
+  - Added `num_prs_stale` column: PRs approved 28+ days ago (urgent state)
+  - Grace period: PRs approved ≤7 days are not flagged
+  - Cached columns with historical consistency using week `end_date`
+  - Dynamic methods for "View PRs" functionality with temporal accuracy
+  - Dashboard chart now shows Late PRs (orange) and Stale PRs (red) datasets
+  - Week show page displays counts with clickable "View PRs" links
+  - Comprehensive test coverage: 21 new tests, 100% coverage on new code
+  - Automated backfill via data_migrate gem on deployment
+  - Code coverage increased from 80.07% to 84.48% (+4.41%)
+
 ## [2025-06-03]
 
 ### Added
