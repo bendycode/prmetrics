@@ -18,7 +18,7 @@ class PullRequest < ApplicationRecord
 
   # Scopes for querying approved/open/unmerged PRs
   scope :approved, -> {
-    joins(:reviews).merge(Review.where(state: 'APPROVED')).distinct
+    joins(:reviews).merge(Review.approved).distinct
   }
 
   scope :open_at, ->(timestamp) {

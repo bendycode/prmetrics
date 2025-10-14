@@ -422,26 +422,26 @@ RSpec.describe Week, type: :model do
 
         describe 'boundary conditions' do
           it 'PR approved exactly 7 days before week end is NOT late' do
-            pr = create(:pull_request, repository: repository, gh_created_at: 60.days.ago)
-            create(:review, pull_request: pr, state: 'APPROVED', submitted_at: week.end_date - 7.days)
+            pr = create(:pull_request, :approved_before_week_end,
+                        repository: repository, week: week, days_before_week_end: 7)
             expect(week.late_prs).not_to include(pr)
           end
 
           it 'PR approved exactly 8 days before week end IS late' do
-            pr = create(:pull_request, repository: repository, gh_created_at: 60.days.ago)
-            create(:review, pull_request: pr, state: 'APPROVED', submitted_at: week.end_date - 8.days)
+            pr = create(:pull_request, :approved_before_week_end,
+                        repository: repository, week: week, days_before_week_end: 8)
             expect(week.late_prs).to include(pr)
           end
 
           it 'PR approved exactly 27 days before week end IS still late' do
-            pr = create(:pull_request, repository: repository, gh_created_at: 60.days.ago)
-            create(:review, pull_request: pr, state: 'APPROVED', submitted_at: week.end_date - 27.days)
+            pr = create(:pull_request, :approved_before_week_end,
+                        repository: repository, week: week, days_before_week_end: 27)
             expect(week.late_prs).to include(pr)
           end
 
           it 'PR approved exactly 28 days before week end IS stale (not late)' do
-            pr = create(:pull_request, repository: repository, gh_created_at: 60.days.ago)
-            create(:review, pull_request: pr, state: 'APPROVED', submitted_at: week.end_date - 28.days)
+            pr = create(:pull_request, :approved_before_week_end,
+                        repository: repository, week: week, days_before_week_end: 28)
             expect(week.stale_prs).to include(pr)
             expect(week.late_prs).not_to include(pr)
           end

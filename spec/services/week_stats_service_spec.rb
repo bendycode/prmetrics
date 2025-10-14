@@ -172,14 +172,12 @@ RSpec.describe WeekStatsService do
 
     describe '#calculate_num_prs_stale' do
       it 'counts only PRs approved 28+ days ago' do
-        pr1 = create(:pull_request, repository: repository, gh_created_at: 90.days.ago)
-        create(:review, pull_request: pr1, state: 'APPROVED', submitted_at: week.end_date - 27.days)
-
-        pr2 = create(:pull_request, repository: repository, gh_created_at: 90.days.ago)
-        create(:review, pull_request: pr2, state: 'APPROVED', submitted_at: week.end_date - 28.days)
-
-        pr3 = create(:pull_request, repository: repository, gh_created_at: 90.days.ago)
-        create(:review, pull_request: pr3, state: 'APPROVED', submitted_at: week.end_date - 60.days)
+        create(:pull_request, :approved_before_week_end,
+               repository: repository, week: week, days_before_week_end: 27)
+        create(:pull_request, :approved_before_week_end,
+               repository: repository, week: week, days_before_week_end: 28)
+        create(:pull_request, :approved_before_week_end,
+               repository: repository, week: week, days_before_week_end: 60)
 
         expect(service.send(:calculate_num_prs_stale)).to eq(2)
       end

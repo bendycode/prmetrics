@@ -10,27 +10,21 @@ RSpec.describe 'Week Navigation', type: :system, js: true do
   end
 
   describe 'late and stale PRs functionality' do
-    # Week ends January 14, 2024 - calculate approval dates relative to that
+    # Week ends January 14, 2024 - use factory trait for cleaner setup
     let!(:fresh_pr) {
-      pr = create(:pull_request, repository: repository, title: 'Fresh Feature',
-                  gh_created_at: Date.new(2023, 12, 1))
-      create(:review, pull_request: pr, state: 'APPROVED',
-             submitted_at: week.end_date - 2.days) # Approved 2 days before week end
-      pr
+      create(:pull_request, :approved_before_week_end,
+             repository: repository, week: week, days_before_week_end: 2,
+             title: 'Fresh Feature')
     }
     let!(:late_pr) {
-      pr = create(:pull_request, repository: repository, title: 'Late Feature',
-                  gh_created_at: Date.new(2023, 12, 1))
-      create(:review, pull_request: pr, state: 'APPROVED',
-             submitted_at: week.end_date - 10.days) # Approved 10 days before week end
-      pr
+      create(:pull_request, :approved_before_week_end,
+             repository: repository, week: week, days_before_week_end: 10,
+             title: 'Late Feature')
     }
     let!(:stale_pr) {
-      pr = create(:pull_request, repository: repository, title: 'Stale Feature',
-                  gh_created_at: Date.new(2023, 12, 1))
-      create(:review, pull_request: pr, state: 'APPROVED',
-             submitted_at: week.end_date - 35.days) # Approved 35 days before week end
-      pr
+      create(:pull_request, :approved_before_week_end,
+             repository: repository, week: week, days_before_week_end: 35,
+             title: 'Stale Feature')
     }
 
     before do
@@ -72,24 +66,24 @@ RSpec.describe 'Week Navigation', type: :system, js: true do
 
   describe 'boundary conditions' do
     it 'PR approved exactly 7 days before week end is NOT late' do
-      pr = create(:pull_request, repository: repository, gh_created_at: Date.new(2023, 12, 1))
-      create(:review, pull_request: pr, state: 'APPROVED', submitted_at: week.end_date - 7.days)
+      create(:pull_request, :approved_before_week_end,
+             repository: repository, week: week, days_before_week_end: 7)
       WeekStatsService.new(week).update_stats
       visit repository_week_path(repository, week)
       expect(page).to have_content('Late PRs: 0')
     end
 
     it 'PR approved exactly 8 days before week end IS late' do
-      pr = create(:pull_request, repository: repository, gh_created_at: Date.new(2023, 12, 1))
-      create(:review, pull_request: pr, state: 'APPROVED', submitted_at: week.end_date - 8.days)
+      create(:pull_request, :approved_before_week_end,
+             repository: repository, week: week, days_before_week_end: 8)
       WeekStatsService.new(week).update_stats
       visit repository_week_path(repository, week)
       expect(page).to have_content('Late PRs: 1')
     end
 
     it 'PR approved exactly 28 days before week end IS stale (not late)' do
-      pr = create(:pull_request, repository: repository, gh_created_at: Date.new(2023, 12, 1))
-      create(:review, pull_request: pr, state: 'APPROVED', submitted_at: week.end_date - 28.days)
+      create(:pull_request, :approved_before_week_end,
+             repository: repository, week: week, days_before_week_end: 28)
       WeekStatsService.new(week).update_stats
       visit repository_week_path(repository, week)
       expect(page).to have_content('Late PRs: 0')
