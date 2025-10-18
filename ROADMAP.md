@@ -109,6 +109,51 @@ This document outlines future development plans for prmetrics. For completed wor
    - API authentication
    - Rate limiting
 
+## AI & Machine Learning Features
+
+These features leverage AI/ML to provide intelligent insights and predictions based on PR metrics data.
+
+### AI-Powered Insights & Analysis
+
+1. **AI-Powered PR Insights Dashboard Widget**
+   - Natural language insights generation using Claude/OpenAI API
+   - Automated analysis of recent PR patterns and anomalies
+   - Real-time insights like "Review times increased 40% this week - 3 PRs sat unreviewed for 2+ days"
+   - Contextual recommendations based on team behavior patterns
+   - Optional regeneration with different focus areas (late PRs, review patterns, specific team members)
+   - **Implementation**: 3-4 hours for MVP
+   - **Demo potential**: High - generates readable, actionable insights
+   - **Business value**: Helps teams spot problems without manual chart analysis
+
+2. **Natural Language Metrics Query Interface**
+   - Chat-style interface for asking questions about metrics
+   - Examples: "Which PRs took longest to review last month?", "Show me John's review performance"
+   - AI-powered query understanding and data retrieval
+   - Natural language responses with supporting data and charts
+   - Semantic search capabilities for domain-specific questions
+   - Function calling integration with Claude API
+   - **Implementation**: 4-5 hours for MVP
+   - **Demo potential**: Very high - interactive, conversational UI
+   - **Business value**: Democratizes data access for non-technical users
+
+3. **Predictive PR Merge Time Estimator**
+   - ML model predicting merge time based on historical patterns
+   - Factors: PR size, author history, time of week, review count, file types
+   - Display predictions on PR cards: "This PR will likely merge in 2-4 days"
+   - Confidence intervals and explanation of prediction factors
+   - Model training on repository-specific historical data
+   - Options: Simple regression or more sophisticated ML models
+   - **Implementation**: 4-6 hours for MVP
+   - **Demo potential**: High - visual predictions with explanations
+   - **Business value**: Sets realistic expectations, helps prioritization
+
+### Future AI Enhancements
+- Automated PR complexity scoring using code analysis
+- Intelligent reviewer assignment based on expertise and availability
+- Anomaly detection for unusual review patterns or bottlenecks
+- Sentiment analysis on PR comments and reviews
+- Custom insight generation based on user-defined business rules
+
 ## Feature Backlog
 
 ### Analytics & Reporting
