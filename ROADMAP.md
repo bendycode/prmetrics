@@ -19,6 +19,20 @@ This document outlines future development plans for prmetrics. For completed wor
    - Add to CI/CD pipeline
    - Fix identified code smells and anti-patterns
 
+3. **Test Suite Optimization**
+   - ⏳ Enable pending specs (10 currently skipped with xit/xcontext)
+     - Review and fix skipped search specs in spec/features/search_spec.rb
+     - Fix webhook specs in spec/controllers/webhooks_controller_spec.rb
+     - Enable Sidekiq dashboard and mentor invitation specs
+   - ⏱️ Identify and optimize slowest 3 specs
+     - Profile test suite to find performance bottlenecks
+     - Target specs taking >5 seconds individually
+     - Optimize database setup, fixtures, or test logic
+   - 🚀 Improve overall rake execution time
+     - Current: ~4 minutes total (RuboCop + RSpec + Teaspoon)
+     - Target: <3 minutes for faster development feedback
+     - Consider parallel test execution, selective test running, or test optimizations
+
 ### Phase 2: Architecture Improvements (4-8 weeks)
 
 1. **Refactor GithubService**
