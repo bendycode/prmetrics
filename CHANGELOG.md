@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Enhanced GitHub Data Sync Reliability**
+  - Added GitHub issue events sync to capture ready_for_review timing changes
+  - Implemented more robust incremental sync logic
+  - Added validation for sync completeness
 - **Late and Stale PR Tracking** (feature/late-and-stale-prs)
   - Replaced generic "Approved but Unmerged PRs" metric with actionable categories
   - Added `num_prs_late` column: PRs approved 8-27 days ago (warning state)

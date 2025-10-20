@@ -6,18 +6,13 @@ This document outlines future development plans for prmetrics. For completed wor
 
 ### Phase 1: Code Quality & Stability (Next 2-4 weeks)
 
-1. **Enhance GitHub Data Sync Reliability**
-   - Add GitHub issue events sync to capture ready_for_review timing changes
-   - Implement more robust incremental sync logic
-   - Add validation for sync completeness
-
-2. **Integrate Linting (StandardRB or RuboCop)**
+1. **Integrate Linting (StandardRB or RuboCop)**
    - Evaluate and choose between StandardRB or RuboCop for consistent code style
    - Add chosen linter gem and configure as default rake task
    - Run initial code standardization across entire codebase
    - Ensure linting passes in CI/CD pipeline
 
-3. **Add Rails Best Practices**
+2. **Add Rails Best Practices**
    - Integrate rails_best_practices gem
    - Configure custom rules for the project
    - Add to CI/CD pipeline
