@@ -55,8 +55,34 @@ bundle exec rspec spec/models/pull_request_spec.rb:42
 bundle exec rspec spec/models/
 ```
 
-**Note**: Ruby 3.3.5 may show harmless DidYouMean deprecation warnings from upstream gems. 
+**Note**: Ruby 3.3.5 may show harmless DidYouMean deprecation warnings from upstream gems.
 These are safe to ignore and will be resolved when gems update their DidYouMean API usage.
+
+### Code Quality (RuboCop)
+```bash
+# Run RuboCop linter
+docker exec mme-app-1 bundle exec rubocop
+# or
+docker exec mme-app-1 rake rubocop
+
+# Auto-fix violations where possible (safe only)
+docker exec mme-app-1 bundle exec rubocop -a
+# or
+docker exec mme-app-1 rake rubocop:autocorrect
+
+# Auto-fix all violations (safe and unsafe)
+docker exec mme-app-1 rake rubocop:autocorrect_all
+
+# Run default task (RuboCop + RSpec)
+docker exec mme-app-1 rake
+```
+
+**RuboCop Configuration:**
+- **Config**: `.rubocop.yml` follows Ruby Style Guide defaults with Rails/RSpec extensions
+- **Gradual Adoption**: `.rubocop_todo.yml` contains existing violations for incremental fixing
+- **Default Task**: `rake` runs `rubocop` first, then `spec`
+- **CI/CD**: GitHub Actions runs RuboCop on every push and PR
+- **Todo Management**: Fix violations incrementally, remove from `.rubocop_todo.yml` as resolved
 
 ### GitHub Data Fetching
 ```bash

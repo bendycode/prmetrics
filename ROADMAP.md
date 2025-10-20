@@ -6,11 +6,12 @@ This document outlines future development plans for prmetrics. For completed wor
 
 ### Phase 1: Code Quality & Stability (Next 2-4 weeks)
 
-1. **Integrate Linting (StandardRB or RuboCop)**
-   - Evaluate and choose between StandardRB or RuboCop for consistent code style
-   - Add chosen linter gem and configure as default rake task
-   - Run initial code standardization across entire codebase
-   - Ensure linting passes in CI/CD pipeline
+1. ✅ **Integrate Linting (RuboCop)** (In Progress)
+   - ✅ Added RuboCop with Ruby Style Guide defaults
+   - ✅ Configured as default rake task (runs before specs)
+   - ✅ Generated .rubocop_todo.yml for gradual adoption
+   - ✅ Added to CI/CD pipeline (GitHub Actions)
+   - 🔄 Incremental cleanup of existing violations (ongoing)
 
 2. **Add Rails Best Practices**
    - Integrate rails_best_practices gem

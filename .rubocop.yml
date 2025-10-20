@@ -1,0 +1,20 @@
+inherit_from: .rubocop_todo.yml
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.4
+  Exclude:
+    - 'db/schema.rb'
+    - 'db/migrate/**/*'
+    - 'bin/**/*'
+    - 'node_modules/**/*'
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+    - 'log/**/*'
+    - '.rubocop_todo.yml'
+
+# Extensions
+plugins:
+  - rubocop-rails
+  - rubocop-rspec
+  - rubocop-performance

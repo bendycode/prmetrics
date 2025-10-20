@@ -74,15 +74,21 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
-  
+
   # Detect N+1 queries
   gem "bullet"
-  
+
   # Preview emails in browser
   gem "letter_opener"
-  
+
   # Process management for development
   gem "foreman"
+
+  # Code quality and linting
+  gem "rubocop", require: false
+  gem "rubocop-rails", require: false
+  gem "rubocop-rspec", require: false
+  gem "rubocop-performance", require: false
 
   # Add speed badges [https://github.com/MiniProfiler/rack-mini-profiler]
   # gem "rack-mini-profiler"

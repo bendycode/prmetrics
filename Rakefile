@@ -4,3 +4,6 @@
 require_relative "config/application"
 
 Rails.application.load_tasks
+
+# Default task runs RuboCop first, then RSpec
+task default: ["rubocop", "spec"]

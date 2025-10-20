@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.4.4
+        bundler-cache: true
+
+    - name: Setup database
+      env:
+        RAILS_ENV: test
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/prmetrics_test
+      run: |
+        bundle exec rails db:create
+        bundle exec rails db:migrate
+        bundle exec rails data:migrate
+
+    - name: Run RuboCop
+      run: bundle exec rubocop
+
+    - name: Run RSpec
+      env:
+        RAILS_ENV: test
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/prmetrics_test
+      run: bundle exec rspec
