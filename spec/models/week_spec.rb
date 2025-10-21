@@ -273,10 +273,11 @@ RSpec.describe Week do
         after  { Time.zone = 'UTC' }
 
         let(:repository) { create(:repository) }
-        let(:week) { create(:week,
-                            repository: repository,
-                            begin_date: Time.zone.local(2024, 1, 8),
-                            end_date: Time.zone.local(2024, 1, 14))
+        let(:week) {
+          create(:week,
+                 repository: repository,
+                 begin_date: Time.zone.local(2024, 1, 8),
+                 end_date: Time.zone.local(2024, 1, 14))
         }
 
         let!(:open_pr) {
