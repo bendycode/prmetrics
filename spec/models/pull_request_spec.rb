@@ -103,7 +103,7 @@ RSpec.describe PullRequest do
              ready_for_review_at: 1.day.ago)
     end
 
-    it 'should return a positive duration for reviews submitted after ready_for_review_at' do
+    it 'returns a positive duration for reviews submitted after ready_for_review_at' do
       # Use a Monday at 9 AM as ready_for_review_at
       monday_9am = 1.week.ago.beginning_of_week + 9.hours
       pull_request.update!(ready_for_review_at: monday_9am)
@@ -118,7 +118,7 @@ RSpec.describe PullRequest do
       expect(pull_request.time_to_first_review).to be > 0.hours
     end
 
-    it 'should return nil when all reviews are submitted before ready_for_review_at' do
+    it 'returns nil when all reviews are submitted before ready_for_review_at' do
       create(:review,
              pull_request: pull_request,
              author: contributor,
@@ -129,7 +129,7 @@ RSpec.describe PullRequest do
       expect(pull_request.time_to_first_review).to be_nil
     end
 
-    it 'should ignore reviews submitted before ready_for_review_at when finding first review' do
+    it 'ignores reviews submitted before ready_for_review_at when finding first review' do
       # Use a Monday at 9 AM as ready_for_review_at
       monday_9am = 1.week.ago.beginning_of_week + 9.hours
       pull_request.update!(ready_for_review_at: monday_9am)
