@@ -104,7 +104,7 @@ RSpec.configure do |config|
   config.include Devise::Test::IntegrationHelpers, type: :system
 
   # Use inline job processing for tests
-  config.before(:each) do
+  config.before do
     ActiveJob::Base.queue_adapter = :test
   end
 
@@ -117,11 +117,11 @@ RSpec.configure do |config|
 
   # Configure Bullet for tests (only if Bullet is available)
   if defined?(Bullet)
-    config.before(:each) do
+    config.before do
       Bullet.start_request if Bullet.enable?
     end
 
-    config.after(:each) do
+    config.after do
       Bullet.perform_out_of_channel_notifications if Bullet.enable?
       Bullet.end_request if Bullet.enable?
     end
