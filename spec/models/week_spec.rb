@@ -29,8 +29,7 @@ RSpec.describe Week do
              repository: repository,
              week_number: 202402, # Correct week number for 2024-01-08 to 2024-01-14
              begin_date: Time.zone.local(2024, 1, 8), # Monday
-             end_date: Time.zone.local(2024, 1, 14)   # Sunday
-            )
+             end_date: Time.zone.local(2024, 1, 14)) # Sunday
     end
 
     describe '#avg_hours_to_first_review' do
@@ -44,14 +43,12 @@ RSpec.describe Week do
                        title: "PR 1",
                        state: "open",
                        ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0), # Monday 9 AM
-                       first_review_week: current_week
-                      )
+                       first_review_week: current_week)
           create(:review,
                  pull_request: pr1,
                  author: contributor,
                  submitted_at: Time.zone.local(2024, 1, 8, 13, 0, 0), # Monday 1 PM (4 hours later)
-                 state: 'approved'
-                )
+                 state: 'approved')
 
           # PR 2: Reviewed next day, 31 hours later
           pr2 = create(:pull_request,
@@ -61,14 +58,12 @@ RSpec.describe Week do
                        title: "PR 2",
                        state: "open",
                        ready_for_review_at: Time.zone.local(2024, 1, 9, 14, 0, 0), # Tuesday 2 PM
-                       first_review_week: current_week
-                      )
+                       first_review_week: current_week)
           create(:review,
                  pull_request: pr2,
                  author: contributor,
                  submitted_at: Time.zone.local(2024, 1, 10, 21, 0, 0), # Wednesday 9 PM (31 hours later)
-                 state: 'approved'
-                )
+                 state: 'approved')
         end
 
         it 'calculates average weekday hours correctly' do
@@ -93,14 +88,12 @@ RSpec.describe Week do
                        number: 3,
                        title: "PR 3",
                        state: "open",
-                       ready_for_review_at: Time.zone.local(2024, 1, 8, 14, 0, 0) # Monday 2 PM
-                      )
+                       ready_for_review_at: Time.zone.local(2024, 1, 8, 14, 0, 0)) # Monday 2 PM
           create(:review,
                  pull_request: pr1,
                  author: contributor,
                  submitted_at: Time.zone.local(2024, 1, 11, 10, 0, 0), # Thursday 10 AM
-                 state: 'approved'
-                )
+                 state: 'approved')
 
           # PR 2: Created Tuesday, reviewed Friday
           pr2 = create(:pull_request,
@@ -109,14 +102,12 @@ RSpec.describe Week do
                        number: 4,
                        title: "PR 4",
                        state: "open",
-                       ready_for_review_at: Time.zone.local(2024, 1, 9, 9, 0, 0) # Tuesday 9 AM
-                      )
+                       ready_for_review_at: Time.zone.local(2024, 1, 9, 9, 0, 0)) # Tuesday 9 AM
           create(:review,
                  pull_request: pr2,
                  author: contributor,
                  submitted_at: Time.zone.local(2024, 1, 12, 9, 0, 0), # Friday 9 AM
-                 state: 'approved'
-                )
+                 state: 'approved')
 
           # Week associations are automatically updated by callbacks
         end
@@ -152,8 +143,7 @@ RSpec.describe Week do
                  state: "closed",
                  ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0), # Monday 9 AM
                  gh_merged_at: Time.zone.local(2024, 1, 8, 15, 0, 0),       # Monday 3 PM
-                 merged_week: current_week
-                )
+                 merged_week: current_week)
 
           # PR 2: Merged two days later, 61 hours later
           create(:pull_request,
@@ -164,8 +154,7 @@ RSpec.describe Week do
                  state: "closed",
                  ready_for_review_at: Time.zone.local(2024, 1, 9, 10, 0, 0), # Tuesday 10 AM
                  gh_merged_at: Time.zone.local(2024, 1, 11, 23, 0, 0),       # Thursday 11 PM
-                 merged_week: current_week
-                )
+                 merged_week: current_week)
         end
 
         it 'calculates average weekday hours correctly' do
@@ -195,8 +184,7 @@ RSpec.describe Week do
                  title: "PR 7",
                  state: "closed",
                  ready_for_review_at: Time.zone.local(2024, 1, 8, 13, 0, 0), # Monday 1 PM
-                 gh_merged_at: Time.zone.local(2024, 1, 12, 11, 0, 0)        # Friday 11 AM
-                )
+                 gh_merged_at: Time.zone.local(2024, 1, 12, 11, 0, 0)) # Friday 11 AM
 
           # PR 2: Created Monday, merged Wednesday
           create(:pull_request,
@@ -206,8 +194,7 @@ RSpec.describe Week do
                  title: "PR 8",
                  state: "closed",
                  ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0), # Monday 9 AM
-                 gh_merged_at: Time.zone.local(2024, 1, 10, 17, 0, 0) # Wednesday 5 PM
-                )
+                 gh_merged_at: Time.zone.local(2024, 1, 10, 17, 0, 0)) # Wednesday 5 PM
 
           # Week associations are automatically updated by callbacks
         end
@@ -289,24 +276,21 @@ RSpec.describe Week do
         let(:week) { create(:week,
                             repository: repository,
                             begin_date: Time.zone.local(2024, 1, 8),
-                            end_date: Time.zone.local(2024, 1, 14)
-                           )
+                            end_date: Time.zone.local(2024, 1, 14))
         }
 
         let!(:open_pr) {
           create(:pull_request,
                  repository: repository,
                  draft: false,
-                 gh_created_at: week.begin_date
-                )
+                 gh_created_at: week.begin_date)
         }
 
         let!(:draft_pr) {
           create(:pull_request,
                  repository: repository,
                  draft: true,
-                 gh_created_at: week.begin_date
-                )
+                 gh_created_at: week.begin_date)
         }
 
         let!(:pr_closed_end_of_week) do
@@ -314,8 +298,7 @@ RSpec.describe Week do
                  repository: repository,
                  draft: false,
                  gh_created_at: week.begin_date,
-                 gh_closed_at: Time.zone.local(2024, 1, 14, 23, 59, 59) # 11:59:59 PM on end date
-                )
+                 gh_closed_at: Time.zone.local(2024, 1, 14, 23, 59, 59)) # 11:59:59 PM on end date
         end
 
         let!(:pr_closed_start_of_next_day) do
@@ -323,8 +306,7 @@ RSpec.describe Week do
                  repository: repository,
                  draft: false,
                  gh_created_at: week.begin_date,
-                 gh_closed_at: Time.zone.local(2024, 1, 15, 0, 1, 0) # 12:01:00 AM the next day
-                )
+                 gh_closed_at: Time.zone.local(2024, 1, 15, 0, 1, 0)) # 12:01:00 AM the next day
         end
 
         it 'returns non-draft PRs open during the week, excluding those closed at end-of-day boundary' do
