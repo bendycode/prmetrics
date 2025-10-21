@@ -45,7 +45,7 @@ class SyncRepositoryBatchJob < ApplicationJob
 
   private
 
-  def fetch_pull_requests_page(service, repository, page)
+  def fetch_pull_requests_page(_service, repository, page)
     # We need to directly use Octokit since GithubService doesn't expose the client
     client = Octokit::Client.new(access_token: ENV.fetch('GITHUB_ACCESS_TOKEN', nil))
     client.pull_requests(
@@ -58,7 +58,7 @@ class SyncRepositoryBatchJob < ApplicationJob
     )
   end
 
-  def process_pull_requests(service, repository, pull_requests)
+  def process_pull_requests(_service, repository, pull_requests)
     # For now, we'll use the existing GithubService logic by calling the full method
     # This is inefficient but works until we refactor GithubService
     pull_requests.each do |pr_data|
