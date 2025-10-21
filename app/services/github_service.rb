@@ -214,9 +214,9 @@ class GithubService
     else
       # Fallback for cases where we only have username
       Contributor.find_or_create_from_username(github_user.login, {
-        name: github_user.respond_to?(:name) ? github_user.name : nil,
-        email: github_user.respond_to?(:email) ? github_user.email : nil
-      })
+                                                 name: github_user.respond_to?(:name) ? github_user.name : nil,
+                                                 email: github_user.respond_to?(:email) ? github_user.email : nil
+                                               })
     end
   end
 
