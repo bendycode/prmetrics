@@ -205,8 +205,8 @@ RSpec.describe Week do
             number: 8,
             title: "PR 8",
             state: "closed",
-            ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0),  # Monday 9 AM
-            gh_merged_at: Time.zone.local(2024, 1, 10, 17, 0, 0)       # Wednesday 5 PM
+            ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0), # Monday 9 AM
+            gh_merged_at: Time.zone.local(2024, 1, 10, 17, 0, 0) # Wednesday 5 PM
           )
 
           # Week associations are automatically updated by callbacks
@@ -313,7 +313,7 @@ RSpec.describe Week do
             repository: repository,
             draft: false,
             gh_created_at: week.begin_date,
-            gh_closed_at: Time.zone.local(2024, 1, 14, 23, 59, 59)  # 11:59:59 PM on end date
+            gh_closed_at: Time.zone.local(2024, 1, 14, 23, 59, 59) # 11:59:59 PM on end date
           )
         end
 
@@ -322,7 +322,7 @@ RSpec.describe Week do
             repository: repository,
             draft: false,
             gh_created_at: week.begin_date,
-            gh_closed_at: Time.zone.local(2024, 1, 15, 0, 1, 0)  # 12:01:00 AM the next day
+            gh_closed_at: Time.zone.local(2024, 1, 15, 0, 1, 0) # 12:01:00 AM the next day
           )
         end
 

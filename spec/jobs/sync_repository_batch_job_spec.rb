@@ -179,7 +179,7 @@ RSpec.describe SyncRepositoryBatchJob do
         ),
         double(
           state: 'changes_requested',
-          submitted_at: nil  # Should be skipped
+          submitted_at: nil # Should be skipped
         )
       ]
     end
@@ -313,7 +313,7 @@ RSpec.describe SyncRepositoryBatchJob do
 
     it 'retries on rate limit errors' do
       call_count = 0
-      allow(job).to receive(:sleep)  # Don't actually sleep in tests
+      allow(job).to receive(:sleep) # Don't actually sleep in tests
 
       result = job.send(:with_rate_limit_handling) do
         call_count += 1
@@ -380,15 +380,15 @@ RSpec.describe SyncRepositoryBatchJob do
 
     it 'uses exponential backoff for nil headers' do
       wait_time = job.send(:calculate_wait_time, nil, 1)
-      expect(wait_time).to eq(120)  # 60 * (2 ** 1)
+      expect(wait_time).to eq(120) # 60 * (2 ** 1)
     end
 
     it 'uses exponential backoff when rate limit reset time is past' do
-      reset_time = (Time.now - 60).to_i  # Past time
+      reset_time = (Time.now - 60).to_i # Past time
       headers = { 'x-ratelimit-remaining' => '0', 'x-ratelimit-reset' => reset_time.to_s }
 
       wait_time = job.send(:calculate_wait_time, headers, 0)
-      expect(wait_time).to eq(60)  # Falls back to exponential backoff
+      expect(wait_time).to eq(60) # Falls back to exponential backoff
     end
   end
 
