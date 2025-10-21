@@ -3,7 +3,7 @@ class SyncRepositoryJob < ApplicationJob
 
   def perform(repo_name, fetch_all: false, access_token: nil)
     # Use provided token or fall back to environment variable
-    token = access_token || ENV['GITHUB_ACCESS_TOKEN']
+    token = access_token || ENV.fetch('GITHUB_ACCESS_TOKEN', nil)
 
     unless token
       Rails.logger.error "No GitHub access token available for sync"

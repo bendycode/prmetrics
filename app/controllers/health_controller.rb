@@ -63,7 +63,7 @@ class HealthController < ApplicationController
   end
 
   def check_github_api
-    client = Octokit::Client.new(access_token: ENV['GITHUB_ACCESS_TOKEN'])
+    client = Octokit::Client.new(access_token: ENV.fetch('GITHUB_ACCESS_TOKEN', nil))
     rate_limit = client.rate_limit
     {
       status: 'ok',

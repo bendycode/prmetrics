@@ -27,7 +27,7 @@ namespace :email do
     puts "  Perform Deliveries: #{ActionMailer::Base.perform_deliveries}"
     puts "  Raise Delivery Errors: #{ActionMailer::Base.raise_delivery_errors}"
     puts "  Default URL Host: #{ActionMailer::Base.default_url_options[:host]}"
-    puts "  Default From: #{ENV['DEFAULT_MAILER_SENDER']}"
+    puts "  Default From: #{ENV.fetch('DEFAULT_MAILER_SENDER', nil)}"
 
     puts "\nSMTP Configuration:"
     if ENV['SENDGRID_USERNAME'].present?

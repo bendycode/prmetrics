@@ -85,7 +85,7 @@ Rails.application.configure do
       port: 587,
       domain: ENV['APPLICATION_HOST'] || 'prmetrics.io',
       user_name: ENV['SENDGRID_USERNAME'],
-      password: ENV['SENDGRID_PASSWORD'],
+      password: ENV.fetch('SENDGRID_PASSWORD', nil),
       authentication: :plain,
       enable_starttls_auto: true
     }
@@ -94,9 +94,9 @@ Rails.application.configure do
     config.action_mailer.smtp_settings = {
       address: ENV['SMTP_ADDRESS'],
       port: ENV['SMTP_PORT'] || 587,
-      domain: ENV['SMTP_DOMAIN'],
-      user_name: ENV['SMTP_USERNAME'],
-      password: ENV['SMTP_PASSWORD'],
+      domain: ENV.fetch('SMTP_DOMAIN', nil),
+      user_name: ENV.fetch('SMTP_USERNAME', nil),
+      password: ENV.fetch('SMTP_PASSWORD', nil),
       authentication: :plain,
       enable_starttls_auto: true
     }
