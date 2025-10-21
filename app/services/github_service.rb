@@ -41,7 +41,7 @@ class GithubService
       (new_prs || pull_requests).each do |pr|
         process_pull_request(repository, repo_name, pr)
         most_recent_update = [most_recent_update, pr.updated_at].compact.max
-        Rails.logger.debug "Processed PR ##{pr.number}"
+        Rails.logger.debug { "Processed PR ##{pr.number}" }
         total_processed += 1
 
         # Call the processor callback if provided
@@ -95,7 +95,7 @@ class GithubService
         affected_prs << pull_request
         total_processed += 1
 
-        Rails.logger.debug "Updated reviews for PR ##{pr_number} due to comment activity"
+        Rails.logger.debug { "Updated reviews for PR ##{pr_number} due to comment activity" }
       end
 
       page += 1

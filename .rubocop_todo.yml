@@ -365,12 +365,6 @@ Rails/DynamicFindBy:
     - 'lib/tasks/validate_week_associations.rake'
     - 'spec/models/week_spec.rb'
 
-# Offense count: 2
-# This cop supports safe autocorrection (--autocorrect).
-Rails/EagerEvaluationLogMessage:
-  Exclude:
-    - 'app/services/github_service.rb'
-
 # Offense count: 4
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: AllowedMethods, AllowedPatterns.
