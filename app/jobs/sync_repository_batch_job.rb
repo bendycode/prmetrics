@@ -207,9 +207,9 @@ class SyncRepositoryBatchJob < ApplicationJob
     else
       # Fallback for cases where we only have username
       Contributor.find_or_create_from_username(user_login, {
-        name: user_name,
-        email: user_email
-      })
+                                                 name: user_name,
+                                                 email: user_email
+                                               })
     end
   end
 

@@ -105,9 +105,9 @@ RSpec.describe Contributor do
     describe '.find_or_create_from_username' do
       it 'creates a new contributor with placeholder github_id' do
         contributor = Contributor.find_or_create_from_username('newuser', {
-          name: 'New User',
-          email: 'new@example.com'
-        })
+                                                                 name: 'New User',
+                                                                 email: 'new@example.com'
+                                                               })
 
         expect(contributor.username).to eq 'newuser'
         expect(contributor.github_id).to start_with('placeholder_')
