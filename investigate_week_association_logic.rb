@@ -10,7 +10,7 @@ problem_weeks.each do |week_number|
   week = Week.find_by(week_number: week_number)
   next unless week
 
-  puts "\n" + "=" * 60
+  puts "\n" + ("=" * 60)
   puts "WEEK #{week_number} DEEP INVESTIGATION"
   puts "=" * 60
 
@@ -82,7 +82,7 @@ problem_weeks.each do |week_number|
   end
 end
 
-puts "\n" + "=" * 80
+puts "\n" + ("=" * 80)
 puts "TESTING Week.find_by_date LOGIC"
 puts "=" * 80
 
@@ -112,7 +112,7 @@ test_dates.each do |date|
   end
 end
 
-puts "\n" + "=" * 80
+puts "\n" + ("=" * 80)
 puts "DATABASE WEEK OVERLAP CHECK"
 puts "=" * 80
 

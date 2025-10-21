@@ -68,7 +68,7 @@ problem_weeks.each do |week_number|
   end
 end
 
-puts "\n" + "=" * 80
+puts "\n" + ("=" * 80)
 puts "CORRECT FIX APPROACH"
 puts "=" * 80
 

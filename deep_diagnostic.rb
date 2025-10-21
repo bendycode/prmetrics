@@ -16,7 +16,7 @@ puts
 problem_weeks = [202518, 202519, 202521]
 
 problem_weeks.each do |week_number|
-  puts "\n" + "=" * 60
+  puts "\n" + ("=" * 60)
   puts "WEEK #{week_number} DETAILED ANALYSIS"
   puts "=" * 60
 
@@ -111,7 +111,7 @@ problem_weeks.each do |week_number|
   puts "  Time.zone.now: #{Time.zone.now}"
 end
 
-puts "\n" + "=" * 80
+puts "\n" + ("=" * 80)
 puts "ENVIRONMENT INFO:"
 puts "  Rails.env: #{Rails.env}"
 puts "  Time.zone: #{Time.zone}"
