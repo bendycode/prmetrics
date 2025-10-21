@@ -14,12 +14,12 @@ class DomainRedirectMiddleware
 
       # Define redirect rules
       redirect_host = case host
-      when 'pr-analyzer-production.herokuapp.com'
-        'prmetrics-production.herokuapp.com'
-      when 'pr-analyzer.herokuapp.com'
-        'prmetrics-production.herokuapp.com'
-      else
-        nil
+                      when 'pr-analyzer-production.herokuapp.com'
+                        'prmetrics-production.herokuapp.com'
+                      when 'pr-analyzer.herokuapp.com'
+                        'prmetrics-production.herokuapp.com'
+                      else
+                        nil
       end
 
       # Perform redirect if needed
