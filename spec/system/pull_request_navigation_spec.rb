@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Pull Request Navigation', type: :system do
+RSpec.describe 'Pull Request Navigation' do
   let(:admin) { create(:user, :admin) }
   let(:repository) { create(:repository, name: 'test/repo') }
   let(:github_user) { create(:github_user, username: 'testuser') }

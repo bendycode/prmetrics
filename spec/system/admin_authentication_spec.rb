@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Admin Authentication', type: :system do
+RSpec.describe 'Admin Authentication' do
   describe 'login flow' do
     let(:admin) { create(:user, :admin, email: 'admin@example.com', password: 'password123') }
 

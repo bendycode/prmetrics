@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe UpdateRepositoryStatsJob, type: :job do
+RSpec.describe UpdateRepositoryStatsJob do
   let(:repository) { create(:repository) }
   let(:job) { described_class.new }
 

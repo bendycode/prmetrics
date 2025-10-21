@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe Contributor, type: :model do
+RSpec.describe Contributor do
   describe 'validations' do
     it "is valid with valid attributes" do
       contributor = Contributor.new(

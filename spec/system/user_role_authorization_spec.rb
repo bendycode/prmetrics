@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'User Role Authorization', type: :system, js: true do
+RSpec.describe 'User Role Authorization', js: true do
   # These specs test the core authorization patterns we'll implement
   # They will fail initially and pass as we build the role system
 

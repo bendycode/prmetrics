@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Dashboard Late and Stale PRs Chart', type: :system, js: true do
+RSpec.describe 'Dashboard Late and Stale PRs Chart', js: true do
   let(:admin) { create(:user, :admin) }
 
   before { sign_in admin }

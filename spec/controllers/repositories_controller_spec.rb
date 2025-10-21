@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe RepositoriesController, type: :controller do
+RSpec.describe RepositoriesController do
   let(:user) { create(:user, :admin) }
   let(:repository) { create(:repository) }
 

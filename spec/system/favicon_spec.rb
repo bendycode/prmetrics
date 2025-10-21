@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Favicon', type: :system do
+RSpec.describe 'Favicon' do
   describe 'favicon links in HTML head' do
     it 'includes all favicon variants on the main application' do
       visit root_path

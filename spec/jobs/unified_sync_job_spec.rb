@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe UnifiedSyncJob, type: :job do
+RSpec.describe UnifiedSyncJob do
   let(:repo_name) { 'rails/rails' }
 
   describe '#perform' do

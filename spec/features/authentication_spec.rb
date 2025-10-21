@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Authentication', type: :feature do
+RSpec.describe 'Authentication' do
   describe 'user login flows' do
     let(:admin_user) { create(:user, role: :admin) }
     let(:regular_user) { create(:user, role: :regular_user) }

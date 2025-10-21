@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe SyncRepositoryJob, type: :job do
+RSpec.describe SyncRepositoryJob do
   let(:repo_name) { 'owner/repo' }
   let(:access_token) { 'test_token' }
 

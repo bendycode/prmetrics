@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe DashboardController, type: :controller do
+RSpec.describe DashboardController do
   let(:user) { create(:user, :admin) }
 
   before do

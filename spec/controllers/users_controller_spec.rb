@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe UsersController, type: :controller do
+RSpec.describe UsersController do
   let(:admin_user) { create(:user, :admin) }
   let(:regular_user) { create(:user) }
   let(:other_admin) { create(:user, :admin) }
