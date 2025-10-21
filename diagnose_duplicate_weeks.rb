@@ -70,10 +70,10 @@ puts '=' * 80
 Week.where('begin_date >= ?', Date.new(2025, 1, 1)).each do |week|
   old_prs = week.merged_prs.where('gh_merged_at < ?', Date.new(2021, 1, 1))
 
-  if old_prs.any?
-    puts "\n❌ Week #{week.week_number} (#{week.begin_date}) has old PRs:"
-    old_prs.each do |pr|
-      puts "  PR ##{pr.number}: merged #{pr.gh_merged_at}"
-    end
+  next unless old_prs.any?
+
+  puts "\n❌ Week #{week.week_number} (#{week.begin_date}) has old PRs:"
+  old_prs.each do |pr|
+    puts "  PR ##{pr.number}: merged #{pr.gh_merged_at}"
   end
 end

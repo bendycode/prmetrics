@@ -682,20 +682,6 @@ Style/NegatedIfElseCondition:
     - 'fix_specific_prs.rb'
     - 'lib/tasks/coverage.rake'
 
-# Offense count: 9
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, MinBodyLength, AllowConsecutiveConditionals.
-# SupportedStyles: skip_modifier_ifs, always
-Style/Next:
-  Exclude:
-    - 'app/services/github_service.rb'
-    - 'diagnose_duplicate_weeks.rb'
-    - 'diagnose_exact_prs.rb'
-    - 'find_null_merge_associations.rb'
-    - 'fix_specific_prs.rb'
-    - 'lib/tasks/ci_checks.rake'
-    - 'lib/tasks/fix_duplicates.rake'
-    - 'lib/tasks/timezone_fix.rake'
 
 # Offense count: 38
 # This cop supports unsafe autocorrection (--autocorrect-all).

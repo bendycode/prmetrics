@@ -22,11 +22,11 @@ namespace :ci do
 
     inconsistent_count = 0
     sample_prs.each do |pr|
-      if pr.gh_merged_at
-        expected_week = Week.find_by_date(pr.gh_merged_at)
-        if pr.merged_week != expected_week
-          inconsistent_count += 1
-        end
+      next unless pr.gh_merged_at
+
+      expected_week = Week.find_by_date(pr.gh_merged_at)
+      if pr.merged_week != expected_week
+        inconsistent_count += 1
       end
     end
 

@@ -46,18 +46,18 @@ problem_weeks.each do |week_number|
 
       # Find which week this PR should belong to
       pr_record = PullRequest.find_by(number: pr[:number])
-      if pr_record
-        correct_week = pr_record.repository.weeks
-                                .where('begin_date <= ? AND end_date >= ?',
-                                       pr_record.gh_merged_at.to_date,
-                                       pr_record.gh_merged_at.to_date)
-                                .first
+      next unless pr_record
 
-        if correct_week
-          puts "    Should be in week #{correct_week.week_number}"
-        else
-          puts '    No week found for this merge date!'
-        end
+      correct_week = pr_record.repository.weeks
+                              .where('begin_date <= ? AND end_date >= ?',
+                                     pr_record.gh_merged_at.to_date,
+                                     pr_record.gh_merged_at.to_date)
+                              .first
+
+      if correct_week
+        puts "    Should be in week #{correct_week.week_number}"
+      else
+        puts '    No week found for this merge date!'
       end
     end
   end
@@ -93,35 +93,35 @@ problem_weeks.each do |week_number|
   puts "  SQL: #{sql_associated} PRs have merged_week_id = #{week.id}"
   puts "  SQL: #{sql_in_range} PRs merged in timestamp range"
 
-  if sql_associated != sql_in_range
-    puts "\n🔍 INVESTIGATING DIFFERENCE:"
+  next unless sql_associated != sql_in_range
 
-    # Get the actual PR numbers
-    associated_sql = ActiveRecord::Base.connection.execute(
-      "SELECT number, gh_merged_at FROM pull_requests WHERE merged_week_id = #{week.id} ORDER BY number"
-    )
+  puts "\n🔍 INVESTIGATING DIFFERENCE:"
 
-    in_range_sql = ActiveRecord::Base.connection.execute(
-      "SELECT number, merged_week_id FROM pull_requests
-       WHERE repository_id = #{week.repository_id}
-       AND gh_merged_at >= '#{week_start.utc.iso8601}'
-       AND gh_merged_at <= '#{week_end.utc.iso8601}'
-       ORDER BY number"
-    )
+  # Get the actual PR numbers
+  associated_sql = ActiveRecord::Base.connection.execute(
+    "SELECT number, gh_merged_at FROM pull_requests WHERE merged_week_id = #{week.id} ORDER BY number"
+  )
 
-    associated_nums = associated_sql.map { |r| r['number'] }
-    in_range_nums = in_range_sql.map { |r| r['number'] }
+  in_range_sql = ActiveRecord::Base.connection.execute(
+    "SELECT number, merged_week_id FROM pull_requests
+     WHERE repository_id = #{week.repository_id}
+     AND gh_merged_at >= '#{week_start.utc.iso8601}'
+     AND gh_merged_at <= '#{week_end.utc.iso8601}'
+     ORDER BY number"
+  )
 
-    extra_associated = associated_nums - in_range_nums
-    missing_associated = in_range_nums - associated_nums
+  associated_nums = associated_sql.map { |r| r['number'] }
+  in_range_nums = in_range_sql.map { |r| r['number'] }
 
-    if extra_associated.any?
-      puts "  Extra PRs associated: #{extra_associated.join(', ')}"
-    end
+  extra_associated = associated_nums - in_range_nums
+  missing_associated = in_range_nums - associated_nums
 
-    if missing_associated.any?
-      puts "  PRs that should be associated: #{missing_associated.join(', ')}"
-    end
+  if extra_associated.any?
+    puts "  Extra PRs associated: #{extra_associated.join(', ')}"
+  end
+
+  if missing_associated.any?
+    puts "  PRs that should be associated: #{missing_associated.join(', ')}"
   end
 end
 
