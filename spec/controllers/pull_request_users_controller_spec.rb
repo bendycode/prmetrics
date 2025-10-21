@@ -2,13 +2,13 @@ require 'rails_helper'
 
 RSpec.describe PullRequestUsersController do
   let(:user) { create(:user, :admin) }
+  let(:pull_request) { create(:pull_request) }
+  let(:pull_request_user) { create(:pull_request_user, pull_request: pull_request) }
 
   before do
     sign_in user
   end
 
-  let(:pull_request) { create(:pull_request) }
-  let(:pull_request_user) { create(:pull_request_user, pull_request: pull_request) }
 
   describe "GET #index" do
     it "returns http success" do
