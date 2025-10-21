@@ -14,9 +14,9 @@ class Repository < ApplicationRecord
   def valid_github_repository_format
     return if name.blank?
 
-    unless name.match?(/\A[\w\-\.]+\/[\w\-\.]+\z/)
-      errors.add(:name, "must be in format 'owner/repository'")
-    end
+    return if name.match?(/\A[\w\-\.]+\/[\w\-\.]+\z/)
+
+    errors.add(:name, "must be in format 'owner/repository'")
   end
 
   def normalize_github_url

@@ -183,9 +183,9 @@ class GithubService
     fetch_and_store_users(pull_request, pr)
 
     # Skip week associations during unified sync - the processor will handle it
-    unless @skip_week_associations
-      pull_request.ensure_weeks_exist_and_update_associations
-    end
+    return if @skip_week_associations
+
+    pull_request.ensure_weeks_exist_and_update_associations
   end
 
   def fetch_and_store_reviews(pull_request, repo_name, pr_number)
@@ -242,26 +242,22 @@ class GithubService
     begin
       yield
     rescue Octokit::TooManyRequests => e
-      if retries < MAX_RETRIES
-        wait_time = calculate_wait_time(e.response_headers, retries)
-        Rails.logger.warn "Rate limit exceeded. Waiting for #{wait_time} seconds before retrying..."
-        sleep(wait_time)
-        retries += 1
-        retry
-      else
-        raise "Max retries reached. Unable to complete the request due to rate limiting."
-      end
+      raise "Max retries reached. Unable to complete the request due to rate limiting." unless retries < MAX_RETRIES
+
+      wait_time = calculate_wait_time(e.response_headers, retries)
+      Rails.logger.warn "Rate limit exceeded. Waiting for #{wait_time} seconds before retrying..."
+      sleep(wait_time)
+      retries += 1
+      retry
     rescue Faraday::ConnectionFailed, Net::OpenTimeout => e
       Rails.logger.warn "ConnectionFailed or OpenTimeout error caught. retries: #{retries}"
-      if retries < MAX_RETRIES
-        wait_time = 5 * (2**retries) # exponential backoff
-        Rails.logger.warn "Connection error: #{e.message}. Retrying in #{wait_time} seconds..."
-        sleep(wait_time)
-        retries += 1
-        retry
-      else
-        raise "Max retries reached. Unable to complete the request due to connection issues."
-      end
+      raise "Max retries reached. Unable to complete the request due to connection issues." unless retries < MAX_RETRIES
+
+      wait_time = 5 * (2**retries) # exponential backoff
+      Rails.logger.warn "Connection error: #{e.message}. Retrying in #{wait_time} seconds..."
+      sleep(wait_time)
+      retries += 1
+      retry
     end
   end
 

@@ -153,9 +153,9 @@ class PullRequest < ApplicationRecord
     # Only delete Contributor if they have no other authored pull requests
     # Don't delete based on reviews or pull_request_users since those are
     # participation records that shouldn't cause deletion
-    if author.authored_pull_requests.empty?
-      author.destroy
-    end
+    return unless author.authored_pull_requests.empty?
+
+    author.destroy
   end
 
   def weeks_belong_to_same_repository
