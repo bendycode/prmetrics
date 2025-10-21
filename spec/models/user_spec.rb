@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe User, type: :model do
+RSpec.describe User do
   describe 'associations' do
     # User model is for authentication/authorization only
     # No associations with pull requests, reviews, or GitHub data

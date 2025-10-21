@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Repositories Authorization', type: :request do
+RSpec.describe 'Repositories Authorization' do
   let(:repository) { create(:repository, name: 'test/repo') }
 
   describe 'Admin user access' do

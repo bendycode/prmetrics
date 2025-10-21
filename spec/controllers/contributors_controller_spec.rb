@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe ContributorsController, type: :controller do
+RSpec.describe ContributorsController do
   let(:user) { create(:user, :admin) }
 
   before do

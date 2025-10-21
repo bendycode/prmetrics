@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe PullRequest, type: :model do
+RSpec.describe PullRequest do
   describe 'cross-repository week association protection' do
     let!(:repo1) { create(:repository, name: 'owner/repo1') }
     let!(:repo2) { create(:repository, name: 'owner/repo2') }

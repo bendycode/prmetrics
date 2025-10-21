@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe HealthController, type: :controller do
+RSpec.describe HealthController do
   describe "GET #show" do
     context "without authentication" do
       it "returns http success without requiring authentication" do

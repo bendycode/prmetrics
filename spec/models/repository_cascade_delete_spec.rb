@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Repository cascade delete', type: :model do
+RSpec.describe 'Repository cascade delete' do
   let(:repository) { create(:repository) }
   let(:contributor1) { create(:contributor) }
   let(:contributor2) { create(:contributor) }

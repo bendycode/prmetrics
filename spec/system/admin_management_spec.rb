@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'User Management', type: :system do
+RSpec.describe 'User Management' do
   let(:admin) { create(:user, :admin, email: 'admin@example.com') }
   let(:other_admin) { create(:user, :admin, email: 'other@example.com', invitation_accepted_at: 1.day.ago) }
   let(:pending_admin) { create(:user, :admin, email: 'pending@example.com', invitation_accepted_at: nil) }

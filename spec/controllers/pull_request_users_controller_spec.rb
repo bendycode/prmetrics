@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe PullRequestUsersController, type: :controller do
+RSpec.describe PullRequestUsersController do
   let(:user) { create(:user, :admin) }
 
   before do

@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe AccountsController, type: :controller do
+RSpec.describe AccountsController do
   let(:user) { create(:user, :admin, email: 'admin@example.com', password: 'password123') }
 
   before do

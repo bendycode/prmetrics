@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe PullRequestUser, type: :model do
+RSpec.describe PullRequestUser do
   let(:repository) { create(:repository) }
   let(:author) { create(:contributor) }
   let(:pull_request) { create(:pull_request, repository: repository, author: author) }

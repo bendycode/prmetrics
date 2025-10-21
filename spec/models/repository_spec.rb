@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe Repository, type: :model do
+RSpec.describe Repository do
   it "is valid with valid attributes" do
     repository = Repository.new(name: "test/repo", url: "https://github.com/test/repo")
     expect(repository).to be_valid

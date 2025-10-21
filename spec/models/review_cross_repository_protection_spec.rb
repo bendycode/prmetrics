@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe Review, type: :model do
+RSpec.describe Review do
   describe 'cross-repository week association protection' do
     let!(:repo1) { create(:repository, name: 'owner/repo1') }
     let!(:repo2) { create(:repository, name: 'owner/repo2') }

@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe SyncRepositoryBatchJob, type: :job do
+RSpec.describe SyncRepositoryBatchJob do
   let(:repository) { create(:repository, name: 'rails/rails') }
   let(:client) { instance_double(Octokit::Client) }
 

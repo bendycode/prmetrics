@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe Week, type: :model do
+RSpec.describe Week do
   describe 'associations' do
     it { should belong_to(:repository) }
     it { should have_many(:ready_for_review_prs).class_name('PullRequest') }

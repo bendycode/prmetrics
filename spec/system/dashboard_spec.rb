@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Dashboard', type: :system do
+RSpec.describe 'Dashboard' do
   let!(:admin) { create(:user, :admin, email: 'admin@example.com', password: 'password123') }
 
   before do

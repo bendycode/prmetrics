@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Branding', type: :system do
+RSpec.describe 'Branding' do
   describe 'Logo display' do
     context 'when logged in' do
       let(:admin) { create(:user, :admin) }

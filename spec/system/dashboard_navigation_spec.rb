@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Dashboard navigation', type: :system do
+RSpec.describe 'Dashboard navigation' do
   let(:admin) { create(:user, :admin) }
 
   before do

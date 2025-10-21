@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe ReviewsController, type: :controller do
+RSpec.describe ReviewsController do
   let(:user) { create(:user, :admin) }
 
   before do

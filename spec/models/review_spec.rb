@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe Review, type: :model do
+RSpec.describe Review do
   let(:repository) { Repository.create(name: "Test Repo", url: "https://github.com/test/repo") }
   let(:pull_request) { create(:pull_request) }
   let(:author) { create(:contributor) }
