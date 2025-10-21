@@ -8,7 +8,6 @@ RSpec.describe ContributorsController do
     sign_in user
   end
 
-
   describe "GET #index" do
     it "returns http success" do
       get :index
