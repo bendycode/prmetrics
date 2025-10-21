@@ -134,7 +134,7 @@ RSpec.configure do |config|
   end
 
   # For tests that specifically need JavaScript, use this tag: js: true
-  config.before(:each, js: true, type: :system) do
+  config.before(:each, :js, type: :system) do
     driven_by :selenium, using: :headless_chrome, screen_size: [1400, 1400] do |driver_opts|
       driver_opts.add_argument('--no-sandbox')
       driver_opts.add_argument('--disable-dev-shm-usage')

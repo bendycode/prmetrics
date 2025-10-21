@@ -281,16 +281,6 @@ RSpec/MessageSpies:
     - 'spec/lib/tasks/sync_rake_spec.rb'
     - 'spec/services/unified_sync_service_spec.rb'
 
-# Offense count: 4
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: hash, symbol
-RSpec/MetadataStyle:
-  Exclude:
-    - 'spec/rails_helper.rb'
-    - 'spec/system/dashboard_late_stale_prs_chart_spec.rb'
-    - 'spec/system/user_role_authorization_spec.rb'
-    - 'spec/system/week_navigation_spec.rb'
 
 # Offense count: 214
 RSpec/MultipleExpectations:
