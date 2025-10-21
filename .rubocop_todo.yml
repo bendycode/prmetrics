@@ -604,14 +604,6 @@ Style/MultilineTernaryOperator:
   Exclude:
     - 'app/services/unified_sync_service.rb'
 
-# Offense count: 2
-# This cop supports safe autocorrection (--autocorrect).
-Style/NegatedIfElseCondition:
-  Exclude:
-    - 'fix_specific_prs.rb'
-    - 'lib/tasks/coverage.rake'
-
-
 # Offense count: 38
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: EnforcedStyle, AllowedMethods, AllowedPatterns.

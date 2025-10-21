@@ -8,11 +8,11 @@ namespace :coverage do
 
     # Check if coverage met the minimum threshold
     exit_code = $?.exitstatus
-    if exit_code != 0
+    if exit_code == 0
+      puts "\n✅ All tests passed and coverage meets minimum threshold"
+    else
       puts "\n❌ Tests failed or coverage below minimum threshold"
       exit(exit_code)
-    else
-      puts "\n✅ All tests passed and coverage meets minimum threshold"
     end
   end
 
