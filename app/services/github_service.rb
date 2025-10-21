@@ -284,7 +284,7 @@ class GithubService
     end
   end
 
-  def exponential_backoff_starting_at_one_minute retry_count
+  def exponential_backoff_starting_at_one_minute(retry_count)
     60 * (2**retry_count)
   end
 end
