@@ -38,7 +38,7 @@ RSpec.describe 'Dashboard navigation' do
 
       within(card_container) do
         # Verify the link exists with proper class
-        expect(page).to have_css('a.text-decoration-none[href="/repositories"]')
+        expect(page).to have_link(href: '/repositories', class: 'text-decoration-none')
 
         # Verify the card is inside the link
         expect(page).to have_css('a .card.shadow')
