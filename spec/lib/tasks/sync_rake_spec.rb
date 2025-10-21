@@ -7,7 +7,7 @@ RSpec.describe 'sync:repository rake task' do
     Rake::Task.define_task(:environment)
   end
 
-  before(:each) do
+  before do
     Rake::Task['sync:repository'].reenable
     Rake::Task['sync:status'].reenable
     Rake::Task['sync:list'].reenable
