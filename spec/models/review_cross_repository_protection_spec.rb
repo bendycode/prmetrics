@@ -18,8 +18,7 @@ RSpec.describe Review do
                pull_request: pr,
                author: author,
                submitted_at: Date.new(2023, 1, 5).to_time,
-               state: 'APPROVED'
-              )
+               state: 'APPROVED')
 
         pr.reload
         expect(pr.first_review_week).to eq(week_repo1)
@@ -34,8 +33,7 @@ RSpec.describe Review do
                pull_request: pr,
                author: author,
                submitted_at: Date.new(2023, 1, 5).to_time,
-               state: 'APPROVED'
-              )
+               state: 'APPROVED')
 
         pr.reload
         # Should be nil because the PR's repository doesn't have a week for this date
@@ -48,8 +46,7 @@ RSpec.describe Review do
                pull_request: pr,
                author: author,
                submitted_at: Date.new(2023, 1, 6).to_time,
-               state: 'APPROVED'
-              )
+               state: 'APPROVED')
 
         pr.reload
         expect(pr.first_review_week).to eq(week_repo1)
@@ -59,8 +56,7 @@ RSpec.describe Review do
                pull_request: pr,
                author: create(:contributor), # Different author
                submitted_at: Date.new(2023, 1, 4).to_time,
-               state: 'COMMENTED'
-              )
+               state: 'COMMENTED')
 
         pr.reload
         # Week should still be the same since both dates are in the same week

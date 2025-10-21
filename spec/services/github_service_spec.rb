@@ -57,8 +57,7 @@ RSpec.describe GithubService do
              updated_at: 1.day.ago,
              merged_at: nil,
              closed_at: nil,
-             merged_by: nil
-            )
+             merged_by: nil)
     end
 
     before do
