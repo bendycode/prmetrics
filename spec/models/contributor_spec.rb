@@ -18,7 +18,7 @@ RSpec.describe Contributor do
         email: "test@example.com",
         github_id: "12345"
       )
-      expect(contributor).to_not be_valid
+      expect(contributor).not_to be_valid
     end
 
     it "is not valid without a github_id" do
@@ -27,19 +27,19 @@ RSpec.describe Contributor do
         name: "Test User",
         email: "test@example.com"
       )
-      expect(contributor).to_not be_valid
+      expect(contributor).not_to be_valid
     end
 
     it "validates uniqueness of github_id" do
       create(:contributor, github_id: "12345")
       duplicate = build(:contributor, github_id: "12345")
-      expect(duplicate).to_not be_valid
+      expect(duplicate).not_to be_valid
     end
 
     it "validates uniqueness of username" do
       create(:contributor, username: "testuser")
       duplicate = build(:contributor, username: "testuser", github_id: "different_id")
-      expect(duplicate).to_not be_valid
+      expect(duplicate).not_to be_valid
       expect(duplicate.errors[:username]).to include("has already been taken")
     end
   end
