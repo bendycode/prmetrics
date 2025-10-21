@@ -17,7 +17,7 @@ problem_prs.each do |pr_number|
     next
   end
 
-  puts "\n" + "-" * 60
+  puts "\n" + ("-" * 60)
   puts "PR ##{pr.number}: #{pr.title[0..50]}..."
   puts "  State: #{pr.state}"
   puts "  Merged at: #{pr.gh_merged_at || 'NULL'}"
@@ -74,7 +74,7 @@ problem_prs.each do |pr_number|
 end
 
 if ARGV.include?('--apply')
-  puts "\n" + "=" * 80
+  puts "\n" + ("=" * 80)
   puts "🔄 RECALCULATING AFFECTED WEEK STATISTICS"
   puts "=" * 80
 
@@ -92,7 +92,7 @@ if ARGV.include?('--apply')
 
   puts "\n✅ ALL FIXES APPLIED"
 else
-  puts "\n" + "=" * 80
+  puts "\n" + ("=" * 80)
   puts "🔍 DRY RUN COMPLETE"
   puts "Run with --apply to make changes"
 end

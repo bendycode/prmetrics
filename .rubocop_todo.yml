@@ -99,21 +99,6 @@ Lint/AmbiguousBlockAssociation:
     - 'spec/jobs/sync_repository_batch_job_spec.rb'
     - 'spec/models/repository_cascade_delete_spec.rb'
 
-# Offense count: 20
-# This cop supports safe autocorrection (--autocorrect).
-Lint/AmbiguousOperatorPrecedence:
-  Exclude:
-    - 'app/jobs/sync_repository_batch_job.rb'
-    - 'deep_diagnostic.rb'
-    - 'diagnose_duplicate_weeks.rb'
-    - 'diagnose_exact_prs.rb'
-    - 'find_null_merge_associations.rb'
-    - 'fix_all_week_associations.rb'
-    - 'fix_specific_prs.rb'
-    - 'fix_week_associations_properly.rb'
-    - 'investigate_week_association_logic.rb'
-    - 'lib/tasks/sync.rake'
-
 # Offense count: 1
 # Configuration parameters: AllowedMethods.
 # AllowedMethods: enums

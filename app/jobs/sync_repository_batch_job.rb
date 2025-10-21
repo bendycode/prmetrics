@@ -110,7 +110,7 @@ class SyncRepositoryBatchJob < ApplicationJob
   end
 
   def update_progress(repository, page, batch_size)
-    total_processed = (page - 1) * BATCH_SIZE + batch_size
+    total_processed = ((page - 1) * BATCH_SIZE) + batch_size
     Rails.logger.info "Processed page #{page} for #{repository.name} (#{total_processed} PRs so far)"
 
     # Optionally store progress

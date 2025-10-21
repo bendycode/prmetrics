@@ -88,7 +88,7 @@ end
 
 stats[:total_fixes] = stats[:null_merge_fixed] + stats[:misassociated_fixed] + stats[:missing_associations_added]
 
-puts "\n" + "=" * 80
+puts "\n" + ("=" * 80)
 puts "SUMMARY"
 puts "=" * 80
 puts "NULL merge associations removed: #{stats[:null_merge_fixed]}"

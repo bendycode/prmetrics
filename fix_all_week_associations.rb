@@ -24,7 +24,7 @@ stats = {
 }
 
 Repository.includes(:pull_requests, :weeks).find_each do |repository|
-  puts "\n" + "=" * 60
+  puts "\n" + ("=" * 60)
   puts "PROCESSING REPOSITORY: #{repository.name}"
   puts "=" * 60
 
@@ -82,7 +82,7 @@ Repository.includes(:pull_requests, :weeks).find_each do |repository|
   puts "  ✅ #{repo_fixes} fixes needed for #{repository.name}"
 end
 
-puts "\n" + "=" * 80
+puts "\n" + ("=" * 80)
 puts "RECALCULATING WEEK STATISTICS"
 puts "=" * 80
 
@@ -110,7 +110,7 @@ else
   puts "✅ All week statistics recalculated"
 end
 
-puts "\n" + "=" * 80
+puts "\n" + ("=" * 80)
 puts "FINAL SUMMARY"
 puts "=" * 80
 puts "Repositories processed: #{stats[:repositories_processed]}"

@@ -24,7 +24,7 @@ if duplicate_week_numbers.any?
   end
 end
 
-puts "\n" + "=" * 80
+puts "\n" + ("=" * 80)
 puts "CHECKING SPECIFIC PROBLEM WEEKS"
 puts "=" * 80
 
@@ -46,7 +46,7 @@ puts "=" * 80
   end
 end
 
-puts "\n" + "=" * 80
+puts "\n" + ("=" * 80)
 puts "CHECKING YEAR OVERLAP ISSUE"
 puts "=" * 80
 
@@ -62,7 +62,7 @@ week_18s.each do |week|
   puts "    ID: #{week.id}, Merged PRs: #{week.merged_prs.count}"
 end
 
-puts "\n" + "=" * 80
+puts "\n" + ("=" * 80)
 puts "CHECKING PR ASSOCIATIONS FOR WRONG YEAR"
 puts "=" * 80
 

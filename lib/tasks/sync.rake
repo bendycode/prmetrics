@@ -206,7 +206,7 @@ namespace :sync do
 
     total_duration = Time.current - start_time
 
-    puts "\n" + "=" * 80
+    puts "\n" + ("=" * 80)
     puts "Sync Summary:"
     puts "  Total repositories: #{total_repos}"
     puts "  Successful: #{success_count}"
