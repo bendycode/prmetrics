@@ -91,27 +91,6 @@ Layout/MultilineMethodCallBraceLayout:
     - 'spec/models/week_spec.rb'
     - 'spec/services/github_service_spec.rb'
 
-# Offense count: 84
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: aligned, indented, indented_relative_to_receiver
-Layout/MultilineMethodCallIndentation:
-  Exclude:
-    - 'app/controllers/dashboard_controller.rb'
-    - 'app/models/pull_request.rb'
-    - 'app/models/week.rb'
-    - 'app/services/week_stats_service.rb'
-    - 'config/environments/production.rb'
-    - 'deep_diagnostic.rb'
-    - 'diagnose_duplicate_weeks.rb'
-    - 'diagnose_exact_prs.rb'
-    - 'find_null_merge_associations.rb'
-    - 'fix_all_week_associations.rb'
-    - 'fix_week_associations_properly.rb'
-    - 'lib/tasks/ci_checks.rake'
-    - 'lib/tasks/fix_duplicates.rake'
-    - 'lib/tasks/fix_week_stats.rake'
-
 # Offense count: 6
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: AllowForAlignment, EnforcedStyleForExponentOperator, EnforcedStyleForRationalLiterals.

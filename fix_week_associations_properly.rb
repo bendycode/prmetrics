@@ -45,8 +45,8 @@ Week.includes(:repository).find_each do |week|
 
   # Find PRs associated with this week but merged outside its range
   misassociated = week.merged_prs
-    .where.not(gh_merged_at: nil)
-    .where.not(gh_merged_at: week_start..week_end)
+                      .where.not(gh_merged_at: nil)
+                      .where.not(gh_merged_at: week_start..week_end)
 
   if misassociated.any?
     puts "\nWeek #{week.week_number} has #{misassociated.count} misassociated PRs:"

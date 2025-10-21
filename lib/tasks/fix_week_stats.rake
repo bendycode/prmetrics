@@ -37,9 +37,9 @@ namespace :fix do
 
       # Check started PRs
       actual_started = week.repository.pull_requests
-        .where(draft: false)
-        .where(ready_for_review_week_id: week.id)
-        .count
+                           .where(draft: false)
+                           .where(ready_for_review_week_id: week.id)
+                           .count
       if week.num_prs_started != actual_started
         puts "\n⚠️  Week #{week.week_number} (#{week.repository.name}):"
         puts "  Stored started count: #{week.num_prs_started}"

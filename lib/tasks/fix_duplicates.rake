@@ -7,9 +7,9 @@ namespace :fix do
 
     Repository.find_each do |repository|
       duplicates = repository.pull_requests
-        .group(:number)
-        .having("COUNT(*) > 1")
-        .count
+                             .group(:number)
+                             .having("COUNT(*) > 1")
+                             .count
 
       next if duplicates.empty?
 
@@ -43,8 +43,8 @@ namespace :fix do
 
     # Find all reviews grouped by uniqueness criteria
     duplicate_reviews = Review.select(:pull_request_id, :author_id, :submitted_at, :state)
-                             .group(:pull_request_id, :author_id, :submitted_at, :state)
-                             .having("COUNT(*) > 1")
+                              .group(:pull_request_id, :author_id, :submitted_at, :state)
+                              .having("COUNT(*) > 1")
 
     duplicate_reviews.each do |dup|
       reviews = Review.where(
@@ -79,9 +79,9 @@ namespace :fix do
 
     Repository.find_each do |repository|
       duplicates = repository.pull_requests
-        .group(:number)
-        .having("COUNT(*) > 1")
-        .count
+                             .group(:number)
+                             .having("COUNT(*) > 1")
+                             .count
 
       next if duplicates.empty?
 
@@ -91,9 +91,9 @@ namespace :fix do
         total_duplicates += (count - 1)
 
         prs = repository.pull_requests
-          .where(number: pr_number)
-          .order(:updated_at)
-          .select(:id, :number, :gh_merged_at, :created_at, :updated_at)
+                        .where(number: pr_number)
+                        .order(:updated_at)
+                        .select(:id, :number, :gh_merged_at, :created_at, :updated_at)
 
         puts "\n  PR ##{pr_number} has #{count} copies:"
         prs.each_with_index do |pr, i|

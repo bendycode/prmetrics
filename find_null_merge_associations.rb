@@ -57,8 +57,8 @@ problem_weeks.each do |week_number|
   week_end = week.end_date.in_time_zone.end_of_day
 
   outside_range = week.merged_prs
-    .where.not(gh_merged_at: nil)
-    .where.not(gh_merged_at: week_start..week_end)
+                      .where.not(gh_merged_at: nil)
+                      .where.not(gh_merged_at: week_start..week_end)
 
   if outside_range.any?
     puts "  ❌ Found #{outside_range.count} PRs merged outside week range!"

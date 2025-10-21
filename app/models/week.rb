@@ -53,19 +53,19 @@ class Week < ApplicationRecord
   def open_prs
     end_time = Time.zone.local(end_date.year, end_date.month, end_date.day, 23, 59, 59)
     repository.pull_requests
-      .where(draft: false)
-      .where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)',
-             end_time,
-             end_time)
+              .where(draft: false)
+              .where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)',
+                     end_time,
+                     end_time)
   end
 
   def draft_prs
     end_time = Time.zone.local(end_date.year, end_date.month, end_date.day, 23, 59, 59)
     repository.pull_requests
-      .where(draft: true)
-      .where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)',
-             end_time,
-             end_time)
+              .where(draft: true)
+              .where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)',
+                     end_time,
+                     end_time)
   end
 
   def approved_prs

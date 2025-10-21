@@ -42,8 +42,8 @@ namespace :ci do
 
     # Sample a few recent weeks
     recent_weeks = Week.joins(:repository)
-                      .where('begin_date > ?', 1.month.ago)
-                      .limit(10)
+                       .where('begin_date > ?', 1.month.ago)
+                       .limit(10)
 
     stats_inconsistent = 0
     recent_weeks.each do |week|
@@ -64,10 +64,10 @@ namespace :ci do
     puts "\n3. Checking for orphaned records..."
 
     orphaned_contributors = Contributor.left_joins(:authored_pull_requests, :reviews, :pull_request_users)
-                                      .where(pull_requests: { id: nil })
-                                      .where(reviews: { id: nil })
-                                      .where(pull_request_users: { id: nil })
-                                      .count
+                                       .where(pull_requests: { id: nil })
+                                       .where(reviews: { id: nil })
+                                       .where(pull_request_users: { id: nil })
+                                       .count
 
     if orphaned_contributors > 0
       puts "   ⚠️  Found #{orphaned_contributors} orphaned contributors"

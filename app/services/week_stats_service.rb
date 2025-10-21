@@ -59,18 +59,18 @@ class WeekStatsService
     end_timestamp = @week.end_date.in_time_zone.end_of_day
 
     @repository.pull_requests
-      .where(state: 'open', draft: false)
-      .where('gh_created_at <= ?', end_timestamp)
-      .where('(gh_closed_at > ? OR gh_closed_at IS NULL)', end_timestamp)
-      .where('(ready_for_review_at <= ? OR ready_for_review_at IS NULL)', end_timestamp)
-      .count
+               .where(state: 'open', draft: false)
+               .where('gh_created_at <= ?', end_timestamp)
+               .where('(gh_closed_at > ? OR gh_closed_at IS NULL)', end_timestamp)
+               .where('(ready_for_review_at <= ? OR ready_for_review_at IS NULL)', end_timestamp)
+               .count
   end
 
   def calculate_prs_started
     # Use week association for consistency
     @repository.pull_requests.where(draft: false)
-      .where(ready_for_review_week_id: @week.id)
-      .count
+               .where(ready_for_review_week_id: @week.id)
+               .count
   end
 
   def calculate_prs_merged
@@ -81,23 +81,23 @@ class WeekStatsService
   def calculate_num_prs_initially_reviewed
     # Count PRs that had their first review in this week
     @repository.pull_requests
-      .where(first_review_week_id: @week.id)
-      .count
+               .where(first_review_week_id: @week.id)
+               .count
   end
 
   def calculate_prs_cancelled
     # Use week association for consistency
     @repository.pull_requests.where(state: 'closed', gh_merged_at: nil)
-      .where(closed_week_id: @week.id)
-      .count
+               .where(closed_week_id: @week.id)
+               .count
   end
 
   def calculate_avg_hrs_to_first_review
     # Calculate average hours for PRs that had their first review in this week
     prs_with_first_review = @repository.pull_requests
-      .where(first_review_week_id: @week.id)
-      .where.not(ready_for_review_at: nil)
-      .includes(:reviews)
+                                       .where(first_review_week_id: @week.id)
+                                       .where.not(ready_for_review_at: nil)
+                                       .includes(:reviews)
 
     total_hours = prs_with_first_review.sum do |pr|
       first_review = pr.valid_first_review
@@ -116,8 +116,8 @@ class WeekStatsService
   def calculate_avg_hrs_to_merge
     # Use week association for consistency
     merged_prs = @repository.pull_requests
-      .where(merged_week_id: @week.id)
-      .where.not(ready_for_review_at: nil)
+                            .where(merged_week_id: @week.id)
+                            .where.not(ready_for_review_at: nil)
 
     total_hours = merged_prs.sum do |pr|
       ((pr.gh_merged_at - pr.ready_for_review_at) / 1.hour).round(2)
@@ -134,12 +134,12 @@ class WeekStatsService
     end_timestamp = @week.end_date.in_time_zone.end_of_day
 
     @repository.pull_requests
-      .approved
-      .open_at(end_timestamp)
-      .unmerged_at(end_timestamp)
-      .where(draft: false)
-      .select { |pr| (8..27).cover?(pr.days_since_first_approval(@week.end_date)) }
-      .count
+               .approved
+               .open_at(end_timestamp)
+               .unmerged_at(end_timestamp)
+               .where(draft: false)
+               .select { |pr| (8..27).cover?(pr.days_since_first_approval(@week.end_date)) }
+               .count
   end
 
   def calculate_num_prs_stale
@@ -148,11 +148,11 @@ class WeekStatsService
     end_timestamp = @week.end_date.in_time_zone.end_of_day
 
     @repository.pull_requests
-      .approved
-      .open_at(end_timestamp)
-      .unmerged_at(end_timestamp)
-      .where(draft: false)
-      .select { |pr| pr.days_since_first_approval(@week.end_date) >= 28 }
-      .count
+               .approved
+               .open_at(end_timestamp)
+               .unmerged_at(end_timestamp)
+               .where(draft: false)
+               .select { |pr| pr.days_since_first_approval(@week.end_date) >= 28 }
+               .count
   end
 end
