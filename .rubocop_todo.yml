@@ -446,28 +446,6 @@ RSpec/EmptyExampleGroup:
   Exclude:
     - 'spec/models/user_spec.rb'
 
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-RSpec/EmptyLineAfterFinalLet:
-  Exclude:
-    - 'spec/models/week_spec.rb'
-
-# Offense count: 4
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowConsecutiveOneLiners.
-RSpec/EmptyLineAfterHook:
-  Exclude:
-    - 'spec/controllers/contributors_controller_spec.rb'
-    - 'spec/controllers/pull_request_users_controller_spec.rb'
-    - 'spec/controllers/pull_requests_controller_spec.rb'
-    - 'spec/controllers/reviews_controller_spec.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-RSpec/EmptyLineAfterSubject:
-  Exclude:
-    - 'spec/models/user_spec.rb'
-
 # Offense count: 112
 # Configuration parameters: CountAsOne.
 RSpec/ExampleLength:

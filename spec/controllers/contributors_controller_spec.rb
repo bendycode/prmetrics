@@ -6,6 +6,7 @@ RSpec.describe ContributorsController do
   before do
     sign_in user
   end
+
   let(:contributor) { create(:contributor) }
 
   describe "GET #index" do

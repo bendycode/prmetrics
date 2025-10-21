@@ -6,6 +6,7 @@ RSpec.describe ReviewsController do
   before do
     sign_in user
   end
+
   let(:pull_request) { create(:pull_request) }
   let(:author) { create(:contributor) }
   let(:review) { create(:review, pull_request: pull_request, author: author) }
