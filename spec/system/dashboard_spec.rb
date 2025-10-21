@@ -288,7 +288,7 @@ RSpec.describe 'Dashboard' do
       email_element.click
 
       # Should show dropdown menu
-      expect(page).to have_css('.dropdown-menu', visible: true)
+      expect(page).to have_css('.dropdown-menu', visible: :visible)
       expect(page).to have_link('My Account')
     end
 
@@ -304,7 +304,7 @@ RSpec.describe 'Dashboard' do
       end
 
       # Should show logout modal
-      expect(page).to have_css('#logoutModal', visible: true)
+      expect(page).to have_css('#logoutModal', visible: :visible)
       expect(page).to have_content('Ready to Leave?')
 
       # Click actual Logout button in modal

@@ -26,7 +26,10 @@ plugins:
 Layout/TrailingWhitespace:
   Enabled: true
 
-# Allow feature descriptions in system specs instead of requiring class/module names
+# Allow feature/behavior descriptions instead of requiring class/module names
 RSpec/DescribeClass:
   Exclude:
     - 'spec/system/**/*'
+    - 'spec/requests/**/*'
+    - 'spec/lib/tasks/**/*'
+    - 'spec/models/*_cascade_delete_spec.rb'
