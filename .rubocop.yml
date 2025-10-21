@@ -18,3 +18,10 @@ plugins:
   - rubocop-rails
   - rubocop-rspec
   - rubocop-performance
+  - rubocop-capybara
+  - rubocop-factory_bot
+  - rubocop-rspec_rails
+
+# Enforce no trailing whitespace (removed from todo file)
+Layout/TrailingWhitespace:
+  Enabled: true

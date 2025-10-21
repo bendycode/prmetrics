@@ -76,7 +76,7 @@ Rails.application.configure do
   # Email configuration
   config.action_mailer.default_url_options = { host: ENV['APPLICATION_HOST'] || 'prmetrics.io' }
   config.action_mailer.delivery_method = :smtp
-  
+
   # Support both SendGrid and generic SMTP configuration
   if ENV['SENDGRID_USERNAME'].present?
     # SendGrid configuration (common on Heroku)
@@ -126,7 +126,7 @@ Rails.application.configure do
     allowed_hosts = ENV['ALLOWED_HOSTS'].split(',').map(&:strip)
     config.hosts = allowed_hosts
   end
-  
+
   # Skip DNS rebinding protection for the default health check endpoint.
   config.host_authorization = { exclude: ->(request) { request.path.in?(["/up", "/health"]) } }
 end

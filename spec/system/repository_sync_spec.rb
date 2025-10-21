@@ -11,7 +11,7 @@ RSpec.describe 'Repository Sync', type: :system do
   describe 'sync controls' do
     it 'displays sync status and controls on repository page' do
       visit repository_path(repository)
-      
+
       expect(page).to have_content('Sync Status')
       expect(page).to have_button('Sync Updates')
       expect(page).to have_button('Full Sync')
@@ -19,22 +19,22 @@ RSpec.describe 'Repository Sync', type: :system do
 
     it 'allows incremental sync of repository' do
       visit repository_path(repository)
-      
+
       # Mock the GitHub API call to avoid actual API requests
       allow_any_instance_of(GithubService).to receive(:fetch_and_store_pull_requests).and_return(true)
-      
+
       click_button 'Sync Updates'
-      
+
       expect(page).to have_content('Sync job queued')
       expect(page).to have_button('Sync Updates')
     end
 
     it 'shows full sync button with confirmation' do
       visit repository_path(repository)
-      
+
       # Check that the full sync button exists and has confirmation
       expect(page).to have_button('Full Sync')
-      expect(page).to have_selector('[data-confirm]')
+      expect(page).to have_css('[data-confirm]')
     end
   end
 
@@ -45,9 +45,9 @@ RSpec.describe 'Repository Sync', type: :system do
         sync_started_at: 1.hour.ago,
         sync_completed_at: 30.minutes.ago
       )
-      
+
       visit repository_path(repository)
-      
+
       expect(page).to have_content('Sync completed')
       expect(page).to have_content('30 minutes ago')
     end
@@ -58,9 +58,9 @@ RSpec.describe 'Repository Sync', type: :system do
         sync_started_at: 1.hour.ago,
         last_sync_error: 'API rate limit exceeded'
       )
-      
+
       visit repository_path(repository)
-      
+
       expect(page).to have_content('Last sync failed')
       expect(page).to have_content('API rate limit exceeded')
     end
@@ -70,9 +70,9 @@ RSpec.describe 'Repository Sync', type: :system do
         sync_status: 'in_progress',
         sync_started_at: 5.minutes.ago
       )
-      
+
       visit repository_path(repository)
-      
+
       expect(page).to have_content('Sync in progress')
       expect(page).to have_link('View Sidekiq', href: '/sidekiq')
       expect(page).to have_button('Sync Updates', disabled: true)
@@ -84,9 +84,9 @@ RSpec.describe 'Repository Sync', type: :system do
     it 'shows sync status for all repositories' do
       repo1 = create(:repository, name: 'org/repo1', sync_status: 'completed')
       repo2 = create(:repository, name: 'org/repo2', sync_status: 'in_progress')
-      
+
       visit repositories_path
-      
+
       expect(page).to have_content('org/repo1')
       expect(page).to have_content('org/repo2')
     end
@@ -95,7 +95,7 @@ RSpec.describe 'Repository Sync', type: :system do
   describe 'error handling' do
     it 'shows sync controls on repository page' do
       visit repository_path(repository)
-      
+
       expect(page).to have_button('Sync Updates')
       expect(page).to have_button('Full Sync')
     end

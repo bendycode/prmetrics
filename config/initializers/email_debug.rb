@@ -15,13 +15,13 @@ if Rails.env.production? && !Rails.env.test?
       Rails.logger.info "=" * 50
     end
   end
-  
+
   class EmailDeliveryInterceptor
     def self.delivering_email(message)
       Rails.logger.info "Attempting to deliver email to: #{message.to}"
     end
   end
-  
+
   # Register observers after classes are defined
   # Wrap in after_initialize to ensure ActionMailer is loaded
   Rails.application.config.after_initialize do

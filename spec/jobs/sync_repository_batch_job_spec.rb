@@ -3,31 +3,31 @@ require 'rails_helper'
 RSpec.describe SyncRepositoryBatchJob, type: :job do
   let(:repository) { create(:repository, name: 'rails/rails') }
   let(:client) { instance_double(Octokit::Client) }
-  
+
   before do
     allow(Octokit::Client).to receive(:new).with(access_token: ENV['GITHUB_ACCESS_TOKEN']).and_return(client)
     allow(GithubService).to receive(:new).with(ENV['GITHUB_ACCESS_TOKEN']).and_return(instance_double(GithubService))
   end
-  
+
   describe '#perform' do
     context 'when starting a sync (page 1)' do
       it 'marks repository as in_progress' do
         allow(client).to receive(:pull_requests).and_return([])
-        
+
         expect {
           described_class.perform_now(repository.name, page: 1, fetch_all: true)
         }.to change { repository.reload.sync_status }.to('completed')
-        
+
         expect(repository.sync_started_at).to be_present
       end
     end
-    
+
     context 'when fetching pull requests' do
       let(:pr_data) do
         [
-          { 
-            number: 123, 
-            title: 'Test PR', 
+          {
+            number: 123,
+            title: 'Test PR',
             state: 'open',
             created_at: 2.days.ago,
             updated_at: 1.day.ago,
@@ -38,7 +38,7 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
           }
         ]
       end
-      
+
       it 'processes pull requests in batches' do
         allow(client).to receive(:pull_requests).with(
           repository.name,
@@ -48,66 +48,66 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
           sort: 'updated',
           direction: 'desc'
         ).and_return(pr_data)
-        
+
         # Now we process PRs directly in the job
         expect_any_instance_of(described_class).to receive(:process_single_pull_request).with(repository, pr_data.first)
-        
+
         described_class.perform_now(repository.name, page: 1, fetch_all: false)
       end
-      
+
       it 'queues next page when batch is full' do
         full_batch = Array.new(100) { pr_data.first }
         allow(client).to receive(:pull_requests).and_return(full_batch)
         allow(client).to receive(:issue_events).and_return([])
         allow(client).to receive(:pull_request_reviews).and_return([])
-        
+
         expect(SyncRepositoryBatchJob).to receive(:perform_later).with(
-          repository.name, 
-          page: 2, 
+          repository.name,
+          page: 2,
           fetch_all: true
         )
-        
+
         described_class.perform_now(repository.name, page: 1, fetch_all: true)
       end
-      
+
       it 'completes sync when no more pull requests' do
         allow(client).to receive(:pull_requests).and_return([])
-        
+
         described_class.perform_now(repository.name, page: 1, fetch_all: true)
-        
+
         repository.reload
         expect(repository.sync_status).to eq('completed')
         expect(repository.sync_completed_at).to be_present
         expect(repository.last_fetched_at).to be_present
       end
     end
-    
+
     context 'when an error occurs' do
       let(:error) { StandardError.new('API Error') }
-      
+
       before do
         allow(client).to receive(:pull_requests).and_raise(error)
       end
-      
+
       it 'marks repository as failed and re-raises error' do
         expect {
           described_class.perform_now(repository.name, page: 1)
         }.to raise_error(StandardError, 'API Error')
-        
+
         repository.reload
         expect(repository.sync_status).to eq('failed')
         expect(repository.last_sync_error).to eq('API Error')
       end
     end
-    
+
     context 'with incremental sync' do
       before do
         repository.update!(last_fetched_at: 1.week.ago)
       end
-      
+
       it 'stops fetching when reaching previously fetched PRs' do
-        old_pr = { 
-          number: 100, 
+        old_pr = {
+          number: 100,
           title: 'Old PR',
           state: 'closed',
           created_at: 3.weeks.ago,
@@ -117,26 +117,26 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
           draft: false,
           user: { id: 1, login: 'user1', name: 'User One', avatar_url: 'http://example.com/avatar.png' }
         }
-        
+
         allow(client).to receive(:pull_requests).and_return([old_pr])
         allow(client).to receive(:issue_events).and_return([])
         allow(client).to receive(:pull_request_reviews).and_return([])
-        
+
         # Should not queue next page
         expect(SyncRepositoryBatchJob).not_to receive(:perform_later)
-        
+
         described_class.perform_now(repository.name, page: 1, fetch_all: false)
-        
+
         expect(repository.reload.sync_status).to eq('completed')
       end
     end
   end
-  
+
   describe 'job configuration' do
     it 'uses the default queue' do
       expect(described_class.new.queue_name).to eq('default')
     end
-    
+
     it 'has correct batch size' do
       expect(described_class::BATCH_SIZE).to eq(100)
     end
@@ -149,9 +149,9 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
       ready_event = double(event: 'ready_for_review', created_at: 2.days.ago)
       other_event = double(event: 'labeled', created_at: 1.day.ago)
       events = [other_event, ready_event]
-      
+
       allow(client).to receive(:issue_events).with('owner/repo', 123).and_return(events)
-      
+
       result = job.send(:determine_ready_for_review_at, 'owner/repo', 123, 3.days.ago)
       expect(result).to eq(ready_event.created_at)
     end
@@ -159,9 +159,9 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
     it 'returns created_at when no ready_for_review event exists' do
       events = [double(event: 'labeled', created_at: 1.day.ago)]
       created_time = 3.days.ago
-      
+
       allow(client).to receive(:issue_events).with('owner/repo', 123).and_return(events)
-      
+
       result = job.send(:determine_ready_for_review_at, 'owner/repo', 123, created_time)
       expect(result).to eq(created_time)
     end
@@ -186,11 +186,11 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
 
     it 'fetches and stores reviews with valid submitted_at' do
       allow(client).to receive(:pull_request_reviews).with('owner/repo', 123).and_return(review_data)
-      
+
       expect {
         job.send(:fetch_and_store_reviews, pull_request, 'owner/repo', 123)
       }.to change { pull_request.reviews.count }.by(1)
-      
+
       review = pull_request.reviews.first
       expect(review.state).to eq('approved')
       expect(review.submitted_at).to eq(review_data.first.submitted_at)
@@ -199,7 +199,7 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
     it 'skips reviews without submitted_at' do
       review_without_time = double(state: 'pending', submitted_at: nil)
       allow(client).to receive(:pull_request_reviews).with('owner/repo', 123).and_return([review_without_time])
-      
+
       expect {
         job.send(:fetch_and_store_reviews, pull_request, 'owner/repo', 123)
       }.not_to change { pull_request.reviews.count }
@@ -234,7 +234,7 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
 
       it 'finds existing contributor by github_id' do
         existing = create(:contributor, github_id: '123')
-        
+
         result = job.send(:find_or_create_contributor, github_user)
         expect(result).to eq(existing)
         expect(Contributor.count).to eq(1)
@@ -267,16 +267,16 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
     it 'stores author and merger users' do
       expect(job).to receive(:store_user).with(pull_request, pr_data[:user], 'author')
       expect(job).to receive(:store_user).with(pull_request, pr_data[:merged_by], 'merger')
-      
+
       job.send(:fetch_and_store_users, pull_request, pr_data)
     end
 
     it 'handles missing merged_by' do
       pr_data_without_merger = { user: { id: 123, login: 'author' } }
-      
+
       expect(job).to receive(:store_user).with(pull_request, pr_data_without_merger[:user], 'author')
       expect(job).not_to receive(:store_user).with(pull_request, nil, 'merger')
-      
+
       job.send(:fetch_and_store_users, pull_request, pr_data_without_merger)
     end
   end
@@ -314,7 +314,7 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
     it 'retries on rate limit errors' do
       call_count = 0
       allow(job).to receive(:sleep)  # Don't actually sleep in tests
-      
+
       result = job.send(:with_rate_limit_handling) do
         call_count += 1
         if call_count == 1
@@ -325,7 +325,7 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
           'success'
         end
       end
-      
+
       expect(result).to eq('success')
       expect(call_count).to eq(2)
     end
@@ -333,7 +333,7 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
     it 'retries on connection errors' do
       call_count = 0
       allow(job).to receive(:sleep)
-      
+
       result = job.send(:with_rate_limit_handling) do
         call_count += 1
         if call_count == 1
@@ -342,14 +342,14 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
           'success'
         end
       end
-      
+
       expect(result).to eq('success')
       expect(call_count).to eq(2)
     end
 
     it 'raises after max retries' do
       allow(job).to receive(:sleep)
-      
+
       expect {
         job.send(:with_rate_limit_handling) do
           error = Octokit::TooManyRequests.new
@@ -372,7 +372,7 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
     it 'calculates wait time from rate limit reset' do
       reset_time = (Time.now + 120).to_i
       headers = { 'x-ratelimit-remaining' => '0', 'x-ratelimit-reset' => reset_time.to_s }
-      
+
       wait_time = job.send(:calculate_wait_time, headers, 0)
       expect(wait_time).to be > 110
       expect(wait_time).to be < 130
@@ -386,7 +386,7 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
     it 'uses exponential backoff when rate limit reset time is past' do
       reset_time = (Time.now - 60).to_i  # Past time
       headers = { 'x-ratelimit-remaining' => '0', 'x-ratelimit-reset' => reset_time.to_s }
-      
+
       wait_time = job.send(:calculate_wait_time, headers, 0)
       expect(wait_time).to eq(60)  # Falls back to exponential backoff
     end
@@ -475,9 +475,9 @@ RSpec.describe SyncRepositoryBatchJob, type: :job do
 
     it 'handles existing pull request updates' do
       existing_pr = create(:pull_request, repository: repository, number: 456, title: 'Old Title')
-      
+
       job.send(:process_single_pull_request, repository, pr_data)
-      
+
       existing_pr.reload
       expect(existing_pr.title).to eq('Integration Test PR')
     end

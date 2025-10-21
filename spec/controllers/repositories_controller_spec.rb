@@ -21,20 +21,20 @@ RSpec.describe RepositoriesController, type: :controller do
       expect(response).to have_http_status(:success)
     end
   end
-  
+
   describe "POST #sync" do
     it "queues a sync job" do
       expect {
         post :sync, params: { id: repository.id }
       }.to have_enqueued_job(SyncRepositoryBatchJob).with(repository.name, page: 1, fetch_all: false)
     end
-    
+
     it "redirects to repository with notice" do
       post :sync, params: { id: repository.id }
       expect(response).to redirect_to(repository)
       expect(flash[:notice]).to eq("Sync job queued for #{repository.name}")
     end
-    
+
     context "with fetch_all parameter" do
       it "queues a full sync job" do
         expect {
@@ -98,25 +98,25 @@ RSpec.describe RepositoriesController, type: :controller do
     let!(:repository_to_delete) { create(:repository, name: 'test/repo') }
     let!(:pull_request) { create(:pull_request, repository: repository_to_delete) }
     let!(:review) { create(:review, pull_request: pull_request) }
-    
+
     it "destroys the repository" do
       expect {
         delete :destroy, params: { id: repository_to_delete.id }
       }.to change(Repository, :count).by(-1)
     end
-    
+
     it "destroys associated pull requests" do
       expect {
         delete :destroy, params: { id: repository_to_delete.id }
       }.to change(PullRequest, :count).by(-1)
     end
-    
+
     it "destroys associated reviews" do
       expect {
         delete :destroy, params: { id: repository_to_delete.id }
       }.to change(Review, :count).by(-1)
     end
-    
+
     it "redirects to repositories index with notice" do
       delete :destroy, params: { id: repository_to_delete.id }
       expect(response).to redirect_to(repositories_path)

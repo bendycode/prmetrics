@@ -25,7 +25,7 @@ namespace :github do
 
     # Queue the sync job
     SyncRepositoryJob.perform_later(repo_name, fetch_all: fetch_all)
-    
+
     puts "Repository sync job queued. Check Sidekiq for progress."
   end
 end

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Properly fix week associations including NULL merge dates
-# Usage: 
+# Usage:
 #   rails runner fix_week_associations_properly.rb           # Dry run
 #   rails runner fix_week_associations_properly.rb --apply   # Apply fixes
 
@@ -42,18 +42,18 @@ puts "-" * 40
 Week.includes(:repository).find_each do |week|
   week_start = week.begin_date.in_time_zone.beginning_of_day
   week_end = week.end_date.in_time_zone.end_of_day
-  
+
   # Find PRs associated with this week but merged outside its range
   misassociated = week.merged_prs
     .where.not(gh_merged_at: nil)
     .where.not(gh_merged_at: week_start..week_end)
-  
+
   if misassociated.any?
     puts "\nWeek #{week.week_number} has #{misassociated.count} misassociated PRs:"
-    
+
     misassociated.each do |pr|
       correct_week = Week.find_by_date(pr.gh_merged_at)
-      
+
       if correct_week
         puts "  PR ##{pr.number}: Moving from week #{week.week_number} to #{correct_week.week_number}"
         unless dry_run
@@ -76,7 +76,7 @@ puts "-" * 40
 # Find all PRs with merge dates but no week association
 PullRequest.where.not(gh_merged_at: nil).where(merged_week_id: nil).find_each do |pr|
   week = Week.find_by_date(pr.gh_merged_at)
-  
+
   if week
     puts "  PR ##{pr.number}: Adding association to week #{week.week_number}"
     unless dry_run
@@ -101,18 +101,18 @@ if dry_run
   puts "Run with --apply to make changes"
 else
   puts "\n✅ FIXES APPLIED"
-  
+
   # Recalculate week statistics
   puts "\n🔄 Recalculating week statistics..."
   Week.find_each do |week|
     WeekStatsService.new(week).update_stats
   end
   puts "✅ Week statistics updated"
-  
+
   # Verification
   puts "\n🔍 Running verification..."
   remaining_issues = PullRequest.where(gh_merged_at: nil).where.not(merged_week_id: nil).count
-  
+
   if remaining_issues == 0
     puts "✅ No PRs with NULL merge dates have week associations"
   else

@@ -8,12 +8,12 @@ RSpec.describe "Query Optimization", type: :request do
   before do
     sign_in user
   end
-  
+
   describe "WeeksController#pr_list" do
     let!(:pull_requests) do
       3.times.map do |i|
-        pr = create(:pull_request, 
-          repository: repository, 
+        pr = create(:pull_request,
+          repository: repository,
           gh_created_at: week.begin_date + i.hours,
           ready_for_review_at: week.begin_date + i.hours
         )
@@ -36,26 +36,26 @@ RSpec.describe "Query Optimization", type: :request do
       end
     end
   end
-  
+
   describe "PullRequestUsersController#index" do
     let(:pull_request) { create(:pull_request, repository: repository) }
     let!(:pull_request_users) do
       3.times.map { create(:pull_request_user, pull_request: pull_request) }
     end
-    
+
     it "loads pull request users with includes" do
       get pull_request_pull_request_users_path(pull_request)
       expect(response).to be_successful
       expect(response.body).to include(pull_request_users.first.user.username)
     end
   end
-  
+
   describe "ContributorsController#show" do
     let(:contributor) { create(:contributor) }
     let!(:pull_request_users) do
       3.times.map { create(:pull_request_user, user: contributor) }
     end
-    
+
     it "loads contributor's pull requests with includes" do
       get contributor_path(contributor)
       expect(response).to be_successful

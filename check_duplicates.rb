@@ -24,7 +24,7 @@ else
   duplicates.each do |week_number, count|
     puts "  Week #{week_number}: #{count} records"
   end
-  
+
   puts "\nDetailed duplicate records:"
   duplicates.keys.each do |week_number|
     weeks = repo.weeks.where(week_number: week_number).order(:created_at)

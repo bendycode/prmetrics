@@ -43,7 +43,7 @@ rails db:reset
 # Run all tests
 bundle exec rspec
 # or
-rake
+bundle exec rake
 
 # Run specific test file
 bundle exec rspec spec/models/pull_request_spec.rb
@@ -61,20 +61,20 @@ These are safe to ignore and will be resolved when gems update their DidYouMean 
 ### Code Quality (RuboCop)
 ```bash
 # Run RuboCop linter
-docker exec mme-app-1 bundle exec rubocop
+bundle exec rubocop
 # or
-docker exec mme-app-1 rake rubocop
+bundle exec rake rubocop
 
 # Auto-fix violations where possible (safe only)
-docker exec mme-app-1 bundle exec rubocop -a
+bundle exec rubocop -a
 # or
-docker exec mme-app-1 rake rubocop:autocorrect
+bundle exec rake rubocop:autocorrect
 
 # Auto-fix all violations (safe and unsafe)
-docker exec mme-app-1 rake rubocop:autocorrect_all
+bundle exec rake rubocop:autocorrect_all
 
 # Run default task (RuboCop + RSpec)
-docker exec mme-app-1 rake
+bundle exec rake
 ```
 
 **RuboCop Configuration:**

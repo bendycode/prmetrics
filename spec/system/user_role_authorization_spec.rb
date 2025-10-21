@@ -80,11 +80,11 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
       visit repositories_path
 
       # Regular user should NOT see add repository button
-      expect(page).not_to have_button('Add Repository')
+      expect(page).to have_no_button('Add Repository')
 
       # Regular user should NOT see sync or delete buttons for repositories
-      expect(page).not_to have_button('Sync')
-      expect(page).not_to have_link('Delete')
+      expect(page).to have_no_button('Sync')
+      expect(page).to have_no_link('Delete')
     end
 
     it 'cannot access sync or delete actions on repository show page' do
@@ -92,12 +92,12 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
       visit repository_path(repository)
 
       # Regular user should NOT see sync controls section
-      expect(page).not_to have_content('Sync Status')
-      expect(page).not_to have_button('Sync Updates')
-      expect(page).not_to have_button('Full Sync')
+      expect(page).to have_no_content('Sync Status')
+      expect(page).to have_no_button('Sync Updates')
+      expect(page).to have_no_button('Full Sync')
 
       # Regular user should NOT see delete button
-      expect(page).not_to have_link('Delete Repository')
+      expect(page).to have_no_link('Delete Repository')
     end
 
     it 'is redirected when accessing sync action via direct URL navigation' do
@@ -105,15 +105,15 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
 
       # Attempt to navigate to sync URL directly - should be redirected/blocked
       visit sync_repository_path(repository)
-      expect(page).not_to have_content('Sync job queued')
+      expect(page).to have_no_content('Sync job queued')
     end
 
     it 'cannot access admin management section' do
       visit root_path
 
       # Regular user should NOT see ADMINISTRATION section in sidebar
-      expect(page).not_to have_content('Administration')
-      expect(page).not_to have_link('Users')
+      expect(page).to have_no_content('Administration')
+      expect(page).to have_no_link('Users')
     end
 
     it 'cannot directly access admin management' do
@@ -121,7 +121,7 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
       visit users_path
 
       # Should be redirected away from admin management
-      expect(page).not_to have_content('User Management')
+      expect(page).to have_no_content('User Management')
       # Will implement proper 403/redirect behavior with Pundit
     end
 
@@ -129,7 +129,7 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
       visit repositories_path
 
       # Regular user should NOT see Sidekiq link
-      expect(page).not_to have_link('Sidekiq Dashboard')
+      expect(page).to have_no_link('Sidekiq Dashboard')
     end
 
     it 'can view all data and metrics' do
@@ -223,8 +223,8 @@ RSpec.describe 'User Role Authorization', type: :system, js: true do
       admin_only_paths.each do |path|
         visit path
         # Should be redirected or see authorization error
-        expect(page).not_to have_content('Add Repository')
-        expect(page).not_to have_content('Invite User')
+        expect(page).to have_no_content('Add Repository')
+        expect(page).to have_no_content('Invite User')
       end
     end
   end

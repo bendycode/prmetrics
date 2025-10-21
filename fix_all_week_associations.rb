@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Comprehensive script to fix ALL incorrect week associations across all repositories
-# Usage: 
+# Usage:
 #   rails runner fix_all_week_associations.rb           # Dry run (preview only)
 #   rails runner fix_all_week_associations.rb --apply   # Apply fixes
 
@@ -27,24 +27,24 @@ Repository.includes(:pull_requests, :weeks).find_each do |repository|
   puts "\n" + "=" * 60
   puts "PROCESSING REPOSITORY: #{repository.name}"
   puts "=" * 60
-  
+
   stats[:repositories_processed] += 1
   repo_fixes = 0
-  
+
   # Get all merged PRs for this repository
   merged_prs = repository.pull_requests.where.not(gh_merged_at: nil)
   puts "Found #{merged_prs.count} merged PRs"
-  
+
   merged_prs.find_each.with_index do |pr, index|
     stats[:total_prs_checked] += 1
-    
+
     if (index + 1) % 100 == 0
       puts "  Progress: #{index + 1}/#{merged_prs.count} PRs checked"
     end
-    
+
     # Find the correct week for this PR's merge date
     correct_week = Week.find_by_date(pr.gh_merged_at)
-    
+
     if correct_week.nil?
       # No week exists for this merge date - this is expected for very old/new PRs
       if pr.merged_week_id.present?
@@ -57,7 +57,7 @@ Repository.includes(:pull_requests, :weeks).find_each do |repository|
       end
       next
     end
-    
+
     # Check if the PR's week association is incorrect
     if pr.merged_week_id != correct_week.id
       if pr.merged_week_id.nil?
@@ -71,14 +71,14 @@ Repository.includes(:pull_requests, :weeks).find_each do |repository|
         puts "     Title: #{pr.title[0..60]}..."
         stats[:misassociated_fixed] += 1
       end
-      
+
       unless dry_run
         pr.update_column(:merged_week_id, correct_week.id)
       end
       repo_fixes += 1
     end
   end
-  
+
   puts "  ✅ #{repo_fixes} fixes needed for #{repository.name}"
 end
 
@@ -94,7 +94,7 @@ if dry_run
     ))
     .distinct
     .count
-  
+
   puts "📊 #{affected_weeks} weeks would need statistics recalculation"
   stats[:weeks_recalculated] = affected_weeks
 else
@@ -102,7 +102,7 @@ else
     if (index + 1) % 50 == 0
       puts "  Progress: #{index + 1}/#{Week.count} weeks recalculated"
     end
-    
+
     service = WeekStatsService.new(week)
     service.update_stats
     stats[:weeks_recalculated] += 1
@@ -128,20 +128,20 @@ if dry_run
   puts "Run with --apply to make changes"
 else
   puts "✅ ALL FIXES APPLIED - #{total_fixes} issues resolved"
-  
+
   # Run final verification
   puts "\n🔍 Running final verification..."
   remaining_issues = 0
-  
+
   PullRequest.where.not(gh_merged_at: nil).find_each do |pr|
     correct_week = Week.find_by_date(pr.gh_merged_at)
     expected_week_id = correct_week&.id
-    
+
     if pr.merged_week_id != expected_week_id
       remaining_issues += 1
     end
   end
-  
+
   if remaining_issues == 0
     puts "✅ VERIFICATION PASSED - No remaining issues"
   else

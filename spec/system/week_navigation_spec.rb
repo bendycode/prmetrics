@@ -46,21 +46,21 @@ RSpec.describe 'Week Navigation', type: :system, js: true do
       visit repository_week_path(repository, week)
       page.find('a[data-category="late"]').click
       expect(page).to have_content('Late Feature')
-      expect(page).not_to have_content('Fresh Feature')
-      expect(page).not_to have_content('Stale Feature')
+      expect(page).to have_no_content('Fresh Feature')
+      expect(page).to have_no_content('Stale Feature')
     end
 
     it 'allows viewing stale PRs dynamically' do
       visit repository_week_path(repository, week)
       page.find('a[data-category="stale"]').click
       expect(page).to have_content('Stale Feature')
-      expect(page).not_to have_content('Fresh Feature')
-      expect(page).not_to have_content('Late Feature')
+      expect(page).to have_no_content('Fresh Feature')
+      expect(page).to have_no_content('Late Feature')
     end
 
     it 'does not show old "Approved but Unmerged PRs" line' do
       visit repository_week_path(repository, week)
-      expect(page).not_to have_content('Approved but Unmerged PRs')
+      expect(page).to have_no_content('Approved but Unmerged PRs')
     end
   end
 

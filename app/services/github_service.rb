@@ -5,7 +5,7 @@ class GithubService
     @client = Octokit::Client.new(access_token: access_token)
     @client.auto_paginate = false
   end
-  
+
   def get_pull_request_count(repo_name)
     # Get total count of PRs for progress tracking
     # Using search API which returns total_count
@@ -21,7 +21,7 @@ class GithubService
   def fetch_and_store_pull_requests(repo_name, fetch_all: false, processor: nil)
     repository = Repository.find_or_create_by(name: repo_name)
     last_fetched_at = fetch_all ? nil : repository.last_fetched_at&.iso8601
-    
+
     # Skip week associations if processor provided (unified sync handles it)
     @skip_week_associations = processor.present?
 
@@ -43,7 +43,7 @@ class GithubService
         most_recent_update = [most_recent_update, pr.updated_at].compact.max
         Rails.logger.debug "Processed PR ##{pr.number}"
         total_processed += 1
-        
+
         # Call the processor callback if provided
         processor.call(pr) if processor
       end
@@ -69,48 +69,48 @@ class GithubService
 
     # Use since_date or fall back to last_fetched_at or 7 days ago
     since = since_date || repository.last_fetched_at || 7.days.ago
-    
+
     Rails.logger.info "Fetching recent review activity for #{repo_name} since #{since}"
-    
+
     # Fetch review comments across the repository using GitHub API
     # GET /repos/{owner}/{repo}/pulls/comments?since=date&sort=created&direction=desc
     page = 1
     per_page = 100
     total_processed = 0
     affected_prs = Set.new
-    
+
     loop do
       review_comments = fetch_review_comments_page(repo_name, page, per_page, since)
       break if review_comments.empty?
-      
+
       review_comments.each do |comment|
         # Each comment belongs to a PR - find and update that PR's reviews
         pr_number = comment.pull_request_url.split('/').last.to_i
         pull_request = repository.pull_requests.find_by(number: pr_number)
-        
+
         if pull_request
           # Re-fetch reviews for this PR to get the latest review data
           fetch_and_store_reviews(pull_request, repo_name, pr_number)
           affected_prs << pull_request
           total_processed += 1
-          
+
           Rails.logger.debug "Updated reviews for PR ##{pr_number} due to comment activity"
         end
       end
-      
+
       page += 1
-      
+
       # Safety break to avoid infinite loops
       break if page > 50 # Max 5000 comments
     end
-    
+
     Rails.logger.info "Processed #{total_processed} review comments affecting #{affected_prs.size} PRs"
-    
+
     # Update week associations for affected PRs
     affected_prs.each do |pr|
       pr.ensure_weeks_exist_and_update_associations
     end
-    
+
     total_processed
   end
 
@@ -181,7 +181,7 @@ class GithubService
 
     fetch_and_store_reviews(pull_request, repo_name, pr.number)
     fetch_and_store_users(pull_request, pr)
-    
+
     # Skip week associations during unified sync - the processor will handle it
     unless @skip_week_associations
       pull_request.ensure_weeks_exist_and_update_associations

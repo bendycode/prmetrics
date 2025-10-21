@@ -4,7 +4,7 @@ class WeekStatsService
       new(week).update_stats
     end
   end
-  
+
   def self.generate_weeks_for_repository(repository)
     oldest_date = [
       repository.pull_requests.minimum(:gh_created_at),
@@ -26,7 +26,7 @@ class WeekStatsService
       week_begin = ct_date.beginning_of_week.to_date
       week_end = ct_date.end_of_week.to_date
       week_number = ct_date.strftime('%Y%W').to_i
-      
+
       repository.weeks.find_or_create_by!(week_number: week_number) do |week|
         week.begin_date = week_begin
         week.end_date = week_end
@@ -102,7 +102,7 @@ class WeekStatsService
     total_hours = prs_with_first_review.sum do |pr|
       first_review = pr.valid_first_review
       next 0 unless first_review
-      
+
       time_to_review = ((first_review.submitted_at - pr.ready_for_review_at) / 1.hour).round(2)
       raise "negative time to review for pr #{pr.id}: #{time_to_review} hours" if time_to_review.negative?
       time_to_review

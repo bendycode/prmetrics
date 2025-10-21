@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe PullRequest, type: :model do
   let(:repository) { create(:repository) }
-  let(:author) { create :github_user }
+  let(:author) { create(:github_user) }
   let(:contributor) { create(:contributor) }
 
   describe 'weekday hours calculation' do
@@ -113,7 +113,7 @@ RSpec.describe PullRequest, type: :model do
       # Use a Monday at 9 AM as ready_for_review_at
       monday_9am = 1.week.ago.beginning_of_week + 9.hours
       pull_request.update!(ready_for_review_at: monday_9am)
-      
+
       # Review submitted 2 hours later on same Monday
       review = create(:review,
         pull_request: pull_request,
@@ -141,7 +141,7 @@ RSpec.describe PullRequest, type: :model do
       # Use a Monday at 9 AM as ready_for_review_at
       monday_9am = 1.week.ago.beginning_of_week + 9.hours
       pull_request.update!(ready_for_review_at: monday_9am)
-      
+
       # Earlier invalid review (before ready_for_review_at)
       early_review = create(:review,
         pull_request: pull_request,
