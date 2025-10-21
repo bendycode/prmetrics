@@ -30,7 +30,7 @@ else
     weeks = repo.weeks.where(week_number: week_number).order(:created_at)
     puts "  Week #{week_number}:"
     weeks.each_with_index do |week, i|
-      puts "    #{i+1}. ID: #{week.id}, Created: #{week.created_at}, Begin: #{week.begin_date}"
+      puts "    #{i + 1}. ID: #{week.id}, Created: #{week.created_at}, Begin: #{week.begin_date}"
     end
   end
 end

@@ -84,7 +84,7 @@ problem_weeks.each do |week_number|
   puts "PRs MERGED IN TIME RANGE (#{week_start} to #{week_end}):"
   prs_in_range.each_with_index do |pr, i|
     week_assoc = pr.merged_week_id == week.id ? "✅" : "❌"
-    puts "  #{i+1}. PR ##{pr.number}: #{pr.title[0..50]}..."
+    puts "  #{i + 1}. PR ##{pr.number}: #{pr.title[0..50]}..."
     puts "     Merged: #{pr.gh_merged_at}"
     puts "     Week assoc: #{week_assoc} (ID: #{pr.merged_week_id})"
     puts

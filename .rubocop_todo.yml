@@ -45,18 +45,6 @@ Layout/FirstArgumentIndentation:
   Exclude:
     - 'fix_all_week_associations.rb'
 
-# Offense count: 6
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowForAlignment, EnforcedStyleForExponentOperator, EnforcedStyleForRationalLiterals.
-# SupportedStylesForExponentOperator: space, no_space
-# SupportedStylesForRationalLiterals: space, no_space
-Layout/SpaceAroundOperators:
-  Exclude:
-    - 'app/jobs/sync_repository_batch_job.rb'
-    - 'app/services/github_service.rb'
-    - 'check_duplicates.rb'
-    - 'deep_diagnostic.rb'
-
 # Offense count: 2
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBrackets.

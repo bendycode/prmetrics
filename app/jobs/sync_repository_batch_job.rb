@@ -252,7 +252,7 @@ class SyncRepositoryBatchJob < ApplicationJob
     rescue Faraday::ConnectionFailed, Net::OpenTimeout => e
       Rails.logger.warn "ConnectionFailed or OpenTimeout error caught. retries: #{retries}"
       if retries < 5
-        wait_time = 5 * (2 ** retries) # exponential backoff
+        wait_time = 5 * (2**retries) # exponential backoff
         Rails.logger.warn "Connection error: #{e.message}. Retrying in #{wait_time} seconds..."
         sleep(wait_time)
         retries += 1
@@ -287,6 +287,6 @@ class SyncRepositoryBatchJob < ApplicationJob
   end
 
   def exponential_backoff_starting_at_one_minute retry_count
-    60 * (2 ** retry_count)
+    60 * (2**retry_count)
   end
 end
