@@ -28,7 +28,7 @@ puts "\n" + ("=" * 80)
 puts "CHECKING SPECIFIC PROBLEM WEEKS"
 puts "=" * 80
 
-[202518, 202519, 202521].each do |week_num|
+[202_518, 202_519, 202_521].each do |week_num|
   puts "\nWeek #{week_num}:"
 
   weeks = Week.where(week_number: week_num)

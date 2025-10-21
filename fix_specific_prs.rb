@@ -78,7 +78,7 @@ if ARGV.include?('--apply')
   puts "🔄 RECALCULATING AFFECTED WEEK STATISTICS"
   puts "=" * 80
 
-  affected_week_numbers = [202518, 202519, 202521]
+  affected_week_numbers = [202_518, 202_519, 202_521]
 
   affected_week_numbers.each do |week_number|
     week = Week.find_by(week_number: week_number)

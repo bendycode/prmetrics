@@ -8,8 +8,8 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', js: true do
   describe 'PR Velocity Trends chart displays late and stale PRs datasets' do
     context 'with late and stale PRs data from multiple weeks' do
       let(:repository) { create(:repository, name: 'test/repo') }
-      let!(:week1) { create(:week, repository: repository, week_number: 202401, begin_date: Date.new(2024, 1, 8), end_date: Date.new(2024, 1, 14)) }
-      let!(:week2) { create(:week, repository: repository, week_number: 202402, begin_date: Date.new(2024, 1, 15), end_date: Date.new(2024, 1, 21)) }
+      let!(:week1) { create(:week, repository: repository, week_number: 202_401, begin_date: Date.new(2024, 1, 8), end_date: Date.new(2024, 1, 14)) }
+      let!(:week2) { create(:week, repository: repository, week_number: 202_402, begin_date: Date.new(2024, 1, 15), end_date: Date.new(2024, 1, 21)) }
 
       before do
         # Week 1: 1 late PR, 1 stale PR
@@ -64,7 +64,7 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', js: true do
 
     context 'with no late or stale PRs' do
       let(:repository) { create(:repository, name: 'test/repo') }
-      let!(:week) { create(:week, repository: repository, week_number: 202401, begin_date: Date.new(2024, 1, 8), end_date: Date.new(2024, 1, 14)) }
+      let!(:week) { create(:week, repository: repository, week_number: 202_401, begin_date: Date.new(2024, 1, 8), end_date: Date.new(2024, 1, 14)) }
 
       before do
         # Only fresh PRs (approved within last week)

@@ -49,7 +49,7 @@ RSpec.describe UpdateRepositoryStatsJob do
 
     context 'when repository does not exist' do
       it 'raises ActiveRecord::RecordNotFound' do
-        expect { job.perform(999999) }.to raise_error(ActiveRecord::RecordNotFound)
+        expect { job.perform(999_999) }.to raise_error(ActiveRecord::RecordNotFound)
       end
     end
 

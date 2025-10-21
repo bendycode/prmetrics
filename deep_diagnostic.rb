@@ -5,15 +5,15 @@ puts "=" * 80
 
 # Development data we know
 dev_data = {
-  202518 => 6,
-  202519 => 18,
-  202521 => 11
+  202_518 => 6,
+  202_519 => 18,
+  202_521 => 11
 }
 
 puts "Development counts: #{dev_data}"
 puts
 
-problem_weeks = [202518, 202519, 202521]
+problem_weeks = [202_518, 202_519, 202_521]
 
 problem_weeks.each do |week_number|
   puts "\n" + ("=" * 60)

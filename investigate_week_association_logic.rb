@@ -4,7 +4,7 @@ puts "🔍 INVESTIGATING WEEK ASSOCIATION LOGIC"
 puts "=" * 80
 
 # Focus on the problem weeks we know have issues
-problem_weeks = [202518, 202519, 202521]
+problem_weeks = [202_518, 202_519, 202_521]
 
 problem_weeks.each do |week_number|
   week = Week.find_by(week_number: week_number)
