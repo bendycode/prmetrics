@@ -12,6 +12,7 @@ RSpec.describe User do
 
     context 'with valid user attributes' do
       subject { build(:user) }
+
       it { should validate_presence_of(:role) }
     end
   end

@@ -6,6 +6,7 @@ RSpec.describe PullRequestUsersController do
   before do
     sign_in user
   end
+
   let(:pull_request) { create(:pull_request) }
   let(:pull_request_user) { create(:pull_request_user, pull_request: pull_request) }
 

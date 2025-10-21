@@ -11,6 +11,7 @@ RSpec.describe Week do
 
   describe 'validations' do
     let(:repo) { create(:repository) }
+
     subject { build(:week, repository: repo) }
 
     it { should validate_presence_of(:week_number) }
