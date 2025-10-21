@@ -40,15 +40,15 @@ problem_weeks.each do |week_number|
   week_start = week.begin_date.in_time_zone.beginning_of_day
   week_end = week.end_date.in_time_zone.end_of_day
   timestamp_count = week.repository.pull_requests
-    .where(gh_merged_at: week_start..week_end)
-    .count
+                        .where(gh_merged_at: week_start..week_end)
+                        .count
 
   # UTC boundaries for comparison
   utc_start = week.begin_date.beginning_of_day.utc
   utc_end = week.end_date.end_of_day.utc
   utc_count = week.repository.pull_requests
-    .where(gh_merged_at: utc_start..utc_end)
-    .count
+                  .where(gh_merged_at: utc_start..utc_end)
+                  .count
 
   puts "COUNTS:"
   puts "  Stored (num_prs_merged): #{stored_count}"
@@ -78,8 +78,8 @@ problem_weeks.each do |week_number|
 
   # List ALL PRs merged in the timestamp range
   prs_in_range = week.repository.pull_requests
-    .where(gh_merged_at: week_start..week_end)
-    .order(:gh_merged_at)
+                     .where(gh_merged_at: week_start..week_end)
+                     .order(:gh_merged_at)
 
   puts "PRs MERGED IN TIME RANGE (#{week_start} to #{week_end}):"
   prs_in_range.each_with_index do |pr, i|

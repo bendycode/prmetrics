@@ -12,16 +12,16 @@ class DashboardController < ApplicationController
 
     # Get latest week data for overview
     @latest_weeks = weeks_scope
-                      .order(begin_date: :desc)
-                      .limit(10)
+                    .order(begin_date: :desc)
+                    .limit(10)
 
     # Get data for charts (last 12 weeks for trends)
     # When filtering by repository, get all weeks; otherwise limit to 12
     if @selected_repository_id.present?
       @chart_weeks = weeks_scope
-                        .includes(repository: {pull_requests: :reviews})
-                        .order(begin_date: :asc)
-                        .last(12)
+                     .includes(repository: {pull_requests: :reviews})
+                     .order(begin_date: :asc)
+                     .last(12)
     else
       # For all repositories, group by week and aggregate
       # Preload associations needed for approved_prs calculation
@@ -128,8 +128,8 @@ class DashboardController < ApplicationController
 
   def calculate_avg_time_to_review(repository_id = nil)
     prs_with_first_review = PullRequest.joins(:reviews)
-                                     .where.not(ready_for_review_at: nil)
-                                     .distinct
+                                       .where.not(ready_for_review_at: nil)
+                                       .distinct
 
     if repository_id.present?
       prs_with_first_review = prs_with_first_review.where(repository_id: repository_id)

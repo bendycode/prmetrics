@@ -24,8 +24,8 @@ problem_weeks.each do |week_number|
 
   # Get all PRs that should be in this week based on merge timestamp
   timestamp_prs = week.repository.pull_requests
-    .where(gh_merged_at: week_start..week_end)
-    .order(:number)
+                      .where(gh_merged_at: week_start..week_end)
+                      .order(:number)
 
   puts "\nASSOCIATED PRs (via merged_week_id = #{week.id}): #{associated_prs.count}"
   associated_pr_numbers = associated_prs.pluck(:number, :gh_merged_at).map do |num, merged_at|
@@ -48,10 +48,10 @@ problem_weeks.each do |week_number|
       pr_record = PullRequest.find_by(number: pr[:number])
       if pr_record
         correct_week = pr_record.repository.weeks
-          .where('begin_date <= ? AND end_date >= ?',
-                 pr_record.gh_merged_at.to_date,
-                 pr_record.gh_merged_at.to_date)
-          .first
+                                .where('begin_date <= ? AND end_date >= ?',
+                                       pr_record.gh_merged_at.to_date,
+                                       pr_record.gh_merged_at.to_date)
+                                .first
 
         if correct_week
           puts "    Should be in week #{correct_week.week_number}"

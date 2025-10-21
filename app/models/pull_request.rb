@@ -85,9 +85,9 @@ class PullRequest < ApplicationRecord
   # @return [Integer] Number of days since first approval, or 0 if no approved reviews
   def days_since_first_approval(reference_date = Time.current)
     first_approved_review = reviews
-      .where(state: 'APPROVED')
-      .order(:submitted_at)
-      .first
+                            .where(state: 'APPROVED')
+                            .order(:submitted_at)
+                            .first
 
     return 0 unless first_approved_review
 

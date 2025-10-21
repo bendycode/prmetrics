@@ -88,12 +88,12 @@ puts "=" * 80
 
 if dry_run
   affected_weeks = Week.joins(:merged_prs)
-    .where(pull_requests: { gh_merged_at: nil })
-    .or(Week.joins(:merged_prs).where.not(
+                       .where(pull_requests: { gh_merged_at: nil })
+                       .or(Week.joins(:merged_prs).where.not(
       'merged_week_id = weeks.id'
     ))
-    .distinct
-    .count
+                       .distinct
+                       .count
 
   puts "📊 #{affected_weeks} weeks would need statistics recalculation"
   stats[:weeks_recalculated] = affected_weeks

@@ -5,8 +5,8 @@ puts "=" * 80
 
 # Check for duplicate week numbers
 duplicate_week_numbers = Week.group(:week_number)
-  .having('COUNT(*) > 1')
-  .pluck(:week_number)
+                             .having('COUNT(*) > 1')
+                             .pluck(:week_number)
 
 puts "Found #{duplicate_week_numbers.count} duplicate week numbers"
 puts
