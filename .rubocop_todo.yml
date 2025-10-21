@@ -725,15 +725,6 @@ Style/RedundantRegexpEscape:
   Exclude:
     - 'app/models/repository.rb'
 
-# Offense count: 8
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, AllowInnerSlashes.
-# SupportedStyles: slashes, percent_r, mixed
-Style/RegexpLiteral:
-  Exclude:
-    - 'app/models/repository.rb'
-    - 'lib/tasks/sync.rake'
-    - 'spec/lib/tasks/sync_rake_spec.rb'
 
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).
