@@ -1,5 +1,5 @@
 class RepositoriesController < ApplicationController
-  before_action :set_repository, only: [:show, :sync, :destroy]
+  before_action :set_repository, only: %i[show sync destroy]
 
   def index
     authorize Repository
