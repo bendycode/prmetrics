@@ -7,9 +7,17 @@ RSpec.describe WeekStatsService do
 
   describe '#update_stats' do
     context 'when calculating num_open_prs' do
-      let!(:closed_after_wk) { create(:pull_request, repository: repository, state: 'open', draft: false, gh_created_at: 2.weeks.ago, gh_closed_at: 1.day.from_now) }
-      let!(:closed_before_wk) { create(:pull_request, repository: repository, state: 'closed', draft: false, gh_created_at: 3.weeks.ago, gh_closed_at: 8.days.ago) }
-      let!(:draft_pr) { create(:pull_request, repository: repository, state: 'open', draft: true, gh_created_at: 2.weeks.ago) }
+      let!(:closed_after_wk) {
+        create(:pull_request, repository: repository, state: 'open', draft: false, gh_created_at: 2.weeks.ago,
+                              gh_closed_at: 1.day.from_now)
+      }
+      let!(:closed_before_wk) {
+        create(:pull_request, repository: repository, state: 'closed', draft: false, gh_created_at: 3.weeks.ago,
+                              gh_closed_at: 8.days.ago)
+      }
+      let!(:draft_pr) {
+        create(:pull_request, repository: repository, state: 'open', draft: true, gh_created_at: 2.weeks.ago)
+      }
 
       let!(:draft_removed_after_wk) {
         # PR created as draft during week, draft removed after week
@@ -17,7 +25,9 @@ RSpec.describe WeekStatsService do
         draft_pr.update(draft: false, ready_for_review_at: 1.day.from_now)
         draft_pr
       }
-      let!(:opened_during_wk) { create(:pull_request, repository: repository, state: 'open', draft: false, gh_created_at: 7.days.ago) }
+      let!(:opened_during_wk) {
+        create(:pull_request, repository: repository, state: 'open', draft: false, gh_created_at: 7.days.ago)
+      }
 
       before do
         service.update_stats
@@ -83,10 +93,14 @@ RSpec.describe WeekStatsService do
 
     context 'when calculating num_prs_cancelled' do
       before do
-        create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil, gh_closed_at: week.begin_date + 1.day)
-        create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil, gh_closed_at: week.begin_date - 1.day)
-        create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil, gh_closed_at: week.end_date + 1.day)
-        create(:pull_request, repository: repository, state: 'closed', gh_merged_at: week.begin_date + 1.day, gh_closed_at: week.begin_date + 1.day)
+        create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil,
+                              gh_closed_at: week.begin_date + 1.day)
+        create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil,
+                              gh_closed_at: week.begin_date - 1.day)
+        create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil,
+                              gh_closed_at: week.end_date + 1.day)
+        create(:pull_request, repository: repository, state: 'closed', gh_merged_at: week.begin_date + 1.day,
+                              gh_closed_at: week.begin_date + 1.day)
 
         # Week associations are automatically updated by callbacks
 
@@ -118,8 +132,10 @@ RSpec.describe WeekStatsService do
 
     context 'when calculating avg_hrs_to_merge' do
       before do
-        create(:pull_request, repository: repository, ready_for_review_at: week.begin_date, gh_merged_at: week.begin_date + 3.hours)
-        create(:pull_request, repository: repository, ready_for_review_at: week.begin_date, gh_merged_at: week.begin_date + 9.hours)
+        create(:pull_request, repository: repository, ready_for_review_at: week.begin_date,
+                              gh_merged_at: week.begin_date + 3.hours)
+        create(:pull_request, repository: repository, ready_for_review_at: week.begin_date,
+                              gh_merged_at: week.begin_date + 9.hours)
 
         # Week associations are automatically updated by callbacks
 

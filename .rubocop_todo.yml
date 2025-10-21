@@ -843,9 +843,9 @@ Style/TernaryParentheses:
   Exclude:
     - 'lib/tasks/fix_duplicates.rake'
 
-# Offense count: 59
+# Offense count: 12
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: AllowHeredoc, AllowURI, AllowQualifiedName, URISchemes, IgnoreCopDirectives, AllowedPatterns, SplitStrings.
 # URISchemes: http, https
 Layout/LineLength:
-  Max: 189
+  Max: 154

@@ -3,7 +3,10 @@ require 'rails_helper'
 RSpec.describe 'Week Navigation', js: true do
   let(:admin) { create(:user, :admin) }
   let(:repository) { create(:repository, name: 'test/repo') }
-  let(:week) { create(:week, repository: repository, week_number: 202_401, begin_date: Date.new(2024, 1, 8), end_date: Date.new(2024, 1, 14)) }
+  let(:week) {
+    create(:week, repository: repository, week_number: 202_401, begin_date: Date.new(2024, 1, 8),
+                  end_date: Date.new(2024, 1, 14))
+  }
 
   before do
     sign_in admin

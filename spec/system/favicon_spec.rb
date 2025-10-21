@@ -9,11 +9,14 @@ RSpec.describe 'Favicon' do
       expect(page).to have_css('link[rel="icon"][type="image/x-icon"][href="/favicon.ico"]', visible: :hidden)
 
       # Check for PNG favicons
-      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="32x32"][href="/favicon-32x32.png"]', visible: :hidden)
-      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="16x16"][href="/favicon-16x16.png"]', visible: :hidden)
+      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="32x32"][href="/favicon-32x32.png"]',
+                               visible: :hidden)
+      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="16x16"][href="/favicon-16x16.png"]',
+                               visible: :hidden)
 
       # Check for Apple touch icon
-      expect(page).to have_css('link[rel="apple-touch-icon"][sizes="180x180"][href="/apple-touch-icon.png"]', visible: :hidden)
+      expect(page).to have_css('link[rel="apple-touch-icon"][sizes="180x180"][href="/apple-touch-icon.png"]',
+                               visible: :hidden)
 
       # Check for manifest
       expect(page).to have_css('link[rel="manifest"][href="/site.webmanifest"]', visible: :hidden)
@@ -31,11 +34,14 @@ RSpec.describe 'Favicon' do
       expect(page).to have_css('link[rel="icon"][type="image/x-icon"][href="/favicon.ico"]', visible: :hidden)
 
       # Check for PNG favicons
-      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="32x32"][href="/favicon-32x32.png"]', visible: :hidden)
-      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="16x16"][href="/favicon-16x16.png"]', visible: :hidden)
+      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="32x32"][href="/favicon-32x32.png"]',
+                               visible: :hidden)
+      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="16x16"][href="/favicon-16x16.png"]',
+                               visible: :hidden)
 
       # Check for Apple touch icon
-      expect(page).to have_css('link[rel="apple-touch-icon"][sizes="180x180"][href="/apple-touch-icon.png"]', visible: :hidden)
+      expect(page).to have_css('link[rel="apple-touch-icon"][sizes="180x180"][href="/apple-touch-icon.png"]',
+                               visible: :hidden)
 
       # Check for manifest
       expect(page).to have_css('link[rel="manifest"][href="/site.webmanifest"]', visible: :hidden)

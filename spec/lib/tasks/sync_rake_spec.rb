@@ -38,7 +38,9 @@ RSpec.describe 'sync:repository rake task' do
 
     context 'with missing arguments' do
       it 'shows error when repository name is missing' do
-        expect { Rake::Task['sync:repository'].invoke }.to output(/Error: Repository name is required/).to_stdout.and raise_error(SystemExit)
+        expect {
+          Rake::Task['sync:repository'].invoke
+        }.to output(/Error: Repository name is required/).to_stdout.and raise_error(SystemExit)
       end
 
       it 'handles repository name from ARGV when brackets not used' do
@@ -65,7 +67,9 @@ RSpec.describe 'sync:repository rake task' do
       it 'shows error when GITHUB_ACCESS_TOKEN is not set' do
         allow(ENV).to receive(:[]).with('GITHUB_ACCESS_TOKEN').and_return(nil)
 
-        expect { Rake::Task['sync:repository'].invoke('rails/rails') }.to output(/GITHUB_ACCESS_TOKEN environment variable is not set/).to_stdout.and raise_error(SystemExit)
+        expect {
+          Rake::Task['sync:repository'].invoke('rails/rails')
+        }.to output(/GITHUB_ACCESS_TOKEN environment variable is not set/).to_stdout.and raise_error(SystemExit)
       end
     end
   end
@@ -90,7 +94,9 @@ RSpec.describe 'sync:repository rake task' do
     end
 
     it 'shows error for non-existent repository' do
-      expect { Rake::Task['sync:status'].invoke('unknown/repo') }.to output(/Repository unknown\/repo not found/).to_stdout.and raise_error(SystemExit)
+      expect {
+        Rake::Task['sync:status'].invoke('unknown/repo')
+      }.to output(/Repository unknown\/repo not found/).to_stdout.and raise_error(SystemExit)
     end
   end
 
@@ -170,7 +176,9 @@ RSpec.describe 'sync:repository rake task' do
       it 'exits gracefully when no repositories exist' do
         Repository.destroy_all
 
-        expect { Rake::Task['sync:all_repositories'].invoke }.to output(/No repositories found to sync/).to_stdout.and raise_error(SystemExit)
+        expect {
+          Rake::Task['sync:all_repositories'].invoke
+        }.to output(/No repositories found to sync/).to_stdout.and raise_error(SystemExit)
       end
     end
 
@@ -178,7 +186,9 @@ RSpec.describe 'sync:repository rake task' do
       it 'shows error when GITHUB_ACCESS_TOKEN is not set' do
         allow(ENV).to receive(:[]).with('GITHUB_ACCESS_TOKEN').and_return(nil)
 
-        expect { Rake::Task['sync:all_repositories'].invoke }.to output(/GITHUB_ACCESS_TOKEN environment variable is not set/).to_stdout.and raise_error(SystemExit)
+        expect {
+          Rake::Task['sync:all_repositories'].invoke
+        }.to output(/GITHUB_ACCESS_TOKEN environment variable is not set/).to_stdout.and raise_error(SystemExit)
       end
     end
   end

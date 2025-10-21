@@ -6,7 +6,8 @@ RSpec.describe SyncRepositoryBatchJob do
 
   before do
     allow(Octokit::Client).to receive(:new).with(access_token: ENV.fetch('GITHUB_ACCESS_TOKEN', nil)).and_return(client)
-    allow(GithubService).to receive(:new).with(ENV.fetch('GITHUB_ACCESS_TOKEN', nil)).and_return(instance_double(GithubService))
+    allow(GithubService).to receive(:new).with(ENV.fetch('GITHUB_ACCESS_TOKEN',
+                                                         nil)).and_return(instance_double(GithubService))
   end
 
   describe '#perform' do
@@ -210,7 +211,9 @@ RSpec.describe SyncRepositoryBatchJob do
     let(:job) { described_class.new }
 
     context 'with object format (Octokit::Sawyer::Resource)' do
-      let(:github_user) { double(id: 123, login: 'testuser', name: 'Test User', email: 'test@example.com', avatar_url: 'http://avatar.url') }
+      let(:github_user) {
+        double(id: 123, login: 'testuser', name: 'Test User', email: 'test@example.com', avatar_url: 'http://avatar.url')
+      }
 
       it 'uses existing find_or_create_from_github method' do
         expect(Contributor).to receive(:find_or_create_from_github).with(github_user)

@@ -244,8 +244,13 @@ RSpec.describe PullRequest do
 
     describe '.open_at' do
       let(:timestamp) { Time.zone.local(2024, 1, 15, 23, 59, 59) }
-      let!(:open_pr) { create(:pull_request, repository: repository, gh_created_at: Time.zone.local(2024, 1, 10), gh_closed_at: nil) }
-      let!(:closed_pr) { create(:pull_request, repository: repository, gh_created_at: Time.zone.local(2024, 1, 10), gh_closed_at: Time.zone.local(2024, 1, 12)) }
+      let!(:open_pr) do
+        create(:pull_request, repository: repository, gh_created_at: Time.zone.local(2024, 1, 10), gh_closed_at: nil)
+      end
+      let!(:closed_pr) do
+        create(:pull_request, repository: repository, gh_created_at: Time.zone.local(2024, 1, 10),
+                              gh_closed_at: Time.zone.local(2024, 1, 12))
+      end
 
       it 'returns only PRs that were open at the timestamp' do
         expect(PullRequest.open_at(timestamp)).to contain_exactly(open_pr)
@@ -263,8 +268,13 @@ RSpec.describe PullRequest do
 
     describe '.unmerged_at' do
       let(:timestamp) { Time.zone.local(2024, 1, 15, 23, 59, 59) }
-      let!(:unmerged_pr) { create(:pull_request, repository: repository, gh_created_at: Time.zone.local(2024, 1, 10), gh_merged_at: nil) }
-      let!(:merged_pr) { create(:pull_request, repository: repository, gh_created_at: Time.zone.local(2024, 1, 10), gh_merged_at: Time.zone.local(2024, 1, 12)) }
+      let!(:unmerged_pr) do
+        create(:pull_request, repository: repository, gh_created_at: Time.zone.local(2024, 1, 10), gh_merged_at: nil)
+      end
+      let!(:merged_pr) do
+        create(:pull_request, repository: repository, gh_created_at: Time.zone.local(2024, 1, 10),
+                              gh_merged_at: Time.zone.local(2024, 1, 12))
+      end
 
       it 'returns only PRs that were unmerged at the timestamp' do
         expect(PullRequest.unmerged_at(timestamp)).to contain_exactly(unmerged_pr)
