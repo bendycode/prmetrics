@@ -17,20 +17,20 @@ class PullRequest < ApplicationRecord
   validates :state, presence: true
 
   # Scopes for querying approved/open/unmerged PRs
-  scope :approved, -> {
+  scope :approved, lambda {
     joins(:reviews).merge(Review.approved).distinct
   }
 
-  scope :open_at, ->(timestamp) {
+  scope :open_at, lambda { |timestamp|
     where('gh_created_at <= ?', timestamp)
       .where('(gh_closed_at IS NULL OR gh_closed_at > ?)', timestamp)
   }
 
-  scope :unmerged, -> {
+  scope :unmerged, lambda {
     where(gh_merged_at: nil)
   }
 
-  scope :unmerged_at, ->(timestamp) {
+  scope :unmerged_at, lambda { |timestamp|
     where('(gh_merged_at IS NULL OR gh_merged_at > ?)', timestamp)
   }
 
