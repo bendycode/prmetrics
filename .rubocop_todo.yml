@@ -628,13 +628,6 @@ Style/InverseMethods:
   Exclude:
     - 'diagnose_exact_prs.rb'
 
-# Offense count: 4
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: line_count_dependent, lambda, literal
-Style/Lambda:
-  Exclude:
-    - 'app/models/pull_request.rb'
 
 # Offense count: 2
 # This cop supports safe autocorrection (--autocorrect).
