@@ -25,7 +25,7 @@ class SyncRepositoryJob < ApplicationJob
         sync_completed_at: Time.current,
         last_sync_error: nil
       )
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "Repository sync failed: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
 

@@ -36,7 +36,7 @@ namespace :sync do
     begin
       service = UnifiedSyncService.new(repo_name, fetch_all: fetch_all)
       service.sync!
-    rescue => e
+    rescue StandardError => e
       puts "\nError during sync: #{e.message}"
       puts 'Please check the logs for more details.'
       exit 1
@@ -192,7 +192,7 @@ namespace :sync do
 
         puts "  ✓ Completed #{repository.name} in #{repo_duration.round(2)}s"
 
-      rescue => e
+      rescue StandardError => e
         repo_duration = Time.current - repo_start_time
         error_count += 1
 
