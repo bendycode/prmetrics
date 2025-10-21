@@ -12,15 +12,15 @@ Rails.application.routes.draw do
   get 'dashboard', to: 'dashboard#index'
   get 'health', to: 'health#show'
 
-  resource :account, only: [:edit, :update]
-  resources :users, only: [:index, :new, :create, :destroy]
+  resource :account, only: %i[edit update]
+  resources :users, only: %i[index new create destroy]
 
-  resources :repositories, only: [:index, :show, :new, :create, :destroy] do
+  resources :repositories, only: %i[index show new create destroy] do
     member do
       post :sync
     end
     resources :pull_requests, only: [:index]
-    resources :weeks, only: [:index, :show] do
+    resources :weeks, only: %i[index show] do
       member do
         get 'pr_list'
       end
@@ -34,7 +34,7 @@ Rails.application.routes.draw do
 
   resources :reviews, only: [:show]
   resources :pull_request_users, only: [:show]
-  resources :contributors, only: [:index, :show]
+  resources :contributors, only: %i[index show]
 
   get "up" => "rails/health#show", as: :rails_health_check
 end

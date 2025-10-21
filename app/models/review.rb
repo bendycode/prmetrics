@@ -7,7 +7,7 @@ class Review < ApplicationRecord
   validates :state, presence: true
   validates :submitted_at, presence: true
   validates :submitted_at, uniqueness: {
-    scope: [:pull_request_id, :author_id, :state],
+    scope: %i[pull_request_id author_id state],
     message: "review already exists for this pull request, author, and state combination"
   }
 

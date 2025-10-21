@@ -1,6 +1,6 @@
 namespace :ci do
   desc "Run all CI checks (coverage and data integrity)"
-  task all: [:coverage_check, :data_integrity]
+  task all: %i[coverage_check data_integrity]
 
   desc "Run coverage ratcheting check for CI"
   task coverage_check: :environment do
