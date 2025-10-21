@@ -13,7 +13,7 @@ class GithubService
       result = @client.search_issues("repo:#{repo_name} is:pr", per_page: 1)
       result.total_count
     end
-  rescue => e
+  rescue StandardError => e
     Rails.logger.warn "Could not get PR count: #{e.message}"
     nil
   end

@@ -38,7 +38,7 @@ class UnifiedSyncService
 
       log_progress('Sync completed successfully!')
       log_summary
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "Unified sync failed: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
 
@@ -152,7 +152,7 @@ class UnifiedSyncService
       # Rough estimate: 2 PRs per day
       [days_since_sync * 2, 10].max
     end
-  rescue => e
+  rescue StandardError => e
     Rails.logger.warn "Could not estimate PR count: #{e.message}"
     100 # Default estimate
   end

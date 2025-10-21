@@ -12,7 +12,7 @@ namespace :email do
       # TODO: Update to use UserMailer or create appropriate test email method
       puts '⚠️ Email task disabled - AdminMailer was removed during Admin->User migration'
       puts '✅ Email configuration check completed (actual sending disabled)'
-    rescue => e
+    rescue StandardError => e
       puts "❌ Failed to send email: #{e.message}"
       puts e.backtrace.first(5)
     end

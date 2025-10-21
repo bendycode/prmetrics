@@ -38,7 +38,7 @@ class SyncRepositoryBatchJob < ApplicationJob
         finalize_sync(repository)
       end
     end
-  rescue => e
+  rescue StandardError => e
     handle_sync_error(repository, e)
     raise # Re-raise to trigger Sidekiq retry
   end
