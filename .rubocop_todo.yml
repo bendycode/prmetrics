@@ -56,15 +56,6 @@ Layout/SpaceInsideArrayLiteralBrackets:
 
 # Offense count: 4
 # This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBraces.
-# SupportedStyles: space, no_space, compact
-# SupportedStylesForEmptyBraces: space, no_space
-Layout/SpaceInsideHashLiteralBraces:
-  Exclude:
-    - 'app/controllers/dashboard_controller.rb'
-
-# Offense count: 4
-# This cop supports safe autocorrection (--autocorrect).
 Layout/SpaceInsidePercentLiteralDelimiters:
   Exclude:
     - 'Gemfile'
