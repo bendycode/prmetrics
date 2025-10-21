@@ -224,20 +224,6 @@ Lint/DuplicateBranch:
     - 'app/middleware/domain_redirect_middleware.rb'
     - 'app/models/concerns/weekday_hours.rb'
 
-# Offense count: 9
-# This cop supports safe autocorrection (--autocorrect).
-Lint/ScriptPermission:
-  Exclude:
-    - 'check_duplicates.rb'
-    - 'deep_diagnostic.rb'
-    - 'diagnose_duplicate_weeks.rb'
-    - 'diagnose_exact_prs.rb'
-    - 'find_null_merge_associations.rb'
-    - 'fix_all_week_associations.rb'
-    - 'fix_specific_prs.rb'
-    - 'fix_week_associations_properly.rb'
-    - 'investigate_week_association_logic.rb'
-
 # Offense count: 7
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: IgnoreEmptyBlocks, AllowUnusedKeywordArguments.
