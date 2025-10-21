@@ -2,11 +2,11 @@ require 'rails_helper'
 
 RSpec.describe Week do
   describe 'associations' do
-    it { should belong_to(:repository) }
-    it { should have_many(:ready_for_review_prs).class_name('PullRequest') }
-    it { should have_many(:first_review_prs).class_name('PullRequest') }
-    it { should have_many(:merged_prs).class_name('PullRequest') }
-    it { should have_many(:closed_prs).class_name('PullRequest') }
+    it { is_expected.to belong_to(:repository) }
+    it { is_expected.to have_many(:ready_for_review_prs).class_name('PullRequest') }
+    it { is_expected.to have_many(:first_review_prs).class_name('PullRequest') }
+    it { is_expected.to have_many(:merged_prs).class_name('PullRequest') }
+    it { is_expected.to have_many(:closed_prs).class_name('PullRequest') }
   end
 
   describe 'validations' do
@@ -14,10 +14,10 @@ RSpec.describe Week do
 
     subject { build(:week, repository: repo) }
 
-    it { should validate_presence_of(:week_number) }
-    it { should validate_presence_of(:begin_date) }
-    it { should validate_presence_of(:end_date) }
-    it { should validate_uniqueness_of(:week_number).scoped_to(:repository_id) }
+    it { is_expected.to validate_presence_of(:week_number) }
+    it { is_expected.to validate_presence_of(:begin_date) }
+    it { is_expected.to validate_presence_of(:end_date) }
+    it { is_expected.to validate_uniqueness_of(:week_number).scoped_to(:repository_id) }
   end
 
   describe 'weekday hour metrics' do
