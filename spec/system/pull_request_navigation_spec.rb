@@ -14,15 +14,15 @@ RSpec.describe 'Pull Request Navigation' do
     let!(:pull_requests) do
       [
         create(:pull_request,
-          repository: repository,
-          title: 'First PR',
-          state: 'open',
-          gh_created_at: 2.days.ago),
+               repository: repository,
+               title: 'First PR',
+               state: 'open',
+               gh_created_at: 2.days.ago),
         create(:pull_request,
-          repository: repository,
-          title: 'Second PR',
-          state: 'merged',
-          gh_created_at: 1.day.ago)
+               repository: repository,
+               title: 'Second PR',
+               state: 'merged',
+               gh_created_at: 1.day.ago)
       ]
     end
 
@@ -58,28 +58,28 @@ RSpec.describe 'Pull Request Navigation' do
   describe 'pull request details' do
     let(:pull_request) do
       create(:pull_request,
-        repository: repository,
-        title: 'Test PR',
-        state: 'merged',
-        gh_created_at: 3.days.ago,
-        ready_for_review_at: 3.days.ago,
-        gh_merged_at: 1.day.ago,
-        author: github_user)
+             repository: repository,
+             title: 'Test PR',
+             state: 'merged',
+             gh_created_at: 3.days.ago,
+             ready_for_review_at: 3.days.ago,
+             gh_merged_at: 1.day.ago,
+             author: github_user)
     end
 
     let!(:review) do
       create(:review,
-        pull_request: pull_request,
-        author: user,
-        state: 'approved',
-        submitted_at: 2.days.ago)
+             pull_request: pull_request,
+             author: user,
+             state: 'approved',
+             submitted_at: 2.days.ago)
     end
 
     let!(:pull_request_user) do
       create(:pull_request_user,
-        pull_request: pull_request,
-        user: user,
-        role: 'reviewer')
+             pull_request: pull_request,
+             user: user,
+             role: 'reviewer')
     end
 
     it 'displays pull request details correctly' do
@@ -167,10 +167,10 @@ RSpec.describe 'Pull Request Navigation' do
 
     it 'handles pull request with missing data' do
       pr = create(:pull_request,
-        repository: repository,
-        title: 'Incomplete PR',
-        ready_for_review_at: nil,
-        gh_merged_at: nil)
+                  repository: repository,
+                  title: 'Incomplete PR',
+                  ready_for_review_at: nil,
+                  gh_merged_at: nil)
 
       visit pull_request_path(pr)
 

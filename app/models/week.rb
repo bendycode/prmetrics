@@ -55,8 +55,8 @@ class Week < ApplicationRecord
     repository.pull_requests
       .where(draft: false)
       .where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)',
-            end_time,
-            end_time)
+             end_time,
+             end_time)
   end
 
   def draft_prs
@@ -64,8 +64,8 @@ class Week < ApplicationRecord
     repository.pull_requests
       .where(draft: true)
       .where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)',
-            end_time,
-            end_time)
+             end_time,
+             end_time)
   end
 
   def approved_prs

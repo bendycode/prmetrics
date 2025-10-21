@@ -13,10 +13,10 @@ RSpec.describe "Query Optimization", type: :request do
     let!(:pull_requests) do
       3.times.map do |i|
         pr = create(:pull_request,
-          repository: repository,
-          gh_created_at: week.begin_date + i.hours,
-          ready_for_review_at: week.begin_date + i.hours
-        )
+                    repository: repository,
+                    gh_created_at: week.begin_date + i.hours,
+                    ready_for_review_at: week.begin_date + i.hours
+                   )
         create(:review, pull_request: pr, submitted_at: week.begin_date + 2.days)
         pr.update_week_associations
         pr
