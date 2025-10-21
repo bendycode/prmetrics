@@ -63,7 +63,7 @@ problem_weeks.each do |week_number|
   end
 
   # Find PRs that should be associated but aren't
-  timestamp_not_associated = timestamp_pr_numbers.select { |num, week_id| week_id != week.id }
+  timestamp_not_associated = timestamp_pr_numbers.select { |_num, week_id| week_id != week.id }
 
   if timestamp_not_associated.any?
     puts "\n❌ PRs IN WEEK RANGE BUT NOT ASSOCIATED:"
