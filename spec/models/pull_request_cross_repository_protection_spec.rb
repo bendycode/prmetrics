@@ -58,8 +58,8 @@ RSpec.describe PullRequest do
       it 'returns nil when no week exists for the repository' do
         # Create a PR for a date where only repo2 has a week
         create(:week, repository: repo2, week_number: 202302,
-                                begin_date: Date.new(2023, 1, 9),
-                                end_date: Date.new(2023, 1, 15))
+                      begin_date: Date.new(2023, 1, 9),
+                      end_date: Date.new(2023, 1, 15))
 
         pr.gh_merged_at = Date.new(2023, 1, 10).to_time
         pr.update_week_associations # This method doesn't create weeks
@@ -71,8 +71,8 @@ RSpec.describe PullRequest do
       it 'creates and assigns week when using ensure_weeks_exist_and_update_associations' do
         # Create a PR for a date where only repo2 has a week
         create(:week, repository: repo2, week_number: 202302,
-                                begin_date: Date.new(2023, 1, 9),
-                                end_date: Date.new(2023, 1, 15))
+                      begin_date: Date.new(2023, 1, 9),
+                      end_date: Date.new(2023, 1, 15))
 
         pr.gh_merged_at = Date.new(2023, 1, 10).to_time
         pr.ensure_weeks_exist_and_update_associations

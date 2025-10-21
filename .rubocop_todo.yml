@@ -45,24 +45,6 @@ Layout/FirstArgumentIndentation:
   Exclude:
     - 'fix_all_week_associations.rb'
 
-# Offense count: 35
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowMultipleStyles, EnforcedHashRocketStyle, EnforcedColonStyle, EnforcedLastArgumentHashStyle.
-# SupportedHashRocketStyles: key, separator, table
-# SupportedColonStyles: key, separator, table
-# SupportedLastArgumentHashStyles: always_inspect, always_ignore, ignore_implicit, ignore_explicit
-Layout/HashAlignment:
-  Exclude:
-    - 'spec/controllers/dashboard_controller_spec.rb'
-    - 'spec/factories/pull_requests.rb'
-    - 'spec/jobs/update_repository_stats_job_spec.rb'
-    - 'spec/lib/tasks/sync_rake_spec.rb'
-    - 'spec/models/pull_request_cross_repository_protection_spec.rb'
-    - 'spec/models/week_spec.rb'
-    - 'spec/services/unified_sync_service_spec.rb'
-    - 'spec/services/week_stats_service_spec.rb'
-    - 'spec/system/repository_sync_integration_spec.rb'
-
 # Offense count: 7
 # This cop supports safe autocorrection (--autocorrect).
 Layout/MultilineBlockLayout:

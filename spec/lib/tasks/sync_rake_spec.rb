@@ -72,10 +72,10 @@ RSpec.describe 'sync:repository rake task' do
 
   describe 'sync:status' do
     let!(:repository) { create(:repository, name: 'rails/rails',
-                                sync_status: 'completed',
-                                sync_started_at: 1.hour.ago,
-                                sync_completed_at: 30.minutes.ago,
-                                sync_progress: 100)
+                                            sync_status: 'completed',
+                                            sync_started_at: 1.hour.ago,
+                                            sync_completed_at: 30.minutes.ago,
+                                            sync_progress: 100)
     }
 
     it 'displays repository sync status' do

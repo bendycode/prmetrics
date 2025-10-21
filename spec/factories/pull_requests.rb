@@ -29,7 +29,7 @@ FactoryBot.define do
 
       after(:create) do |pr, evaluator|
         create(:review, pull_request: pr, state: 'APPROVED',
-               submitted_at: Time.current - evaluator.days_ago.days)
+                        submitted_at: Time.current - evaluator.days_ago.days)
       end
     end
 
@@ -47,7 +47,7 @@ FactoryBot.define do
         raise ArgumentError, 'week is required for :approved_before_week_end trait' unless evaluator.week
 
         create(:review, pull_request: pr, state: 'APPROVED',
-               submitted_at: evaluator.week.end_date - evaluator.days_before_week_end.days)
+                        submitted_at: evaluator.week.end_date - evaluator.days_before_week_end.days)
       end
     end
 
