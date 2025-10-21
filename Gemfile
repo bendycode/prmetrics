@@ -7,13 +7,13 @@ gem "rails", "~> 7.1.4"
 # The original asset pipeline for Rails [https://github.com/rails/sprockets-rails]
 gem "sprockets-rails"
 
-gem "octokit"
-gem "faraday-retry"
-gem "kaminari"
 gem "bootstrap"
-gem "sassc-rails"
-gem 'jquery-rails'
+gem "faraday-retry"
 gem 'font-awesome-sass'
+gem 'jquery-rails'
+gem "kaminari"
+gem "octokit"
+gem "sassc-rails"
 
 gem "pg", "~> 1.1"
 gem "puma", ">= 5.0"
@@ -55,14 +55,14 @@ gem "bootsnap", require: false
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
+  gem 'capybara'
   gem "debug", platforms: %i[ mri mswin mswin64 mingw x64_mingw ]
-  gem 'rspec-rails', '~> 7.1'
-  gem 'shoulda-matchers', '~> 6.5'
   gem 'factory_bot_rails'
   gem 'faker'
   gem 'rails-controller-testing'
-  gem 'capybara'
+  gem 'rspec-rails', '~> 7.1'
   gem 'selenium-webdriver'
+  gem 'shoulda-matchers', '~> 6.5'
 end
 
 group :test do
@@ -86,11 +86,11 @@ group :development do
 
   # Code quality and linting
   gem "rubocop", require: false
-  gem "rubocop-rails", require: false
-  gem "rubocop-rspec", require: false
-  gem "rubocop-performance", require: false
   gem "rubocop-capybara", require: false
   gem "rubocop-factory_bot", require: false
+  gem "rubocop-performance", require: false
+  gem "rubocop-rails", require: false
+  gem "rubocop-rspec", require: false
   gem "rubocop-rspec_rails", require: false
 
   # Add speed badges [https://github.com/MiniProfiler/rack-mini-profiler]
