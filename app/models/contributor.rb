@@ -3,23 +3,23 @@ class Contributor < ApplicationRecord
   has_many :authored_pull_requests, class_name: 'PullRequest', foreign_key: 'author_id', dependent: :nullify
   has_many :pull_request_users, foreign_key: 'user_id', dependent: :destroy
   has_many :participated_pull_requests, through: :pull_request_users, source: :pull_request
-  
+
   # Review associations
   has_many :reviews, foreign_key: 'author_id', dependent: :destroy
-  
+
   # Validations
   validates :username, presence: true, uniqueness: true
   validates :github_id, presence: true, uniqueness: true
-  
+
   # Scopes
   scope :with_github_data, -> { where.not(github_id: nil).where.not("github_id LIKE 'user_%'") }
   scope :authors, -> { joins(:authored_pull_requests).distinct }
   scope :reviewers, -> { joins(:reviews).distinct }
-  
+
   # Find or create contributor using full GitHub API data
   def self.find_or_create_from_github(github_user)
     return nil unless github_user
-    
+
     find_or_create_by(github_id: github_user.id.to_s) do |contributor|
       contributor.username = github_user.login
       contributor.name = github_user.name
@@ -27,15 +27,15 @@ class Contributor < ApplicationRecord
       contributor.email = github_user.email
     end
   end
-  
+
   # Find or create contributor with minimal data (for backward compatibility)
   def self.find_or_create_from_username(username, additional_attrs = {})
     return nil unless username
-    
+
     # First try to find by username
     contributor = find_by(username: username)
     return contributor if contributor
-    
+
     # Create with a placeholder github_id if not provided
     create!(
       username: username,
@@ -44,17 +44,17 @@ class Contributor < ApplicationRecord
       email: additional_attrs[:email]
     )
   end
-  
+
   # Helper to get display name (falls back to username if name is blank)
   def display_name
     name.presence || username
   end
-  
+
   # Check if this is a real GitHub user vs placeholder
   def has_github_data?
     github_id.present? && !github_id.starts_with?('placeholder_') && !github_id.starts_with?('user_')
   end
-  
+
   # Get all pull requests this contributor is involved with (authored or participated)
   def all_pull_requests
     PullRequest.left_joins(:pull_request_users)

@@ -4,9 +4,8 @@ module WeekAssociationHelpers
     old_skip_pr = PullRequest.skip_callback(:save, :after, :update_week_associations_if_needed)
     old_skip_review_save = Review.skip_callback(:save, :after, :update_pull_request_first_review_week)
     old_skip_review_destroy = Review.skip_callback(:destroy, :after, :update_pull_request_first_review_week)
-    
+
     yield
-    
   ensure
     # Re-enable callbacks
     PullRequest.set_callback(:save, :after, :update_week_associations_if_needed) unless old_skip_pr

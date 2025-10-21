@@ -9,42 +9,42 @@ problem_weeks = [202518, 202519, 202521]
 problem_weeks.each do |week_number|
   week = Week.find_by(week_number: week_number)
   next unless week
-  
+
   puts "\n" + "=" * 60
   puts "WEEK #{week_number} DEEP INVESTIGATION"
   puts "=" * 60
-  
+
   puts "Week ID: #{week.id}"
   puts "Repository: #{week.repository.name}"
   puts "Date range: #{week.begin_date} to #{week.end_date}"
-  
+
   # Get time boundaries
   week_start = week.begin_date.in_time_zone.beginning_of_day
   week_end = week.end_date.in_time_zone.end_of_day
-  
+
   puts "\nTime boundaries:"
   puts "  week_start: #{week_start}"
   puts "  week_end: #{week_end}"
-  
+
   # Count PRs via association
   associated_prs = week.merged_prs
   puts "\nPRs via association (merged_week_id = #{week.id}): #{associated_prs.count}"
-  
+
   # Count PRs via timestamp
   timestamp_prs = week.repository.pull_requests.where(gh_merged_at: week_start..week_end)
   puts "PRs via timestamp range: #{timestamp_prs.count}"
-  
+
   # Find PRs that are associated but shouldn't be
   puts "\n🔍 CHECKING FOR MISASSOCIATED PRS:"
   misassociated = associated_prs.where.not(gh_merged_at: week_start..week_end)
-  
+
   if misassociated.any?
     puts "Found #{misassociated.count} PRs associated with this week but merged outside range:"
     misassociated.each do |pr|
       puts "  PR ##{pr.number}:"
       puts "    Merged at: #{pr.gh_merged_at}"
       puts "    Merged week ID: #{pr.merged_week_id}"
-      
+
       # What week SHOULD this PR belong to?
       correct_week = Week.find_by_date(pr.gh_merged_at)
       if correct_week
@@ -52,7 +52,7 @@ problem_weeks.each do |week_number|
       else
         puts "    Should be week: NONE (no week for this date)"
       end
-      
+
       # Test Week.find_by_date logic
       puts "    Testing Week.find_by_date(#{pr.gh_merged_at}):"
       test_date = pr.gh_merged_at.respond_to?(:to_date) ? pr.gh_merged_at.to_date : pr.gh_merged_at
@@ -65,11 +65,11 @@ problem_weeks.each do |week_number|
   else
     puts "✅ No misassociated PRs found"
   end
-  
+
   # Find PRs that should be associated but aren't
   puts "\n🔍 CHECKING FOR MISSING ASSOCIATIONS:"
   missing = timestamp_prs.where.not(merged_week_id: week.id)
-  
+
   if missing.any?
     puts "Found #{missing.count} PRs that should be in this week but aren't:"
     missing.each do |pr|
@@ -101,7 +101,7 @@ test_dates.each do |date|
   else
     puts "  No week found!"
   end
-  
+
   # Also test with date object
   date_obj = date.to_date
   week2 = Week.find_by_date(date_obj)

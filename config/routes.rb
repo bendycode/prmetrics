@@ -7,11 +7,11 @@ Rails.application.routes.draw do
   authenticate :user do
     mount Sidekiq::Web => '/sidekiq'
   end
-  
+
   root 'dashboard#index'
   get 'dashboard', to: 'dashboard#index'
   get 'health', to: 'health#show'
-  
+
   resource :account, only: [:edit, :update]
   resources :users, only: [:index, :new, :create, :destroy]
 

@@ -14,7 +14,7 @@ puts
 if duplicate_week_numbers.any?
   duplicate_week_numbers.sort.each do |week_num|
     puts "\nWeek number #{week_num}:"
-    
+
     weeks = Week.where(week_number: week_num).includes(:repository).order(:begin_date)
     weeks.each do |week|
       puts "  ID: #{week.id}, Repo: #{week.repository.name}"
@@ -30,13 +30,13 @@ puts "=" * 80
 
 [202518, 202519, 202521].each do |week_num|
   puts "\nWeek #{week_num}:"
-  
+
   weeks = Week.where(week_number: week_num)
   puts "  Found #{weeks.count} week(s) with this number"
-  
+
   weeks.each do |week|
     puts "  Week ID #{week.id}: #{week.begin_date} to #{week.end_date}"
-    
+
     # Check if any of the "extra" PRs are associated with this week
     [419, 420, 428, 430, 432].each do |pr_num|
       if week.merged_prs.where(number: pr_num).exists?
@@ -69,7 +69,7 @@ puts "=" * 80
 # Check if 2025 weeks have 2020 PRs associated
 Week.where('begin_date >= ?', Date.new(2025, 1, 1)).each do |week|
   old_prs = week.merged_prs.where('gh_merged_at < ?', Date.new(2021, 1, 1))
-  
+
   if old_prs.any?
     puts "\n❌ Week #{week.week_number} (#{week.begin_date}) has old PRs:"
     old_prs.each do |pr|

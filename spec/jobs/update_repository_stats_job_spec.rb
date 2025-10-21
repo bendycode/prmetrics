@@ -7,7 +7,7 @@ RSpec.describe UpdateRepositoryStatsJob, type: :job do
   describe '#perform' do
     before do
       # Create some pull requests with various dates
-      create(:pull_request, repository: repository, 
+      create(:pull_request, repository: repository,
              gh_created_at: 2.weeks.ago,
              ready_for_review_at: 2.weeks.ago)
       create(:pull_request, repository: repository,
@@ -23,7 +23,7 @@ RSpec.describe UpdateRepositoryStatsJob, type: :job do
 
     it 'updates stats for each week' do
       job.perform(repository.id)
-      
+
       # Should create at least 3 weeks (2 weeks ago, 1 week ago, current week)
       expect(repository.weeks.count).to be >= 3
     end
@@ -31,14 +31,14 @@ RSpec.describe UpdateRepositoryStatsJob, type: :job do
     it 'calls update_stats on each week' do
       # First generate the weeks
       WeekStatsService.generate_weeks_for_repository(repository)
-      
+
       # Mock the update_stats calls
       repository.weeks.each do |week|
         service_double = instance_double(WeekStatsService)
         expect(WeekStatsService).to receive(:new).with(week).and_return(service_double)
         expect(service_double).to receive(:update_stats)
       end
-      
+
       job.perform(repository.id)
     end
 
@@ -82,7 +82,7 @@ RSpec.describe UpdateRepositoryStatsJob, type: :job do
 
     it 'generates weeks for ALL repositories, not just the target one' do
       expect(WeekStatsService).to receive(:generate_weeks_for_repository).with(repo1)
-      expect(WeekStatsService).to receive(:generate_weeks_for_repository).with(repo2)  
+      expect(WeekStatsService).to receive(:generate_weeks_for_repository).with(repo2)
       expect(WeekStatsService).to receive(:generate_weeks_for_repository).with(repo3)
       expect(WeekStatsService).to receive(:update_all_weeks)
 
@@ -102,7 +102,7 @@ RSpec.describe UpdateRepositoryStatsJob, type: :job do
     it 'behaves like rake weeks:update_stats' do
       # This test verifies the job now does the same thing as the rake task
       # The rake task calls generate_weeks_for_repository for all repos, then update_all_weeks
-      
+
       expect(Repository).to receive(:find_each).and_yield(repo1).and_yield(repo2).and_yield(repo3)
       expect(WeekStatsService).to receive(:generate_weeks_for_repository).with(repo1)
       expect(WeekStatsService).to receive(:generate_weeks_for_repository).with(repo2)
@@ -118,11 +118,11 @@ RSpec.describe UpdateRepositoryStatsJob, type: :job do
       single_repo = create(:repository)
       allow(WeekStatsService).to receive(:generate_weeks_for_repository)
       allow(WeekStatsService).to receive(:update_all_weeks)
-      
+
       expect {
         job.perform(single_repo.id)
       }.not_to raise_error
-      
+
       # Should still update stats for the single repository
       expect(WeekStatsService).to have_received(:update_all_weeks)
     end

@@ -53,17 +53,17 @@ RSpec.describe 'Authentication', type: :feature do
         sign_in regular_user
         visit root_path
 
-        expect(page).not_to have_content('Administration')
-        expect(page).not_to have_link('Users')
+        expect(page).to have_no_content('Administration')
+        expect(page).to have_no_link('Users')
       end
 
       it 'hides repository management controls from regular user' do
         sign_in regular_user
         visit repositories_path
 
-        expect(page).not_to have_button('Add Repository')
-        expect(page).not_to have_button('Sync All')
-        expect(page).not_to have_button('Delete')
+        expect(page).to have_no_button('Add Repository')
+        expect(page).to have_no_button('Sync All')
+        expect(page).to have_no_button('Delete')
       end
 
       it 'redirects regular user from user management' do
@@ -71,7 +71,7 @@ RSpec.describe 'Authentication', type: :feature do
         visit users_path
 
         expect(page).to have_content('You are not authorized')
-        expect(current_path).to eq(root_path)
+        expect(page).to have_current_path(root_path, ignore_query: true)
       end
 
       it 'redirects regular user from new repository form' do
@@ -79,7 +79,7 @@ RSpec.describe 'Authentication', type: :feature do
         visit new_repository_path
 
         expect(page).to have_content('You are not authorized')
-        expect(current_path).to eq(root_path)
+        expect(page).to have_current_path(root_path, ignore_query: true)
       end
     end
 
@@ -104,7 +104,7 @@ RSpec.describe 'Authentication', type: :feature do
         click_button 'Set my password'
 
         expect(page).to have_content('Your password was set successfully')
-        expect(page).not_to have_content('Administration')
+        expect(page).to have_no_content('Administration')
       end
     end
 
@@ -115,8 +115,8 @@ RSpec.describe 'Authentication', type: :feature do
         visit root_path
         visit repositories_path
 
-        expect(page).not_to have_button('Add Repository')
-        expect(page).not_to have_button('Sync All')
+        expect(page).to have_no_button('Add Repository')
+        expect(page).to have_no_button('Sync All')
       end
 
       it 'correctly identifies current user role in navigation' do
@@ -155,14 +155,14 @@ RSpec.describe 'Authentication', type: :feature do
         visit root_path
 
         # Click the user dropdown to reveal logout option
-        find('#userDropdown').click
+        find_by_id('userDropdown').click
         # Click the logout link in the dropdown which opens the modal
         find('.dropdown-menu').click_link('Logout')
         # Click the actual logout button in the modal
-        find('#logoutModal').click_link('Logout')
+        find_by_id('logoutModal').click_link('Logout')
 
         expect(page).to have_content('You need to sign in')
-        expect(current_path).to eq(new_user_session_path)
+        expect(page).to have_current_path(new_user_session_path, ignore_query: true)
       end
     end
 
@@ -170,7 +170,7 @@ RSpec.describe 'Authentication', type: :feature do
       it 'redirects unauthenticated users to login' do
         visit repositories_path
 
-        expect(current_path).to eq(new_user_session_path)
+        expect(page).to have_current_path(new_user_session_path, ignore_query: true)
         expect(page).to have_content('You need to sign in')
       end
 
@@ -179,7 +179,7 @@ RSpec.describe 'Authentication', type: :feature do
         visit new_repository_path
 
         expect(page).to have_content('You are not authorized')
-        expect(current_path).to eq(root_path)
+        expect(page).to have_current_path(root_path, ignore_query: true)
       end
     end
 

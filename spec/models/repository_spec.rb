@@ -16,13 +16,13 @@ RSpec.describe Repository, type: :model do
     expect(repository).to be_valid
     expect(repository.url).to eq("https://github.com/test/repo")
   end
-  
+
   it "validates repository name format" do
     repository = Repository.new(name: "invalid-name", url: "https://github.com/test/repo")
     expect(repository).to_not be_valid
     expect(repository.errors[:name]).to include("must be in format 'owner/repository'")
   end
-  
+
   it "accepts valid repository name formats" do
     valid_names = ["owner/repo", "some-org/my-repo", "user123/test.project"]
     valid_names.each do |name|
@@ -30,8 +30,7 @@ RSpec.describe Repository, type: :model do
       expect(repository).to be_valid, "Expected #{name} to be valid"
     end
   end
-  
-  
+
   it "enforces uniqueness of name" do
     create(:repository, name: "rails/rails")
     duplicate = Repository.new(name: "rails/rails", url: "https://github.com/rails/rails")

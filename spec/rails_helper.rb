@@ -97,12 +97,12 @@ RSpec.configure do |config|
 
   # Include FactoryBot methods
   config.include FactoryBot::Syntax::Methods
-  
+
   # Include Devise test helpers
   config.include Devise::Test::ControllerHelpers, type: :controller
   config.include Devise::Test::IntegrationHelpers, type: :request
   config.include Devise::Test::IntegrationHelpers, type: :system
-  
+
   # Use inline job processing for tests
   config.before(:each) do
     ActiveJob::Base.queue_adapter = :test
@@ -114,7 +114,7 @@ RSpec.configure do |config|
       with.library :rails
     end
   end
-  
+
   # Configure Bullet for tests (only if Bullet is available)
   if defined?(Bullet)
     config.before(:each) do
@@ -126,13 +126,13 @@ RSpec.configure do |config|
       Bullet.end_request if Bullet.enable?
     end
   end
-  
+
   # Configure Capybara for system tests
   config.before(:each, type: :system) do
     # Use rack_test for faster system tests without JavaScript
     driven_by :rack_test
   end
-  
+
   # For tests that specifically need JavaScript, use this tag: js: true
   config.before(:each, type: :system, js: true) do
     driven_by :selenium, using: :headless_chrome, screen_size: [1400, 1400] do |driver_opts|

@@ -12,24 +12,24 @@ RSpec.describe DashboardController, type: :controller do
     let!(:repo2) { create(:repository, name: 'ruby/ruby') }
     let!(:week1) { create(:week, repository: repo1, begin_date: 1.week.ago, num_prs_started: 10, num_prs_merged: 8) }
     let!(:week2) { create(:week, repository: repo2, begin_date: 1.week.ago, num_prs_started: 5, num_prs_merged: 3) }
-    
+
     context "without repository filter" do
       it "returns http success" do
         get :index
         expect(response).to have_http_status(:success)
       end
-      
+
       it "shows all repositories" do
         get :index
         expect(assigns(:repositories)).to match_array([repo1, repo2])
       end
-      
+
       it "aggregates data from all repositories" do
         get :index
         expect(assigns(:total_prs)).to eq(PullRequest.count)
       end
     end
-    
+
     context "with repository filter" do
       it "filters data by selected repository" do
         get :index, params: { repository_id: repo1.id }
@@ -42,21 +42,21 @@ RSpec.describe DashboardController, type: :controller do
         expect(chart_weeks).to match_array([week1])
       end
     end
-    
+
     context "with nil values in week records" do
       let!(:repo_with_nils) { create(:repository, name: 'test/nil-values') }
-      let!(:week_with_nils) { create(:week, repository: repo_with_nils, begin_date: 1.week.ago, 
+      let!(:week_with_nils) { create(:week, repository: repo_with_nils, begin_date: 1.week.ago,
                                      num_prs_started: nil, num_prs_merged: nil, num_prs_cancelled: nil) }
       let!(:normal_week) { create(:week, repository: repo_with_nils, begin_date: 2.weeks.ago,
                                   num_prs_started: 5, num_prs_merged: 3, num_prs_cancelled: 1) }
-      
+
       it "handles nil values without crashing" do
         expect {
           get :index, params: { repository_id: repo_with_nils.id }
         }.not_to raise_error
         expect(response).to have_http_status(:success)
       end
-      
+
       it "treats nil values as zero in aggregations" do
         get :index, params: { repository_id: repo_with_nils.id }
 

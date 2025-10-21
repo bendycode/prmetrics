@@ -10,7 +10,7 @@ RSpec.describe Week, type: :model do
   end
 
   describe 'validations' do
-    let(:repo) { create :repository }
+    let(:repo) { create(:repository) }
     subject { build(:week, repository: repo) }
 
     it { should validate_presence_of(:week_number) }
@@ -84,7 +84,7 @@ RSpec.describe Week, type: :model do
         before do
           # Force creation of current_week before creating PRs/reviews
           current_week
-          
+
           # PR 1: Created Monday, reviewed Thursday (within same week)
           pr1 = create(:pull_request,
             repository: repository,
@@ -116,16 +116,15 @@ RSpec.describe Week, type: :model do
             submitted_at: Time.zone.local(2024, 1, 12, 9, 0, 0), # Friday 9 AM
             state: 'approved'
           )
-          
+
           # Week associations are automatically updated by callbacks
         end
 
         it 'calculates average hours correctly, excluding weekend hours' do
           # PR1: Monday 2PM to Thursday 10AM = 68 hours weekday time
-          # PR2: Tuesday 9AM to Friday 9AM = 72 hours weekday time  
+          # PR2: Tuesday 9AM to Friday 9AM = 72 hours weekday time
           # Average: (68 + 72) / 2 = 70 hours
-          
-          
+
           expect(current_week.avg_hours_to_first_review).to eq(70.0)
 
           # Raw calculation would include weekend for PR1
@@ -186,7 +185,7 @@ RSpec.describe Week, type: :model do
         before do
           # Force creation of current_week before creating PRs
           current_week
-          
+
           # PR 1: Created Monday, merged Friday (within same week)
           pr1 = create(:pull_request,
             repository: repository,
@@ -208,7 +207,7 @@ RSpec.describe Week, type: :model do
             ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0),  # Monday 9 AM
             gh_merged_at: Time.zone.local(2024, 1, 10, 17, 0, 0)       # Wednesday 5 PM
           )
-          
+
           # Week associations are automatically updated by callbacks
         end
 

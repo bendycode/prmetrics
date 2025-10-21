@@ -2,12 +2,12 @@ namespace :email do
   desc "Test email configuration by sending a test email"
   task test: :environment do
     email = ENV['TEST_EMAIL'] || 'test@example.com'
-    
+
     puts "Testing email configuration..."
     puts "Delivery method: #{ActionMailer::Base.delivery_method}"
     puts "SMTP settings: #{ActionMailer::Base.smtp_settings.inspect}"
     puts "Sending test email to: #{email}"
-    
+
     begin
       # TODO: Update to use UserMailer or create appropriate test email method
       puts "⚠️ Email task disabled - AdminMailer was removed during Admin->User migration"
@@ -17,7 +17,7 @@ namespace :email do
       puts e.backtrace.first(5)
     end
   end
-  
+
   desc "Check email configuration"
   task check_config: :environment do
     puts "=== Email Configuration Check ==="
@@ -28,7 +28,7 @@ namespace :email do
     puts "  Raise Delivery Errors: #{ActionMailer::Base.raise_delivery_errors}"
     puts "  Default URL Host: #{ActionMailer::Base.default_url_options[:host]}"
     puts "  Default From: #{ENV['DEFAULT_MAILER_SENDER']}"
-    
+
     puts "\nSMTP Configuration:"
     if ENV['SENDGRID_USERNAME'].present?
       puts "  Using SendGrid"
@@ -44,7 +44,7 @@ namespace :email do
       puts "  ❌ No email configuration found!"
       puts "  Set either SENDGRID_USERNAME/SENDGRID_PASSWORD or SMTP_* variables"
     end
-    
+
     puts "\nApplication Host: #{ENV['APPLICATION_HOST'] || 'Not set (using prmetrics.io)'}"
   end
 end

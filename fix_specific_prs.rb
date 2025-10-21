@@ -11,33 +11,33 @@ puts
 
 problem_prs.each do |pr_number|
   pr = PullRequest.find_by(number: pr_number)
-  
+
   if pr.nil?
     puts "❌ PR ##{pr_number} not found"
     next
   end
-  
+
   puts "\n" + "-" * 60
   puts "PR ##{pr.number}: #{pr.title[0..50]}..."
   puts "  State: #{pr.state}"
   puts "  Merged at: #{pr.gh_merged_at || 'NULL'}"
   puts "  Current week association: #{pr.merged_week_id}"
-  
+
   if pr.merged_week_id
     current_week = Week.find_by(id: pr.merged_week_id)
     puts "  Currently in week: #{current_week&.week_number} (#{current_week&.begin_date} to #{current_week&.end_date})" if current_week
   end
-  
+
   # Find the correct week for this PR
   if pr.gh_merged_at
     correct_week = pr.repository.weeks.find_by_date(pr.gh_merged_at)
-    
+
     if correct_week
       puts "  Should be in week: #{correct_week.week_number} (#{correct_week.begin_date} to #{correct_week.end_date})"
-      
+
       if pr.merged_week_id != correct_week.id
         puts "  ❌ MISASSOCIATED - needs to be moved"
-        
+
         if ARGV.include?('--apply')
           pr.update_column(:merged_week_id, correct_week.id)
           puts "  ✅ FIXED - moved to week #{correct_week.week_number}"
@@ -49,7 +49,7 @@ problem_prs.each do |pr_number|
       end
     else
       puts "  ⚠️  No week found for merge date #{pr.gh_merged_at}"
-      
+
       if pr.merged_week_id
         if ARGV.include?('--apply')
           pr.update_column(:merged_week_id, nil)
@@ -61,7 +61,7 @@ problem_prs.each do |pr_number|
     end
   else
     puts "  ⚠️  PR has no merge date"
-    
+
     if pr.merged_week_id
       if ARGV.include?('--apply')
         pr.update_column(:merged_week_id, nil)
@@ -77,9 +77,9 @@ if ARGV.include?('--apply')
   puts "\n" + "=" * 80
   puts "🔄 RECALCULATING AFFECTED WEEK STATISTICS"
   puts "=" * 80
-  
+
   affected_week_numbers = [202518, 202519, 202521]
-  
+
   affected_week_numbers.each do |week_number|
     week = Week.find_by(week_number: week_number)
     if week
@@ -89,7 +89,7 @@ if ARGV.include?('--apply')
       puts "  New merged count: #{week.num_prs_merged}"
     end
   end
-  
+
   puts "\n✅ ALL FIXES APPLIED"
 else
   puts "\n" + "=" * 80

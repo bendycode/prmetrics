@@ -1,11 +1,11 @@
 class SyncRepositoryBatchJob < ApplicationJob
   queue_as :default
-  
+
   BATCH_SIZE = 100
-  
+
   def perform(repository_name, page: 1, fetch_all: false)
     repository = Repository.find_by!(name: repository_name)
-    
+
     # Mark as in progress on first page
     if page == 1
       repository.update!(
@@ -14,22 +14,22 @@ class SyncRepositoryBatchJob < ApplicationJob
         last_sync_error: nil
       )
     end
-    
+
     service = GithubService.new(ENV['GITHUB_ACCESS_TOKEN'])
-    
+
     # Fetch one page of PRs
     pull_requests = fetch_pull_requests_page(service, repository, page)
-    
+
     if pull_requests.empty?
       # We've reached the end
       finalize_sync(repository)
     else
       # Process this batch
       process_pull_requests(service, repository, pull_requests)
-      
+
       # Update progress
       update_progress(repository, page, pull_requests.size)
-      
+
       # Check if we should continue
       if should_continue_fetching?(repository, pull_requests, fetch_all)
         # Queue next page
@@ -42,9 +42,9 @@ class SyncRepositoryBatchJob < ApplicationJob
     handle_sync_error(repository, e)
     raise # Re-raise to trigger Sidekiq retry
   end
-  
+
   private
-  
+
   def fetch_pull_requests_page(service, repository, page)
     # We need to directly use Octokit since GithubService doesn't expose the client
     client = Octokit::Client.new(access_token: ENV['GITHUB_ACCESS_TOKEN'])
@@ -57,7 +57,7 @@ class SyncRepositoryBatchJob < ApplicationJob
       direction: 'desc'
     )
   end
-  
+
   def process_pull_requests(service, repository, pull_requests)
     # For now, we'll use the existing GithubService logic by calling the full method
     # This is inefficient but works until we refactor GithubService
@@ -66,7 +66,7 @@ class SyncRepositoryBatchJob < ApplicationJob
       process_single_pull_request(repository, pr_data)
     end
   end
-  
+
   def process_single_pull_request(repository, pr_data)
     # Handle both Octokit objects and hashes
     pr_number = pr_data.respond_to?(:number) ? pr_data.number : pr_data[:number]
@@ -108,18 +108,18 @@ class SyncRepositoryBatchJob < ApplicationJob
     # Update week associations
     pull_request.ensure_weeks_exist_and_update_associations
   end
-  
+
   def update_progress(repository, page, batch_size)
     total_processed = (page - 1) * BATCH_SIZE + batch_size
     Rails.logger.info "Processed page #{page} for #{repository.name} (#{total_processed} PRs so far)"
-    
+
     # Optionally store progress
     repository.update_column(:sync_progress, total_processed)
   end
-  
+
   def should_continue_fetching?(repository, pull_requests, fetch_all)
     return false if pull_requests.size < BATCH_SIZE # Last page
-    
+
     if fetch_all
       true
     else
@@ -128,20 +128,20 @@ class SyncRepositoryBatchJob < ApplicationJob
       repository.last_fetched_at.nil? || oldest_pr_date > repository.last_fetched_at
     end
   end
-  
+
   def finalize_sync(repository)
     repository.update!(
       sync_status: 'completed',
       sync_completed_at: Time.current,
       last_fetched_at: Time.current
     )
-    
+
     # Queue stats calculation
     UpdateRepositoryStatsJob.perform_later(repository.id)
-    
+
     Rails.logger.info "Completed sync for #{repository.name}"
   end
-  
+
   def handle_sync_error(repository, error)
     repository.update!(
       sync_status: 'failed',
