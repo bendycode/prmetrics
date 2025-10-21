@@ -21,7 +21,7 @@ RSpec.describe UsersController do
         user2 = create(:user, email: 'alpha@example.com')
 
         get :index
-        expect(assigns(:users)).to match_array([admin_user, user1, user2])
+        expect(assigns(:users)).to contain_exactly(admin_user, user1, user2)
         expect(assigns(:users).map(&:email)).to eq(['alpha@example.com', admin_user.email, 'zebra@example.com'].sort)
       end
     end

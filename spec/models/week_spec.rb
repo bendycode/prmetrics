@@ -329,7 +329,7 @@ RSpec.describe Week do
         it 'returns non-draft PRs open during the week, excluding those closed at end-of-day boundary' do
           # Tests important boundary: PRs closed at 11:59:59 PM on end_date are excluded,
           # but PRs closed after midnight are included
-          expect(week.open_prs).to match_array([open_pr, pr_closed_start_of_next_day])
+          expect(week.open_prs).to contain_exactly(open_pr, pr_closed_start_of_next_day)
         end
       end
 
@@ -338,7 +338,7 @@ RSpec.describe Week do
         let!(:regular_pr) { create(:pull_request, repository: repository, draft: false, gh_created_at: current_week.begin_date) }
 
         it 'returns draft PRs that were open during the week' do
-          expect(current_week.draft_prs).to match_array([draft_pr])
+          expect(current_week.draft_prs).to contain_exactly(draft_pr)
         end
       end
 
@@ -348,7 +348,7 @@ RSpec.describe Week do
         let(:draft_approved_pr) { create(:pull_request, :draft, :approved, repository: repository, gh_created_at: current_week.begin_date) }
 
         it 'returns non-draft PRs with approved reviews that were open during the week' do
-          expect(current_week.approved_prs).to match_array([approved_pr])
+          expect(current_week.approved_prs).to contain_exactly(approved_pr)
         end
 
         it 'handles PRs with multiple reviews correctly' do
@@ -363,7 +363,7 @@ RSpec.describe Week do
         let!(:pr_before_week) { create(:pull_request, repository: repository, gh_created_at: current_week.begin_date - 1.day) }
 
         it 'returns PRs created during the week' do
-          expect(current_week.started_prs).to match_array([pr_in_week])
+          expect(current_week.started_prs).to contain_exactly(pr_in_week)
         end
       end
 
@@ -377,7 +377,7 @@ RSpec.describe Week do
         end
 
         it 'returns closed PRs that were not merged' do
-          expect(current_week.cancelled_prs).to match_array([cancelled_pr])
+          expect(current_week.cancelled_prs).to contain_exactly(cancelled_pr)
         end
       end
 
