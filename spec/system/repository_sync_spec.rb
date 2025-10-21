@@ -82,8 +82,8 @@ RSpec.describe 'Repository Sync' do
 
   describe 'repositories index sync' do
     it 'shows sync status for all repositories' do
-      repo1 = create(:repository, name: 'org/repo1', sync_status: 'completed')
-      repo2 = create(:repository, name: 'org/repo2', sync_status: 'in_progress')
+      create(:repository, name: 'org/repo1', sync_status: 'completed')
+      create(:repository, name: 'org/repo2', sync_status: 'in_progress')
 
       visit repositories_path
 

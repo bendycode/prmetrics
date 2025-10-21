@@ -188,7 +188,6 @@ class GithubService
     end
   end
 
-
   def fetch_and_store_reviews(pull_request, repo_name, pr_number)
     reviews = with_rate_limit_handling do
       @client.pull_request_reviews(repo_name, pr_number)

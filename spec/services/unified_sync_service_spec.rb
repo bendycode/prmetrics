@@ -70,7 +70,7 @@ RSpec.describe UnifiedSyncService do
     end
 
     it 'updates week statistics for affected weeks' do
-      week = create(:week, repository: repository)
+      create(:week, repository: repository)
       allow(service).to receive(:update_week_statistics)
 
       service.sync!

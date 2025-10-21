@@ -12,7 +12,7 @@ RSpec.describe 'User Role Authorization', js: true do
     end
 
     it 'can access all repository management functions' do
-      repository = create(:repository, name: 'test/repo')
+      create(:repository, name: 'test/repo')
       visit repositories_path
 
       # Admin should see add repository button
@@ -76,7 +76,7 @@ RSpec.describe 'User Role Authorization', js: true do
     end
 
     it 'can view repositories but not modify them' do
-      repository = create(:repository, name: 'test/repo')
+      create(:repository, name: 'test/repo')
       visit repositories_path
 
       # Regular user should NOT see add repository button

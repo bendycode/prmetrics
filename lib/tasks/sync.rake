@@ -65,7 +65,7 @@ namespace :sync do
     fetch_all = ENV['FETCH_ALL'] == 'true'
 
     # Create/update repository record
-    repository = Repository.find_or_create_by(name: repo_name)
+    Repository.find_or_create_by(name: repo_name)
 
     # Queue the unified sync job
     job_id = UnifiedSyncJob.perform_later(repo_name, fetch_all: fetch_all).job_id

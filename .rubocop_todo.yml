@@ -28,13 +28,6 @@ Layout/ArgumentAlignment:
     - 'spec/services/github_service_spec.rb'
     - 'spec/system/pull_request_navigation_spec.rb'
 
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: with_first_element, with_fixed_indentation
-Layout/ArrayAlignment:
-  Exclude:
-    - 'spec/models/user_spec.rb'
 
 # Offense count: 2
 # This cop supports safe autocorrection (--autocorrect).

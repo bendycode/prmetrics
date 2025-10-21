@@ -2,6 +2,7 @@ require 'rails_helper'
 
 RSpec.describe 'Repository Sync Integration' do
   include ActiveJob::TestHelper
+
   let(:admin) { create(:user, :admin) }
   let(:repository) { create(:repository) }
 
