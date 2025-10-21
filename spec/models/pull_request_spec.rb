@@ -272,58 +272,58 @@ RSpec.describe PullRequest do
     end
   end
 
-  it "is valid with valid attributes" do
+  it 'is valid with valid attributes' do
     pull_request = PullRequest.new(
       repository: repository,
       author: author,
       number: 1,
-      title: "Test PR",
-      state: "open",
+      title: 'Test PR',
+      state: 'open',
       draft: false
     )
     expect(pull_request).to be_valid
   end
 
-  it "is not valid without a repository" do
-    pull_request = PullRequest.new(number: 1, title: "Test PR", state: "open")
+  it 'is not valid without a repository' do
+    pull_request = PullRequest.new(number: 1, title: 'Test PR', state: 'open')
     expect(pull_request).not_to be_valid
   end
 
-  it "is not valid without a number" do
-    pull_request = PullRequest.new(repository: repository, title: "Test PR", state: "open")
+  it 'is not valid without a number' do
+    pull_request = PullRequest.new(repository: repository, title: 'Test PR', state: 'open')
     expect(pull_request).not_to be_valid
   end
 
-  it "validates uniqueness of number scoped to repository" do
+  it 'validates uniqueness of number scoped to repository' do
     create(:pull_request, repository: repository, number: 123)
     duplicate = build(:pull_request, repository: repository, number: 123)
     expect(duplicate).not_to be_valid
-    expect(duplicate.errors[:number]).to include("has already been taken")
+    expect(duplicate.errors[:number]).to include('has already been taken')
   end
 
-  it "allows same number in different repositories" do
-    other_repository = create(:repository, name: "other/repo")
+  it 'allows same number in different repositories' do
+    other_repository = create(:repository, name: 'other/repo')
     create(:pull_request, repository: repository, number: 123)
     different_repo_pr = build(:pull_request, repository: other_repository, number: 123)
     expect(different_repo_pr).to be_valid
   end
 
-  it "belongs to a repository" do
+  it 'belongs to a repository' do
     association = described_class.reflect_on_association(:repository)
     expect(association.macro).to eq :belongs_to
   end
 
-  it "has many reviews" do
+  it 'has many reviews' do
     association = described_class.reflect_on_association(:reviews)
     expect(association.macro).to eq :has_many
   end
 
-  it "has many pull request users" do
+  it 'has many pull request users' do
     association = described_class.reflect_on_association(:pull_request_users)
     expect(association.macro).to eq :has_many
   end
 
-  it "has many contributors through pull request users" do
+  it 'has many contributors through pull request users' do
     association = described_class.reflect_on_association(:contributors)
     expect(association.macro).to eq :has_many
     expect(association.options[:through]).to eq :pull_request_users

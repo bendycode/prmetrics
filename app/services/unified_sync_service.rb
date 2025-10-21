@@ -36,7 +36,7 @@ class UnifiedSyncService
         sync_progress: 100
       )
 
-      log_progress("Sync completed successfully!")
+      log_progress('Sync completed successfully!')
       log_summary
     rescue => e
       Rails.logger.error "Unified sync failed: #{e.message}"
@@ -72,7 +72,7 @@ class UnifiedSyncService
     # This catches PRs that got new reviews but weren't updated themselves
     return if @fetch_all
 
-    log_progress("Fetching recent review activity...")
+    log_progress('Fetching recent review activity...')
     review_comments_processed = github_service.fetch_recent_review_activity(@repo_name)
     log_progress("Processed #{review_comments_processed} recent review comments")
   end
@@ -169,12 +169,12 @@ class UnifiedSyncService
   end
 
   def log_summary
-    log_progress("=" * 50)
-    log_progress("Sync Summary:")
+    log_progress('=' * 50)
+    log_progress('Sync Summary:')
     log_progress("  - Processed #{@processed_prs} pull requests")
     log_progress("  - Created #{@created_weeks.size} new week records")
     log_progress("  - Updated statistics for #{@updated_weeks.size} weeks")
-    log_progress("=" * 50)
+    log_progress('=' * 50)
   end
 
   def default_progress_callback(message)

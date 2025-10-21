@@ -1,7 +1,7 @@
 namespace :validate do
-  desc "Check for week association inconsistencies and optionally fix them"
+  desc 'Check for week association inconsistencies and optionally fix them'
   task week_associations: :environment do
-    puts "🔍 Validating week associations for all pull requests..."
+    puts '🔍 Validating week associations for all pull requests...'
 
     inconsistent_prs = []
     orphaned_weeks = []
@@ -58,7 +58,7 @@ namespace :validate do
     # Check for orphaned week records (weeks with no associated PRs)
     Week.find_each do |week|
       pr_count = week.repository.pull_requests.where(
-        "merged_week_id = ? OR ready_for_review_week_id = ? OR first_review_week_id = ? OR closed_week_id = ?",
+        'merged_week_id = ? OR ready_for_review_week_id = ? OR first_review_week_id = ? OR closed_week_id = ?',
         week.id, week.id, week.id, week.id
       ).count
 
@@ -100,15 +100,15 @@ namespace :validate do
     end
 
     if inconsistent_prs.empty? && orphaned_weeks.empty?
-      puts "✅ All week associations are consistent!"
+      puts '✅ All week associations are consistent!'
     end
   end
 end
 
 namespace :fix do
-  desc "Fix inconsistent week associations"
+  desc 'Fix inconsistent week associations'
   task week_associations: :environment do
-    puts "🔧 Fixing inconsistent week associations..."
+    puts '🔧 Fixing inconsistent week associations...'
 
     fixed_count = 0
     total_prs = PullRequest.count

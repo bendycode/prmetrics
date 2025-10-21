@@ -4,7 +4,7 @@ FactoryBot.define do
     sequence(:number) { |n| n }
     author { association :github_user }
     sequence(:title) { |n| "Pull Request #{n}" }
-    state { "open" }
+    state { 'open' }
     draft { false }
     gh_created_at { Time.current }
     gh_updated_at { Time.now }

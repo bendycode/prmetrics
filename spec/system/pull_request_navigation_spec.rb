@@ -159,7 +159,7 @@ RSpec.describe 'Pull Request Navigation' do
 
   describe 'error handling' do
     it 'handles non-existent pull request gracefully' do
-      visit "/pull_requests/99999"
+      visit '/pull_requests/99999'
 
       expect(page).to have_content('Record not found')
       # Note: This depends on Rails error handling - might need adjustment

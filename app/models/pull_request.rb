@@ -114,7 +114,7 @@ class PullRequest < ApplicationRecord
     dates = [ready_for_review_at, valid_first_review&.submitted_at, gh_merged_at, gh_closed_at].compact
 
     dates.each do |date|
-      ct_date = date.in_time_zone("America/Chicago")
+      ct_date = date.in_time_zone('America/Chicago')
       week_number = ct_date.strftime('%Y%W').to_i
 
       repository.weeks.find_or_create_by(week_number: week_number) do |w|
@@ -168,7 +168,7 @@ class PullRequest < ApplicationRecord
 
     week_associations.each do |association_name, week|
       if week && week.repository_id != repository_id
-        errors.add(association_name, "must belong to the same repository as the pull request")
+        errors.add(association_name, 'must belong to the same repository as the pull request')
       end
     end
   end

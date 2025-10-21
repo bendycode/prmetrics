@@ -1,10 +1,10 @@
 namespace :coverage do
-  desc "Run tests with coverage and check against baseline"
+  desc 'Run tests with coverage and check against baseline'
   task :check do
     ENV['COVERAGE'] = 'true'
 
     # Run RSpec with coverage
-    system("bundle exec rspec")
+    system('bundle exec rspec')
 
     # Check if coverage met the minimum threshold
     exit_code = $?.exitstatus
@@ -16,7 +16,7 @@ namespace :coverage do
     end
   end
 
-  desc "Update coverage baseline file"
+  desc 'Update coverage baseline file'
   task :update_baseline do
     baseline_file = Rails.root.join('.coverage_baseline')
     coverage_file = Rails.root.join('coverage/.last_run.json')
@@ -29,14 +29,14 @@ namespace :coverage do
         File.write(baseline_file, current_coverage.to_s)
         puts "✅ Coverage baseline updated to #{current_coverage}%"
       else
-        puts "❌ Could not extract coverage percentage from coverage report"
+        puts '❌ Could not extract coverage percentage from coverage report'
       end
     else
       puts "❌ Coverage file not found. Run 'rake coverage:check' first."
     end
   end
 
-  desc "Show current coverage and baseline"
+  desc 'Show current coverage and baseline'
   task :status do
     baseline_file = Rails.root.join('.coverage_baseline')
     coverage_file = Rails.root.join('coverage/.last_run.json')
@@ -58,7 +58,7 @@ namespace :coverage do
         elsif diff < 0
           puts "   Change: #{diff}% ⚠️"
         else
-          puts "   Change: 0% ➖"
+          puts '   Change: 0% ➖'
         end
       end
     else

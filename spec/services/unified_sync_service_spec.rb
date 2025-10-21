@@ -131,7 +131,7 @@ RSpec.describe UnifiedSyncService do
         service.sync!
 
         expect(progress_messages).to include("Starting unified sync for #{repo_name}")
-        expect(progress_messages).to include("Sync completed successfully!")
+        expect(progress_messages).to include('Sync completed successfully!')
       end
     end
   end

@@ -1,4 +1,4 @@
-require "active_support/core_ext/integer/time"
+require 'active_support/core_ext/integer/time'
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -62,7 +62,7 @@ Rails.application.configure do
   # "info" includes generic and useful information about system operation, but avoids logging too much
   # information to avoid inadvertent exposure of personally identifiable information (PII). If you
   # want to log everything, set the level to "debug".
-  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
+  config.log_level = ENV.fetch('RAILS_LOG_LEVEL', 'info')
 
   # Use a different cache store in production.
   # config.cache_store = :mem_cache_store
@@ -103,7 +103,7 @@ Rails.application.configure do
   else
     # Log warning if no email configuration is present
     # Note: Rails.logger may not be available during asset precompilation
-    puts "WARNING: No email configuration found. Email delivery will fail." if defined?(Rails.logger)
+    puts 'WARNING: No email configuration found. Email delivery will fail.' if defined?(Rails.logger)
   end
 
   # Enable email delivery errors in production for debugging
@@ -128,5 +128,5 @@ Rails.application.configure do
   end
 
   # Skip DNS rebinding protection for the default health check endpoint.
-  config.host_authorization = { exclude: ->(request) { request.path.in?(["/up", "/health"]) } }
+  config.host_authorization = { exclude: ->(request) { request.path.in?(['/up', '/health']) } }
 end

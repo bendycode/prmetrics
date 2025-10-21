@@ -40,8 +40,8 @@ RSpec.describe Week do
                        repository: repository,
                        author: author,
                        number: 1,
-                       title: "PR 1",
-                       state: "open",
+                       title: 'PR 1',
+                       state: 'open',
                        ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0), # Monday 9 AM
                        first_review_week: current_week)
           create(:review,
@@ -55,8 +55,8 @@ RSpec.describe Week do
                        repository: repository,
                        author: author,
                        number: 2,
-                       title: "PR 2",
-                       state: "open",
+                       title: 'PR 2',
+                       state: 'open',
                        ready_for_review_at: Time.zone.local(2024, 1, 9, 14, 0, 0), # Tuesday 2 PM
                        first_review_week: current_week)
           create(:review,
@@ -86,8 +86,8 @@ RSpec.describe Week do
                        repository: repository,
                        author: author,
                        number: 3,
-                       title: "PR 3",
-                       state: "open",
+                       title: 'PR 3',
+                       state: 'open',
                        ready_for_review_at: Time.zone.local(2024, 1, 8, 14, 0, 0)) # Monday 2 PM
           create(:review,
                  pull_request: pr1,
@@ -100,8 +100,8 @@ RSpec.describe Week do
                        repository: repository,
                        author: author,
                        number: 4,
-                       title: "PR 4",
-                       state: "open",
+                       title: 'PR 4',
+                       state: 'open',
                        ready_for_review_at: Time.zone.local(2024, 1, 9, 9, 0, 0)) # Tuesday 9 AM
           create(:review,
                  pull_request: pr2,
@@ -139,8 +139,8 @@ RSpec.describe Week do
                  repository: repository,
                  author: author,
                  number: 5,
-                 title: "PR 5",
-                 state: "closed",
+                 title: 'PR 5',
+                 state: 'closed',
                  ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0), # Monday 9 AM
                  gh_merged_at: Time.zone.local(2024, 1, 8, 15, 0, 0),       # Monday 3 PM
                  merged_week: current_week)
@@ -150,8 +150,8 @@ RSpec.describe Week do
                  repository: repository,
                  author: author,
                  number: 6,
-                 title: "PR 6",
-                 state: "closed",
+                 title: 'PR 6',
+                 state: 'closed',
                  ready_for_review_at: Time.zone.local(2024, 1, 9, 10, 0, 0), # Tuesday 10 AM
                  gh_merged_at: Time.zone.local(2024, 1, 11, 23, 0, 0),       # Thursday 11 PM
                  merged_week: current_week)
@@ -181,8 +181,8 @@ RSpec.describe Week do
                  repository: repository,
                  author: author,
                  number: 7,
-                 title: "PR 7",
-                 state: "closed",
+                 title: 'PR 7',
+                 state: 'closed',
                  ready_for_review_at: Time.zone.local(2024, 1, 8, 13, 0, 0), # Monday 1 PM
                  gh_merged_at: Time.zone.local(2024, 1, 12, 11, 0, 0)) # Friday 11 AM
 
@@ -191,8 +191,8 @@ RSpec.describe Week do
                  repository: repository,
                  author: author,
                  number: 8,
-                 title: "PR 8",
-                 state: "closed",
+                 title: 'PR 8',
+                 state: 'closed',
                  ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0), # Monday 9 AM
                  gh_merged_at: Time.zone.local(2024, 1, 10, 17, 0, 0)) # Wednesday 5 PM
 

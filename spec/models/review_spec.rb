@@ -1,26 +1,26 @@
 require 'rails_helper'
 
 RSpec.describe Review do
-  let(:repository) { Repository.create(name: "Test Repo", url: "https://github.com/test/repo") }
+  let(:repository) { Repository.create(name: 'Test Repo', url: 'https://github.com/test/repo') }
   let(:pull_request) { create(:pull_request) }
   let(:author) { create(:contributor) }
 
-  it "is valid with valid attributes" do
-    review = Review.new(pull_request: pull_request, state: "approved", submitted_at: Time.current, author: author)
+  it 'is valid with valid attributes' do
+    review = Review.new(pull_request: pull_request, state: 'approved', submitted_at: Time.current, author: author)
     expect(review).to be_valid
   end
 
-  it "is not valid without a pull request" do
-    review = Review.new(state: "approved", submitted_at: Time.current)
+  it 'is not valid without a pull request' do
+    review = Review.new(state: 'approved', submitted_at: Time.current)
     expect(review).not_to be_valid
   end
 
-  it "is not valid without a state" do
+  it 'is not valid without a state' do
     review = Review.new(pull_request: pull_request, submitted_at: Time.current)
     expect(review).not_to be_valid
   end
 
-  it "belongs to a pull request" do
+  it 'belongs to a pull request' do
     association = described_class.reflect_on_association(:pull_request)
     expect(association.macro).to eq :belongs_to
   end

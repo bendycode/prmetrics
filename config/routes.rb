@@ -36,5 +36,5 @@ Rails.application.routes.draw do
   resources :pull_request_users, only: [:show]
   resources :contributors, only: %i[index show]
 
-  get "up" => "rails/health#show", as: :rails_health_check
+  get 'up' => 'rails/health#show', as: :rails_health_check
 end

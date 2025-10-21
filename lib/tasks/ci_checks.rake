@@ -1,15 +1,15 @@
 namespace :ci do
-  desc "Run all CI checks (coverage and data integrity)"
+  desc 'Run all CI checks (coverage and data integrity)'
   task all: %i[coverage_check data_integrity]
 
-  desc "Run coverage ratcheting check for CI"
+  desc 'Run coverage ratcheting check for CI'
   task coverage_check: :environment do
     Rake::Task['coverage:ratchet'].invoke
   end
 
-  desc "Run data integrity checks suitable for CI/CD pipeline"
+  desc 'Run data integrity checks suitable for CI/CD pipeline'
   task data_integrity: :environment do
-    puts "🔍 Running data integrity checks..."
+    puts '🔍 Running data integrity checks...'
 
     issues_found = 0
 
@@ -34,7 +34,7 @@ namespace :ci do
       puts "   ❌ Found #{inconsistent_count} PRs with inconsistent week associations in sample"
       issues_found += 1
     else
-      puts "   ✅ Week associations look consistent"
+      puts '   ✅ Week associations look consistent'
     end
 
     # Check 2: Statistics consistency
@@ -57,7 +57,7 @@ namespace :ci do
       puts "   ❌ Found #{stats_inconsistent} weeks with inconsistent statistics"
       issues_found += 1
     else
-      puts "   ✅ Week statistics look consistent"
+      puts '   ✅ Week statistics look consistent'
     end
 
     # Check 3: Orphaned records
@@ -73,20 +73,20 @@ namespace :ci do
       puts "   ⚠️  Found #{orphaned_contributors} orphaned contributors"
       # This is a warning, not a critical error
     else
-      puts "   ✅ No orphaned contributors found"
+      puts '   ✅ No orphaned contributors found'
     end
 
     # Summary
     puts "\n📊 Data Integrity Check Summary:"
     if issues_found == 0
-      puts "   ✅ All checks passed!"
+      puts '   ✅ All checks passed!'
       exit 0
     else
       puts "   ❌ Found #{issues_found} critical issues"
       puts "\n🔧 Recommended actions:"
-      puts "   - Run: rake fix:week_associations"
-      puts "   - Run: rake fix:week_stats"
-      puts "   - Check recent deployments for data consistency"
+      puts '   - Run: rake fix:week_associations'
+      puts '   - Run: rake fix:week_stats'
+      puts '   - Check recent deployments for data consistency'
       exit 1
     end
   end

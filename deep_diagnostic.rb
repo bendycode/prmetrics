@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
-puts "🔍 DEEP DIAGNOSTIC: Finding Exact Differences"
-puts "=" * 80
+puts '🔍 DEEP DIAGNOSTIC: Finding Exact Differences'
+puts '=' * 80
 
 # Development data we know
 dev_data = {
@@ -16,9 +16,9 @@ puts
 problem_weeks = [202_518, 202_519, 202_521]
 
 problem_weeks.each do |week_number|
-  puts "\n" + ("=" * 60)
+  puts "\n" + ('=' * 60)
   puts "WEEK #{week_number} DETAILED ANALYSIS"
-  puts "=" * 60
+  puts '=' * 60
 
   week = Week.find_by(week_number: week_number)
   unless week
@@ -50,7 +50,7 @@ problem_weeks.each do |week_number|
                   .where(gh_merged_at: utc_start..utc_end)
                   .count
 
-  puts "COUNTS:"
+  puts 'COUNTS:'
   puts "  Stored (num_prs_merged): #{stored_count}"
   puts "  Via association: #{association_count}"
   puts "  Via timestamp (TZ): #{timestamp_count}"
@@ -60,17 +60,17 @@ problem_weeks.each do |week_number|
 
   # Find discrepancies
   if stored_count != dev_data[week_number]
-    puts "❌ STORED COUNT DISCREPANCY!"
+    puts '❌ STORED COUNT DISCREPANCY!'
     puts "   Production: #{stored_count}, Development: #{dev_data[week_number]}"
   end
 
   if association_count != dev_data[week_number]
-    puts "❌ ASSOCIATION COUNT DISCREPANCY!"
+    puts '❌ ASSOCIATION COUNT DISCREPANCY!'
     puts "   Production: #{association_count}, Development: #{dev_data[week_number]}"
   end
 
   if timestamp_count != dev_data[week_number]
-    puts "❌ TIMESTAMP COUNT DISCREPANCY!"
+    puts '❌ TIMESTAMP COUNT DISCREPANCY!'
     puts "   Production: #{timestamp_count}, Development: #{dev_data[week_number]}"
   end
 
@@ -83,7 +83,7 @@ problem_weeks.each do |week_number|
 
   puts "PRs MERGED IN TIME RANGE (#{week_start} to #{week_end}):"
   prs_in_range.each_with_index do |pr, i|
-    week_assoc = pr.merged_week_id == week.id ? "✅" : "❌"
+    week_assoc = pr.merged_week_id == week.id ? '✅' : '❌'
     puts "  #{i + 1}. PR ##{pr.number}: #{pr.title[0..50]}..."
     puts "     Merged: #{pr.gh_merged_at}"
     puts "     Week assoc: #{week_assoc} (ID: #{pr.merged_week_id})"
@@ -111,10 +111,10 @@ problem_weeks.each do |week_number|
   puts "  Time.zone.now: #{Time.zone.now}"
 end
 
-puts "\n" + ("=" * 80)
-puts "ENVIRONMENT INFO:"
+puts "\n" + ('=' * 80)
+puts 'ENVIRONMENT INFO:'
 puts "  Rails.env: #{Rails.env}"
 puts "  Time.zone: #{Time.zone}"
 puts "  Database timezone: #{ActiveRecord::Base.connection.execute('SHOW timezone').first['TimeZone'] rescue 'unknown'}"
 puts "  Current time: #{Time.current}"
-puts "=" * 80
+puts '=' * 80

@@ -18,9 +18,9 @@ puts "Repository: #{repo.name}"
 puts "Total weeks: #{total_weeks}"
 
 if duplicates.empty?
-  puts "✅ No duplicate week records found"
+  puts '✅ No duplicate week records found'
 else
-  puts "❌ Found duplicate week_numbers:"
+  puts '❌ Found duplicate week_numbers:'
   duplicates.each do |week_number, count|
     puts "  Week #{week_number}: #{count} records"
   end

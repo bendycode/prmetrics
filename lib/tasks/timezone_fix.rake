@@ -1,7 +1,7 @@
 namespace :timezone do
-  desc "Recalculate all week boundaries and associations using Central Time"
+  desc 'Recalculate all week boundaries and associations using Central Time'
   task fix_weeks: :environment do
-    puts "🕐 Starting timezone fix for all repositories..."
+    puts '🕐 Starting timezone fix for all repositories...'
 
     Repository.find_each do |repository|
       puts "\n📁 Processing repository: #{repository.name}"
@@ -28,7 +28,7 @@ namespace :timezone do
 
       # Step 6: Recalculate statistics for all weeks
       WeekStatsService.new(repository.weeks.each).map(&:update_stats)
-      puts "  Recalculated statistics for all weeks"
+      puts '  Recalculated statistics for all weeks'
 
       final_week_count = repository.weeks.count
       puts "  Final weeks: #{final_week_count} (#{final_week_count - original_week_count} net change)"
@@ -37,9 +37,9 @@ namespace :timezone do
     puts "\n✅ Timezone fix completed for all repositories!"
   end
 
-  desc "Preview timezone fix changes without applying them"
+  desc 'Preview timezone fix changes without applying them'
   task preview: :environment do
-    puts "🔍 Previewing timezone fix changes..."
+    puts '🔍 Previewing timezone fix changes...'
 
     Repository.find_each do |repository|
       puts "\n📁 Repository: #{repository.name}"
@@ -52,10 +52,10 @@ namespace :timezone do
       issues = analyze_week_issues(repository)
 
       if issues.any?
-        puts "  ⚠️  Issues found:"
+        puts '  ⚠️  Issues found:'
         issues.each { |issue| puts "    - #{issue}" }
       else
-        puts "  ✅ No timezone issues detected"
+        puts '  ✅ No timezone issues detected'
       end
 
       # Show sample of what would change
@@ -81,7 +81,7 @@ namespace :timezone do
     week_map = {}
 
     dates.each do |date|
-      ct_date = date.in_time_zone("America/Chicago")
+      ct_date = date.in_time_zone('America/Chicago')
       week_number = ct_date.strftime('%Y%W').to_i
 
       unless week_map[week_number]
@@ -126,7 +126,7 @@ namespace :timezone do
     # Check for weeks with potential timezone boundary issues
     repository.weeks.find_each do |week|
       # Recalculate what the week boundaries should be
-      sample_date = week.begin_date.in_time_zone("America/Chicago")
+      sample_date = week.begin_date.in_time_zone('America/Chicago')
       correct_begin = sample_date.beginning_of_week.to_date
       correct_end = sample_date.end_of_week.to_date
 
@@ -142,9 +142,9 @@ namespace :timezone do
     # Show first few weeks that would change
     sample_weeks = repository.weeks.limit(3)
 
-    puts "  Sample changes:"
+    puts '  Sample changes:'
     sample_weeks.each do |week|
-      sample_date = week.begin_date.in_time_zone("America/Chicago")
+      sample_date = week.begin_date.in_time_zone('America/Chicago')
       correct_begin = sample_date.beginning_of_week.to_date
       correct_end = sample_date.end_of_week.to_date
 

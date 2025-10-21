@@ -242,7 +242,7 @@ class GithubService
     begin
       yield
     rescue Octokit::TooManyRequests => e
-      raise "Max retries reached. Unable to complete the request due to rate limiting." unless retries < MAX_RETRIES
+      raise 'Max retries reached. Unable to complete the request due to rate limiting.' unless retries < MAX_RETRIES
 
       wait_time = calculate_wait_time(e.response_headers, retries)
       Rails.logger.warn "Rate limit exceeded. Waiting for #{wait_time} seconds before retrying..."
@@ -251,7 +251,7 @@ class GithubService
       retry
     rescue Faraday::ConnectionFailed, Net::OpenTimeout => e
       Rails.logger.warn "ConnectionFailed or OpenTimeout error caught. retries: #{retries}"
-      raise "Max retries reached. Unable to complete the request due to connection issues." unless retries < MAX_RETRIES
+      raise 'Max retries reached. Unable to complete the request due to connection issues.' unless retries < MAX_RETRIES
 
       wait_time = 5 * (2**retries) # exponential backoff
       Rails.logger.warn "Connection error: #{e.message}. Retrying in #{wait_time} seconds..."

@@ -2,70 +2,70 @@ require 'rails_helper'
 
 RSpec.describe Contributor do
   describe 'validations' do
-    it "is valid with valid attributes" do
+    it 'is valid with valid attributes' do
       contributor = Contributor.new(
-        username: "testuser",
-        name: "Test User",
-        email: "test@example.com",
-        github_id: "12345"
+        username: 'testuser',
+        name: 'Test User',
+        email: 'test@example.com',
+        github_id: '12345'
       )
       expect(contributor).to be_valid
     end
 
-    it "is not valid without a username" do
+    it 'is not valid without a username' do
       contributor = Contributor.new(
-        name: "Test User",
-        email: "test@example.com",
-        github_id: "12345"
+        name: 'Test User',
+        email: 'test@example.com',
+        github_id: '12345'
       )
       expect(contributor).not_to be_valid
     end
 
-    it "is not valid without a github_id" do
+    it 'is not valid without a github_id' do
       contributor = Contributor.new(
-        username: "testuser",
-        name: "Test User",
-        email: "test@example.com"
+        username: 'testuser',
+        name: 'Test User',
+        email: 'test@example.com'
       )
       expect(contributor).not_to be_valid
     end
 
-    it "validates uniqueness of github_id" do
-      create(:contributor, github_id: "12345")
-      duplicate = build(:contributor, github_id: "12345")
+    it 'validates uniqueness of github_id' do
+      create(:contributor, github_id: '12345')
+      duplicate = build(:contributor, github_id: '12345')
       expect(duplicate).not_to be_valid
     end
 
-    it "validates uniqueness of username" do
-      create(:contributor, username: "testuser")
-      duplicate = build(:contributor, username: "testuser", github_id: "different_id")
+    it 'validates uniqueness of username' do
+      create(:contributor, username: 'testuser')
+      duplicate = build(:contributor, username: 'testuser', github_id: 'different_id')
       expect(duplicate).not_to be_valid
-      expect(duplicate.errors[:username]).to include("has already been taken")
+      expect(duplicate.errors[:username]).to include('has already been taken')
     end
   end
 
   describe 'associations' do
-    it "has many authored pull requests" do
+    it 'has many authored pull requests' do
       association = described_class.reflect_on_association(:authored_pull_requests)
       expect(association.macro).to eq :has_many
       expect(association.options[:class_name]).to eq 'PullRequest'
       expect(association.options[:foreign_key]).to eq 'author_id'
     end
 
-    it "has many pull request users" do
+    it 'has many pull request users' do
       association = described_class.reflect_on_association(:pull_request_users)
       expect(association.macro).to eq :has_many
       expect(association.options[:foreign_key]).to eq 'user_id'
     end
 
-    it "has many participated pull requests through pull request users" do
+    it 'has many participated pull requests through pull request users' do
       association = described_class.reflect_on_association(:participated_pull_requests)
       expect(association.macro).to eq :has_many
       expect(association.options[:through]).to eq :pull_request_users
       expect(association.options[:source]).to eq :pull_request
     end
 
-    it "has many reviews" do
+    it 'has many reviews' do
       association = described_class.reflect_on_association(:reviews)
       expect(association.macro).to eq :has_many
       expect(association.options[:foreign_key]).to eq 'author_id'

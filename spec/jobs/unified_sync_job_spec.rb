@@ -61,8 +61,8 @@ RSpec.describe UnifiedSyncJob do
       job.perform(repo_name)
 
       # Test that the callback logs with the expected prefix
-      expect(job.logger).to receive(:info).with("[UnifiedSync] Test progress message")
-      callback_captured.call("Test progress message") if callback_captured
+      expect(job.logger).to receive(:info).with('[UnifiedSync] Test progress message')
+      callback_captured.call('Test progress message') if callback_captured
     end
   end
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
-puts "🔍 FINDING NULL MERGE DATE ASSOCIATIONS"
-puts "=" * 80
+puts '🔍 FINDING NULL MERGE DATE ASSOCIATIONS'
+puts '=' * 80
 
 # Find PRs with week associations but NULL merge dates
 null_merge_with_week = PullRequest.where(gh_merged_at: nil).where.not(merged_week_id: nil)
@@ -10,7 +10,7 @@ puts "Found #{null_merge_with_week.count} PRs with NULL merge dates but week ass
 puts
 
 if null_merge_with_week.any?
-  puts "These PRs should NOT have week associations:"
+  puts 'These PRs should NOT have week associations:'
   null_merge_with_week.includes(:merged_week).each do |pr|
     puts "  PR ##{pr.number}: #{pr.title[0..50]}..."
     puts "    State: #{pr.state}"
@@ -20,9 +20,9 @@ if null_merge_with_week.any?
   end
 end
 
-puts "=" * 80
-puts "CHECKING PROBLEM WEEKS FOR NULL MERGE ASSOCIATIONS"
-puts "=" * 80
+puts '=' * 80
+puts 'CHECKING PROBLEM WEEKS FOR NULL MERGE ASSOCIATIONS'
+puts '=' * 80
 
 problem_weeks = [202_518, 202_519, 202_521]
 
@@ -68,14 +68,14 @@ problem_weeks.each do |week_number|
   end
 end
 
-puts "\n" + ("=" * 80)
-puts "CORRECT FIX APPROACH"
-puts "=" * 80
+puts "\n" + ('=' * 80)
+puts 'CORRECT FIX APPROACH'
+puts '=' * 80
 
-puts "To fix these issues:"
-puts "1. Remove week associations from PRs with NULL merge dates"
+puts 'To fix these issues:'
+puts '1. Remove week associations from PRs with NULL merge dates'
 puts "2. Reassign PRs that are merged outside their associated week's range"
-puts "3. Recalculate week statistics"
+puts '3. Recalculate week statistics'
 
 total_to_fix = null_merge_with_week.count
 puts "\nTotal PRs to fix: #{total_to_fix}"

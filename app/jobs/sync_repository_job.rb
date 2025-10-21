@@ -6,7 +6,7 @@ class SyncRepositoryJob < ApplicationJob
     token = access_token || ENV.fetch('GITHUB_ACCESS_TOKEN', nil)
 
     unless token
-      Rails.logger.error "No GitHub access token available for sync"
+      Rails.logger.error 'No GitHub access token available for sync'
       return
     end
 

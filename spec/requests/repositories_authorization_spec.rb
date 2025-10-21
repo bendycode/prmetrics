@@ -34,13 +34,13 @@ RSpec.describe 'Repositories Authorization' do
     it 'cannot access sync action' do
       post sync_repository_path(repository)
       expect(response).to redirect_to(root_path)
-      expect(flash[:alert]).to eq("You are not authorized")
+      expect(flash[:alert]).to eq('You are not authorized')
     end
 
     it 'cannot access destroy action' do
       delete repository_path(repository)
       expect(response).to redirect_to(root_path)
-      expect(flash[:alert]).to eq("You are not authorized")
+      expect(flash[:alert]).to eq('You are not authorized')
     end
 
     it 'can view repository index' do

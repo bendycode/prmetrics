@@ -23,7 +23,7 @@ class RepositoriesController < ApplicationController
     if @repository.save
       # Use sync service to determine best sync strategy
       RepositorySyncService.new(@repository, fetch_all: true).perform
-      redirect_to @repository, notice: "Repository added successfully. Initial sync has been queued."
+      redirect_to @repository, notice: 'Repository added successfully. Initial sync has been queued.'
     else
       render :new, status: :unprocessable_entity
     end
