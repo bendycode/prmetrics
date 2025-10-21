@@ -14,7 +14,7 @@ class Repository < ApplicationRecord
   def valid_github_repository_format
     return if name.blank?
 
-    return if name.match?(%r{\A[\w\-\.]+/[\w\-\.]+\z})
+    return if name.match?(%r{\A[\w\-.]+/[\w\-.]+\z})
 
     errors.add(:name, "must be in format 'owner/repository'")
   end
