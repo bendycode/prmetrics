@@ -135,19 +135,14 @@ namespace :sync do
       exit 0
     end
 
-    puts '%-40s %-15s %-20s %-10s' % ['Repository', 'Status', 'Last Sync', 'Progress']
+    puts 'Repository                               Status          Last Sync            Progress  '
     puts '-' * 90
 
     repositories.each do |repo|
       last_sync = repo.sync_completed_at ? repo.sync_completed_at.strftime('%Y-%m-%d %H:%M') : 'Never'
       progress = repo.sync_status == 'in_progress' ? "#{repo.sync_progress || 0}%" : '-'
 
-      puts '%-40s %-15s %-20s %-10s' % [
-        repo.name,
-        repo.sync_status || 'never synced',
-        last_sync,
-        progress
-      ]
+      puts format('%-40s %-15s %-20s %-10s', repo.name, repo.sync_status || 'never synced', last_sync, progress)
     end
   end
 
