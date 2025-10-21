@@ -69,9 +69,9 @@ RSpec.describe UsersController do
     context 'with admin user' do
       context 'with valid regular user parameters' do
         it 'creates a new regular user' do
-          expect {
+          expect do
             post :create, params: valid_params
-          }.to change(User, :count).by(1)
+          end.to change(User, :count).by(1)
 
           new_user = User.last
           expect(new_user.email).to eq('newuser@example.com')
@@ -87,9 +87,9 @@ RSpec.describe UsersController do
 
       context 'with valid admin parameters' do
         it 'creates a new admin user' do
-          expect {
+          expect do
             post :create, params: admin_params
-          }.to change(User, :count).by(1)
+          end.to change(User, :count).by(1)
 
           new_user = User.last
           expect(new_user.email).to eq('newadmin@example.com')
@@ -105,9 +105,9 @@ RSpec.describe UsersController do
 
       context 'with invalid parameters' do
         it 'does not create a user' do
-          expect {
+          expect do
             post :create, params: invalid_params
-          }.not_to change(User, :count)
+          end.not_to change(User, :count)
         end
 
         it 'renders new template' do
@@ -127,9 +127,9 @@ RSpec.describe UsersController do
         let(:duplicate_params) { { user: { email: 'existing@example.com', admin_role_admin: 'regular_user' } } }
 
         it 'does not create a user' do
-          expect {
+          expect do
             post :create, params: duplicate_params
-          }.not_to change(User, :count)
+          end.not_to change(User, :count)
         end
 
         it 'renders new template with error' do
@@ -157,9 +157,9 @@ RSpec.describe UsersController do
     context 'with admin user' do
       context 'when deleting a regular user' do
         it 'destroys the user' do
-          expect {
+          expect do
             delete :destroy, params: { id: target_user.id }
-          }.to change(User, :count).by(-1)
+          end.to change(User, :count).by(-1)
         end
 
         it 'redirects to users index with success notice' do
@@ -173,9 +173,9 @@ RSpec.describe UsersController do
         let!(:another_admin) { create(:user, :admin) }
 
         it 'destroys the admin user' do
-          expect {
+          expect do
             delete :destroy, params: { id: another_admin.id }
-          }.to change(User, :count).by(-1)
+          end.to change(User, :count).by(-1)
         end
 
         it 'redirects with success notice' do
@@ -193,9 +193,9 @@ RSpec.describe UsersController do
         end
 
         it 'does not destroy the user' do
-          expect {
+          expect do
             delete :destroy, params: { id: admin_user.id }
-          }.not_to change(User, :count)
+          end.not_to change(User, :count)
         end
 
         it 'redirects with authorization error' do
@@ -209,9 +209,9 @@ RSpec.describe UsersController do
         let!(:pending_user) { create(:user, :pending) }
 
         it 'destroys the pending user' do
-          expect {
+          expect do
             delete :destroy, params: { id: pending_user.id }
-          }.to change(User, :count).by(-1)
+          end.to change(User, :count).by(-1)
         end
 
         it 'redirects with success notice' do

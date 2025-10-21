@@ -23,18 +23,18 @@ RSpec.describe 'Repository Sync Integration' do
       expect(page).to have_button('Sync Updates')
 
       # Click sync should queue the job
-      expect {
+      expect do
         click_button 'Sync Updates'
-      }.to have_enqueued_job(SyncRepositoryBatchJob)
+      end.to have_enqueued_job(SyncRepositoryBatchJob)
 
       # Should redirect with success message
       expect(page).to have_content("Sync job queued for #{repository.name}")
 
       # Most importantly: verify UpdateRepositoryStatsJob can be called without ArgumentError
       # This is what would have caught the bug
-      expect {
+      expect do
         UpdateRepositoryStatsJob.new.perform(repository.id)
-      }.not_to raise_error
+      end.not_to raise_error
 
       # And it should create weeks
       repository.reload
@@ -47,9 +47,9 @@ RSpec.describe 'Repository Sync Integration' do
       visit repository_path(repository)
 
       # Full sync button should queue with fetch_all: true
-      expect {
+      expect do
         click_button 'Full Sync'
-      }.to have_enqueued_job(SyncRepositoryBatchJob)
+      end.to have_enqueued_job(SyncRepositoryBatchJob)
         .with(repository.name, page: 1, fetch_all: true)
     end
   end

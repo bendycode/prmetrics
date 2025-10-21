@@ -5,14 +5,14 @@ RSpec.describe PullRequest do
     let!(:repo1) { create(:repository, name: 'owner/repo1') }
     let!(:repo2) { create(:repository, name: 'owner/repo2') }
 
-    let!(:week_repo1) {
+    let!(:week_repo1) do
       create(:week, repository: repo1, week_number: 202_301, begin_date: Date.new(2023, 1, 2),
                     end_date: Date.new(2023, 1, 8))
-    }
-    let!(:week_repo2) {
+    end
+    let!(:week_repo2) do
       create(:week, repository: repo2, week_number: 202_301, begin_date: Date.new(2023, 1, 2),
                     end_date: Date.new(2023, 1, 8))
-    }
+    end
 
     let(:pr) { create(:pull_request, repository: repo1) }
 
@@ -98,11 +98,11 @@ RSpec.describe PullRequest do
       end
 
       it 'creates a new week if it does not exist for the repository' do
-        expect {
+        expect do
           week = Week.for_repository_and_week_number(repo1, 202_302)
           expect(week.repository).to eq(repo1)
           expect(week.week_number).to eq(202_302)
-        }.to change { repo1.weeks.count }.by(1)
+        end.to change { repo1.weeks.count }.by(1)
       end
 
       it 'does not return weeks from other repositories' do

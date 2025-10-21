@@ -15,9 +15,9 @@ RSpec.describe SyncRepositoryBatchJob do
       it 'marks repository as in_progress' do
         allow(client).to receive(:pull_requests).and_return([])
 
-        expect {
+        expect do
           described_class.perform_now(repository.name, page: 1, fetch_all: true)
-        }.to change { repository.reload.sync_status }.to('completed')
+        end.to change { repository.reload.sync_status }.to('completed')
 
         expect(repository.sync_started_at).to be_present
       end
@@ -91,9 +91,9 @@ RSpec.describe SyncRepositoryBatchJob do
       end
 
       it 'marks repository as failed and re-raises error' do
-        expect {
+        expect do
           described_class.perform_now(repository.name, page: 1)
-        }.to raise_error(StandardError, 'API Error')
+        end.to raise_error(StandardError, 'API Error')
 
         repository.reload
         expect(repository.sync_status).to eq('failed')
@@ -188,9 +188,9 @@ RSpec.describe SyncRepositoryBatchJob do
     it 'fetches and stores reviews with valid submitted_at' do
       allow(client).to receive(:pull_request_reviews).with('owner/repo', 123).and_return(review_data)
 
-      expect {
+      expect do
         job.send(:fetch_and_store_reviews, pull_request, 'owner/repo', 123)
-      }.to change { pull_request.reviews.count }.by(1)
+      end.to change { pull_request.reviews.count }.by(1)
 
       review = pull_request.reviews.first
       expect(review.state).to eq('approved')
@@ -201,9 +201,9 @@ RSpec.describe SyncRepositoryBatchJob do
       review_without_time = double(state: 'pending', submitted_at: nil)
       allow(client).to receive(:pull_request_reviews).with('owner/repo', 123).and_return([review_without_time])
 
-      expect {
+      expect do
         job.send(:fetch_and_store_reviews, pull_request, 'owner/repo', 123)
-      }.not_to change { pull_request.reviews.count }
+      end.not_to change { pull_request.reviews.count }
     end
   end
 
@@ -211,9 +211,9 @@ RSpec.describe SyncRepositoryBatchJob do
     let(:job) { described_class.new }
 
     context 'with object format (Octokit::Sawyer::Resource)' do
-      let(:github_user) {
+      let(:github_user) do
         double(id: 123, login: 'testuser', name: 'Test User', email: 'test@example.com', avatar_url: 'http://avatar.url')
-      }
+      end
 
       it 'uses existing find_or_create_from_github method' do
         expect(Contributor).to receive(:find_or_create_from_github).with(github_user)
@@ -225,9 +225,9 @@ RSpec.describe SyncRepositoryBatchJob do
       let(:github_user) { { id: 123, login: 'testuser', name: 'Test User', avatar_url: 'http://avatar.url' } }
 
       it 'creates contributor with hash data' do
-        expect {
+        expect do
           job.send(:find_or_create_contributor, github_user)
-        }.to change { Contributor.count }.by(1)
+        end.to change { Contributor.count }.by(1)
 
         contributor = Contributor.last
         expect(contributor.github_id).to eq('123')
@@ -290,9 +290,9 @@ RSpec.describe SyncRepositoryBatchJob do
     let(:github_user) { { id: 123, login: 'testuser' } }
 
     it 'creates PullRequestUser association' do
-      expect {
+      expect do
         job.send(:store_user, pull_request, github_user, 'author')
-      }.to change { PullRequestUser.count }.by(1)
+      end.to change { PullRequestUser.count }.by(1)
 
       association = PullRequestUser.last
       expect(association.pull_request).to eq(pull_request)
@@ -300,9 +300,9 @@ RSpec.describe SyncRepositoryBatchJob do
     end
 
     it 'handles nil github_user gracefully' do
-      expect {
+      expect do
         job.send(:store_user, pull_request, nil, 'author')
-      }.not_to change { PullRequestUser.count }
+      end.not_to change { PullRequestUser.count }
     end
   end
 
@@ -351,13 +351,13 @@ RSpec.describe SyncRepositoryBatchJob do
     it 'raises after max retries' do
       allow(job).to receive(:sleep)
 
-      expect {
+      expect do
         job.send(:with_rate_limit_handling) do
           error = Octokit::TooManyRequests.new
           allow(error).to receive(:response_headers).and_return(nil)
           raise error
         end
-      }.to raise_error(/Max retries reached/)
+      end.to raise_error(/Max retries reached/)
     end
   end
 
@@ -432,9 +432,9 @@ RSpec.describe SyncRepositoryBatchJob do
       allow(client).to receive(:issue_events).and_return([])
       allow(client).to receive(:pull_request_reviews).and_return([])
 
-      expect {
+      expect do
         job.send(:process_single_pull_request, repository, minimal_pr_data)
-      }.to change { repository.pull_requests.count }.by(1)
+      end.to change { repository.pull_requests.count }.by(1)
 
       pr = repository.pull_requests.last
       expect(pr.number).to eq(999)
@@ -464,9 +464,9 @@ RSpec.describe SyncRepositoryBatchJob do
     end
 
     it 'creates pull request with proper week associations' do
-      expect {
+      expect do
         job.send(:process_single_pull_request, repository, pr_data)
-      }.to change { repository.pull_requests.count }.by(1)
+      end.to change { repository.pull_requests.count }.by(1)
 
       pr = repository.pull_requests.find_by(number: 456)
       expect(pr.title).to eq('Integration Test PR')

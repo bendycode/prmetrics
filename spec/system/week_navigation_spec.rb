@@ -3,10 +3,10 @@ require 'rails_helper'
 RSpec.describe 'Week Navigation', js: true do
   let(:admin) { create(:user, :admin) }
   let(:repository) { create(:repository, name: 'test/repo') }
-  let(:week) {
+  let(:week) do
     create(:week, repository: repository, week_number: 202_401, begin_date: Date.new(2024, 1, 8),
                   end_date: Date.new(2024, 1, 14))
-  }
+  end
 
   before do
     sign_in admin
@@ -14,21 +14,21 @@ RSpec.describe 'Week Navigation', js: true do
 
   describe 'late and stale PRs functionality' do
     # Week ends January 14, 2024 - use factory trait for cleaner setup
-    let!(:fresh_pr) {
+    let!(:fresh_pr) do
       create(:pull_request, :approved_before_week_end,
              repository: repository, week: week, days_before_week_end: 2,
              title: 'Fresh Feature')
-    }
-    let!(:late_pr) {
+    end
+    let!(:late_pr) do
       create(:pull_request, :approved_before_week_end,
              repository: repository, week: week, days_before_week_end: 10,
              title: 'Late Feature')
-    }
-    let!(:stale_pr) {
+    end
+    let!(:stale_pr) do
       create(:pull_request, :approved_before_week_end,
              repository: repository, week: week, days_before_week_end: 35,
              title: 'Stale Feature')
-    }
+    end
 
     before do
       # Populate cached values
