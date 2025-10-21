@@ -25,3 +25,8 @@ plugins:
 # Enforce no trailing whitespace (removed from todo file)
 Layout/TrailingWhitespace:
   Enabled: true
+
+# Allow feature descriptions in system specs instead of requiring class/module names
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/system/**/*'
