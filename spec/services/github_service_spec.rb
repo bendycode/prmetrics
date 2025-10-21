@@ -45,7 +45,10 @@ RSpec.describe GithubService do
   end
 
   describe '#process_pull_request' do
-    let(:github_user) { double('github_user', login: 'author', name: 'Author', email: 'author@example.com', id: '456', avatar_url: 'https://example.com/avatar.png') }
+    let(:github_user) {
+      double('github_user', login: 'author', name: 'Author', email: 'author@example.com', id: '456',
+                            avatar_url: 'https://example.com/avatar.png')
+    }
     let(:pr_data) do
       double('pr_data',
              number: 123,

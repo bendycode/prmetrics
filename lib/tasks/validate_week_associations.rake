@@ -8,7 +8,8 @@ namespace :validate do
     total_prs = PullRequest.count
     checked = 0
 
-    PullRequest.includes(:repository, :merged_week, :ready_for_review_week, :first_review_week, :closed_week).find_each do |pr|
+    PullRequest.includes(:repository, :merged_week, :ready_for_review_week, :first_review_week,
+                         :closed_week).find_each do |pr|
       checked += 1
 
       if (checked % 500) == 0

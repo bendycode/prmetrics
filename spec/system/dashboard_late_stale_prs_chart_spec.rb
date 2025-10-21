@@ -8,8 +8,14 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', js: true do
   describe 'PR Velocity Trends chart displays late and stale PRs datasets' do
     context 'with late and stale PRs data from multiple weeks' do
       let(:repository) { create(:repository, name: 'test/repo') }
-      let!(:week1) { create(:week, repository: repository, week_number: 202_401, begin_date: Date.new(2024, 1, 8), end_date: Date.new(2024, 1, 14)) }
-      let!(:week2) { create(:week, repository: repository, week_number: 202_402, begin_date: Date.new(2024, 1, 15), end_date: Date.new(2024, 1, 21)) }
+      let!(:week1) do
+        create(:week, repository: repository, week_number: 202_401, begin_date: Date.new(2024, 1, 8),
+                      end_date: Date.new(2024, 1, 14))
+      end
+      let!(:week2) do
+        create(:week, repository: repository, week_number: 202_402, begin_date: Date.new(2024, 1, 15),
+                      end_date: Date.new(2024, 1, 21))
+      end
 
       before do
         # Week 1: 1 late PR, 1 stale PR
@@ -17,7 +23,8 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', js: true do
         create(:pull_request, :approved_before_week_end, week: week1, days_before_week_end: 35, repository: repository)
 
         # Week 2: 2 late PRs, 1 stale PR
-        create_list(:pull_request, 2, :approved_before_week_end, week: week2, days_before_week_end: 15, repository: repository)
+        create_list(:pull_request, 2, :approved_before_week_end, week: week2, days_before_week_end: 15,
+                                                                 repository: repository)
         create(:pull_request, :approved_before_week_end, week: week2, days_before_week_end: 40, repository: repository)
 
         # Fresh PR (not late or stale)
@@ -64,7 +71,10 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', js: true do
 
     context 'with no late or stale PRs' do
       let(:repository) { create(:repository, name: 'test/repo') }
-      let!(:week) { create(:week, repository: repository, week_number: 202_401, begin_date: Date.new(2024, 1, 8), end_date: Date.new(2024, 1, 14)) }
+      let!(:week) do
+        create(:week, repository: repository, week_number: 202_401, begin_date: Date.new(2024, 1, 8),
+                      end_date: Date.new(2024, 1, 14))
+      end
 
       before do
         # Only fresh PRs (approved within last week)

@@ -131,8 +131,14 @@ RSpec.describe 'Dashboard' do
 
   describe 'enhanced chart functionality' do
     let!(:repository) { create(:repository, name: 'test/repo') }
-    let!(:week1) { create(:week, repository: repository, week_number: 1, num_prs_started: 5, num_prs_merged: 3, num_prs_cancelled: 1, avg_hrs_to_first_review: 8.5, avg_hrs_to_merge: 24.0) }
-    let!(:week2) { create(:week, repository: repository, week_number: 2, num_prs_started: 7, num_prs_merged: 4, num_prs_cancelled: 0, avg_hrs_to_first_review: 6.0, avg_hrs_to_merge: 18.5) }
+    let!(:week1) do
+      create(:week, repository: repository, week_number: 1, num_prs_started: 5, num_prs_merged: 3, num_prs_cancelled: 1,
+                    avg_hrs_to_first_review: 8.5, avg_hrs_to_merge: 24.0)
+    end
+    let!(:week2) do
+      create(:week, repository: repository, week_number: 2, num_prs_started: 7, num_prs_merged: 4, num_prs_cancelled: 0,
+                    avg_hrs_to_first_review: 6.0, avg_hrs_to_merge: 18.5)
+    end
     let!(:pull_request) { create(:pull_request, repository: repository) }
 
     it 'displays enhanced analytics charts' do
