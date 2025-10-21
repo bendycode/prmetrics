@@ -27,7 +27,7 @@ RSpec.describe Week do
     let(:current_week) do
       create(:week,
              repository: repository,
-             week_number: 202402, # Correct week number for 2024-01-08 to 2024-01-14
+             week_number: 202_402, # Correct week number for 2024-01-08 to 2024-01-14
              begin_date: Time.zone.local(2024, 1, 8), # Monday
              end_date: Time.zone.local(2024, 1, 14)) # Sunday
     end

@@ -748,12 +748,6 @@ Style/Next:
     - 'lib/tasks/fix_duplicates.rake'
     - 'lib/tasks/timezone_fix.rake'
 
-# Offense count: 39
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: Strict, AllowedNumbers, AllowedPatterns.
-Style/NumericLiterals:
-  MinDigits: 15
-
 # Offense count: 38
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: EnforcedStyle, AllowedMethods, AllowedPatterns.

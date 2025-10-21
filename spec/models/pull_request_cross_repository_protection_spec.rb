@@ -5,8 +5,8 @@ RSpec.describe PullRequest do
     let!(:repo1) { create(:repository, name: 'owner/repo1') }
     let!(:repo2) { create(:repository, name: 'owner/repo2') }
 
-    let!(:week_repo1) { create(:week, repository: repo1, week_number: 202301, begin_date: Date.new(2023, 1, 2), end_date: Date.new(2023, 1, 8)) }
-    let!(:week_repo2) { create(:week, repository: repo2, week_number: 202301, begin_date: Date.new(2023, 1, 2), end_date: Date.new(2023, 1, 8)) }
+    let!(:week_repo1) { create(:week, repository: repo1, week_number: 202_301, begin_date: Date.new(2023, 1, 2), end_date: Date.new(2023, 1, 8)) }
+    let!(:week_repo2) { create(:week, repository: repo2, week_number: 202_301, begin_date: Date.new(2023, 1, 2), end_date: Date.new(2023, 1, 8)) }
 
     let(:pr) { create(:pull_request, repository: repo1) }
 
@@ -57,7 +57,7 @@ RSpec.describe PullRequest do
 
       it 'returns nil when no week exists for the repository' do
         # Create a PR for a date where only repo2 has a week
-        create(:week, repository: repo2, week_number: 202302,
+        create(:week, repository: repo2, week_number: 202_302,
                       begin_date: Date.new(2023, 1, 9),
                       end_date: Date.new(2023, 1, 15))
 
@@ -70,7 +70,7 @@ RSpec.describe PullRequest do
 
       it 'creates and assigns week when using ensure_weeks_exist_and_update_associations' do
         # Create a PR for a date where only repo2 has a week
-        create(:week, repository: repo2, week_number: 202302,
+        create(:week, repository: repo2, week_number: 202_302,
                       begin_date: Date.new(2023, 1, 9),
                       end_date: Date.new(2023, 1, 15))
 
@@ -80,27 +80,27 @@ RSpec.describe PullRequest do
         # Should create a week for repo1 and assign it
         expect(pr.merged_week).to be_present
         expect(pr.merged_week.repository).to eq(repo1)
-        expect(pr.merged_week.week_number).to eq(202302)
+        expect(pr.merged_week.week_number).to eq(202_302)
       end
     end
 
     describe 'Week.for_repository_and_week_number' do
       it 'returns existing week for the correct repository' do
-        week = Week.for_repository_and_week_number(repo1, 202301)
+        week = Week.for_repository_and_week_number(repo1, 202_301)
         expect(week).to eq(week_repo1)
         expect(week.repository).to eq(repo1)
       end
 
       it 'creates a new week if it does not exist for the repository' do
         expect {
-          week = Week.for_repository_and_week_number(repo1, 202302)
+          week = Week.for_repository_and_week_number(repo1, 202_302)
           expect(week.repository).to eq(repo1)
-          expect(week.week_number).to eq(202302)
+          expect(week.week_number).to eq(202_302)
         }.to change { repo1.weeks.count }.by(1)
       end
 
       it 'does not return weeks from other repositories' do
-        week = Week.for_repository_and_week_number(repo1, 202301)
+        week = Week.for_repository_and_week_number(repo1, 202_301)
         expect(week).not_to eq(week_repo2)
       end
     end
