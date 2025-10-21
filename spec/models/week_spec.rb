@@ -290,7 +290,8 @@ RSpec.describe Week do
           repository: repository,
           begin_date: Time.zone.local(2024, 1, 8),
           end_date: Time.zone.local(2024, 1, 14)
-        )}
+        )
+        }
 
         let!(:open_pr) {
           create(:pull_request,

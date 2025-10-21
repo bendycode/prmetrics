@@ -16,7 +16,8 @@ RSpec.describe UnifiedSyncService do
     let(:service) { described_class.new(repo_name, progress_callback: ->(msg) {}) }
     let(:pr_data) { double(number: 123, created_at: 1.week.ago, merged_at: 2.days.ago) }
     let(:pull_request) { create(:pull_request, repository: repository, number: 123,
-                                gh_created_at: 1.week.ago, gh_merged_at: 2.days.ago) }
+                                gh_created_at: 1.week.ago, gh_merged_at: 2.days.ago)
+    }
 
     before do
       allow(github_service).to receive(:get_pull_request_count).and_return(10)

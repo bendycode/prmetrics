@@ -9,7 +9,6 @@ RSpec.describe PullRequestUsersController do
     sign_in user
   end
 
-
   describe "GET #index" do
     it "returns http success" do
       get :index, params: { pull_request_id: pull_request.id }

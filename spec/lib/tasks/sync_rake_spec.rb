@@ -75,7 +75,8 @@ RSpec.describe 'sync:repository rake task' do
                                 sync_status: 'completed',
                                 sync_started_at: 1.hour.ago,
                                 sync_completed_at: 30.minutes.ago,
-                                sync_progress: 100) }
+                                sync_progress: 100)
+    }
 
     it 'displays repository sync status' do
       output = capture_stdout { Rake::Task['sync:status'].invoke('rails/rails') }
