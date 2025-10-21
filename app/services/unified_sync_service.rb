@@ -55,7 +55,7 @@ class UnifiedSyncService
   private
 
   def fetch_and_process_pull_requests
-    github_service = GithubService.new(ENV['GITHUB_ACCESS_TOKEN'])
+    github_service = GithubService.new(ENV.fetch('GITHUB_ACCESS_TOKEN', nil))
 
     # Get total count for progress tracking
     @total_prs = estimate_total_prs(github_service)

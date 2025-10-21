@@ -5,8 +5,8 @@ RSpec.describe SyncRepositoryBatchJob do
   let(:client) { instance_double(Octokit::Client) }
 
   before do
-    allow(Octokit::Client).to receive(:new).with(access_token: ENV['GITHUB_ACCESS_TOKEN']).and_return(client)
-    allow(GithubService).to receive(:new).with(ENV['GITHUB_ACCESS_TOKEN']).and_return(instance_double(GithubService))
+    allow(Octokit::Client).to receive(:new).with(access_token: ENV.fetch('GITHUB_ACCESS_TOKEN', nil)).and_return(client)
+    allow(GithubService).to receive(:new).with(ENV.fetch('GITHUB_ACCESS_TOKEN', nil)).and_return(instance_double(GithubService))
   end
 
   describe '#perform' do

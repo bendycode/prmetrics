@@ -598,21 +598,6 @@ Style/EmptyMethod:
   Exclude:
     - 'app/controllers/accounts_controller.rb'
 
-# Offense count: 16
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowedVars, DefaultToNil.
-Style/FetchEnvVar:
-  Exclude:
-    - 'app/controllers/health_controller.rb'
-    - 'app/jobs/sync_repository_batch_job.rb'
-    - 'app/jobs/sync_repository_job.rb'
-    - 'app/services/unified_sync_service.rb'
-    - 'config/environments/production.rb'
-    - 'config/initializers/github.rb'
-    - 'lib/tasks/email.rake'
-    - 'lib/tasks/github.rake'
-    - 'spec/jobs/sync_repository_batch_job_spec.rb'
-
 # Offense count: 2
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: EnforcedStyle.

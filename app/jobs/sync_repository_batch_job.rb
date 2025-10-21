@@ -15,7 +15,7 @@ class SyncRepositoryBatchJob < ApplicationJob
       )
     end
 
-    service = GithubService.new(ENV['GITHUB_ACCESS_TOKEN'])
+    service = GithubService.new(ENV.fetch('GITHUB_ACCESS_TOKEN', nil))
 
     # Fetch one page of PRs
     pull_requests = fetch_pull_requests_page(service, repository, page)
@@ -47,7 +47,7 @@ class SyncRepositoryBatchJob < ApplicationJob
 
   def fetch_pull_requests_page(service, repository, page)
     # We need to directly use Octokit since GithubService doesn't expose the client
-    client = Octokit::Client.new(access_token: ENV['GITHUB_ACCESS_TOKEN'])
+    client = Octokit::Client.new(access_token: ENV.fetch('GITHUB_ACCESS_TOKEN', nil))
     client.pull_requests(
       repository.name,
       state: 'all',
@@ -152,7 +152,7 @@ class SyncRepositoryBatchJob < ApplicationJob
 
   def determine_ready_for_review_at(repo_name, pr_number, created_at)
     events = with_rate_limit_handling do
-      client = Octokit::Client.new(access_token: ENV['GITHUB_ACCESS_TOKEN'])
+      client = Octokit::Client.new(access_token: ENV.fetch('GITHUB_ACCESS_TOKEN', nil))
       client.issue_events(repo_name, pr_number)
     end
     ready_for_review_event = events.find { |e| e.event == 'ready_for_review' }
@@ -166,7 +166,7 @@ class SyncRepositoryBatchJob < ApplicationJob
 
   def fetch_and_store_reviews(pull_request, repo_name, pr_number)
     reviews = with_rate_limit_handling do
-      client = Octokit::Client.new(access_token: ENV['GITHUB_ACCESS_TOKEN'])
+      client = Octokit::Client.new(access_token: ENV.fetch('GITHUB_ACCESS_TOKEN', nil))
       client.pull_request_reviews(repo_name, pr_number)
     end
 
