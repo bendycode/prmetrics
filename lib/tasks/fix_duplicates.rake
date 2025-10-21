@@ -57,14 +57,14 @@ namespace :fix do
       keeper = reviews.first
       to_remove = reviews - [keeper]
 
-      if to_remove.any?
-        pr = PullRequest.find(dup.pull_request_id)
-        author = Contributor.find_by(id: dup.author_id)
-        puts "  PR ##{pr.number}, Author: #{author&.username || 'unknown'}, Time: #{dup.submitted_at}: removing #{to_remove.size} duplicates"
+      next unless to_remove.any?
 
-        to_remove.each(&:destroy)
-        review_duplicates_removed += to_remove.size
-      end
+      pr = PullRequest.find(dup.pull_request_id)
+      author = Contributor.find_by(id: dup.author_id)
+      puts "  PR ##{pr.number}, Author: #{author&.username || 'unknown'}, Time: #{dup.submitted_at}: removing #{to_remove.size} duplicates"
+
+      to_remove.each(&:destroy)
+      review_duplicates_removed += to_remove.size
     end
 
     puts "\n✅ Removed #{review_duplicates_removed} duplicate review records"

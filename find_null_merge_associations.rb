@@ -60,11 +60,11 @@ problem_weeks.each do |week_number|
                       .where.not(gh_merged_at: nil)
                       .where.not(gh_merged_at: week_start..week_end)
 
-  if outside_range.any?
-    puts "  ❌ Found #{outside_range.count} PRs merged outside week range!"
-    outside_range.each do |pr|
-      puts "    - PR ##{pr.number}: merged at #{pr.gh_merged_at}"
-    end
+  next unless outside_range.any?
+
+  puts "  ❌ Found #{outside_range.count} PRs merged outside week range!"
+  outside_range.each do |pr|
+    puts "    - PR ##{pr.number}: merged at #{pr.gh_merged_at}"
   end
 end
 

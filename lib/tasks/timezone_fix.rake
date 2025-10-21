@@ -84,13 +84,13 @@ namespace :timezone do
       ct_date = date.in_time_zone('America/Chicago')
       week_number = ct_date.strftime('%Y%W').to_i
 
-      unless week_map[week_number]
-        week = repository.weeks.find_or_initialize_by(week_number: week_number)
-        week.begin_date = ct_date.beginning_of_week.to_date
-        week.end_date = ct_date.end_of_week.to_date
-        week.save!
-        week_map[week_number] = week
-      end
+      next if week_map[week_number]
+
+      week = repository.weeks.find_or_initialize_by(week_number: week_number)
+      week.begin_date = ct_date.beginning_of_week.to_date
+      week.end_date = ct_date.end_of_week.to_date
+      week.save!
+      week_map[week_number] = week
     end
 
     week_map.values

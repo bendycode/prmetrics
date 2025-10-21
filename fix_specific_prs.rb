@@ -82,12 +82,12 @@ if ARGV.include?('--apply')
 
   affected_week_numbers.each do |week_number|
     week = Week.find_by(week_number: week_number)
-    if week
-      puts "Recalculating week #{week_number}..."
-      WeekStatsService.new(week).update_stats
-      week.reload
-      puts "  New merged count: #{week.num_prs_merged}"
-    end
+    next unless week
+
+    puts "Recalculating week #{week_number}..."
+    WeekStatsService.new(week).update_stats
+    week.reload
+    puts "  New merged count: #{week.num_prs_merged}"
   end
 
   puts "\n✅ ALL FIXES APPLIED"

@@ -88,14 +88,14 @@ class GithubService
         pr_number = comment.pull_request_url.split('/').last.to_i
         pull_request = repository.pull_requests.find_by(number: pr_number)
 
-        if pull_request
-          # Re-fetch reviews for this PR to get the latest review data
-          fetch_and_store_reviews(pull_request, repo_name, pr_number)
-          affected_prs << pull_request
-          total_processed += 1
+        next unless pull_request
 
-          Rails.logger.debug "Updated reviews for PR ##{pr_number} due to comment activity"
-        end
+        # Re-fetch reviews for this PR to get the latest review data
+        fetch_and_store_reviews(pull_request, repo_name, pr_number)
+        affected_prs << pull_request
+        total_processed += 1
+
+        Rails.logger.debug "Updated reviews for PR ##{pr_number} due to comment activity"
       end
 
       page += 1
