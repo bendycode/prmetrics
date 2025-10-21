@@ -152,7 +152,7 @@ class Week < ApplicationRecord
   # Original average hours to merge calculation that includes weekends
   def raw_avg_hours_to_merge
     merged_prs.where.not(ready_for_review_at: nil)
-              .average("EXTRACT(EPOCH FROM (gh_merged_at - ready_for_review_at)) / 3600")
+              .average('EXTRACT(EPOCH FROM (gh_merged_at - ready_for_review_at)) / 3600')
               &.round(2)
   end
 end

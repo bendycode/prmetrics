@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
-puts "🔍 EXACT PR DIAGNOSIS FOR PROBLEM WEEKS"
-puts "=" * 80
+puts '🔍 EXACT PR DIAGNOSIS FOR PROBLEM WEEKS'
+puts '=' * 80
 
 problem_weeks = [202_518, 202_519, 202_521]
 
@@ -9,9 +9,9 @@ problem_weeks.each do |week_number|
   week = Week.find_by(week_number: week_number)
   next unless week
 
-  puts "\n" + ("=" * 60)
+  puts "\n" + ('=' * 60)
   puts "WEEK #{week_number}"
-  puts "=" * 60
+  puts '=' * 60
 
   week_start = week.begin_date.in_time_zone.beginning_of_day
   week_end = week.end_date.in_time_zone.end_of_day
@@ -56,7 +56,7 @@ problem_weeks.each do |week_number|
         if correct_week
           puts "    Should be in week #{correct_week.week_number}"
         else
-          puts "    No week found for this merge date!"
+          puts '    No week found for this merge date!'
         end
       end
     end
@@ -125,4 +125,4 @@ problem_weeks.each do |week_number|
   end
 end
 
-puts "\n" + ("=" * 80)
+puts "\n" + ('=' * 80)

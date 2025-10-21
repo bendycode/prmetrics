@@ -7,10 +7,10 @@
 
 dry_run = !ARGV.include?('--apply')
 
-puts "🔧 PROPER WEEK ASSOCIATION FIX"
-puts "=" * 80
-puts dry_run ? "🔍 DRY RUN MODE (use --apply to make changes)" : "⚡ APPLYING CHANGES"
-puts "=" * 80
+puts '🔧 PROPER WEEK ASSOCIATION FIX'
+puts '=' * 80
+puts dry_run ? '🔍 DRY RUN MODE (use --apply to make changes)' : '⚡ APPLYING CHANGES'
+puts '=' * 80
 puts
 
 stats = {
@@ -21,8 +21,8 @@ stats = {
 }
 
 # First, fix PRs with NULL merge dates that have week associations
-puts "STEP 1: Fixing PRs with NULL merge dates"
-puts "-" * 40
+puts 'STEP 1: Fixing PRs with NULL merge dates'
+puts '-' * 40
 
 null_merge_with_week = PullRequest.where(gh_merged_at: nil).where.not(merged_week_id: nil)
 puts "Found #{null_merge_with_week.count} PRs with NULL merge dates but week associations"
@@ -36,7 +36,7 @@ null_merge_with_week.each do |pr|
 end
 
 puts "\nSTEP 2: Fixing misassociated PRs"
-puts "-" * 40
+puts '-' * 40
 
 # For each week, check all associated PRs
 Week.includes(:repository).find_each do |week|
@@ -71,7 +71,7 @@ Week.includes(:repository).find_each do |week|
 end
 
 puts "\nSTEP 3: Adding missing associations"
-puts "-" * 40
+puts '-' * 40
 
 # Find all PRs with merge dates but no week association
 PullRequest.where.not(gh_merged_at: nil).where(merged_week_id: nil).find_each do |pr|
@@ -88,9 +88,9 @@ end
 
 stats[:total_fixes] = stats[:null_merge_fixed] + stats[:misassociated_fixed] + stats[:missing_associations_added]
 
-puts "\n" + ("=" * 80)
-puts "SUMMARY"
-puts "=" * 80
+puts "\n" + ('=' * 80)
+puts 'SUMMARY'
+puts '=' * 80
 puts "NULL merge associations removed: #{stats[:null_merge_fixed]}"
 puts "Misassociated PRs fixed: #{stats[:misassociated_fixed]}"
 puts "Missing associations added: #{stats[:missing_associations_added]}"
@@ -98,7 +98,7 @@ puts "Total fixes: #{stats[:total_fixes]}"
 
 if dry_run
   puts "\n🔍 DRY RUN COMPLETE"
-  puts "Run with --apply to make changes"
+  puts 'Run with --apply to make changes'
 else
   puts "\n✅ FIXES APPLIED"
 
@@ -107,17 +107,17 @@ else
   Week.find_each do |week|
     WeekStatsService.new(week).update_stats
   end
-  puts "✅ Week statistics updated"
+  puts '✅ Week statistics updated'
 
   # Verification
   puts "\n🔍 Running verification..."
   remaining_issues = PullRequest.where(gh_merged_at: nil).where.not(merged_week_id: nil).count
 
   if remaining_issues == 0
-    puts "✅ No PRs with NULL merge dates have week associations"
+    puts '✅ No PRs with NULL merge dates have week associations'
   else
     puts "❌ Still found #{remaining_issues} PRs with NULL merge dates and week associations"
   end
 end
 
-puts "=" * 80
+puts '=' * 80

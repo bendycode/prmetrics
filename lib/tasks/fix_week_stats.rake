@@ -1,7 +1,7 @@
 namespace :fix do
-  desc "Recalculate all week statistics using week associations"
+  desc 'Recalculate all week statistics using week associations'
   task week_stats: :environment do
-    puts "🔄 Recalculating all week statistics..."
+    puts '🔄 Recalculating all week statistics...'
 
     total_weeks = Week.count
     updated = 0
@@ -19,9 +19,9 @@ namespace :fix do
     puts "✅ Successfully recalculated statistics for #{updated} weeks"
   end
 
-  desc "Check for week statistics discrepancies"
+  desc 'Check for week statistics discrepancies'
   task check_week_discrepancies: :environment do
-    puts "🔍 Checking for week statistics discrepancies..."
+    puts '🔍 Checking for week statistics discrepancies...'
 
     discrepancies_found = 0
 
@@ -49,7 +49,7 @@ namespace :fix do
     end
 
     if discrepancies_found == 0
-      puts "✅ No discrepancies found!"
+      puts '✅ No discrepancies found!'
     else
       puts "\n❌ Found #{discrepancies_found} discrepancies. Run 'rake fix:week_stats' to fix them."
     end

@@ -7,10 +7,10 @@
 
 dry_run = !ARGV.include?('--apply')
 
-puts "🔧 COMPREHENSIVE WEEK ASSOCIATION FIX"
-puts "=" * 80
-puts dry_run ? "🔍 DRY RUN MODE (use --apply to make changes)" : "⚡ APPLYING CHANGES"
-puts "=" * 80
+puts '🔧 COMPREHENSIVE WEEK ASSOCIATION FIX'
+puts '=' * 80
+puts dry_run ? '🔍 DRY RUN MODE (use --apply to make changes)' : '⚡ APPLYING CHANGES'
+puts '=' * 80
 puts
 
 # Statistics tracking
@@ -24,9 +24,9 @@ stats = {
 }
 
 Repository.includes(:pull_requests, :weeks).find_each do |repository|
-  puts "\n" + ("=" * 60)
+  puts "\n" + ('=' * 60)
   puts "PROCESSING REPOSITORY: #{repository.name}"
-  puts "=" * 60
+  puts '=' * 60
 
   stats[:repositories_processed] += 1
   repo_fixes = 0
@@ -82,9 +82,9 @@ Repository.includes(:pull_requests, :weeks).find_each do |repository|
   puts "  ✅ #{repo_fixes} fixes needed for #{repository.name}"
 end
 
-puts "\n" + ("=" * 80)
-puts "RECALCULATING WEEK STATISTICS"
-puts "=" * 80
+puts "\n" + ('=' * 80)
+puts 'RECALCULATING WEEK STATISTICS'
+puts '=' * 80
 
 if dry_run
   affected_weeks = Week.joins(:merged_prs)
@@ -107,12 +107,12 @@ else
     service.update_stats
     stats[:weeks_recalculated] += 1
   end
-  puts "✅ All week statistics recalculated"
+  puts '✅ All week statistics recalculated'
 end
 
-puts "\n" + ("=" * 80)
-puts "FINAL SUMMARY"
-puts "=" * 80
+puts "\n" + ('=' * 80)
+puts 'FINAL SUMMARY'
+puts '=' * 80
 puts "Repositories processed: #{stats[:repositories_processed]}"
 puts "Total PRs checked: #{stats[:total_prs_checked]}"
 puts "Misassociated PRs fixed: #{stats[:misassociated_fixed]}"
@@ -125,7 +125,7 @@ total_fixes = stats[:misassociated_fixed] + stats[:missing_associations_added] +
 
 if dry_run
   puts "🔍 DRY RUN COMPLETE - #{total_fixes} fixes needed"
-  puts "Run with --apply to make changes"
+  puts 'Run with --apply to make changes'
 else
   puts "✅ ALL FIXES APPLIED - #{total_fixes} issues resolved"
 
@@ -143,10 +143,10 @@ else
   end
 
   if remaining_issues == 0
-    puts "✅ VERIFICATION PASSED - No remaining issues"
+    puts '✅ VERIFICATION PASSED - No remaining issues'
   else
     puts "❌ VERIFICATION FAILED - #{remaining_issues} issues remain"
   end
 end
 
-puts "=" * 80
+puts '=' * 80

@@ -26,6 +26,10 @@ plugins:
 Layout/TrailingWhitespace:
   Enabled: true
 
+# Enforce single quotes for string literals
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
 # Allow feature/behavior descriptions instead of requiring class/module names
 RSpec/DescribeClass:
   Exclude:

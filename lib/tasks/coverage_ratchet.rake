@@ -1,5 +1,5 @@
 namespace :coverage do
-  desc "Run ratcheting coverage check"
+  desc 'Run ratcheting coverage check'
   task :ratchet do
     require 'json'
 
@@ -8,14 +8,14 @@ namespace :coverage do
 
     # Ensure we have a baseline
     unless File.exist?(baseline_file)
-      puts "⚠️  No coverage baseline found. Creating one..."
+      puts '⚠️  No coverage baseline found. Creating one...'
       Rake::Task['coverage:update_baseline'].invoke
       exit(0)
     end
 
     # Run tests with coverage
-    puts "🧪 Running tests with coverage..."
-    system("bundle exec rspec --format progress")
+    puts '🧪 Running tests with coverage...'
+    system('bundle exec rspec --format progress')
     test_exit_code = $?.exitstatus
 
     # If tests failed, exit early
@@ -37,7 +37,7 @@ namespace :coverage do
       if current_coverage < baseline_coverage
         diff = (baseline_coverage - current_coverage).round(2)
         puts "\n❌ Coverage decreased by #{diff}%!"
-        puts "   Coverage must not decrease below the baseline."
+        puts '   Coverage must not decrease below the baseline.'
         exit(1)
       elsif current_coverage > baseline_coverage
         diff = (current_coverage - baseline_coverage).round(2)
@@ -61,7 +61,7 @@ namespace :coverage do
     end
   end
 
-  desc "Show coverage trend"
+  desc 'Show coverage trend'
   task :trend do
     require 'json'
 
@@ -74,7 +74,7 @@ namespace :coverage do
       baseline = File.read(baseline_file).to_f
 
       puts "\n📈 Coverage Trend:"
-      puts "   Start:   77.87% (initial baseline)"
+      puts '   Start:   77.87% (initial baseline)'
       puts "   Current: #{baseline}% (ratcheted baseline)"
       puts "   Latest:  #{current}% (last run)"
 

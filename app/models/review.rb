@@ -8,7 +8,7 @@ class Review < ApplicationRecord
   validates :submitted_at, presence: true
   validates :submitted_at, uniqueness: {
     scope: %i[pull_request_id author_id state],
-    message: "review already exists for this pull request, author, and state combination"
+    message: 'review already exists for this pull request, author, and state combination'
   }
 
   after_save :update_pull_request_first_review_week, unless: :skip_week_association_update

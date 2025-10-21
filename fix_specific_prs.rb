@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
-puts "🔧 FIXING SPECIFIC MISASSOCIATED PRS"
-puts "=" * 80
+puts '🔧 FIXING SPECIFIC MISASSOCIATED PRS'
+puts '=' * 80
 
 # The specific PRs we identified as problems
 problem_prs = [419, 420, 428, 430, 432]
@@ -17,7 +17,7 @@ problem_prs.each do |pr_number|
     next
   end
 
-  puts "\n" + ("-" * 60)
+  puts "\n" + ('-' * 60)
   puts "PR ##{pr.number}: #{pr.title[0..50]}..."
   puts "  State: #{pr.state}"
   puts "  Merged at: #{pr.gh_merged_at || 'NULL'}"
@@ -36,7 +36,7 @@ problem_prs.each do |pr_number|
       puts "  Should be in week: #{correct_week.week_number} (#{correct_week.begin_date} to #{correct_week.end_date})"
 
       if pr.merged_week_id != correct_week.id
-        puts "  ❌ MISASSOCIATED - needs to be moved"
+        puts '  ❌ MISASSOCIATED - needs to be moved'
 
         if ARGV.include?('--apply')
           pr.update_column(:merged_week_id, correct_week.id)
@@ -45,7 +45,7 @@ problem_prs.each do |pr_number|
           puts "  🔍 Would move to week #{correct_week.week_number} (dry run)"
         end
       else
-        puts "  ✅ Already correctly associated"
+        puts '  ✅ Already correctly associated'
       end
     else
       puts "  ⚠️  No week found for merge date #{pr.gh_merged_at}"
@@ -53,30 +53,30 @@ problem_prs.each do |pr_number|
       if pr.merged_week_id
         if ARGV.include?('--apply')
           pr.update_column(:merged_week_id, nil)
-          puts "  ✅ FIXED - removed invalid association"
+          puts '  ✅ FIXED - removed invalid association'
         else
-          puts "  🔍 Would remove association (dry run)"
+          puts '  🔍 Would remove association (dry run)'
         end
       end
     end
   else
-    puts "  ⚠️  PR has no merge date"
+    puts '  ⚠️  PR has no merge date'
 
     if pr.merged_week_id
       if ARGV.include?('--apply')
         pr.update_column(:merged_week_id, nil)
-        puts "  ✅ FIXED - removed association from unmerged PR"
+        puts '  ✅ FIXED - removed association from unmerged PR'
       else
-        puts "  🔍 Would remove association from unmerged PR (dry run)"
+        puts '  🔍 Would remove association from unmerged PR (dry run)'
       end
     end
   end
 end
 
 if ARGV.include?('--apply')
-  puts "\n" + ("=" * 80)
-  puts "🔄 RECALCULATING AFFECTED WEEK STATISTICS"
-  puts "=" * 80
+  puts "\n" + ('=' * 80)
+  puts '🔄 RECALCULATING AFFECTED WEEK STATISTICS'
+  puts '=' * 80
 
   affected_week_numbers = [202_518, 202_519, 202_521]
 
@@ -92,9 +92,9 @@ if ARGV.include?('--apply')
 
   puts "\n✅ ALL FIXES APPLIED"
 else
-  puts "\n" + ("=" * 80)
-  puts "🔍 DRY RUN COMPLETE"
-  puts "Run with --apply to make changes"
+  puts "\n" + ('=' * 80)
+  puts '🔍 DRY RUN COMPLETE'
+  puts 'Run with --apply to make changes'
 end
 
-puts "=" * 80
+puts '=' * 80

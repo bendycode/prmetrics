@@ -1,14 +1,14 @@
 namespace :fix do
-  desc "Remove duplicate pull request and review records"
+  desc 'Remove duplicate pull request and review records'
   task duplicates: :environment do
-    puts "🔍 Finding duplicate pull request records..."
+    puts '🔍 Finding duplicate pull request records...'
 
     total_removed = 0
 
     Repository.find_each do |repository|
       duplicates = repository.pull_requests
                              .group(:number)
-                             .having("COUNT(*) > 1")
+                             .having('COUNT(*) > 1')
                              .count
 
       next if duplicates.empty?
@@ -44,7 +44,7 @@ namespace :fix do
     # Find all reviews grouped by uniqueness criteria
     duplicate_reviews = Review.select(:pull_request_id, :author_id, :submitted_at, :state)
                               .group(:pull_request_id, :author_id, :submitted_at, :state)
-                              .having("COUNT(*) > 1")
+                              .having('COUNT(*) > 1')
 
     duplicate_reviews.each do |dup|
       reviews = Review.where(
@@ -71,16 +71,16 @@ namespace :fix do
     puts "\n📊 Total duplicates removed: #{total_removed + review_duplicates_removed}"
   end
 
-  desc "Preview duplicate pull requests without removing them"
+  desc 'Preview duplicate pull requests without removing them'
   task preview_duplicates: :environment do
-    puts "🔍 Previewing duplicate pull request records..."
+    puts '🔍 Previewing duplicate pull request records...'
 
     total_duplicates = 0
 
     Repository.find_each do |repository|
       duplicates = repository.pull_requests
                              .group(:number)
-                             .having("COUNT(*) > 1")
+                             .having('COUNT(*) > 1')
                              .count
 
       next if duplicates.empty?
@@ -97,7 +97,7 @@ namespace :fix do
 
         puts "\n  PR ##{pr_number} has #{count} copies:"
         prs.each_with_index do |pr, i|
-          status = (i == prs.length - 1) ? "KEEP" : "REMOVE"
+          status = (i == prs.length - 1) ? 'KEEP' : 'REMOVE'
           puts "    [#{status}] ID: #{pr.id}, merged: #{pr.gh_merged_at || 'not merged'}, updated: #{pr.updated_at}"
         end
       end

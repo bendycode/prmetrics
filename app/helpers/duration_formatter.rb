@@ -3,7 +3,7 @@
 # Output: "11 days, 20 hours, 39 minutes"
 module DurationFormatter
   def self.format_hours(hours)
-    return "N/A" if hours.nil?
+    return 'N/A' if hours.nil?
 
     total_hours = hours.to_f
     days, remaining_hours = total_hours.divmod(24)
@@ -15,6 +15,6 @@ module DurationFormatter
     parts << "#{hours.to_i} hour#{'s' if hours != 1}" if hours > 0
     parts << "#{minutes} minute#{'s' if minutes != 1}" if minutes > 0 || (days == 0 && hours == 0)
 
-    parts.join(", ")
+    parts.join(', ')
   end
 end

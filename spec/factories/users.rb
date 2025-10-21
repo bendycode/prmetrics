@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :user do
-    PASSWORD = "password123".freeze
+    PASSWORD = 'password123'.freeze
 
     sequence(:email) { |n| "user#{n}@example.com" }
     password { PASSWORD }

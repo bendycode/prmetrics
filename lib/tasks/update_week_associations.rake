@@ -1,7 +1,7 @@
 namespace :fix do
-  desc "Update week associations for all pull requests"
+  desc 'Update week associations for all pull requests'
   task update_week_associations: :environment do
-    puts "🔄 Updating week associations for all pull requests..."
+    puts '🔄 Updating week associations for all pull requests...'
 
     total_prs = PullRequest.count
     updated = 0

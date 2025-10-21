@@ -5,14 +5,14 @@ if Rails.env.production? && !Rails.env.test?
   # Define observer classes first
   class EmailDeliveryObserver
     def self.delivered_email(message)
-      Rails.logger.info "=" * 50
-      Rails.logger.info "Email Delivered:"
+      Rails.logger.info '=' * 50
+      Rails.logger.info 'Email Delivered:'
       Rails.logger.info "To: #{message.to}"
       Rails.logger.info "Subject: #{message.subject}"
       Rails.logger.info "From: #{message.from}"
       Rails.logger.info "Delivery Method: #{ActionMailer::Base.delivery_method}"
       Rails.logger.info "SMTP Settings: #{ActionMailer::Base.smtp_settings.inspect}"
-      Rails.logger.info "=" * 50
+      Rails.logger.info '=' * 50
     end
   end
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
-puts "🔍 INVESTIGATING WEEK ASSOCIATION LOGIC"
-puts "=" * 80
+puts '🔍 INVESTIGATING WEEK ASSOCIATION LOGIC'
+puts '=' * 80
 
 # Focus on the problem weeks we know have issues
 problem_weeks = [202_518, 202_519, 202_521]
@@ -10,9 +10,9 @@ problem_weeks.each do |week_number|
   week = Week.find_by(week_number: week_number)
   next unless week
 
-  puts "\n" + ("=" * 60)
+  puts "\n" + ('=' * 60)
   puts "WEEK #{week_number} DEEP INVESTIGATION"
-  puts "=" * 60
+  puts '=' * 60
 
   puts "Week ID: #{week.id}"
   puts "Repository: #{week.repository.name}"
@@ -50,7 +50,7 @@ problem_weeks.each do |week_number|
       if correct_week
         puts "    Should be week: #{correct_week.week_number} (ID: #{correct_week.id})"
       else
-        puts "    Should be week: NONE (no week for this date)"
+        puts '    Should be week: NONE (no week for this date)'
       end
 
       # Test Week.find_by_date logic
@@ -63,7 +63,7 @@ problem_weeks.each do |week_number|
       end
     end
   else
-    puts "✅ No misassociated PRs found"
+    puts '✅ No misassociated PRs found'
   end
 
   # Find PRs that should be associated but aren't
@@ -78,19 +78,19 @@ problem_weeks.each do |week_number|
       puts "    Current week ID: #{pr.merged_week_id}"
     end
   else
-    puts "✅ No missing associations found"
+    puts '✅ No missing associations found'
   end
 end
 
-puts "\n" + ("=" * 80)
-puts "TESTING Week.find_by_date LOGIC"
-puts "=" * 80
+puts "\n" + ('=' * 80)
+puts 'TESTING Week.find_by_date LOGIC'
+puts '=' * 80
 
 # Test some specific dates
 test_dates = [
-  Time.zone.parse("2025-05-05 12:13:43"),  # Should be week 202518
-  Time.zone.parse("2025-05-12 11:00:30"),  # Should be week 202519
-  Time.zone.parse("2025-05-26 11:04:12")   # Should be week 202521
+  Time.zone.parse('2025-05-05 12:13:43'),  # Should be week 202518
+  Time.zone.parse('2025-05-12 11:00:30'),  # Should be week 202519
+  Time.zone.parse('2025-05-26 11:04:12')   # Should be week 202521
 ]
 
 test_dates.each do |date|
@@ -99,7 +99,7 @@ test_dates.each do |date|
   if week
     puts "  Found week: #{week.week_number} (#{week.begin_date} to #{week.end_date})"
   else
-    puts "  No week found!"
+    puts '  No week found!'
   end
 
   # Also test with date object
@@ -108,13 +108,13 @@ test_dates.each do |date|
   if week2
     puts "  Found week (using date): #{week2.week_number}"
   else
-    puts "  No week found (using date)!"
+    puts '  No week found (using date)!'
   end
 end
 
-puts "\n" + ("=" * 80)
-puts "DATABASE WEEK OVERLAP CHECK"
-puts "=" * 80
+puts "\n" + ('=' * 80)
+puts 'DATABASE WEEK OVERLAP CHECK'
+puts '=' * 80
 
 # Check for overlapping weeks
 overlaps = []
@@ -130,12 +130,12 @@ if overlaps.any?
   puts "❌ Found #{overlaps.count} overlapping week pairs!"
   overlaps.each do |w1, w2|
     puts "  Week #{w1.week_number} (#{w1.begin_date} to #{w1.end_date})"
-    puts "  overlaps with"
+    puts '  overlaps with'
     puts "  Week #{w2.week_number} (#{w2.begin_date} to #{w2.end_date})"
     puts
   end
 else
-  puts "✅ No overlapping weeks found"
+  puts '✅ No overlapping weeks found'
 end
 
-puts "=" * 80
+puts '=' * 80

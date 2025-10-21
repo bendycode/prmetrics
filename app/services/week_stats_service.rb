@@ -16,13 +16,13 @@ class WeekStatsService
     return unless oldest_date
 
     # Convert to Central Time for consistent week calculation
-    ct_oldest = oldest_date.in_time_zone("America/Chicago")
+    ct_oldest = oldest_date.in_time_zone('America/Chicago')
     start_date = ct_oldest.beginning_of_week
-    end_date = Time.current.in_time_zone("America/Chicago").end_of_week
+    end_date = Time.current.in_time_zone('America/Chicago').end_of_week
 
     (start_date.to_date..end_date.to_date).step(7) do |date|
       # Use Central Time for week boundaries
-      ct_date = date.in_time_zone("America/Chicago")
+      ct_date = date.in_time_zone('America/Chicago')
       week_begin = ct_date.beginning_of_week.to_date
       week_end = ct_date.end_of_week.to_date
       week_number = ct_date.strftime('%Y%W').to_i

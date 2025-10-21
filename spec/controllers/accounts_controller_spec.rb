@@ -7,21 +7,21 @@ RSpec.describe AccountsController do
     sign_in user
   end
 
-  describe "GET #edit" do
-    it "returns a success response" do
+  describe 'GET #edit' do
+    it 'returns a success response' do
       get :edit
       expect(response).to be_successful
     end
 
-    it "assigns the current user" do
+    it 'assigns the current user' do
       get :edit
       expect(assigns(:user)).to eq(user)
     end
   end
 
-  describe "PATCH #update" do
-    context "with valid params" do
-      context "when updating email only" do
+  describe 'PATCH #update' do
+    context 'with valid params' do
+      context 'when updating email only' do
         let(:new_attributes) { { email: 'newemail@example.com' } }
 
         it "updates the user's email" do
@@ -30,18 +30,18 @@ RSpec.describe AccountsController do
           expect(user.email).to eq('newemail@example.com')
         end
 
-        it "redirects to the edit page" do
+        it 'redirects to the edit page' do
           patch :update, params: { user: new_attributes }
           expect(response).to redirect_to(edit_account_path)
         end
 
-        it "shows a success notice" do
+        it 'shows a success notice' do
           patch :update, params: { user: new_attributes }
           expect(flash[:notice]).to eq('Account was successfully updated.')
         end
       end
 
-      context "when updating password" do
+      context 'when updating password' do
         let(:new_attributes) do
           {
             password: 'newpassword123',
@@ -56,15 +56,15 @@ RSpec.describe AccountsController do
           expect(user.valid_password?('newpassword123')).to be true
         end
 
-        it "redirects to the edit page" do
+        it 'redirects to the edit page' do
           patch :update, params: { user: new_attributes }
           expect(response).to redirect_to(edit_account_path)
         end
       end
     end
 
-    context "with invalid params" do
-      context "when current password is wrong" do
+    context 'with invalid params' do
+      context 'when current password is wrong' do
         let(:invalid_attributes) do
           {
             password: 'newpassword123',
@@ -73,13 +73,13 @@ RSpec.describe AccountsController do
           }
         end
 
-        it "does not update the user" do
+        it 'does not update the user' do
           patch :update, params: { user: invalid_attributes }
           user.reload
           expect(user.valid_password?('newpassword123')).to be false
         end
 
-        it "renders the edit template" do
+        it 'renders the edit template' do
           patch :update, params: { user: invalid_attributes }
           expect(response).to render_template(:edit)
         end
@@ -94,28 +94,28 @@ RSpec.describe AccountsController do
           }
         end
 
-        it "does not update the user" do
+        it 'does not update the user' do
           patch :update, params: { user: invalid_attributes }
           user.reload
           expect(user.valid_password?('newpassword123')).to be false
         end
 
-        it "renders the edit template" do
+        it 'renders the edit template' do
           patch :update, params: { user: invalid_attributes }
           expect(response).to render_template(:edit)
         end
       end
 
-      context "when email is invalid" do
+      context 'when email is invalid' do
         let(:invalid_attributes) { { email: 'invalid-email' } }
 
-        it "does not update the user" do
+        it 'does not update the user' do
           patch :update, params: { user: invalid_attributes }
           user.reload
           expect(user.email).to eq('admin@example.com')
         end
 
-        it "renders the edit template" do
+        it 'renders the edit template' do
           patch :update, params: { user: invalid_attributes }
           expect(response).to render_template(:edit)
         end
@@ -123,8 +123,8 @@ RSpec.describe AccountsController do
     end
   end
 
-  describe "authorization" do
-    it "ensures user can only edit their own account" do
+  describe 'authorization' do
+    it 'ensures user can only edit their own account' do
       get :edit
       expect(assigns(:user)).to eq(user)
     end
