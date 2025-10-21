@@ -119,9 +119,9 @@ RSpec.describe UpdateRepositoryStatsJob do
       allow(WeekStatsService).to receive(:generate_weeks_for_repository)
       allow(WeekStatsService).to receive(:update_all_weeks)
 
-      expect {
+      expect do
         job.perform(single_repo.id)
-      }.not_to raise_error
+      end.not_to raise_error
 
       # Should still update stats for the single repository
       expect(WeekStatsService).to have_received(:update_all_weeks)

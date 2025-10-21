@@ -273,26 +273,26 @@ RSpec.describe Week do
         after  { Time.zone = 'UTC' }
 
         let(:repository) { create(:repository) }
-        let(:week) {
+        let(:week) do
           create(:week,
                  repository: repository,
                  begin_date: Time.zone.local(2024, 1, 8),
                  end_date: Time.zone.local(2024, 1, 14))
-        }
+        end
 
-        let!(:open_pr) {
+        let!(:open_pr) do
           create(:pull_request,
                  repository: repository,
                  draft: false,
                  gh_created_at: week.begin_date)
-        }
+        end
 
-        let!(:draft_pr) {
+        let!(:draft_pr) do
           create(:pull_request,
                  repository: repository,
                  draft: true,
                  gh_created_at: week.begin_date)
-        }
+        end
 
         let!(:pr_closed_end_of_week) do
           create(:pull_request,
@@ -318,12 +318,12 @@ RSpec.describe Week do
       end
 
       describe '#draft_prs' do
-        let!(:draft_pr) {
+        let!(:draft_pr) do
           create(:pull_request, repository: repository, draft: true, gh_created_at: current_week.begin_date)
-        }
-        let!(:regular_pr) {
+        end
+        let!(:regular_pr) do
           create(:pull_request, repository: repository, draft: false, gh_created_at: current_week.begin_date)
-        }
+        end
 
         it 'returns draft PRs that were open during the week' do
           expect(current_week.draft_prs).to contain_exactly(draft_pr)
@@ -331,15 +331,15 @@ RSpec.describe Week do
       end
 
       describe '#approved_prs' do
-        let(:approved_pr) {
+        let(:approved_pr) do
           create(:pull_request, :approved, repository: repository, gh_created_at: current_week.begin_date)
-        }
-        let(:unapproved_pr) {
+        end
+        let(:unapproved_pr) do
           create(:pull_request, :with_comments, repository: repository, gh_created_at: current_week.begin_date)
-        }
-        let(:draft_approved_pr) {
+        end
+        let(:draft_approved_pr) do
           create(:pull_request, :draft, :approved, repository: repository, gh_created_at: current_week.begin_date)
-        }
+        end
 
         it 'returns non-draft PRs with approved reviews that were open during the week' do
           expect(current_week.approved_prs).to contain_exactly(approved_pr)
@@ -353,12 +353,12 @@ RSpec.describe Week do
       end
 
       describe '#started_prs' do
-        let!(:pr_in_week) {
+        let!(:pr_in_week) do
           create(:pull_request, repository: repository, gh_created_at: current_week.begin_date + 1.day)
-        }
-        let!(:pr_before_week) {
+        end
+        let!(:pr_before_week) do
           create(:pull_request, repository: repository, gh_created_at: current_week.begin_date - 1.day)
-        }
+        end
 
         it 'returns PRs created during the week' do
           expect(current_week.started_prs).to contain_exactly(pr_in_week)
@@ -366,13 +366,13 @@ RSpec.describe Week do
       end
 
       describe '#cancelled_prs' do
-        let!(:cancelled_pr) {
+        let!(:cancelled_pr) do
           create(:pull_request, repository: repository, gh_closed_at: current_week.end_date, gh_merged_at: nil)
-        }
-        let!(:merged_pr) {
+        end
+        let!(:merged_pr) do
           create(:pull_request, repository: repository, gh_closed_at: current_week.end_date,
                                 gh_merged_at: current_week.end_date)
-        }
+        end
 
         before do
           cancelled_pr.update(closed_week: current_week)
@@ -389,22 +389,22 @@ RSpec.describe Week do
         let(:week) { create(:week, repository: repository, begin_date: 1.week.ago.to_date, end_date: Date.today) }
 
         context 'with PRs approved at different times' do
-          let!(:fresh_pr) {
+          let!(:fresh_pr) do
             create(:pull_request, :approved_days_ago, days_ago: 5,
                                                       repository: repository, gh_created_at: 60.days.ago)
-          }
-          let!(:late_pr1) {
+          end
+          let!(:late_pr1) do
             create(:pull_request, :approved_days_ago, days_ago: 10,
                                                       repository: repository, gh_created_at: 60.days.ago)
-          }
-          let!(:late_pr2) {
+          end
+          let!(:late_pr2) do
             create(:pull_request, :approved_days_ago, days_ago: 27,
                                                       repository: repository, gh_created_at: 60.days.ago)
-          }
-          let!(:stale_pr) {
+          end
+          let!(:stale_pr) do
             create(:pull_request, :approved_days_ago, days_ago: 40,
                                                       repository: repository, gh_created_at: 60.days.ago)
-          }
+          end
 
           it '#late_prs returns PRs approved 8-27 days ago relative to week end_date' do
             # Dynamic calculation using week.end_date

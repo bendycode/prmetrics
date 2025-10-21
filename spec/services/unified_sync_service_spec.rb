@@ -15,10 +15,10 @@ RSpec.describe UnifiedSyncService do
   describe '#sync!' do
     let(:service) { described_class.new(repo_name, progress_callback: ->(msg) {}) }
     let(:pr_data) { double(number: 123, created_at: 1.week.ago, merged_at: 2.days.ago) }
-    let(:pull_request) {
+    let(:pull_request) do
       create(:pull_request, repository: repository, number: 123,
                             gh_created_at: 1.week.ago, gh_merged_at: 2.days.ago)
-    }
+    end
 
     before do
       allow(github_service).to receive(:get_pull_request_count).and_return(10)
@@ -64,10 +64,10 @@ RSpec.describe UnifiedSyncService do
         processor = opts[:processor]
       end
 
-      expect {
+      expect do
         service.sync!
         processor.call(pr_data) if processor
-      }.to change { repository.weeks.count }.by_at_least(1)
+      end.to change { repository.weeks.count }.by_at_least(1)
     end
 
     it 'updates week statistics for affected weeks' do

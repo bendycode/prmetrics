@@ -45,19 +45,19 @@ RSpec.describe DashboardController do
 
     context 'with nil values in week records' do
       let!(:repo_with_nils) { create(:repository, name: 'test/nil-values') }
-      let!(:week_with_nils) {
+      let!(:week_with_nils) do
         create(:week, repository: repo_with_nils, begin_date: 1.week.ago,
                       num_prs_started: nil, num_prs_merged: nil, num_prs_cancelled: nil)
-      }
-      let!(:normal_week) {
+      end
+      let!(:normal_week) do
         create(:week, repository: repo_with_nils, begin_date: 2.weeks.ago,
                       num_prs_started: 5, num_prs_merged: 3, num_prs_cancelled: 1)
-      }
+      end
 
       it 'handles nil values without crashing' do
-        expect {
+        expect do
           get :index, params: { repository_id: repo_with_nils.id }
-        }.not_to raise_error
+        end.not_to raise_error
         expect(response).to have_http_status(:success)
       end
 
@@ -75,19 +75,19 @@ RSpec.describe DashboardController do
 
       context 'with all nil values' do
         let!(:all_nil_repo) { create(:repository, name: 'test/all-nils') }
-        let!(:nil_week1) {
+        let!(:nil_week1) do
           create(:week, repository: all_nil_repo, begin_date: 1.week.ago,
                         num_prs_started: nil, num_prs_merged: nil, num_prs_cancelled: nil)
-        }
-        let!(:nil_week2) {
+        end
+        let!(:nil_week2) do
           create(:week, repository: all_nil_repo, begin_date: 2.weeks.ago,
                         num_prs_started: nil, num_prs_merged: nil, num_prs_cancelled: nil)
-        }
+        end
 
         it 'handles all nil weeks without crashing' do
-          expect {
+          expect do
             get :index, params: { repository_id: all_nil_repo.id }
-          }.not_to raise_error
+          end.not_to raise_error
           expect(response).to have_http_status(:success)
         end
       end

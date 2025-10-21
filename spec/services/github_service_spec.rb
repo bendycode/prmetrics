@@ -25,9 +25,9 @@ RSpec.describe GithubService do
         allow(octokit_client).to receive(:pull_request_reviews).and_return([valid_review, early_review])
         allow(service).to receive(:find_or_create_contributor).and_return(create(:contributor))
 
-        expect {
+        expect do
           service.send(:fetch_and_store_reviews, pull_request, repo_name, pr_number)
-        }.to change(Review, :count).by(2)
+        end.to change(Review, :count).by(2)
       end
     end
 
@@ -37,18 +37,18 @@ RSpec.describe GithubService do
       it 'skips reviews with nil timestamps' do
         allow(octokit_client).to receive(:pull_request_reviews).and_return([invalid_review])
 
-        expect {
+        expect do
           service.send(:fetch_and_store_reviews, pull_request, repo_name, pr_number)
-        }.not_to change(Review, :count)
+        end.not_to change(Review, :count)
       end
     end
   end
 
   describe '#process_pull_request' do
-    let(:github_user) {
+    let(:github_user) do
       double('github_user', login: 'author', name: 'Author', email: 'author@example.com', id: '456',
                             avatar_url: 'https://example.com/avatar.png')
-    }
+    end
     let(:pr_data) do
       double('pr_data',
              number: 123,
@@ -71,9 +71,9 @@ RSpec.describe GithubService do
     end
 
     it 'creates a pull request and sets ready_for_review_at' do
-      expect {
+      expect do
         service.send(:process_pull_request, repository, 'test/repo', pr_data)
-      }.to change(PullRequest, :count).by(1)
+      end.to change(PullRequest, :count).by(1)
 
       pr = PullRequest.last
       expect(pr.ready_for_review_at).not_to be_nil
@@ -82,9 +82,9 @@ RSpec.describe GithubService do
     it 'does not set ready_for_review_at for draft PRs' do
       allow(pr_data).to receive(:draft).and_return(true)
 
-      expect {
+      expect do
         service.send(:process_pull_request, repository, 'test/repo', pr_data)
-      }.to change(PullRequest, :count).by(1)
+      end.to change(PullRequest, :count).by(1)
 
       pr = PullRequest.last
       expect(pr.ready_for_review_at).to be_nil
