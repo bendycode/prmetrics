@@ -57,7 +57,7 @@ RSpec.describe 'sync:repository rake task' do
         # Now this should work - repo name taken from ARGV[1]
         expect do
           Rake::Task['sync:repository'].invoke
-        end.to output(/Starting unified sync for PureOxygen\/u-app/).to_stdout
+        end.to output(%r{Starting unified sync for PureOxygen/u-app}).to_stdout
 
         ARGV.replace(original_argv)
       end
@@ -96,7 +96,7 @@ RSpec.describe 'sync:repository rake task' do
     it 'shows error for non-existent repository' do
       expect do
         Rake::Task['sync:status'].invoke('unknown/repo')
-      end.to output(/Repository unknown\/repo not found/).to_stdout.and raise_error(SystemExit)
+      end.to output(%r{Repository unknown/repo not found}).to_stdout.and raise_error(SystemExit)
     end
   end
 
@@ -163,7 +163,7 @@ RSpec.describe 'sync:repository rake task' do
         expect(UnifiedSyncService).to receive(:new).with('ruby/ruby', fetch_all: false).and_return(service2)
         expect(service2).to receive(:sync!)
 
-        expect(Rails.logger).to receive(:error).with(/Sync failed for rails\/rails: API error/)
+        expect(Rails.logger).to receive(:error).with(%r{Sync failed for rails/rails: API error})
         expect(Rails.logger).to receive(:error).with(String)
 
         expect do

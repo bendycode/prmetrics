@@ -1,5 +1,5 @@
 # Define a rule to handle repository names as tasks
-rule(/\A[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+\z/) do |t|
+rule(%r{\A[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+\z}) do |t|
   # No-op rule to consume repository name arguments
 end
 
@@ -8,7 +8,7 @@ namespace :sync do
   task :repository, [:repo_name] => :environment do |_t, args|
     # Handle both bracketed and non-bracketed syntax
     # Only use ARGV if it looks like a repository name (owner/repo format, no special chars)
-    argv_repo = ARGV[1] if ARGV[1] && ARGV[1].match?(/\A[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+\z/)
+    argv_repo = ARGV[1] if ARGV[1] && ARGV[1].match?(%r{\A[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+\z})
     repo_name = args[:repo_name] || argv_repo
 
     unless repo_name
@@ -47,7 +47,7 @@ namespace :sync do
   task :repository_async, [:repo_name] => :environment do |_t, args|
     # Handle both bracketed and non-bracketed syntax
     # Only use ARGV if it looks like a repository name (owner/repo format, no special chars)
-    argv_repo = ARGV[1] if ARGV[1] && ARGV[1].match?(/\A[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+\z/)
+    argv_repo = ARGV[1] if ARGV[1] && ARGV[1].match?(%r{\A[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+\z})
     repo_name = args[:repo_name] || argv_repo
 
     unless repo_name
@@ -80,7 +80,7 @@ namespace :sync do
   task :status, [:repo_name] => :environment do |_t, args|
     # Handle both bracketed and non-bracketed syntax
     # Only use ARGV if it looks like a repository name (owner/repo format, no special chars)
-    argv_repo = ARGV[1] if ARGV[1] && ARGV[1].match?(/\A[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+\z/)
+    argv_repo = ARGV[1] if ARGV[1] && ARGV[1].match?(%r{\A[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+\z})
     repo_name = args[:repo_name] || argv_repo
 
     unless repo_name
