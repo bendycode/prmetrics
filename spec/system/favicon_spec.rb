@@ -6,20 +6,20 @@ RSpec.describe 'Favicon' do
       visit root_path
 
       # Check for standard favicon
-      expect(page).to have_css('link[rel="icon"][type="image/x-icon"][href="/favicon.ico"]', visible: false)
+      expect(page).to have_css('link[rel="icon"][type="image/x-icon"][href="/favicon.ico"]', visible: :hidden)
 
       # Check for PNG favicons
-      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="32x32"][href="/favicon-32x32.png"]', visible: false)
-      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="16x16"][href="/favicon-16x16.png"]', visible: false)
+      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="32x32"][href="/favicon-32x32.png"]', visible: :hidden)
+      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="16x16"][href="/favicon-16x16.png"]', visible: :hidden)
 
       # Check for Apple touch icon
-      expect(page).to have_css('link[rel="apple-touch-icon"][sizes="180x180"][href="/apple-touch-icon.png"]', visible: false)
+      expect(page).to have_css('link[rel="apple-touch-icon"][sizes="180x180"][href="/apple-touch-icon.png"]', visible: :hidden)
 
       # Check for manifest
-      expect(page).to have_css('link[rel="manifest"][href="/site.webmanifest"]', visible: false)
+      expect(page).to have_css('link[rel="manifest"][href="/site.webmanifest"]', visible: :hidden)
 
       # Check for theme color
-      expect(page).to have_css('meta[name="theme-color"][content="#3b82f6"]', visible: false)
+      expect(page).to have_css('meta[name="theme-color"][content="#3b82f6"]', visible: :hidden)
     end
 
     it 'includes all favicon variants on the admin pages' do
@@ -28,20 +28,20 @@ RSpec.describe 'Favicon' do
       visit users_path
 
       # Check for standard favicon
-      expect(page).to have_css('link[rel="icon"][type="image/x-icon"][href="/favicon.ico"]', visible: false)
+      expect(page).to have_css('link[rel="icon"][type="image/x-icon"][href="/favicon.ico"]', visible: :hidden)
 
       # Check for PNG favicons
-      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="32x32"][href="/favicon-32x32.png"]', visible: false)
-      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="16x16"][href="/favicon-16x16.png"]', visible: false)
+      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="32x32"][href="/favicon-32x32.png"]', visible: :hidden)
+      expect(page).to have_css('link[rel="icon"][type="image/png"][sizes="16x16"][href="/favicon-16x16.png"]', visible: :hidden)
 
       # Check for Apple touch icon
-      expect(page).to have_css('link[rel="apple-touch-icon"][sizes="180x180"][href="/apple-touch-icon.png"]', visible: false)
+      expect(page).to have_css('link[rel="apple-touch-icon"][sizes="180x180"][href="/apple-touch-icon.png"]', visible: :hidden)
 
       # Check for manifest
-      expect(page).to have_css('link[rel="manifest"][href="/site.webmanifest"]', visible: false)
+      expect(page).to have_css('link[rel="manifest"][href="/site.webmanifest"]', visible: :hidden)
 
       # Check for theme color
-      expect(page).to have_css('meta[name="theme-color"][content="#3b82f6"]', visible: false)
+      expect(page).to have_css('meta[name="theme-color"][content="#3b82f6"]', visible: :hidden)
     end
   end
 
