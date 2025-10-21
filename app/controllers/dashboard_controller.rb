@@ -78,6 +78,7 @@ class DashboardController < ApplicationController
     total_started = weeks.sum { |w| w.num_prs_started || 0 }
     total_merged = weeks.sum { |w| w.num_prs_merged || 0 }
     return 0 if total_started == 0
+
     ((total_merged.to_f / total_started) * 100).round(1)
   end
 
@@ -121,6 +122,7 @@ class DashboardController < ApplicationController
     end
 
     return nil if total_weight == 0
+
     (weighted_sum / total_weight).round(1)
   end
 

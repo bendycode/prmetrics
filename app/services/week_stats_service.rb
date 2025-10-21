@@ -105,6 +105,7 @@ class WeekStatsService
 
       time_to_review = ((first_review.submitted_at - pr.ready_for_review_at) / 1.hour).round(2)
       raise "negative time to review for pr #{pr.id}: #{time_to_review} hours" if time_to_review.negative?
+
       time_to_review
     end
 

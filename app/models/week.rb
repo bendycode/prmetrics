@@ -15,6 +15,7 @@ class Week < ApplicationRecord
 
   def self.find_by_date(date)
     return nil unless date
+
     # Convert to date for consistent lookup - use the date in the original timezone
     # to avoid edge cases where timezone conversion changes the date
     lookup_date = date.respond_to?(:to_date) ? date.to_date : date
