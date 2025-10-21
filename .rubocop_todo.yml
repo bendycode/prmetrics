@@ -235,13 +235,6 @@ RSpec/HookArgument:
     - 'spec/lib/tasks/sync_rake_spec.rb'
     - 'spec/rails_helper.rb'
 
-# Offense count: 13
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: .
-# SupportedStyles: is_expected, should
-RSpec/ImplicitExpect:
-  EnforcedStyle: should
-
 # Offense count: 35
 # Configuration parameters: Max, AllowedIdentifiers, AllowedPatterns.
 RSpec/IndexedLet:

@@ -7,18 +7,18 @@ RSpec.describe User do
   end
 
   describe 'validations' do
-    it { should validate_presence_of(:email) }
-    it { should validate_uniqueness_of(:email).case_insensitive }
+    it { is_expected.to validate_presence_of(:email) }
+    it { is_expected.to validate_uniqueness_of(:email).case_insensitive }
 
     context 'with valid user attributes' do
       subject { build(:user) }
 
-      it { should validate_presence_of(:role) }
+      it { is_expected.to validate_presence_of(:role) }
     end
   end
 
   describe 'enums' do
-    it { should define_enum_for(:role).with_values(regular_user: 0, admin: 1).with_default(:regular_user) }
+    it { is_expected.to define_enum_for(:role).with_values(regular_user: 0, admin: 1).with_default(:regular_user) }
   end
 
   describe 'devise modules' do
