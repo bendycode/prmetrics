@@ -24,7 +24,7 @@ FactoryBot.define do
     # Factory for contributors with placeholder github_id
     factory :legacy_user do
       sequence(:username) { |n| "legacy_user#{n}" }
-      sequence(:github_id) { |n| "placeholder_#{SecureRandom.hex(4)}" }
+      sequence(:github_id) { |_n| "placeholder_#{SecureRandom.hex(4)}" }
       sequence(:email) { |n| "legacy#{n}@example.com" }
     end
   end

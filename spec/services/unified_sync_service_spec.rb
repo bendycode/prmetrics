@@ -60,7 +60,7 @@ RSpec.describe UnifiedSyncService do
 
       # Capture the processor and call it
       processor = nil
-      allow(github_service).to receive(:fetch_and_store_pull_requests) do |name, opts|
+      allow(github_service).to receive(:fetch_and_store_pull_requests) do |_name, opts|
         processor = opts[:processor]
       end
 
@@ -147,7 +147,7 @@ RSpec.describe UnifiedSyncService do
 
       # Capture the processor and simulate PR processing
       processor = nil
-      allow(github_service).to receive(:fetch_and_store_pull_requests) do |name, opts|
+      allow(github_service).to receive(:fetch_and_store_pull_requests) do |_name, opts|
         processor = opts[:processor]
       end
 

@@ -5,7 +5,7 @@ end
 
 namespace :sync do
   desc "Unified sync: fetch PRs, generate weeks, and update stats with real-time progress"
-  task :repository, [:repo_name] => :environment do |t, args|
+  task :repository, [:repo_name] => :environment do |_t, args|
     # Handle both bracketed and non-bracketed syntax
     # Only use ARGV if it looks like a repository name (owner/repo format, no special chars)
     argv_repo = ARGV[1] if ARGV[1] && ARGV[1].match?(/\A[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+\z/)
@@ -44,7 +44,7 @@ namespace :sync do
   end
 
   desc "Unified sync with background job (async)"
-  task :repository_async, [:repo_name] => :environment do |t, args|
+  task :repository_async, [:repo_name] => :environment do |_t, args|
     # Handle both bracketed and non-bracketed syntax
     # Only use ARGV if it looks like a repository name (owner/repo format, no special chars)
     argv_repo = ARGV[1] if ARGV[1] && ARGV[1].match?(/\A[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+\z/)
@@ -77,7 +77,7 @@ namespace :sync do
   end
 
   desc "Check sync status for a repository"
-  task :status, [:repo_name] => :environment do |t, args|
+  task :status, [:repo_name] => :environment do |_t, args|
     # Handle both bracketed and non-bracketed syntax
     # Only use ARGV if it looks like a repository name (owner/repo format, no special chars)
     argv_repo = ARGV[1] if ARGV[1] && ARGV[1].match?(/\A[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+\z/)
