@@ -13,23 +13,23 @@ RSpec.describe PullRequestUser do
 
   it "is not valid without a pull request" do
     pull_request_user = PullRequestUser.new(user: user, role: "author")
-    expect(pull_request_user).to_not be_valid
+    expect(pull_request_user).not_to be_valid
   end
 
   it "is not valid without a user" do
     pull_request_user = PullRequestUser.new(pull_request: pull_request, role: "author")
-    expect(pull_request_user).to_not be_valid
+    expect(pull_request_user).not_to be_valid
   end
 
   it "is not valid without a role" do
     pull_request_user = PullRequestUser.new(pull_request: pull_request, user: user)
-    expect(pull_request_user).to_not be_valid
+    expect(pull_request_user).not_to be_valid
   end
 
   it "validates uniqueness of user scoped to pull_request and role" do
     PullRequestUser.create!(pull_request: pull_request, user: user, role: "reviewer")
     duplicate = PullRequestUser.new(pull_request: pull_request, user: user, role: "reviewer")
-    expect(duplicate).to_not be_valid
+    expect(duplicate).not_to be_valid
     expect(duplicate.errors[:user_id]).to include("has already been taken")
   end
 

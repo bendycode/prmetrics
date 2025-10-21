@@ -300,18 +300,18 @@ RSpec.describe PullRequest do
 
   it "is not valid without a repository" do
     pull_request = PullRequest.new(number: 1, title: "Test PR", state: "open")
-    expect(pull_request).to_not be_valid
+    expect(pull_request).not_to be_valid
   end
 
   it "is not valid without a number" do
     pull_request = PullRequest.new(repository: repository, title: "Test PR", state: "open")
-    expect(pull_request).to_not be_valid
+    expect(pull_request).not_to be_valid
   end
 
   it "validates uniqueness of number scoped to repository" do
     create(:pull_request, repository: repository, number: 123)
     duplicate = build(:pull_request, repository: repository, number: 123)
-    expect(duplicate).to_not be_valid
+    expect(duplicate).not_to be_valid
     expect(duplicate.errors[:number]).to include("has already been taken")
   end
 

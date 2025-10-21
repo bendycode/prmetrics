@@ -12,12 +12,12 @@ RSpec.describe Review do
 
   it "is not valid without a pull request" do
     review = Review.new(state: "approved", submitted_at: Time.current)
-    expect(review).to_not be_valid
+    expect(review).not_to be_valid
   end
 
   it "is not valid without a state" do
     review = Review.new(pull_request: pull_request, submitted_at: Time.current)
-    expect(review).to_not be_valid
+    expect(review).not_to be_valid
   end
 
   it "belongs to a pull request" do
