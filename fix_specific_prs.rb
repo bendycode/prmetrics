@@ -35,7 +35,9 @@ problem_prs.each do |pr_number|
     if correct_week
       puts "  Should be in week: #{correct_week.week_number} (#{correct_week.begin_date} to #{correct_week.end_date})"
 
-      if pr.merged_week_id != correct_week.id
+      if pr.merged_week_id == correct_week.id
+        puts '  ✅ Already correctly associated'
+      else
         puts '  ❌ MISASSOCIATED - needs to be moved'
 
         if ARGV.include?('--apply')
@@ -44,8 +46,6 @@ problem_prs.each do |pr_number|
         else
           puts "  🔍 Would move to week #{correct_week.week_number} (dry run)"
         end
-      else
-        puts '  ✅ Already correctly associated'
       end
     else
       puts "  ⚠️  No week found for merge date #{pr.gh_merged_at}"
