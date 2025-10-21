@@ -57,7 +57,7 @@ RSpec.describe PullRequest do
 
       it 'returns nil when no week exists for the repository' do
         # Create a PR for a date where only repo2 has a week
-        week_repo2_only = create(:week, repository: repo2, week_number: 202302,
+        create(:week, repository: repo2, week_number: 202302,
                                 begin_date: Date.new(2023, 1, 9),
                                 end_date: Date.new(2023, 1, 15))
 
@@ -70,7 +70,7 @@ RSpec.describe PullRequest do
 
       it 'creates and assigns week when using ensure_weeks_exist_and_update_associations' do
         # Create a PR for a date where only repo2 has a week
-        week_repo2_only = create(:week, repository: repo2, week_number: 202302,
+        create(:week, repository: repo2, week_number: 202302,
                                 begin_date: Date.new(2023, 1, 9),
                                 end_date: Date.new(2023, 1, 15))
 

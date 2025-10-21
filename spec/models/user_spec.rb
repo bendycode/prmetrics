@@ -24,7 +24,7 @@ RSpec.describe User do
   describe 'devise modules' do
     it 'includes required devise modules' do
       expected_modules = [:invitable, :database_authenticatable, :recoverable,
-                         :rememberable, :validatable, :trackable]
+                          :rememberable, :validatable, :trackable]
       expect(User.devise_modules).to include(*expected_modules)
     end
   end

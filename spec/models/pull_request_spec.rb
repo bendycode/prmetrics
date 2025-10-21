@@ -16,7 +16,7 @@ RSpec.describe PullRequest do
 
     context 'with time_to_first_review' do
       it 'calculates weekday hours correctly for same day review' do
-        review = create(:review,
+        create(:review,
           pull_request: pull_request,
           author: contributor,
           submitted_at: Time.zone.local(2024, 1, 8, 17, 0, 0), # Monday 5 PM
@@ -29,7 +29,7 @@ RSpec.describe PullRequest do
       end
 
       it 'excludes weekend hours for review spanning a weekend' do
-        review = create(:review,
+        create(:review,
           pull_request: pull_request,
           author: contributor,
           submitted_at: Time.zone.local(2024, 1, 15, 13, 0, 0), # Next Monday 1 PM
@@ -52,7 +52,7 @@ RSpec.describe PullRequest do
           ready_for_review_at: Time.zone.local(2024, 1, 6, 10, 0, 0) # Saturday 10 AM
         )
 
-        review = create(:review,
+        create(:review,
           pull_request: weekend_pr,
           author: contributor,
           submitted_at: Time.zone.local(2024, 1, 8, 14, 0, 0), # Monday 2 PM
@@ -115,7 +115,7 @@ RSpec.describe PullRequest do
       pull_request.update!(ready_for_review_at: monday_9am)
 
       # Review submitted 2 hours later on same Monday
-      review = create(:review,
+      create(:review,
         pull_request: pull_request,
         author: contributor,
         submitted_at: monday_9am + 2.hours,
@@ -126,7 +126,7 @@ RSpec.describe PullRequest do
     end
 
     it 'should return nil when all reviews are submitted before ready_for_review_at' do
-      review = create(:review,
+      create(:review,
         pull_request: pull_request,
         author: contributor,
         submitted_at: 2.days.ago,
@@ -143,7 +143,7 @@ RSpec.describe PullRequest do
       pull_request.update!(ready_for_review_at: monday_9am)
 
       # Earlier invalid review (before ready_for_review_at)
-      early_review = create(:review,
+      create(:review,
         pull_request: pull_request,
         author: contributor,
         submitted_at: monday_9am - 1.hour,
@@ -168,7 +168,7 @@ RSpec.describe PullRequest do
       week = create(:week, repository: repository, begin_date: 1.week.ago, end_date: Date.today)
 
       # Earlier invalid review
-      early_review = create(:review,
+      create(:review,
         pull_request: pull_request,
         author: contributor,
         submitted_at: 2.days.ago,
@@ -179,7 +179,7 @@ RSpec.describe PullRequest do
       expect(pull_request.first_review_week).to be_nil
 
       # Add a valid review
-      valid_review = create(:review,
+      create(:review,
         pull_request: pull_request,
         author: contributor,
         submitted_at: 12.hours.ago,
@@ -197,7 +197,7 @@ RSpec.describe PullRequest do
         ready_for_review_at: nil
       )
 
-      review = create(:review,
+      create(:review,
         pull_request: pr_without_ready,
         author: contributor,
         submitted_at: Time.current,

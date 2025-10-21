@@ -188,7 +188,7 @@ RSpec.describe Week do
           current_week
 
           # PR 1: Created Monday, merged Friday (within same week)
-          pr1 = create(:pull_request,
+          create(:pull_request,
             repository: repository,
             author: author,
             number: 7,
@@ -199,7 +199,7 @@ RSpec.describe Week do
           )
 
           # PR 2: Created Monday, merged Wednesday
-          pr2 = create(:pull_request,
+          create(:pull_request,
             repository: repository,
             author: author,
             number: 8,

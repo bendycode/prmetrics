@@ -64,7 +64,7 @@ RSpec.describe 'Repository cascade delete' do
     it 'deletes Contributor records that have no other pull requests' do
       # Create another repository with a PR by contributor1
       other_repo = create(:repository)
-      other_pr = create(:pull_request, repository: other_repo, author: contributor1)
+      create(:pull_request, repository: other_repo, author: contributor1)
 
       expect { repository.destroy }.to change { Contributor.count }.by(-1)
 

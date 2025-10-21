@@ -14,7 +14,7 @@ RSpec.describe Review do
     describe 'automatic first review week assignment' do
       it 'assigns the first review week from the correct repository' do
         # Create a review that should trigger week assignment
-        review = create(:review,
+        create(:review,
           pull_request: pr,
           author: author,
           submitted_at: Date.new(2023, 1, 5).to_time,
@@ -30,7 +30,7 @@ RSpec.describe Review do
         # Delete the week from repo1 so only repo2 has a week for this date
         week_repo1.destroy
 
-        review = create(:review,
+        create(:review,
           pull_request: pr,
           author: author,
           submitted_at: Date.new(2023, 1, 5).to_time,
@@ -44,7 +44,7 @@ RSpec.describe Review do
 
       it 'updates first review week when earlier review is added' do
         # Create initial review
-        later_review = create(:review,
+        create(:review,
           pull_request: pr,
           author: author,
           submitted_at: Date.new(2023, 1, 6).to_time,
@@ -55,7 +55,7 @@ RSpec.describe Review do
         expect(pr.first_review_week).to eq(week_repo1)
 
         # Create earlier review
-        earlier_review = create(:review,
+        create(:review,
           pull_request: pr,
           author: create(:contributor), # Different author
           submitted_at: Date.new(2023, 1, 4).to_time,
