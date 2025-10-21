@@ -45,15 +45,6 @@ Layout/FirstArgumentIndentation:
   Exclude:
     - 'fix_all_week_associations.rb'
 
-# Offense count: 7
-# This cop supports safe autocorrection (--autocorrect).
-Layout/MultilineBlockLayout:
-  Exclude:
-    - 'spec/controllers/dashboard_controller_spec.rb'
-    - 'spec/lib/tasks/sync_rake_spec.rb'
-    - 'spec/models/week_spec.rb'
-    - 'spec/services/unified_sync_service_spec.rb'
-
 # Offense count: 6
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: AllowForAlignment, EnforcedStyleForExponentOperator, EnforcedStyleForRationalLiterals.
