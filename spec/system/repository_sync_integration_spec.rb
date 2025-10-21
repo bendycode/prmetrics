@@ -14,8 +14,8 @@ RSpec.describe 'Repository Sync Integration' do
     it 'triggers the sync job and ensures UpdateRepositoryStatsJob works' do
       # Create some test data that will be used by UpdateRepositoryStatsJob
       create(:pull_request, repository: repository,
-             gh_created_at: 1.week.ago,
-             ready_for_review_at: 1.week.ago)
+                            gh_created_at: 1.week.ago,
+                            ready_for_review_at: 1.week.ago)
 
       visit repository_path(repository)
 

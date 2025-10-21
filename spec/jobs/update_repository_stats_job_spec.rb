@@ -8,12 +8,12 @@ RSpec.describe UpdateRepositoryStatsJob do
     before do
       # Create some pull requests with various dates
       create(:pull_request, repository: repository,
-             gh_created_at: 2.weeks.ago,
-             ready_for_review_at: 2.weeks.ago)
+                            gh_created_at: 2.weeks.ago,
+                            ready_for_review_at: 2.weeks.ago)
       create(:pull_request, repository: repository,
-             gh_created_at: 1.week.ago,
-             ready_for_review_at: 1.week.ago,
-             gh_merged_at: 3.days.ago)
+                            gh_created_at: 1.week.ago,
+                            ready_for_review_at: 1.week.ago,
+                            gh_merged_at: 3.days.ago)
     end
 
     it 'generates weeks for the repository' do

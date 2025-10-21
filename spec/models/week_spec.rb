@@ -389,19 +389,19 @@ RSpec.describe Week do
         context 'with PRs approved at different times' do
           let!(:fresh_pr) {
             create(:pull_request, :approved_days_ago, days_ago: 5,
-                   repository: repository, gh_created_at: 60.days.ago)
+                                                      repository: repository, gh_created_at: 60.days.ago)
           }
           let!(:late_pr1) {
             create(:pull_request, :approved_days_ago, days_ago: 10,
-                   repository: repository, gh_created_at: 60.days.ago)
+                                                      repository: repository, gh_created_at: 60.days.ago)
           }
           let!(:late_pr2) {
             create(:pull_request, :approved_days_ago, days_ago: 27,
-                   repository: repository, gh_created_at: 60.days.ago)
+                                                      repository: repository, gh_created_at: 60.days.ago)
           }
           let!(:stale_pr) {
             create(:pull_request, :approved_days_ago, days_ago: 40,
-                   repository: repository, gh_created_at: 60.days.ago)
+                                                      repository: repository, gh_created_at: 60.days.ago)
           }
 
           it '#late_prs returns PRs approved 8-27 days ago relative to week end_date' do
