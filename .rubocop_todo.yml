@@ -578,15 +578,6 @@ RSpec/ReceiveMessages:
     - 'spec/services/github_service_spec.rb'
     - 'spec/services/unified_sync_service_spec.rb'
 
-# Offense count: 8
-# This cop supports safe autocorrection (--autocorrect).
-RSpec/ScatteredLet:
-  Exclude:
-    - 'spec/controllers/contributors_controller_spec.rb'
-    - 'spec/controllers/pull_request_users_controller_spec.rb'
-    - 'spec/controllers/pull_requests_controller_spec.rb'
-    - 'spec/controllers/reviews_controller_spec.rb'
-
 # Offense count: 4
 # This cop supports safe autocorrection (--autocorrect).
 RSpec/SortMetadata:

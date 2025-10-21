@@ -2,14 +2,14 @@ require 'rails_helper'
 
 RSpec.describe ReviewsController do
   let(:user) { create(:user, :admin) }
+  let(:pull_request) { create(:pull_request) }
+  let(:author) { create(:contributor) }
+  let(:review) { create(:review, pull_request: pull_request, author: author) }
 
   before do
     sign_in user
   end
 
-  let(:pull_request) { create(:pull_request) }
-  let(:author) { create(:contributor) }
-  let(:review) { create(:review, pull_request: pull_request, author: author) }
 
   describe "GET #index" do
     it "returns http success" do

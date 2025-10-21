@@ -2,12 +2,12 @@ require 'rails_helper'
 
 RSpec.describe ContributorsController do
   let(:user) { create(:user, :admin) }
+  let(:contributor) { create(:contributor) }
 
   before do
     sign_in user
   end
 
-  let(:contributor) { create(:contributor) }
 
   describe "GET #index" do
     it "returns http success" do
