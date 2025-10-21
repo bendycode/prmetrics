@@ -33,3 +33,11 @@ RSpec/DescribeClass:
     - 'spec/requests/**/*'
     - 'spec/lib/tasks/**/*'
     - 'spec/models/*_cascade_delete_spec.rb'
+
+# Allow negation matchers after visit in authorization specs
+# These specs specifically test absence of UI elements for unauthorized users
+Capybara/NegationMatcherAfterVisit:
+  Exclude:
+    - 'spec/features/authentication_spec.rb'
+    - 'spec/system/user_role_authorization_spec.rb'
+    - 'spec/system/week_navigation_spec.rb'
