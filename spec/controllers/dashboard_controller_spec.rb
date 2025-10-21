@@ -92,6 +92,5 @@ RSpec.describe DashboardController do
         end
       end
     end
-
   end
 end
