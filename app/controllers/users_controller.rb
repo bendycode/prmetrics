@@ -50,6 +50,7 @@ class UsersController < ApplicationController
 
     # Use User model's last_admin? method
     return true unless @user.admin?
+
     !User.last_admin?(@user)
   end
 end
