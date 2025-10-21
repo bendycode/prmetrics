@@ -569,15 +569,6 @@ RSpec/ReceiveMessages:
     - 'spec/services/github_service_spec.rb'
     - 'spec/services/unified_sync_service_spec.rb'
 
-# Offense count: 4
-# This cop supports safe autocorrection (--autocorrect).
-RSpec/SortMetadata:
-  Exclude:
-    - 'spec/rails_helper.rb'
-    - 'spec/system/dashboard_late_stale_prs_chart_spec.rb'
-    - 'spec/system/user_role_authorization_spec.rb'
-    - 'spec/system/week_navigation_spec.rb'
-
 # Offense count: 16
 RSpec/StubbedMock:
   Exclude:
