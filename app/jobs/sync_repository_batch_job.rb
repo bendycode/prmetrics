@@ -240,26 +240,22 @@ class SyncRepositoryBatchJob < ApplicationJob
     begin
       yield
     rescue Octokit::TooManyRequests => e
-      if retries < 5
-        wait_time = calculate_wait_time(e.response_headers, retries)
-        Rails.logger.warn "Rate limit exceeded. Waiting for #{wait_time} seconds before retrying..."
-        sleep(wait_time)
-        retries += 1
-        retry
-      else
-        raise "Max retries reached. Unable to complete the request due to rate limiting."
-      end
+      raise "Max retries reached. Unable to complete the request due to rate limiting." unless retries < 5
+
+      wait_time = calculate_wait_time(e.response_headers, retries)
+      Rails.logger.warn "Rate limit exceeded. Waiting for #{wait_time} seconds before retrying..."
+      sleep(wait_time)
+      retries += 1
+      retry
     rescue Faraday::ConnectionFailed, Net::OpenTimeout => e
       Rails.logger.warn "ConnectionFailed or OpenTimeout error caught. retries: #{retries}"
-      if retries < 5
-        wait_time = 5 * (2**retries) # exponential backoff
-        Rails.logger.warn "Connection error: #{e.message}. Retrying in #{wait_time} seconds..."
-        sleep(wait_time)
-        retries += 1
-        retry
-      else
-        raise "Max retries reached. Unable to complete the request due to connection issues."
-      end
+      raise "Max retries reached. Unable to complete the request due to connection issues." unless retries < 5
+
+      wait_time = 5 * (2**retries) # exponential backoff
+      Rails.logger.warn "Connection error: #{e.message}. Retrying in #{wait_time} seconds..."
+      sleep(wait_time)
+      retries += 1
+      retry
     end
   end
 

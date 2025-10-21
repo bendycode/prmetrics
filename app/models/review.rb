@@ -35,8 +35,8 @@ class Review < ApplicationRecord
     # Use repository-scoped week lookup to prevent cross-repository associations
     new_week = first_review ? pull_request.repository.weeks.find_by_date(first_review.submitted_at) : nil
 
-    if pull_request.first_review_week != new_week
-      pull_request.update_column(:first_review_week_id, new_week&.id)
-    end
+    return unless pull_request.first_review_week != new_week
+
+    pull_request.update_column(:first_review_week_id, new_week&.id)
   end
 end

@@ -70,11 +70,11 @@ class UnifiedSyncService
 
     # Step 2: Fetch recent review activity (only for incremental sync)
     # This catches PRs that got new reviews but weren't updated themselves
-    unless @fetch_all
-      log_progress("Fetching recent review activity...")
-      review_comments_processed = github_service.fetch_recent_review_activity(@repo_name)
-      log_progress("Processed #{review_comments_processed} recent review comments")
-    end
+    return if @fetch_all
+
+    log_progress("Fetching recent review activity...")
+    review_comments_processed = github_service.fetch_recent_review_activity(@repo_name)
+    log_progress("Processed #{review_comments_processed} recent review comments")
   end
 
   def process_pull_request(pr_data)
@@ -99,9 +99,9 @@ class UnifiedSyncService
     end
 
     # Log progress every 10 PRs or for the last one
-    if @processed_prs % 10 == 0 || @processed_prs == @total_prs
-      log_progress("Processed #{@processed_prs} pull requests...")
-    end
+    return unless @processed_prs % 10 == 0 || @processed_prs == @total_prs
+
+    log_progress("Processed #{@processed_prs} pull requests...")
   end
 
   def track_created_weeks(pull_request)
