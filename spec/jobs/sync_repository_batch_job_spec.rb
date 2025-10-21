@@ -439,7 +439,6 @@ RSpec.describe SyncRepositoryBatchJob do
       expect(pr.number).to eq(999)
       expect(pr.author.username).to eq('testuser')
     end
-
   end
 
   describe 'integration with process_single_pull_request' do
