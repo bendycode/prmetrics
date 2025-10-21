@@ -21,7 +21,7 @@ RSpec.describe DashboardController do
 
       it "shows all repositories" do
         get :index
-        expect(assigns(:repositories)).to match_array([repo1, repo2])
+        expect(assigns(:repositories)).to contain_exactly(repo1, repo2)
       end
 
       it "aggregates data from all repositories" do
@@ -39,7 +39,7 @@ RSpec.describe DashboardController do
       it "shows filtered week data" do
         get :index, params: { repository_id: repo1.id }
         chart_weeks = assigns(:chart_weeks)
-        expect(chart_weeks).to match_array([week1])
+        expect(chart_weeks).to contain_exactly(week1)
       end
     end
 

@@ -517,14 +517,6 @@ RSpec/LetSetup:
     - 'spec/system/pull_request_navigation_spec.rb'
     - 'spec/system/week_navigation_spec.rb'
 
-# Offense count: 8
-# This cop supports safe autocorrection (--autocorrect).
-RSpec/MatchArray:
-  Exclude:
-    - 'spec/controllers/dashboard_controller_spec.rb'
-    - 'spec/controllers/users_controller_spec.rb'
-    - 'spec/models/week_spec.rb'
-
 # Offense count: 63
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: have_received, receive
