@@ -51,25 +51,6 @@ Layout/CommentIndentation:
   Exclude:
     - 'app/models/week.rb'
 
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EmptyLineBetweenMethodDefs, EmptyLineBetweenClassDefs, EmptyLineBetweenModuleDefs, DefLikeMacros, AllowAdjacentOneLineDefs, NumberOfEmptyLines.
-Layout/EmptyLineBetweenDefs:
-  Exclude:
-    - 'app/services/github_service.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Layout/EmptyLines:
-  Exclude:
-    - 'app/services/github_service.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Layout/EmptyLinesAfterModuleInclusion:
-  Exclude:
-    - 'spec/system/repository_sync_integration_spec.rb'
-
 # Offense count: 3
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: EnforcedStyle.
