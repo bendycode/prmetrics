@@ -632,13 +632,6 @@ Style/RedundantFetchBlock:
   Exclude:
     - 'config/puma.rb'
 
-# Offense count: 2
-# This cop supports safe autocorrection (--autocorrect).
-Style/RedundantRegexpEscape:
-  Exclude:
-    - 'app/models/repository.rb'
-
-
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).
 Style/RescueModifier:
