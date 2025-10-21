@@ -48,17 +48,17 @@ RSpec.describe GithubService do
     let(:github_user) { double('github_user', login: 'author', name: 'Author', email: 'author@example.com', id: '456', avatar_url: 'https://example.com/avatar.png') }
     let(:pr_data) do
       double('pr_data',
-        number: 123,
-        title: 'Test PR',
-        state: 'open',
-        draft: false,
-        user: github_user,
-        created_at: 2.days.ago,
-        updated_at: 1.day.ago,
-        merged_at: nil,
-        closed_at: nil,
-        merged_by: nil
-      )
+             number: 123,
+             title: 'Test PR',
+             state: 'open',
+             draft: false,
+             user: github_user,
+             created_at: 2.days.ago,
+             updated_at: 1.day.ago,
+             merged_at: nil,
+             closed_at: nil,
+             merged_by: nil
+            )
     end
 
     before do

@@ -8,20 +8,20 @@ RSpec.describe PullRequest do
   describe 'weekday hours calculation' do
     let(:pull_request) do
       create(:pull_request,
-        repository: repository,
-        author: author,
-        ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0) # Monday 9 AM
-      )
+             repository: repository,
+             author: author,
+             ready_for_review_at: Time.zone.local(2024, 1, 8, 9, 0, 0) # Monday 9 AM
+            )
     end
 
     context 'with time_to_first_review' do
       it 'calculates weekday hours correctly for same day review' do
         create(:review,
-          pull_request: pull_request,
-          author: contributor,
-          submitted_at: Time.zone.local(2024, 1, 8, 17, 0, 0), # Monday 5 PM
-          state: 'approved'
-        )
+               pull_request: pull_request,
+               author: contributor,
+               submitted_at: Time.zone.local(2024, 1, 8, 17, 0, 0), # Monday 5 PM
+               state: 'approved'
+              )
 
         # From Monday 9am to Monday 5pm = 8 hours
         expect(pull_request.time_to_first_review).to eq(8.hours)
@@ -30,11 +30,11 @@ RSpec.describe PullRequest do
 
       it 'excludes weekend hours for review spanning a weekend' do
         create(:review,
-          pull_request: pull_request,
-          author: contributor,
-          submitted_at: Time.zone.local(2024, 1, 15, 13, 0, 0), # Next Monday 1 PM
-          state: 'approved'
-        )
+               pull_request: pull_request,
+               author: contributor,
+               submitted_at: Time.zone.local(2024, 1, 15, 13, 0, 0), # Next Monday 1 PM
+               state: 'approved'
+              )
 
         # Raw time would include weekend hours
         # From Monday 9am to next Monday 1pm = (7*24 + 4) = 172 hours
@@ -47,17 +47,17 @@ RSpec.describe PullRequest do
 
       it 'handles PR created on weekend, reviewed on weekday' do
         weekend_pr = create(:pull_request,
-          repository: repository,
-          author: author,
-          ready_for_review_at: Time.zone.local(2024, 1, 6, 10, 0, 0) # Saturday 10 AM
-        )
+                            repository: repository,
+                            author: author,
+                            ready_for_review_at: Time.zone.local(2024, 1, 6, 10, 0, 0) # Saturday 10 AM
+                           )
 
         create(:review,
-          pull_request: weekend_pr,
-          author: contributor,
-          submitted_at: Time.zone.local(2024, 1, 8, 14, 0, 0), # Monday 2 PM
-          state: 'approved'
-        )
+               pull_request: weekend_pr,
+               author: contributor,
+               submitted_at: Time.zone.local(2024, 1, 8, 14, 0, 0), # Monday 2 PM
+               state: 'approved'
+              )
 
         # Raw time would be from Saturday 10am to Monday 2pm = 52 hours
         expect(weekend_pr.raw_time_to_first_review).to be_within(0.1).of(52.0)
@@ -103,10 +103,10 @@ RSpec.describe PullRequest do
     let(:user) { create(:user) }
     let(:pull_request) do
       create(:pull_request,
-        repository: repository,
-        author: author,
-        ready_for_review_at: 1.day.ago
-      )
+             repository: repository,
+             author: author,
+             ready_for_review_at: 1.day.ago
+            )
     end
 
     it 'should return a positive duration for reviews submitted after ready_for_review_at' do
@@ -116,22 +116,22 @@ RSpec.describe PullRequest do
 
       # Review submitted 2 hours later on same Monday
       create(:review,
-        pull_request: pull_request,
-        author: contributor,
-        submitted_at: monday_9am + 2.hours,
-        state: 'approved'
-      )
+             pull_request: pull_request,
+             author: contributor,
+             submitted_at: monday_9am + 2.hours,
+             state: 'approved'
+            )
 
       expect(pull_request.time_to_first_review).to be > 0.hours
     end
 
     it 'should return nil when all reviews are submitted before ready_for_review_at' do
       create(:review,
-        pull_request: pull_request,
-        author: contributor,
-        submitted_at: 2.days.ago,
-        state: 'approved'
-      )
+             pull_request: pull_request,
+             author: contributor,
+             submitted_at: 2.days.ago,
+             state: 'approved'
+            )
 
       # Should return nil as there are no valid reviews after ready_for_review_at
       expect(pull_request.time_to_first_review).to be_nil
@@ -144,19 +144,19 @@ RSpec.describe PullRequest do
 
       # Earlier invalid review (before ready_for_review_at)
       create(:review,
-        pull_request: pull_request,
-        author: contributor,
-        submitted_at: monday_9am - 1.hour,
-        state: 'approved'
-      )
+             pull_request: pull_request,
+             author: contributor,
+             submitted_at: monday_9am - 1.hour,
+             state: 'approved'
+            )
 
       # Later valid review - 3 hours after ready_for_review_at
       valid_review = create(:review,
-        pull_request: pull_request,
-        author: contributor,
-        submitted_at: monday_9am + 3.hours,
-        state: 'approved'
-      )
+                            pull_request: pull_request,
+                            author: contributor,
+                            submitted_at: monday_9am + 3.hours,
+                            state: 'approved'
+                           )
 
       # Should use the valid review for calculation, which is > 0
       expect(pull_request.time_to_first_review).to be > 0.hours
@@ -169,22 +169,22 @@ RSpec.describe PullRequest do
 
       # Earlier invalid review
       create(:review,
-        pull_request: pull_request,
-        author: contributor,
-        submitted_at: 2.days.ago,
-        state: 'approved'
-      )
+             pull_request: pull_request,
+             author: contributor,
+             submitted_at: 2.days.ago,
+             state: 'approved'
+            )
 
       pull_request.update_week_associations
       expect(pull_request.first_review_week).to be_nil
 
       # Add a valid review
       create(:review,
-        pull_request: pull_request,
-        author: contributor,
-        submitted_at: 12.hours.ago,
-        state: 'approved'
-      )
+             pull_request: pull_request,
+             author: contributor,
+             submitted_at: 12.hours.ago,
+             state: 'approved'
+            )
 
       pull_request.update_week_associations
       expect(pull_request.first_review_week).to eq(week)
@@ -192,17 +192,17 @@ RSpec.describe PullRequest do
 
     it 'returns nil for time_to_first_review when ready_for_review_at is nil' do
       pr_without_ready = create(:pull_request,
-        repository: repository,
-        author: author,
-        ready_for_review_at: nil
-      )
+                                repository: repository,
+                                author: author,
+                                ready_for_review_at: nil
+                               )
 
       create(:review,
-        pull_request: pr_without_ready,
-        author: contributor,
-        submitted_at: Time.current,
-        state: 'approved'
-      )
+             pull_request: pr_without_ready,
+             author: contributor,
+             submitted_at: Time.current,
+             state: 'approved'
+            )
 
       expect(pr_without_ready.time_to_first_review).to be_nil
     end

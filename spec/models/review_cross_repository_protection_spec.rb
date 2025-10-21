@@ -15,11 +15,11 @@ RSpec.describe Review do
       it 'assigns the first review week from the correct repository' do
         # Create a review that should trigger week assignment
         create(:review,
-          pull_request: pr,
-          author: author,
-          submitted_at: Date.new(2023, 1, 5).to_time,
-          state: 'APPROVED'
-        )
+               pull_request: pr,
+               author: author,
+               submitted_at: Date.new(2023, 1, 5).to_time,
+               state: 'APPROVED'
+              )
 
         pr.reload
         expect(pr.first_review_week).to eq(week_repo1)
@@ -31,11 +31,11 @@ RSpec.describe Review do
         week_repo1.destroy
 
         create(:review,
-          pull_request: pr,
-          author: author,
-          submitted_at: Date.new(2023, 1, 5).to_time,
-          state: 'APPROVED'
-        )
+               pull_request: pr,
+               author: author,
+               submitted_at: Date.new(2023, 1, 5).to_time,
+               state: 'APPROVED'
+              )
 
         pr.reload
         # Should be nil because the PR's repository doesn't have a week for this date
@@ -45,22 +45,22 @@ RSpec.describe Review do
       it 'updates first review week when earlier review is added' do
         # Create initial review
         create(:review,
-          pull_request: pr,
-          author: author,
-          submitted_at: Date.new(2023, 1, 6).to_time,
-          state: 'APPROVED'
-        )
+               pull_request: pr,
+               author: author,
+               submitted_at: Date.new(2023, 1, 6).to_time,
+               state: 'APPROVED'
+              )
 
         pr.reload
         expect(pr.first_review_week).to eq(week_repo1)
 
         # Create earlier review
         create(:review,
-          pull_request: pr,
-          author: create(:contributor), # Different author
-          submitted_at: Date.new(2023, 1, 4).to_time,
-          state: 'COMMENTED'
-        )
+               pull_request: pr,
+               author: create(:contributor), # Different author
+               submitted_at: Date.new(2023, 1, 4).to_time,
+               state: 'COMMENTED'
+              )
 
         pr.reload
         # Week should still be the same since both dates are in the same week
