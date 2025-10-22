@@ -224,6 +224,12 @@ These features leverage AI/ML to provide intelligent insights and predictions ba
 - JIRA integration
 - CI/CD pipeline metrics
 - Third-party webhooks
+- **Ninety.io Integration**
+  - Automatically record ninety.io scoreboard updates weekly via API
+  - Sync scoreboard metrics to prmetrics for unified analytics
+  - Similar pattern to existing GitHub sync functionality
+  - Scheduled weekly via Sidekiq job or GitHub Actions
+  - Requires ninety.io API authentication and data model design
 
 ## Technical Improvements
 
