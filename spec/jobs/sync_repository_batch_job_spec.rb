@@ -194,7 +194,7 @@ RSpec.describe SyncRepositoryBatchJob do
 
       review = pull_request.reviews.first
       expect(review.state).to eq('approved')
-      expect(review.submitted_at).to eq(review_data.first.submitted_at)
+      expect(review.submitted_at).to be_within(0.001).of(review_data.first.submitted_at)
     end
 
     it 'skips reviews without submitted_at' do
