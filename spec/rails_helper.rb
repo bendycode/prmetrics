@@ -20,9 +20,7 @@ SimpleCov.start 'rails' do
   # Only enforce minimum coverage when running full test suite
   # Check if we're running all specs (via rake or rspec without specific files)
   running_full_suite = ARGV.empty? || ARGV.any? { |arg| arg.include?('spec/**') || arg == 'spec' }
-  if running_full_suite
-    minimum_coverage 84.35
-  end
+  minimum_coverage 84.35 if running_full_suite
 end
 
 # This file is copied to spec/ when you run 'rails generate rspec:install'

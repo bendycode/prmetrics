@@ -30,9 +30,7 @@ class HealthController < ApplicationController
     # status[:services][:github] = check_github_api
 
     # Overall status
-    if status[:services].values.any? { |s| s[:status] != 'ok' }
-      status[:status] = 'error'
-    end
+    status[:status] = 'error' if status[:services].values.any? { |s| s[:status] != 'ok' }
 
     status
   end
@@ -49,9 +47,7 @@ class HealthController < ApplicationController
     redis_config = { url: redis_url }
 
     # Handle Heroku Redis SSL
-    if redis_url.start_with?('rediss://')
-      redis_config[:ssl_params] = { verify_mode: OpenSSL::SSL::VERIFY_NONE }
-    end
+    redis_config[:ssl_params] = { verify_mode: OpenSSL::SSL::VERIFY_NONE } if redis_url.start_with?('rediss://')
 
     redis = Redis.new(redis_config)
     redis.ping

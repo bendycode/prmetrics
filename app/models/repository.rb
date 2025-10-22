@@ -23,9 +23,7 @@ class Repository < ApplicationRecord
     return if name.blank?
 
     # Auto-generate URL from name if not provided
-    if url.blank? && name.present?
-      self.url = "https://github.com/#{name}"
-    end
+    self.url = "https://github.com/#{name}" if url.blank? && name.present?
 
     # Ensure URL ends without .git
     self.url = url.chomp('.git') if url.present?

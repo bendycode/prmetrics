@@ -132,9 +132,7 @@ class UnifiedSyncService
       progress = ((index + 1).to_f / @updated_weeks.size * 100).round
       @repository.update_column(:sync_progress, 90 + (progress * 0.1)) # Last 10% for stats
 
-      if (index + 1) % 5 == 0 || index == @updated_weeks.size - 1
-        log_progress("Updated statistics for #{index + 1}/#{@updated_weeks.size} weeks")
-      end
+      log_progress("Updated statistics for #{index + 1}/#{@updated_weeks.size} weeks") if (index + 1) % 5 == 0 || index == @updated_weeks.size - 1
     end
   end
 

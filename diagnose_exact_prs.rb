@@ -70,9 +70,7 @@ problem_weeks.each do |week_number|
     timestamp_not_associated.each do |num, week_id|
       pr = PullRequest.find_by(number: num)
       puts "  PR ##{num}: currently associated with week_id #{week_id}"
-      if pr
-        puts "    Merged at: #{pr.gh_merged_at}"
-      end
+      puts "    Merged at: #{pr.gh_merged_at}" if pr
     end
   end
 
@@ -116,13 +114,9 @@ problem_weeks.each do |week_number|
   extra_associated = associated_nums - in_range_nums
   missing_associated = in_range_nums - associated_nums
 
-  if extra_associated.any?
-    puts "  Extra PRs associated: #{extra_associated.join(', ')}"
-  end
+  puts "  Extra PRs associated: #{extra_associated.join(', ')}" if extra_associated.any?
 
-  if missing_associated.any?
-    puts "  PRs that should be associated: #{missing_associated.join(', ')}"
-  end
+  puts "  PRs that should be associated: #{missing_associated.join(', ')}" if missing_associated.any?
 end
 
 puts "\n" + ('=' * 80)

@@ -11,9 +11,7 @@ namespace :fix do
       service.update_stats
       updated += 1
 
-      if (index + 1) % 10 == 0
-        puts "  Progress: #{index + 1}/#{total_weeks} weeks updated"
-      end
+      puts "  Progress: #{index + 1}/#{total_weeks} weeks updated" if (index + 1) % 10 == 0
     end
 
     puts "✅ Successfully recalculated statistics for #{updated} weeks"

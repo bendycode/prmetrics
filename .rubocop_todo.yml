@@ -441,11 +441,6 @@ Style/IdenticalConditionalBranches:
   Exclude:
     - 'fix_specific_prs.rb'
 
-# Offense count: 52
-# This cop supports safe autocorrection (--autocorrect).
-Style/IfUnlessModifier:
-  Enabled: false
-
 # Offense count: 2
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: InverseMethods, InverseBlocks.

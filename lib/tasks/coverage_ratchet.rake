@@ -79,9 +79,7 @@ namespace :coverage do
       puts "   Latest:  #{current}% (last run)"
 
       overall_improvement = (baseline - 77.87).round(2)
-      if overall_improvement > 0
-        puts "\n   Total improvement: +#{overall_improvement}% 🎉"
-      end
+      puts "\n   Total improvement: +#{overall_improvement}% 🎉" if overall_improvement > 0
     else
       puts "\n❌ Missing coverage data. Run tests first."
     end

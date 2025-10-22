@@ -55,9 +55,7 @@ class GithubService
     # The unified sync will handle this separately
     WeekStatsService.update_all_weeks unless processor
 
-    if most_recent_update
-      repository.update(last_fetched_at: most_recent_update)
-    end
+    repository.update(last_fetched_at: most_recent_update) if most_recent_update
 
     Rails.logger.info "Processed #{total_processed} pull requests for #{repo_name}"
     Rails.logger.info "Most recent update: #{most_recent_update}"
@@ -262,9 +260,7 @@ class GithubService
   end
 
   def calculate_wait_time(headers, retry_count)
-    if headers.nil?
-      return exponential_backoff_starting_at_one_minute retry_count
-    end
+    return exponential_backoff_starting_at_one_minute retry_count if headers.nil?
 
     if headers['retry-after']
       headers['retry-after'].to_i
@@ -274,9 +270,7 @@ class GithubService
 
       # If we're still hitting rate limits and wait time is 0,
       # use exponential backoff instead
-      if wait_time == 0
-        wait_time = exponential_backoff_starting_at_one_minute retry_count
-      end
+      wait_time = exponential_backoff_starting_at_one_minute retry_count if wait_time == 0
 
       wait_time
     else

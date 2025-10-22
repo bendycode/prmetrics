@@ -100,25 +100,15 @@ namespace :sync do
     puts "Repository: #{repository.name}"
     puts "Sync Status: #{repository.sync_status || 'never synced'}"
 
-    if repository.sync_started_at
-      puts "Started: #{repository.sync_started_at.strftime('%Y-%m-%d %H:%M:%S')}"
-    end
+    puts "Started: #{repository.sync_started_at.strftime('%Y-%m-%d %H:%M:%S')}" if repository.sync_started_at
 
-    if repository.sync_completed_at
-      puts "Completed: #{repository.sync_completed_at.strftime('%Y-%m-%d %H:%M:%S')}"
-    end
+    puts "Completed: #{repository.sync_completed_at.strftime('%Y-%m-%d %H:%M:%S')}" if repository.sync_completed_at
 
-    if repository.sync_progress
-      puts "Progress: #{repository.sync_progress}%"
-    end
+    puts "Progress: #{repository.sync_progress}%" if repository.sync_progress
 
-    if repository.last_sync_error
-      puts "Last Error: #{repository.last_sync_error}"
-    end
+    puts "Last Error: #{repository.last_sync_error}" if repository.last_sync_error
 
-    if repository.last_fetched_at
-      puts "Last Fetched: #{repository.last_fetched_at.strftime('%Y-%m-%d %H:%M:%S')}"
-    end
+    puts "Last Fetched: #{repository.last_fetched_at.strftime('%Y-%m-%d %H:%M:%S')}" if repository.last_fetched_at
 
     puts "\nStatistics:"
     puts "  Pull Requests: #{repository.pull_requests.count}"

@@ -76,9 +76,7 @@ class SyncRepositoryBatchJob < ApplicationJob
     # Create/update author using proper GitHub integration
     user_data = pr_data.respond_to?(:user) ? pr_data.user : pr_data[:user]
     github_user = nil
-    if user_data
-      github_user = find_or_create_contributor(user_data)
-    end
+    github_user = find_or_create_contributor(user_data) if user_data
 
     # Determine proper ready_for_review_at using GitHub events
     draft_status = pr_data.respond_to?(:draft) ? pr_data.draft : pr_data[:draft]
@@ -260,9 +258,7 @@ class SyncRepositoryBatchJob < ApplicationJob
   end
 
   def calculate_wait_time(headers, retry_count)
-    if headers.nil?
-      return exponential_backoff_starting_at_one_minute retry_count
-    end
+    return exponential_backoff_starting_at_one_minute retry_count if headers.nil?
 
     if headers['retry-after']
       headers['retry-after'].to_i
@@ -272,9 +268,7 @@ class SyncRepositoryBatchJob < ApplicationJob
 
       # If we're still hitting rate limits and wait time is 0,
       # use exponential backoff instead
-      if wait_time == 0
-        wait_time = exponential_backoff_starting_at_one_minute retry_count
-      end
+      wait_time = exponential_backoff_starting_at_one_minute retry_count if wait_time == 0
 
       wait_time
     else

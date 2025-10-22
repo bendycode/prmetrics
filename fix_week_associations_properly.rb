@@ -29,9 +29,7 @@ puts "Found #{null_merge_with_week.count} PRs with NULL merge dates but week ass
 
 null_merge_with_week.each do |pr|
   puts "  PR ##{pr.number}: Removing invalid week association"
-  unless dry_run
-    pr.update_column(:merged_week_id, nil)
-  end
+  pr.update_column(:merged_week_id, nil) unless dry_run
   stats[:null_merge_fixed] += 1
 end
 
@@ -56,14 +54,10 @@ Week.includes(:repository).find_each do |week|
 
       if correct_week
         puts "  PR ##{pr.number}: Moving from week #{week.week_number} to #{correct_week.week_number}"
-        unless dry_run
-          pr.update_column(:merged_week_id, correct_week.id)
-        end
+        pr.update_column(:merged_week_id, correct_week.id) unless dry_run
       else
         puts "  PR ##{pr.number}: No week exists for merge date, removing association"
-        unless dry_run
-          pr.update_column(:merged_week_id, nil)
-        end
+        pr.update_column(:merged_week_id, nil) unless dry_run
       end
       stats[:misassociated_fixed] += 1
     end
@@ -79,9 +73,7 @@ PullRequest.where.not(gh_merged_at: nil).where(merged_week_id: nil).find_each do
 
   if week
     puts "  PR ##{pr.number}: Adding association to week #{week.week_number}"
-    unless dry_run
-      pr.update_column(:merged_week_id, week.id)
-    end
+    pr.update_column(:merged_week_id, week.id) unless dry_run
     stats[:missing_associations_added] += 1
   end
 end

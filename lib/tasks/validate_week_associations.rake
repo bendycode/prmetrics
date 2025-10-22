@@ -12,9 +12,7 @@ namespace :validate do
                          :closed_week).find_each do |pr|
       checked += 1
 
-      if (checked % 500) == 0
-        puts "  Progress: #{checked}/#{total_prs} PRs checked"
-      end
+      puts "  Progress: #{checked}/#{total_prs} PRs checked" if (checked % 500) == 0
 
       # Check merged week association
       if pr.gh_merged_at
@@ -63,9 +61,7 @@ namespace :validate do
         week.id, week.id, week.id, week.id
       ).count
 
-      if pr_count == 0
-        orphaned_weeks << week
-      end
+      orphaned_weeks << week if pr_count == 0
     end
 
     puts "\n📊 Validation Results:"
@@ -82,9 +78,7 @@ namespace :validate do
         puts "    Expected: week #{issue[:expected] || 'NULL'}"
       end
 
-      if inconsistent_prs.size > 10
-        puts "  ... and #{inconsistent_prs.size - 10} more"
-      end
+      puts "  ... and #{inconsistent_prs.size - 10} more" if inconsistent_prs.size > 10
 
       puts "\n🔧 To fix these issues, run: rake fix:week_associations"
     end
@@ -95,14 +89,10 @@ namespace :validate do
         puts "  Week #{week.week_number} (#{week.repository.name}): #{week.begin_date} - #{week.end_date}"
       end
 
-      if orphaned_weeks.size > 10
-        puts "  ... and #{orphaned_weeks.size - 10} more"
-      end
+      puts "  ... and #{orphaned_weeks.size - 10} more" if orphaned_weeks.size > 10
     end
 
-    if inconsistent_prs.empty? && orphaned_weeks.empty?
-      puts '✅ All week associations are consistent!'
-    end
+    puts '✅ All week associations are consistent!' if inconsistent_prs.empty? && orphaned_weeks.empty?
   end
 end
 
@@ -115,9 +105,7 @@ namespace :fix do
     total_prs = PullRequest.count
 
     PullRequest.find_each.with_index do |pr, index|
-      if (index + 1) % 500 == 0
-        puts "  Progress: #{index + 1}/#{total_prs} PRs processed"
-      end
+      puts "  Progress: #{index + 1}/#{total_prs} PRs processed" if (index + 1) % 500 == 0
 
       old_merged_week = pr.merged_week_id
       old_ready_week = pr.ready_for_review_week_id

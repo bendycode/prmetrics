@@ -120,9 +120,7 @@ puts '=' * 80
 overlaps = []
 Week.find_each do |week1|
   Week.where('id > ?', week1.id).where(repository_id: week1.repository_id).each do |week2|
-    if week1.begin_date <= week2.end_date && week2.begin_date <= week1.end_date
-      overlaps << [week1, week2]
-    end
+    overlaps << [week1, week2] if week1.begin_date <= week2.end_date && week2.begin_date <= week1.end_date
   end
 end
 
