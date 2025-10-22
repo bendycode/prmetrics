@@ -4,6 +4,45 @@ This document outlines future development plans for prmetrics. For completed wor
 
 ## Priority Roadmap
 
+### Phase 0: Critical Fixes (IMMEDIATE)
+
+**⚠️ Issues discovered in production deployment - highest priority**
+
+1. **Fix Week Association Data Integrity** 🚨
+   - 64 PRs have inconsistent week associations in production
+   - Symptoms: PRs associated with weeks from different repositories
+   - Impact: Dashboard statistics may be inaccurate
+   - Action: Run `rake fix:week_associations` to correct
+   - Prevention: Add validation to PullRequest model to prevent cross-repository week associations
+   - Timeline: Fix immediately, add validation within 1 week
+
+2. **Clean Up Orphaned Contributors**
+   - 3 orphaned contributors found in production (contributors with no PR associations)
+   - Determine if they should be deleted or re-associated
+   - Action: Run `rake cleanup:orphaned_contributors` or manual investigation
+   - Timeline: 1-2 days
+
+3. **Fix UI Sync State Bug** 🐛
+   - Repository sync buttons remain disabled after sync completion/failure
+   - Users cannot re-sync without page refresh
+   - Clear sync status flags when background jobs finish
+   - Prevent UI from showing "in progress" when no Sidekiq jobs are running
+   - Timeline: 2-3 days
+
+4. **Upgrade Puma to 7.0.3+** 🔧
+   - Current: 6.6.0
+   - Required: 7.0.3+ for Heroku Router 2.0 compatibility
+   - Heroku official recommendation
+   - Action: `bundle update puma && bundle exec rspec && git commit`
+   - Timeline: 1 day (test thoroughly)
+
+5. **Upgrade Ruby to 3.4.7** 🔐
+   - Current: 3.4.4
+   - Latest: 3.4.7 (includes security and bug fixes)
+   - Update `.ruby-version`, `Gemfile`, `Dockerfile`, `README.md`
+   - Test all gems for compatibility
+   - Timeline: 2-3 days
+
 ### Phase 1: Code Quality & Stability (Next 2-4 weeks)
 
 1. ✅ **Integrate Linting (RuboCop)** (In Progress)
@@ -192,7 +231,6 @@ These features leverage AI/ML to provide intelligent insights and predictions ba
 - Mobile-responsive design
 - Progressive Web App features
 - Complete brand identity implementation
-  - Add favicon using logo (multiple sizes for different devices) ✓
   - Improve favicon design for better visibility at small sizes
     - Consider simplified icon version for 16x16 and 32x32 sizes
     - Optimize contrast and visual weight for favicon contexts
@@ -234,48 +272,115 @@ These features leverage AI/ML to provide intelligent insights and predictions ba
 ## Technical Improvements
 
 ### High Priority
-- ✅ Upgrade Ruby version (Completed)
+- ✅ Upgrade Ruby version (Completed - Now in Phase 0)
   - Upgraded from Ruby 3.3.5 to Ruby 3.4.4
-  - Updated Gemfile, .ruby-version, Dockerfile
-  - Tested compatibility with all gems and Rails 7.1.4
-  - All tests passing (312 examples, 0 failures)
-- **Fix UI sync state bug**
-  - Repository sync buttons remain disabled after sync completion/failure
-  - Clear sync status flags when background jobs finish
-  - Prevent UI from showing "in progress" when no Sidekiq jobs are running
+  - Next: Upgrade to 3.4.7 (see Phase 0)
 - **Review and streamline deployment methods**
-  - Evaluate duplication between Procfile release phase and bin/deploy script
-  - Consider consolidating migration logic to single source of truth
-  - Simplify manual deployment workflow while maintaining safety checks
-  - Document recommended deployment practices and when to use each method
+  - **Issue**: Duplication between Procfile release phase and bin/deploy script
+  - **Goal**: Single source of truth for deployment logic
+  - **Actions**:
+    - Document when to use `git push heroku main` (auto) vs `bin/deploy` (manual)
+    - Consolidate migration running logic to one location
+    - Create deployment runbook with step-by-step procedures
+    - Add deployment checklist to CLAUDE.md
+  - **Timeline**: 1 week
 - **Simplify code coverage threshold management**
-  - Currently duplicated in both `.coverage_baseline` file and `spec/rails_helper.rb`
-  - Consolidate to single source of truth (likely `.coverage_baseline`)
-  - Update rails_helper.rb to read from `.coverage_baseline` file
-  - Ensures consistency and eliminates manual synchronization errors
-- **Rename user associations to contributor where it really meant contributor**
-  - Update PullRequestUser model to use `contributor` association instead of `user`
-  - Rename PullRequestUser model to ContributorPullRequest since it's joining with contributors, not users
-  - Change association references from `user` to `contributor` throughout codebase where that's appropriate
-  - Update corresponding controller logic and view references for clarity
-  - Ensure semantic consistency: User model for authentication, Contributor for PR participation
-  - **Note**: This item identified during multi-user access control implementation (Phase 1 complete)
-- Suppress autoprefixer warnings in test output
-  - Remove color-adjust deprecation warnings from rake/rspec runs
-  - Options: Update SB Admin 2 theme, patch CSS files, or configure autoprefixer
-  - Critical for maintaining clean test output and catching new warnings
-- Incremental statistics updates
-- Automatic cleanup of cancelled jobs
-- Sidekiq job monitoring improvements
+  - **Issue**: Coverage threshold duplicated in `.coverage_baseline` and `spec/rails_helper.rb`
+  - **Goal**: Single source of truth for coverage ratcheting
+  - **Actions**:
+    - Update `spec/rails_helper.rb` to read threshold from `.coverage_baseline`
+    - Add tests to verify threshold synchronization
+    - Document pattern in COVERAGE.md
+  - **Timeline**: 2-3 hours
+- **Rename user associations to contributor** (Semantic clarity)
+  - **Issue**: `PullRequestUser.user` confusingly points to Contributor model
+  - **Goal**: Code that reads naturally and matches domain model
+  - **Actions**:
+    - Rename `PullRequestUser` model to `PullRequestContributor`
+    - Update association from `belongs_to :user` to `belongs_to :contributor`
+    - Update all references in controllers, views, and tests
+    - Run full test suite to verify no regressions
+  - **Timeline**: 3-4 hours
+  - **Note**: User model consolidation already complete (see CHANGELOG)
+
+- **Suppress autoprefixer warnings in test output**
+  - **Issue**: color-adjust deprecation warnings clutter test output
+  - **Goal**: Clean test output to catch new warnings
+  - **Actions**:
+    - Option 1: Update autoprefixer configuration to suppress specific warnings
+    - Option 2: Update SB Admin 2 theme CSS to use new properties
+    - Option 3: Patch affected CSS files directly
+  - **Timeline**: 1-2 hours
+
+- **Incremental statistics updates** (Performance optimization)
+  - **Issue**: Week stats recalculated fully on each sync (slow for large repos)
+  - **Goal**: Update only changed weeks to improve sync performance
+  - **Actions**:
+    - Modify WeekStatsService to accept week range parameter
+    - Update sync jobs to only recalculate affected weeks
+    - Add tests for incremental vs full recalculation
+    - Measure performance improvement on large repositories
+  - **Timeline**: 1 week
+
+- **Automatic cleanup of cancelled jobs**
+  - **Issue**: Cancelled Sidekiq jobs leave repositories in "in_progress" state
+  - **Goal**: Auto-detect and clean up stale sync states
+  - **Actions**:
+    - Add periodic job to check for stale sync_status
+    - Reset repositories stuck "in_progress" for >30 minutes with no active job
+    - Add monitoring/alerting for cleanup events
+  - **Timeline**: 3-4 hours
+
+- **Sidekiq job monitoring improvements**
+  - **Issue**: Limited visibility into job failures and performance
+  - **Goal**: Better observability of background job health
+  - **Actions**:
+    - Add custom Sidekiq middleware for job timing
+    - Implement job failure notifications (email or Slack)
+    - Create dashboard for job metrics
+    - Add retry exhausted handling with alerts
+  - **Timeline**: 1-2 days
 
 ### Medium Priority
-- Improve rate limit messaging
-  - Convert seconds to human-readable format (e.g., "39 minutes 47 seconds")
-  - Add context about what's happening during the wait
-  - Consider showing progress or estimated completion time
-- View partial extraction
-- Service object standardization
-- Timestamp naming consistency
+- **Improve rate limit messaging**
+  - **Issue**: Rate limit wait times shown as raw seconds (e.g., "2387 seconds")
+  - **Goal**: User-friendly messaging during GitHub API rate limiting
+  - **Actions**:
+    - Convert seconds to "X hours Y minutes" format
+    - Add explanation of what's happening during rate limit wait
+    - Show progress bar or countdown timer
+    - Display when API quota will reset
+  - **Timeline**: 2-3 hours
+
+- **View partial extraction**
+  - **Issue**: Large view files with duplicated code
+  - **Goal**: DRY principles and maintainable views
+  - **Actions**:
+    - Identify repeated view patterns (cards, tables, charts)
+    - Extract to partials in `app/views/shared/`
+    - Use view components for complex UI elements
+    - Document partial usage patterns
+  - **Timeline**: 1 week
+
+- **Service object standardization**
+  - **Issue**: Inconsistent service object patterns across codebase
+  - **Goal**: Consistent, predictable service architecture
+  - **Actions**:
+    - Document standard service object pattern (initialize, call, result)
+    - Create BaseService class with common patterns
+    - Refactor existing services to match standard
+    - Add service object guidelines to ARCHITECTURE.md
+  - **Timeline**: 1 week
+
+- **Timestamp naming consistency**
+  - **Issue**: Mix of `gh_created_at` (GitHub) and `created_at` (Rails) naming
+  - **Goal**: Clear, consistent timestamp naming convention
+  - **Actions**:
+    - Document naming convention: `gh_*` for GitHub, `*_at` for local
+    - Audit all timestamp columns for naming clarity
+    - Create migration to rename confusing timestamps
+    - Update corresponding model code and tests
+  - **Timeline**: 3-4 hours
 
 ### Low Priority
 - Dead code removal
@@ -284,8 +389,35 @@ These features leverage AI/ML to provide intelligent insights and predictions ba
 
 ## Success Metrics
 
-- Code coverage > 90%
-- Page load times < 200ms
-- Zero N+1 queries
-- 100% uptime for critical paths
-- Sub-second PR data refresh
+### Current Status & Targets
+
+**Code Quality**
+- Code coverage: 84.48% → Target: 90% (incremental ratcheting)
+  - Current baseline: 84.48% (established 2025-06-03)
+  - Next milestone: 86% by end of Phase 1
+  - Final target: 90% by end of Phase 2
+
+**Performance**
+- Page load times: Baseline TBD → Target: < 200ms for all pages
+  - Establish baseline with performance monitoring (Phase 4)
+  - Optimize slowest pages first
+- N+1 queries: Currently tracked → Target: Zero in production
+  - Bullet gem alerts in development
+  - Query optimization tests prevent regressions
+
+**Reliability**
+- Uptime: Current ~99%+ → Target: 99.9% for critical paths
+  - Critical paths: Dashboard, repository sync, PR data display
+  - Implement health checks and monitoring (Phase 4)
+- Data sync freshness: Nightly (automated) → Target: < 1 hour for on-demand
+  - Nightly automated sync: ✅ Implemented
+  - Manual sync: Available via UI
+  - Incremental sync optimization: Phase 2
+
+**User Experience**
+- Sync feedback: Manual refresh → Target: Real-time progress updates
+  - Implement ActionCable live updates (Phase 4)
+  - Progress bars for long-running operations
+- Error messages: Generic → Target: Specific, actionable messages
+  - User-friendly rate limit messages (Medium Priority)
+  - Helpful error context throughout app

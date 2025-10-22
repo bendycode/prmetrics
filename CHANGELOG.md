@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Bundler Version Update**
+  - Automatically upgraded from 2.6.2 to 2.6.9 during Heroku deployment
+  - Maintains compatibility with latest Heroku buildpack
+  - No manual intervention required
 - **RuboCop Integration in Default Rake Tasks**
   - Added RuboCop linting to the standard `rake` command
   - Default task now runs `rubocop` first, then `spec`
