@@ -25,9 +25,7 @@ namespace :ci do
       next unless pr.gh_merged_at
 
       expected_week = Week.find_by_date(pr.gh_merged_at)
-      if pr.merged_week != expected_week
-        inconsistent_count += 1
-      end
+      inconsistent_count += 1 if pr.merged_week != expected_week
     end
 
     if inconsistent_count > 0
@@ -48,9 +46,7 @@ namespace :ci do
     stats_inconsistent = 0
     recent_weeks.each do |week|
       actual_merged = week.repository.pull_requests.where(merged_week_id: week.id).count
-      if week.num_prs_merged != actual_merged
-        stats_inconsistent += 1
-      end
+      stats_inconsistent += 1 if week.num_prs_merged != actual_merged
     end
 
     if stats_inconsistent > 0

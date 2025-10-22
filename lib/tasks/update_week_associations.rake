@@ -10,9 +10,7 @@ namespace :fix do
       pr.ensure_weeks_exist_and_update_associations
       updated += 1
 
-      if (index + 1) % 100 == 0
-        puts "  Progress: #{index + 1}/#{total_prs} PRs updated"
-      end
+      puts "  Progress: #{index + 1}/#{total_prs} PRs updated" if (index + 1) % 100 == 0
     end
 
     puts "✅ Successfully updated week associations for #{updated} pull requests"

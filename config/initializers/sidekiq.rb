@@ -7,9 +7,7 @@ redis_config = {
 }
 
 # If using Heroku Redis with SSL, disable SSL verification
-if ENV['REDIS_URL']&.start_with?('rediss://')
-  redis_config[:ssl_params] = { verify_mode: OpenSSL::SSL::VERIFY_NONE }
-end
+redis_config[:ssl_params] = { verify_mode: OpenSSL::SSL::VERIFY_NONE } if ENV['REDIS_URL']&.start_with?('rediss://')
 
 Sidekiq.configure_server do |config|
   config.redis = redis_config

@@ -38,9 +38,7 @@ Repository.includes(:pull_requests, :weeks).find_each do |repository|
   merged_prs.find_each.with_index do |pr, index|
     stats[:total_prs_checked] += 1
 
-    if (index + 1) % 100 == 0
-      puts "  Progress: #{index + 1}/#{merged_prs.count} PRs checked"
-    end
+    puts "  Progress: #{index + 1}/#{merged_prs.count} PRs checked" if (index + 1) % 100 == 0
 
     # Find the correct week for this PR's merge date
     correct_week = Week.find_by_date(pr.gh_merged_at)
@@ -49,9 +47,7 @@ Repository.includes(:pull_requests, :weeks).find_each do |repository|
       # No week exists for this merge date - this is expected for very old/new PRs
       if pr.merged_week_id.present?
         puts "  ⚠️  PR ##{pr.number}: No week exists for merge date #{pr.gh_merged_at}, setting to NULL"
-        unless dry_run
-          pr.update_column(:merged_week_id, nil)
-        end
+        pr.update_column(:merged_week_id, nil) unless dry_run
         stats[:null_associations_fixed] += 1
         repo_fixes += 1
       end
@@ -72,9 +68,7 @@ Repository.includes(:pull_requests, :weeks).find_each do |repository|
         stats[:misassociated_fixed] += 1
       end
 
-      unless dry_run
-        pr.update_column(:merged_week_id, correct_week.id)
-      end
+      pr.update_column(:merged_week_id, correct_week.id) unless dry_run
       repo_fixes += 1
     end
   end
@@ -99,9 +93,7 @@ if dry_run
   stats[:weeks_recalculated] = affected_weeks
 else
   Week.includes(:repository).find_each.with_index do |week, index|
-    if (index + 1) % 50 == 0
-      puts "  Progress: #{index + 1}/#{Week.count} weeks recalculated"
-    end
+    puts "  Progress: #{index + 1}/#{Week.count} weeks recalculated" if (index + 1) % 50 == 0
 
     service = WeekStatsService.new(week)
     service.update_stats
@@ -137,9 +129,7 @@ else
     correct_week = Week.find_by_date(pr.gh_merged_at)
     expected_week_id = correct_week&.id
 
-    if pr.merged_week_id != expected_week_id
-      remaining_issues += 1
-    end
+    remaining_issues += 1 if pr.merged_week_id != expected_week_id
   end
 
   if remaining_issues == 0
