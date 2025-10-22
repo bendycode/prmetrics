@@ -203,7 +203,7 @@ RSpec.describe SyncRepositoryBatchJob do
 
       expect do
         job.send(:fetch_and_store_reviews, pull_request, 'owner/repo', 123)
-      end.not_to change { pull_request.reviews.count }
+      end.not_to(change { pull_request.reviews.count })
     end
   end
 
@@ -302,7 +302,7 @@ RSpec.describe SyncRepositoryBatchJob do
     it 'handles nil github_user gracefully' do
       expect do
         job.send(:store_user, pull_request, nil, 'author')
-      end.not_to change { PullRequestUser.count }
+      end.not_to(change { PullRequestUser.count })
     end
   end
 
