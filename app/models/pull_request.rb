@@ -167,7 +167,10 @@ class PullRequest < ApplicationRecord
     }
 
     week_associations.each do |association_name, week|
-      errors.add(association_name, 'must belong to the same repository as the pull request') if week && week.repository_id != repository_id
+      if week && week.repository_id != repository_id
+        errors.add(association_name,
+                   'must belong to the same repository as the pull request')
+      end
     end
   end
 end

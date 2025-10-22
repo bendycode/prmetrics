@@ -412,8 +412,7 @@ Rails/WhereRange:
 Style/Documentation:
   Enabled: false
 
-# Offense count: 8
-# This cop supports safe autocorrection (--autocorrect).
+# Offense count: 4
 # Configuration parameters: MaxUnannotatedPlaceholdersAllowed, Mode, AllowedMethods, AllowedPatterns.
 # SupportedStyles: annotated, template, unannotated
 # AllowedMethods: redirect
