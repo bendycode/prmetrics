@@ -7,6 +7,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **RuboCop Integration in Default Rake Tasks**
+  - Added RuboCop linting to the standard `rake` command
+  - Default task now runs `rubocop` first, then `spec`
+  - Ensures code style checks run automatically with tests
+  - All CI/CD pipelines now enforce code quality standards
+- **Automated Nightly Sync Jobs**
+  - Implemented GitHub Actions workflow for automatic nightly repository syncing
+  - Scheduled daily at 2 AM CT (7:00 UTC) via `.github/workflows/nightly-sync.yml`
+  - Runs `rake sync:all_repositories` via Heroku CLI
+  - Manual trigger available from GitHub Actions UI
+  - Free alternative to Heroku Scheduler ($25/month savings)
+  - Ensures consistent data freshness without manual intervention
 - **Enhanced GitHub Data Sync Reliability**
   - Added GitHub issue events sync to capture ready_for_review timing changes
   - Implemented more robust incremental sync logic
