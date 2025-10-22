@@ -55,9 +55,9 @@ RSpec.describe 'Repository cascade delete' do
 
     it 'does not delete Contributor records (reviewers)' do
       # Contributors who only reviewed (user1, user2) should remain
-      expect { repository.destroy }.not_to change {
+      expect { repository.destroy }.not_to(change do
         Contributor.where(id: [user1.id, user2.id]).count
-      }
+      end)
       expect(Contributor.where(id: [user1.id, user2.id])).to exist
     end
 
