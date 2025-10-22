@@ -339,7 +339,7 @@ RSpec.describe SyncRepositoryBatchJob do
 
       result = job.send(:with_rate_limit_handling) do
         call_count += 1
-        raise Faraday::ConnectionFailed.new('Connection failed') if call_count == 1
+        raise Faraday::ConnectionFailed, 'Connection failed' if call_count == 1
 
         'success'
       end

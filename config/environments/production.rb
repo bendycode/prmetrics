@@ -52,8 +52,8 @@ Rails.application.configure do
   config.force_ssl = true
 
   # Log to STDOUT by default
-  config.logger = ActiveSupport::Logger.new(STDOUT)
-                                       .tap  { |logger| logger.formatter = ::Logger::Formatter.new }
+  config.logger = ActiveSupport::Logger.new($stdout)
+                                       .tap  { |logger| logger.formatter = Logger::Formatter.new }
                                        .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
 
   # Prepend all log lines with the following tags.
@@ -100,10 +100,10 @@ Rails.application.configure do
       authentication: :plain,
       enable_starttls_auto: true
     }
-  else
+  elsif defined?(Rails.logger)
     # Log warning if no email configuration is present
     # Note: Rails.logger may not be available during asset precompilation
-    puts 'WARNING: No email configuration found. Email delivery will fail.' if defined?(Rails.logger)
+    puts 'WARNING: No email configuration found. Email delivery will fail.'
   end
 
   # Enable email delivery errors in production for debugging

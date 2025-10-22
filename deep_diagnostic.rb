@@ -115,6 +115,10 @@ puts "\n" + ('=' * 80)
 puts 'ENVIRONMENT INFO:'
 puts "  Rails.env: #{Rails.env}"
 puts "  Time.zone: #{Time.zone}"
-puts "  Database timezone: #{ActiveRecord::Base.connection.execute('SHOW timezone').first['TimeZone'] rescue 'unknown'}"
+puts "  Database timezone: #{begin
+  ActiveRecord::Base.connection.execute('SHOW timezone').first['TimeZone']
+rescue StandardError
+  'unknown'
+end}"
 puts "  Current time: #{Time.current}"
 puts '=' * 80

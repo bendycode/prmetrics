@@ -2,8 +2,7 @@ class AccountsController < ApplicationController
   before_action :set_user
   before_action :set_minimum_password_length, only: [:edit]
 
-  def edit
-  end
+  def edit; end
 
   def update
     if update_user

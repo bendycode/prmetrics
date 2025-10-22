@@ -6,35 +6,6 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowForAlignment.
-Layout/CommentIndentation:
-  Exclude:
-    - 'app/models/week.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Layout/EmptyLinesAroundExceptionHandlingKeywords:
-  Exclude:
-    - 'lib/tasks/sync.rake'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyleAlignWith, Severity.
-# SupportedStylesAlignWith: keyword, variable, start_of_line
-Layout/EndAlignment:
-  Exclude:
-    - 'app/middleware/domain_redirect_middleware.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: consistent, consistent_relative_to_receiver, special_for_inner_method_call, special_for_inner_method_call_in_parentheses
-Layout/FirstArgumentIndentation:
-  Exclude:
-    - 'fix_all_week_associations.rb'
-
 # Offense count: 3
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: AllowedMethods, AllowedPatterns.
@@ -191,12 +162,6 @@ RSpec/DescribedClass:
     - 'spec/policies/user_policy_spec.rb'
     - 'spec/services/github_service_spec.rb'
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-RSpec/EmptyExampleGroup:
-  Exclude:
-    - 'spec/models/user_spec.rb'
-
 # Offense count: 112
 # Configuration parameters: CountAsOne.
 RSpec/ExampleLength:
@@ -233,12 +198,6 @@ RSpec/IndexedLet:
 RSpec/InstanceVariable:
   Exclude:
     - 'spec/models/repository_cascade_delete_spec.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-RSpec/LeadingSubject:
-  Exclude:
-    - 'spec/models/week_spec.rb'
 
 # Offense count: 43
 RSpec/LetSetup:
@@ -289,14 +248,6 @@ RSpec/NamedSubject:
 RSpec/NestedGroups:
   Max: 5
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: Strict, EnforcedStyle, AllowedExplicitMatchers.
-# SupportedStyles: inflected, explicit
-RSpec/PredicateMatcher:
-  Exclude:
-    - 'spec/requests/repositories_authorization_spec.rb'
-
 # Offense count: 16
 # This cop supports unsafe autocorrection (--autocorrect-all).
 RSpec/ReceiveMessages:
@@ -324,12 +275,6 @@ RSpec/VerifiedDoubles:
     - 'spec/services/github_service_spec.rb'
     - 'spec/services/unified_sync_service_spec.rb'
 
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Rails/ActiveRecordCallbacksOrder:
-  Exclude:
-    - 'app/models/review.rb'
-
 # Offense count: 4
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: EnforcedStyle, AllowToTime.
@@ -339,13 +284,6 @@ Rails/Date:
     - 'spec/models/pull_request_spec.rb'
     - 'spec/models/week_spec.rb'
     - 'spec/services/week_stats_service_spec.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforceForPrefixed.
-Rails/Delegate:
-  Exclude:
-    - 'app/models/concerns/weekday_hours.rb'
 
 # Offense count: 20
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -419,14 +357,6 @@ Rails/RakeEnvironment:
     - 'lib/tasks/coverage.rake'
     - 'lib/tasks/coverage_ratchet.rake'
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: AllowedReceivers.
-# AllowedReceivers: ActionMailer::Preview, ActiveSupport::TimeZone
-Rails/RedundantActiveRecordAllMethod:
-  Exclude:
-    - 'app/controllers/users_controller.rb'
-
 # Offense count: 13
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Rails/ResponseParsedBody:
@@ -471,14 +401,6 @@ Rails/UniqueValidationWithoutIndex:
     - 'app/models/repository.rb'
 
 # Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: exists, where
-Rails/WhereExists:
-  Exclude:
-    - 'diagnose_duplicate_weeks.rb'
-
-# Offense count: 1
 # Configuration parameters: Severity.
 Rails/WhereNotWithMultipleConditions:
   Exclude:
@@ -493,40 +415,10 @@ Rails/WhereRange:
     - 'app/services/week_stats_service.rb'
     - 'diagnose_duplicate_weeks.rb'
 
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Style/BlockComments:
-  Exclude:
-    - 'spec/spec_helper.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, SingleLineConditionsOnly, IncludeTernaryExpressions.
-# SupportedStyles: assign_to_condition, assign_inside_condition
-Style/ConditionalAssignment:
-  Exclude:
-    - 'app/controllers/dashboard_controller.rb'
-
 # Offense count: 41
 # Configuration parameters: AllowedConstants.
 Style/Documentation:
   Enabled: false
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, AllowComments.
-# SupportedStyles: empty, nil, both
-Style/EmptyElse:
-  Exclude:
-    - 'app/middleware/domain_redirect_middleware.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: compact, expanded
-Style/EmptyMethod:
-  Exclude:
-    - 'app/controllers/accounts_controller.rb'
 
 # Offense count: 8
 # This cop supports safe autocorrection (--autocorrect).
@@ -543,41 +435,11 @@ Style/FormatStringToken:
 Style/FrozenStringLiteralComment:
   Enabled: false
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-Style/GlobalStdStream:
-  Exclude:
-    - 'config/environments/production.rb'
-
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: AllowedReceivers.
-# AllowedReceivers: Thread.current
-Style/HashEachMethods:
-  Exclude:
-    - 'check_duplicates.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, EnforcedShorthandSyntax, UseHashRocketsWithSymbolValues, PreferHashRocketsForNonAlnumEndingSymbols.
-# SupportedStyles: ruby19, hash_rockets, no_mixed_keys, ruby19_no_mixed_keys
-# SupportedShorthandSyntax: always, never, either, consistent, either_consistent
-Style/HashSyntax:
-  Exclude:
-    - 'lib/tasks/github.rake'
-
 # Offense count: 2
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/IdenticalConditionalBranches:
   Exclude:
     - 'fix_specific_prs.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowIfModifier.
-Style/IfInsideElse:
-  Exclude:
-    - 'config/environments/production.rb'
 
 # Offense count: 52
 # This cop supports safe autocorrection (--autocorrect).
@@ -592,18 +454,6 @@ Style/InverseMethods:
     - 'diagnose_exact_prs.rb'
 
 
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Style/MultilineIfModifier:
-  Exclude:
-    - 'config/initializers/bullet.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Style/MultilineTernaryOperator:
-  Exclude:
-    - 'app/services/unified_sync_service.rb'
-
 # Offense count: 38
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: EnforcedStyle, AllowedMethods, AllowedPatterns.
@@ -611,33 +461,12 @@ Style/MultilineTernaryOperator:
 Style/NumericPredicate:
   Enabled: false
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: EnforcedStyle, AllowedCompactTypes.
-# SupportedStyles: compact, exploded
-Style/RaiseArgs:
-  Exclude:
-    - 'spec/jobs/sync_repository_batch_job_spec.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Style/RedundantConstantBase:
-  Exclude:
-    - 'config/environments/production.rb'
-
 # Offense count: 3
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: SafeForConstants.
 Style/RedundantFetchBlock:
   Exclude:
     - 'config/puma.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Style/RescueModifier:
-  Exclude:
-    - 'deep_diagnostic.rb'
-
 
 # Offense count: 7
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -682,14 +511,6 @@ Style/SymbolProc:
     - 'app/services/github_service.rb'
     - 'spec/factories/contributors.rb'
     - 'spec/models/user_spec.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, AllowSafeAssignment.
-# SupportedStyles: require_parentheses, require_no_parentheses, require_parentheses_when_complex
-Style/TernaryParentheses:
-  Exclude:
-    - 'lib/tasks/fix_duplicates.rake'
 
 # Offense count: 12
 # This cop supports safe autocorrection (--autocorrect).

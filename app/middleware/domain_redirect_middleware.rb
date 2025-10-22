@@ -18,9 +18,7 @@ class DomainRedirectMiddleware
                         'prmetrics-production.herokuapp.com'
                       when 'pr-analyzer.herokuapp.com'
                         'prmetrics-production.herokuapp.com'
-                      else
-                        nil
-      end
+                      end
 
       # Perform redirect if needed
       if redirect_host

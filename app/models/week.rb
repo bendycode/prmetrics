@@ -135,7 +135,7 @@ class Week < ApplicationRecord
     count > 0 ? (total_hours / count).round(2) : nil
   end
 
-    # Average hours to merge excluding weekends
+  # Average hours to merge excluding weekends
   def avg_hours_to_merge
     valid_prs = merged_prs.where.not(ready_for_review_at: nil).select do |pr|
       pr.weekday_hours_to_merge.present?

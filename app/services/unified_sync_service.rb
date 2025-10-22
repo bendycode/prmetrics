@@ -146,8 +146,11 @@ class UnifiedSyncService
       github_service.get_pull_request_count(@repo_name)
     else
       # For incremental sync, estimate based on time since last sync
-      days_since_sync = @repository.last_fetched_at ?
-        ((Time.current - @repository.last_fetched_at) / 1.day).round : 30
+      days_since_sync = if @repository.last_fetched_at
+                          ((Time.current - @repository.last_fetched_at) / 1.day).round
+                        else
+                          30
+                        end
 
       # Rough estimate: 2 PRs per day
       [days_since_sync * 2, 10].max
