@@ -20,7 +20,7 @@ RSpec.describe 'Repositories Authorization' do
     it 'can access destroy action' do
       delete repository_path(repository)
       expect(response).to redirect_to(repositories_path)
-      expect(Repository.exists?(repository.id)).to be_falsey
+      expect(Repository).not_to exist(repository.id)
     end
   end
 

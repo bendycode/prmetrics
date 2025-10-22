@@ -97,7 +97,7 @@ namespace :fix do
 
         puts "\n  PR ##{pr_number} has #{count} copies:"
         prs.each_with_index do |pr, i|
-          status = (i == prs.length - 1) ? 'KEEP' : 'REMOVE'
+          status = i == prs.length - 1 ? 'KEEP' : 'REMOVE'
           puts "    [#{status}] ID: #{pr.id}, merged: #{pr.gh_merged_at || 'not merged'}, updated: #{pr.updated_at}"
         end
       end

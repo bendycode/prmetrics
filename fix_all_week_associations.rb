@@ -90,8 +90,8 @@ if dry_run
   affected_weeks = Week.joins(:merged_prs)
                        .where(pull_requests: { gh_merged_at: nil })
                        .or(Week.joins(:merged_prs).where.not(
-      'merged_week_id = weeks.id'
-    ))
+                             'merged_week_id = weeks.id'
+                           ))
                        .distinct
                        .count
 

@@ -64,8 +64,6 @@ module WeekdayHours
 
   module ClassMethods
     # Keep this for backward compatibility
-    def weekday_hours_between(start_time, end_time)
-      WeekdayHours.weekday_hours_between(start_time, end_time)
-    end
+    delegate :weekday_hours_between, to: :WeekdayHours
   end
 end

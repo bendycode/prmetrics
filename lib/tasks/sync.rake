@@ -186,7 +186,6 @@ namespace :sync do
         success_count += 1
 
         puts "  ✓ Completed #{repository.name} in #{repo_duration.round(2)}s"
-
       rescue StandardError => e
         repo_duration = Time.current - repo_start_time
         error_count += 1

@@ -39,7 +39,7 @@ puts '=' * 80
 
     # Check if any of the "extra" PRs are associated with this week
     [419, 420, 428, 430, 432].each do |pr_num|
-      if week.merged_prs.where(number: pr_num).exists?
+      if week.merged_prs.exists?(number: pr_num)
         puts "    ❌ Contains PR ##{pr_num}"
       end
     end

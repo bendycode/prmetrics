@@ -11,8 +11,8 @@ class Review < ApplicationRecord
     message: 'review already exists for this pull request, author, and state combination'
   }
 
-  after_save :update_pull_request_first_review_week, unless: :skip_week_association_update
   after_destroy :update_pull_request_first_review_week, unless: :skip_week_association_update
+  after_save :update_pull_request_first_review_week, unless: :skip_week_association_update
 
   scope :ordered, -> { order(submitted_at: :desc) }
   scope :approved, -> { where(state: 'APPROVED') }

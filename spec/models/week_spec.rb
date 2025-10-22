@@ -10,9 +10,9 @@ RSpec.describe Week do
   end
 
   describe 'validations' do
-    let(:repo) { create(:repository) }
-
     subject { build(:week, repository: repo) }
+
+    let(:repo) { create(:repository) }
 
     it { is_expected.to validate_presence_of(:week_number) }
     it { is_expected.to validate_presence_of(:begin_date) }

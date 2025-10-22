@@ -3,7 +3,7 @@ class UsersController < ApplicationController
 
   def index
     authorize User
-    @users = User.all.order(:email)
+    @users = User.order(:email)
   end
 
   def new

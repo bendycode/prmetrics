@@ -17,23 +17,23 @@ class DashboardController < ApplicationController
 
     # Get data for charts (last 12 weeks for trends)
     # When filtering by repository, get all weeks; otherwise limit to 12
-    if @selected_repository_id.present?
-      @chart_weeks = weeks_scope
-                     .includes(repository: { pull_requests: :reviews })
-                     .order(begin_date: :asc)
-                     .last(12)
-    else
-      # For all repositories, group by week and aggregate
-      # Preload associations needed for approved_prs calculation
-      @chart_weeks = aggregate_weeks_data(
-        Week.includes(repository: { pull_requests: :reviews })
-            .order(begin_date: :desc)
-            .group_by(&:begin_date)
-            .values
-            .first(12)
-            .reverse
-      )
-    end
+    @chart_weeks = if @selected_repository_id.present?
+                     weeks_scope
+                       .includes(repository: { pull_requests: :reviews })
+                       .order(begin_date: :asc)
+                       .last(12)
+                   else
+                     # For all repositories, group by week and aggregate
+                     # Preload associations needed for approved_prs calculation
+                     aggregate_weeks_data(
+                       Week.includes(repository: { pull_requests: :reviews })
+                           .order(begin_date: :desc)
+                           .group_by(&:begin_date)
+                           .values
+                           .first(12)
+                           .reverse
+                     )
+                   end
 
     # Prepare repository comparison data
     @repository_stats = prepare_repository_stats

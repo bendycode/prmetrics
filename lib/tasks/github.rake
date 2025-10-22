@@ -1,6 +1,6 @@
 namespace :github do
   desc "Fetch pull requests for a repository. Add 'fetch_all' to fetch all PRs."
-  task :fetch_pull_requests => :environment do
+  task fetch_pull_requests: :environment do
     repo_name = ENV.fetch('REPO', nil)
     fetch_all = ENV['FETCH_ALL'] == 'true'
 
