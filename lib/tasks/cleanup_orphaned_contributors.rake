@@ -17,11 +17,9 @@ namespace :cleanup do
       end
 
       puts "\n⚠️  This will permanently delete these contributors."
-      puts "Press Ctrl+C to cancel or wait 5 seconds to continue..."
+      puts 'Press Ctrl+C to cancel or wait 5 seconds to continue...'
 
-      unless ENV['SKIP_CONFIRMATION']
-        sleep 5
-      end
+      sleep 5 unless ENV['SKIP_CONFIRMATION']
 
       deleted_count = 0
       orphaned.each do |c|
