@@ -16,7 +16,7 @@ gem 'octokit'
 gem 'sassc-rails'
 
 gem 'pg', '~> 1.1'
-gem 'puma', '>= 5.0'
+gem 'puma', '>= 7.0.3'
 
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
 gem 'importmap-rails'
