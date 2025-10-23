@@ -40,6 +40,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Automated backfill via data_migrate gem on deployment
   - Code coverage increased from 80.07% to 84.48% (+4.41%)
 
+### Fixed
+- **Week Association Data Integrity**
+  - Fixed 64 PRs with inconsistent week associations from different repositories in production
+  - Ran `rake fix:week_associations` to correct cross-repository associations
+  - Added validation to PullRequest model to prevent cross-repository week assignments
+  - All PRs now correctly associated with weeks from their own repositories
+- **Orphaned Contributors Cleanup**
+  - Cleaned up 3 orphaned contributors in production (contributors with no PR associations)
+  - Ran `rake cleanup:orphaned_contributors` to remove orphaned records
+  - Improved data integrity in contributors table
+
 ## [2025-06-03]
 
 ### Added
