@@ -8,35 +8,19 @@ This document outlines future development plans for prmetrics. For completed wor
 
 **⚠️ Issues discovered in production deployment - highest priority**
 
-1. ✅ **Fix Week Association Data Integrity** (Completed)
-   - Fixed 64 PRs with inconsistent week associations in production
-   - Ran `rake fix:week_associations` to correct cross-repository associations
-   - Added validation to PullRequest model to prevent future issues
-
-2. ✅ **Clean Up Orphaned Contributors** (Completed)
-   - Cleaned up 3 orphaned contributors in production
-   - Ran `rake cleanup:orphaned_contributors` to remove contributors with no PR associations
-
-3. **Fix UI Sync State Bug** 🐛
+1. **Fix UI Sync State Bug** 🐛
    - Repository sync buttons remain disabled after sync completion/failure
    - Users cannot re-sync without page refresh
    - Clear sync status flags when background jobs finish
    - Prevent UI from showing "in progress" when no Sidekiq jobs are running
    - Timeline: 2-3 days
 
-4. **Upgrade Puma to 7.0.3+** 🔧
+2. **Upgrade Puma to 7.0.3+** 🔧
    - Current: 6.6.0
    - Required: 7.0.3+ for Heroku Router 2.0 compatibility
    - Heroku official recommendation
    - Action: `bundle update puma && bundle exec rspec && git commit`
    - Timeline: 1 day (test thoroughly)
-
-5. **Upgrade Ruby to 3.4.7** 🔐
-   - Current: 3.4.4
-   - Latest: 3.4.7 (includes security and bug fixes)
-   - Update `.ruby-version`, `Gemfile`, `Dockerfile`, `README.md`
-   - Test all gems for compatibility
-   - Timeline: 2-3 days
 
 ### Phase 1: Code Quality & Stability (Next 2-4 weeks)
 

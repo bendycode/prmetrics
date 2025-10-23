@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+- **Ruby Version Upgrade**
+  - Upgraded from Ruby 3.4.4 to Ruby 3.4.7
+  - Updated all version configuration files (.ruby-version, .tool-versions, Gemfile, Dockerfile)
+  - Updated GitHub Actions CI workflow to use Ruby 3.4.7
+  - Includes security patches and bug fixes from Ruby 3.4.5, 3.4.6, and 3.4.7 releases
+  - All tests passing with zero deprecation warnings
+
 ### Added
 - **Bundler Version Update**
   - Automatically upgraded from 2.6.2 to 2.6.9 during Heroku deployment
