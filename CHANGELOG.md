@@ -7,6 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Changed
+- **Puma Web Server Upgrade** (2025-10-23)
+  - Upgraded from Puma 6.6.0 to Puma 7.1.0
+  - Deployed to production as Heroku release v90
+  - Reviewed Puma 7.0 breaking changes: no impact on application
+  - No configuration changes required (no hooks used, preload_app! explicitly set)
+  - Ruby 3.4.7 exceeds Puma 7's minimum requirement of Ruby 3.0+
+  - All tests passing (529 examples, 0 failures)
+  - Zero RuboCop offenses (144 files inspected)
+  - PR #5: https://github.com/bendycode/prmetrics/pull/5
 - **Ruby Version Upgrade**
   - Upgraded from Ruby 3.4.4 to Ruby 3.4.7
   - Updated all version configuration files (.ruby-version, .tool-versions, Gemfile, Dockerfile)

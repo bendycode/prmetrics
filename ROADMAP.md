@@ -15,12 +15,11 @@ This document outlines future development plans for prmetrics. For completed wor
    - Prevent UI from showing "in progress" when no Sidekiq jobs are running
    - Timeline: 2-3 days
 
-2. **Upgrade Puma to 7.0.3+** 🔧
-   - Current: 6.6.0
-   - Required: 7.0.3+ for Heroku Router 2.0 compatibility
-   - Heroku official recommendation
-   - Action: `bundle update puma && bundle exec rspec && git commit`
-   - Timeline: 1 day (test thoroughly)
+2. ✅ **Upgrade Puma to 7.0.3+** (Completed 2025-10-23)
+   - Upgraded from 6.6.0 to 7.1.0
+   - Deployed to production as release v90
+   - All tests passing, zero breaking changes
+   - PR #5: https://github.com/bendycode/prmetrics/pull/5
 
 ### Phase 1: Code Quality & Stability (Next 2-4 weeks)
 
