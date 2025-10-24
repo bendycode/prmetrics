@@ -15,28 +15,15 @@ This document outlines future development plans for prmetrics. For completed wor
    - Prevent UI from showing "in progress" when no Sidekiq jobs are running
    - Timeline: 2-3 days
 
-2. ✅ **Upgrade Puma to 7.0.3+** (Completed 2025-10-23)
-   - Upgraded from 6.6.0 to 7.1.0
-   - Deployed to production as release v90
-   - All tests passing, zero breaking changes
-   - PR #5: https://github.com/bendycode/prmetrics/pull/5
-
 ### Phase 1: Code Quality & Stability (Next 2-4 weeks)
 
-1. ✅ **Integrate Linting (RuboCop)** (In Progress)
-   - ✅ Added RuboCop with Ruby Style Guide defaults
-   - ✅ Configured as default rake task (runs before specs)
-   - ✅ Generated .rubocop_todo.yml for gradual adoption
-   - ✅ Added to CI/CD pipeline (GitHub Actions)
-   - 🔄 Incremental cleanup of existing violations (ongoing)
-
-2. **Add Rails Best Practices**
+1. **Add Rails Best Practices**
    - Integrate rails_best_practices gem
    - Configure custom rules for the project
    - Add to CI/CD pipeline
    - Fix identified code smells and anti-patterns
 
-3. **Test Suite Optimization**
+2. **Test Suite Optimization**
    - ⏳ Enable pending specs (10 currently skipped with xit/xcontext)
      - Review and fix skipped search specs in spec/features/search_spec.rb
      - Fix webhook specs in spec/controllers/webhooks_controller_spec.rb
@@ -58,12 +45,6 @@ This document outlines future development plans for prmetrics. For completed wor
    - Build PullRequestImporter
 
 2. **Standardize Database Statistics Caching**
-   - ✅ **Add cached columns for PR aging metrics** (Completed)
-     - Added `num_prs_late` column to cache PRs approved 8-27 days ago
-     - Added `num_prs_stale` column to cache PRs approved 28+ days ago
-     - Replaced generic "approved but unmerged" with actionable late/stale categories
-     - All cached columns use historical `end_date` for consistency
-
    - **Continue caching pattern for remaining metrics**
      - Audit other dynamic calculations that should be cached for performance
      - Ensure `calculate_open_prs` populates and is used consistently
@@ -250,9 +231,6 @@ These features leverage AI/ML to provide intelligent insights and predictions ba
 ## Technical Improvements
 
 ### High Priority
-- ✅ Upgrade Ruby version (Completed - Now in Phase 0)
-  - Upgraded from Ruby 3.3.5 to Ruby 3.4.4
-  - Next: Upgrade to 3.4.7 (see Phase 0)
 - **Review and streamline deployment methods**
   - **Issue**: Duplication between Procfile release phase and bin/deploy script
   - **Goal**: Single source of truth for deployment logic
