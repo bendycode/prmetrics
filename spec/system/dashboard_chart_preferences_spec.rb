@@ -36,11 +36,7 @@ RSpec.describe 'Dashboard Chart Preferences', :js do
     expect(chart_exists).to be true
 
     # Hide "PRs Cancelled" dataset by clicking legend
-    page.evaluate_script(<<~JS)
-      const chart = window.prVelocityChart;
-      const legendItem = { datasetIndex: 2 };
-      chart.options.plugins.legend.onClick(null, legendItem);
-    JS
+    page.evaluate_script('window.prVelocityChart.options.plugins.legend.onClick(null, {datasetIndex: 2});')
 
     # Verify localStorage was updated
     prefs = page.evaluate_script('JSON.parse(localStorage.getItem("prmetrics_chart_preferences"))')
@@ -61,11 +57,7 @@ RSpec.describe 'Dashboard Chart Preferences', :js do
     wait_for_charts
 
     # Hide dataset in PR Velocity chart
-    page.evaluate_script(<<~JS)
-      const chart = window.prVelocityChart;
-      const legendItem = { datasetIndex: 0 };
-      chart.options.plugins.legend.onClick(null, legendItem);
-    JS
+    page.evaluate_script('window.prVelocityChart.options.plugins.legend.onClick(null, {datasetIndex: 0});')
 
     # Verify localStorage contains only prVelocityChart preferences
     prefs = page.evaluate_script('JSON.parse(localStorage.getItem("prmetrics_chart_preferences"))')
@@ -85,11 +77,10 @@ RSpec.describe 'Dashboard Chart Preferences', :js do
     wait_for_charts
 
     # Verify charts render with all datasets visible (default)
-    visible_count = page.evaluate_script(<<~JS)
-      window.prVelocityChart.data.datasets.filter((d, i) =>
-        !window.prVelocityChart.getDatasetMeta(i).hidden
-      ).length
-    JS
+    visible_count = page.evaluate_script(
+      'window.prVelocityChart.data.datasets.filter(function(d, i) { ' \
+      'return !window.prVelocityChart.getDatasetMeta(i).hidden; }).length'
+    )
     expect(visible_count).to eq(5)
   end
 
@@ -102,11 +93,10 @@ RSpec.describe 'Dashboard Chart Preferences', :js do
     wait_for_charts
 
     # Verify all datasets are visible (default state)
-    visible_count = page.evaluate_script(<<~JS)
-      window.prVelocityChart.data.datasets.filter((d, i) =>
-        !window.prVelocityChart.getDatasetMeta(i).hidden
-      ).length
-    JS
+    visible_count = page.evaluate_script(
+      'window.prVelocityChart.data.datasets.filter(function(d, i) { ' \
+      'return !window.prVelocityChart.getDatasetMeta(i).hidden; }).length'
+    )
     expect(visible_count).to eq(5)
   end
 end

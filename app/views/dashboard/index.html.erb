@@ -232,16 +232,97 @@
 <script>
 /*
  * Dashboard Color Scheme (Consistent across all charts):
- * Blue (#4e73df): PR Counts/Volume 
+ * Blue (#4e73df): PR Counts/Volume
  * Yellow (#f6c23e): Review Time
  * Green (#1cc88a): Merge Time/Success
  * Red (#e74a3b): Cancelled/Failed PRs
  * Cyan (#36b9cc): Repositories/Infrastructure
  */
+
+// Chart Preferences Utility for localStorage persistence
+const ChartPreferences = {
+  STORAGE_KEY: 'prmetrics_chart_preferences',
+
+  /**
+   * Load all preferences from localStorage
+   * @returns {Object} Preferences object or empty object on error
+   */
+  load() {
+    try {
+      const data = localStorage.getItem(this.STORAGE_KEY);
+      return data ? JSON.parse(data) : {};
+    } catch (e) {
+      console.error('Failed to load chart preferences:', e);
+      return {};
+    }
+  },
+
+  /**
+   * Save preferences for a specific chart
+   * @param {string} chartId - Unique chart identifier
+   * @param {Array<string>} visibleDatasets - Array of visible dataset labels
+   */
+  save(chartId, visibleDatasets) {
+    try {
+      const prefs = this.load();
+      prefs[chartId] = visibleDatasets;
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(prefs));
+    } catch (e) {
+      console.error('Failed to save chart preferences:', e);
+    }
+  },
+
+  /**
+   * Apply saved preferences to a chart instance
+   * @param {Chart} chart - Chart.js instance
+   * @param {string} chartId - Unique chart identifier
+   */
+  apply(chart, chartId) {
+    const prefs = this.load();
+    const visibleDatasets = prefs[chartId];
+
+    if (!visibleDatasets) return; // No saved preferences, use defaults
+
+    // Hide/show datasets based on saved preferences
+    chart.data.datasets.forEach((dataset, index) => {
+      const shouldBeVisible = visibleDatasets.includes(dataset.label);
+      const meta = chart.getDatasetMeta(index);
+      meta.hidden = !shouldBeVisible;
+    });
+
+    chart.update();
+  },
+
+  /**
+   * Create a custom legend click handler that saves preferences
+   * @param {Chart} chart - Chart.js instance
+   * @param {string} chartId - Unique chart identifier
+   * @returns {Function} onClick handler for Chart.js legend
+   */
+  createLegendClickHandler(chart, chartId) {
+    return function(e, legendItem) {
+      // Replicate default Chart.js v2.9.4 behavior
+      const index = legendItem.datasetIndex;
+      const meta = chart.getDatasetMeta(index);
+
+      // Toggle visibility
+      meta.hidden = meta.hidden === null ? !chart.data.datasets[index].hidden : null;
+      chart.update();
+
+      // Save current visibility state to localStorage
+      const visibleDatasets = chart.data.datasets
+        .filter((dataset, i) => !chart.getDatasetMeta(i).hidden)
+        .map(dataset => dataset.label);
+
+      ChartPreferences.save(chartId, visibleDatasets);
+    };
+  }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     // Enhanced PR Velocity Chart
     var ctx1 = document.getElementById('prVelocityChart').getContext('2d');
-    var prVelocityChart = new Chart(ctx1, {
+    window.prVelocityChart = new Chart(ctx1, {
         type: 'line',
         data: {
             labels: [<%= @chart_weeks.map { |w| "'#{w.begin_date.strftime('%b %d')}'" }.join(', ').html_safe %>],
@@ -318,9 +399,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Enable chart preferences persistence for PR Velocity Chart
+    window.prVelocityChart.options.plugins.legend.onClick =
+        ChartPreferences.createLegendClickHandler(window.prVelocityChart, 'prVelocityChart');
+    ChartPreferences.apply(window.prVelocityChart, 'prVelocityChart');
+
     // Review Performance Chart
     var ctx2 = document.getElementById('reviewPerformanceChart').getContext('2d');
-    var reviewPerformanceChart = new Chart(ctx2, {
+    window.reviewPerformanceChart = new Chart(ctx2, {
         type: 'line',
         data: {
             labels: [<%= @chart_weeks.map { |w| "'#{w.begin_date.strftime('%b %d')}'" }.join(', ').html_safe %>],
@@ -375,10 +461,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Enable chart preferences persistence for Review Performance Chart
+    window.reviewPerformanceChart.options.plugins.legend.onClick =
+        ChartPreferences.createLegendClickHandler(window.reviewPerformanceChart, 'reviewPerformanceChart');
+    ChartPreferences.apply(window.reviewPerformanceChart, 'reviewPerformanceChart');
+
     // Repository Comparison Chart
     <% if @repository_stats.any? %>
     var ctx3 = document.getElementById('repositoryComparisonChart').getContext('2d');
-    var repositoryComparisonChart = new Chart(ctx3, {
+    window.repositoryComparisonChart = new Chart(ctx3, {
         type: 'bar',
         data: {
             labels: [<%= @repository_stats.map { |r| "'#{r[:name]}'" }.join(', ').html_safe %>],
@@ -457,6 +548,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Enable chart preferences persistence for Repository Comparison Chart
+    window.repositoryComparisonChart.options.plugins.legend.onClick =
+        ChartPreferences.createLegendClickHandler(window.repositoryComparisonChart, 'repositoryComparisonChart');
+    ChartPreferences.apply(window.repositoryComparisonChart, 'repositoryComparisonChart');
     <% end %>
 });
 </script>
