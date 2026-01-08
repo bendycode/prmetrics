@@ -232,6 +232,27 @@ RSpec.describe PullRequest do
     end
   end
 
+  describe '#ensure_weeks_exist_and_update_associations' do
+    context 'year boundary weeks' do
+      it 'creates single week for dates spanning year boundary' do
+        # Dec 31, 2025 and Jan 2, 2026 are in same week (Mon Dec 29 - Sun Jan 4)
+        pr = create(:pull_request,
+                    repository: repository,
+                    author: author,
+                    ready_for_review_at: Time.zone.local(2025, 12, 31, 10, 0, 0),
+                    gh_merged_at: Time.zone.local(2026, 1, 2, 14, 0, 0))
+
+        pr.ensure_weeks_exist_and_update_associations
+
+        # Should create exactly one week, not two
+        year_boundary_weeks = repository.weeks.where(begin_date: Date.new(2025, 12, 29))
+        expect(year_boundary_weeks.count).to eq(1)
+        expect(year_boundary_weeks.first.week_number).to eq(202_552)
+        expect(year_boundary_weeks.first.end_date).to eq(Date.new(2026, 1, 4))
+      end
+    end
+  end
+
   describe 'scopes' do
     describe '.approved' do
       let!(:approved_pr) { create(:pull_request, :approved, repository: repository) }
