@@ -115,11 +115,13 @@ class PullRequest < ApplicationRecord
 
     dates.each do |date|
       ct_date = date.in_time_zone('America/Chicago')
-      week_number = ct_date.strftime('%Y%W').to_i
+      week_begin = ct_date.beginning_of_week.to_date
+      week_end = ct_date.end_of_week.to_date
+      week_number = week_begin.strftime('%Y%W').to_i
 
       repository.weeks.find_or_create_by(week_number: week_number) do |w|
-        w.begin_date = ct_date.beginning_of_week.to_date
-        w.end_date = ct_date.end_of_week.to_date
+        w.begin_date = week_begin
+        w.end_date = week_end
       end
     end
 
