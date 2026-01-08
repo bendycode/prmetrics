@@ -25,7 +25,7 @@ class WeekStatsService
       ct_date = date.in_time_zone('America/Chicago')
       week_begin = ct_date.beginning_of_week.to_date
       week_end = ct_date.end_of_week.to_date
-      week_number = ct_date.strftime('%Y%W').to_i
+      week_number = week_begin.strftime('%Y%W').to_i
 
       repository.weeks.find_or_create_by!(week_number: week_number) do |week|
         week.begin_date = week_begin
