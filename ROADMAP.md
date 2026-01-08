@@ -338,6 +338,17 @@ These features leverage AI/ML to provide intelligent insights and predictions ba
     - Update corresponding model code and tests
   - **Timeline**: 3-4 hours
 
+- **Upgrade to Ruby 4.1** (when released)
+  - **Issue**: Currently on Ruby 3.4.8; Ruby 4.1 expected ~December 2026
+  - **Goal**: Stay current with Ruby releases for security and performance
+  - **Prerequisite**: Ruby 4.1 available via asdf (`asdf list all ruby | grep "^4\.1"`)
+  - **Actions**:
+    - Verify gem compatibility with Ruby 4.1
+    - Update .ruby-version, .tool-versions, Gemfile, Dockerfile, CI workflow
+    - Run full test suite and fix any deprecations
+    - Deploy to production and verify
+  - **Note**: Ruby 3.5 was skipped; 4.0.0 released Dec 2025, 3.4 EOL March 2028
+
 ### Low Priority
 - **Remove unnecessary Gemfile version constraints**
   - **Issue**: Some gems have minimum version constraints that may no longer be needed

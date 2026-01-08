@@ -16,8 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - All tests passing (529 examples, 0 failures)
   - Zero RuboCop offenses (144 files inspected)
   - PR #5: https://github.com/bendycode/prmetrics/pull/5
-- **Ruby Version Upgrade**
+- **Ruby Version Upgrade** (2026-01-08)
   - Upgraded from Ruby 3.4.7 to Ruby 3.4.8
+  - Deployed to production as Heroku release v101
+  - PR #7: https://github.com/bendycode/prmetrics/pull/7
   - Updated all version configuration files (.ruby-version, .tool-versions, Gemfile, Dockerfile)
   - Updated GitHub Actions CI workflow to use Ruby 3.4.8
   - Includes security patches and bug fixes from Ruby 3.4.8 release (December 17, 2025)
