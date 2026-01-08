@@ -3,6 +3,13 @@ require 'rails_helper'
 RSpec.describe HealthController do
   describe 'GET #show' do
     context 'without authentication' do
+      before do
+        redis_mock = instance_double(Redis)
+        allow(Redis).to receive(:new).and_return(redis_mock)
+        allow(redis_mock).to receive(:ping)
+        allow(redis_mock).to receive(:close)
+      end
+
       it 'returns http success without requiring authentication' do
         get :show
         expect(response).to have_http_status(:success)
@@ -109,6 +116,13 @@ RSpec.describe HealthController do
     end
 
     context 'callback configuration regression prevention' do
+      before do
+        redis_mock = instance_double(Redis)
+        allow(Redis).to receive(:new).and_return(redis_mock)
+        allow(redis_mock).to receive(:ping)
+        allow(redis_mock).to receive(:close)
+      end
+
       it 'verifies authenticate_user! method exists (prevents authenticate_admin! typo)' do
         # This test prevents the regression where someone might use authenticate_admin!
         # instead of authenticate_user! in the skip_before_action call

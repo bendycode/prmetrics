@@ -24,7 +24,8 @@ namespace :ci do
     sample_prs.each do |pr|
       next unless pr.gh_merged_at
 
-      expected_week = Week.find_by_date(pr.gh_merged_at)
+      # Use repository-scoped lookup to match actual association logic
+      expected_week = pr.repository.weeks.find_by_date(pr.gh_merged_at)
       inconsistent_count += 1 if pr.merged_week != expected_week
     end
 

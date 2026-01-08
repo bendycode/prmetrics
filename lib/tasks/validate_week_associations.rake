@@ -14,9 +14,9 @@ namespace :validate do
 
       puts "  Progress: #{checked}/#{total_prs} PRs checked" if (checked % 500) == 0
 
-      # Check merged week association
+      # Check merged week association (use repository-scoped lookup)
       if pr.gh_merged_at
-        expected_merged_week = Week.find_by_date(pr.gh_merged_at)
+        expected_merged_week = pr.repository.weeks.find_by_date(pr.gh_merged_at)
         if pr.merged_week != expected_merged_week
           inconsistent_prs << {
             pr: pr,
@@ -27,9 +27,9 @@ namespace :validate do
         end
       end
 
-      # Check ready for review week association
+      # Check ready for review week association (use repository-scoped lookup)
       if pr.ready_for_review_at
-        expected_ready_week = Week.find_by_date(pr.ready_for_review_at)
+        expected_ready_week = pr.repository.weeks.find_by_date(pr.ready_for_review_at)
         if pr.ready_for_review_week != expected_ready_week
           inconsistent_prs << {
             pr: pr,
@@ -40,9 +40,9 @@ namespace :validate do
         end
       end
 
-      # Check closed week association
+      # Check closed week association (use repository-scoped lookup)
       if pr.gh_closed_at
-        expected_closed_week = Week.find_by_date(pr.gh_closed_at)
+        expected_closed_week = pr.repository.weeks.find_by_date(pr.gh_closed_at)
         if pr.closed_week != expected_closed_week
           inconsistent_prs << {
             pr: pr,
