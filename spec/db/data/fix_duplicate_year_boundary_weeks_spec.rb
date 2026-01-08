@@ -62,8 +62,12 @@ RSpec.describe FixDuplicateYearBoundaryWeeks do
       end
 
       it 'leaves weeks unchanged', :aggregate_failures do
-        expect { migration.up }.not_to(change(Week, :count))
-        expect { migration.up }.not_to(change { normal_week.reload.attributes })
+        original_attributes = normal_week.attributes
+
+        migration.up
+
+        expect(Week.count).to eq(1)
+        expect(normal_week.reload.attributes).to eq(original_attributes)
       end
     end
   end
