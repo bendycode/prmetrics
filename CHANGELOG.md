@@ -12,16 +12,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Deployed to production as Heroku release v90
   - Reviewed Puma 7.0 breaking changes: no impact on application
   - No configuration changes required (no hooks used, preload_app! explicitly set)
-  - Ruby 3.4.7 exceeds Puma 7's minimum requirement of Ruby 3.0+
+  - Ruby 3.4.8 exceeds Puma 7's minimum requirement of Ruby 3.0+
   - All tests passing (529 examples, 0 failures)
   - Zero RuboCop offenses (144 files inspected)
   - PR #5: https://github.com/bendycode/prmetrics/pull/5
 - **Ruby Version Upgrade**
-  - Upgraded from Ruby 3.4.4 to Ruby 3.4.7
+  - Upgraded from Ruby 3.4.7 to Ruby 3.4.8
   - Updated all version configuration files (.ruby-version, .tool-versions, Gemfile, Dockerfile)
-  - Updated GitHub Actions CI workflow to use Ruby 3.4.7
-  - Includes security patches and bug fixes from Ruby 3.4.5, 3.4.6, and 3.4.7 releases
-  - All tests passing with zero deprecation warnings
+  - Updated GitHub Actions CI workflow to use Ruby 3.4.8
+  - Includes security patches and bug fixes from Ruby 3.4.8 release (December 17, 2025)
+  - All tests passing (538 examples, 0 failures) with zero deprecation warnings
 
 ### Added
 - **Bundler Version Update**

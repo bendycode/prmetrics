@@ -113,7 +113,7 @@ rake weeks:update_stats
 ### Environment Setup
 - Set GitHub Personal Access Token: `export GITHUB_ACCESS_TOKEN=your_token_here`
 - Database: PostgreSQL
-- Ruby version: 3.4.4
+- Ruby version: 3.4.8
 - Rails version: ~> 7.1.4
 - Redis: Required for Sidekiq background jobs
 - Development admin login: admin@example.com / password123
