@@ -213,4 +213,23 @@ RSpec.describe WeekStatsService do
       end
     end
   end
+
+  describe '.generate_weeks_for_repository' do
+    context 'year boundary weeks' do
+      it 'generates correct week number for year-spanning week' do
+        # Create PR with date in early January that belongs to previous year's week
+        # Jan 2, 2026 is in the week of Mon Dec 29, 2025 - Sun Jan 4, 2026
+        create(:pull_request,
+               repository: repository,
+               gh_created_at: Time.zone.local(2026, 1, 2, 10, 0, 0))
+
+        described_class.generate_weeks_for_repository(repository)
+
+        week = repository.weeks.find_by(begin_date: Date.new(2025, 12, 29))
+        expect(week).to be_present
+        expect(week.week_number).to eq(202_552)
+        expect(week.end_date).to eq(Date.new(2026, 1, 4))
+      end
+    end
+  end
 end
