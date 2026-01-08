@@ -370,6 +370,7 @@ Rails/SkipsModelValidations:
     - 'fix_specific_prs.rb'
     - 'fix_week_associations_properly.rb'
     - 'spec/db/data/fix_duplicate_year_boundary_weeks_spec.rb'
+    - 'spec/factories/pull_requests.rb'
 
 # Offense count: 8
 # This cop supports unsafe autocorrection (--autocorrect-all).

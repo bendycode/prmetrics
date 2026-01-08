@@ -225,10 +225,10 @@ RSpec.describe WeekStatsService do
 
         described_class.generate_weeks_for_repository(repository)
 
-        week = repository.weeks.find_by(begin_date: Date.new(2025, 12, 29))
-        expect(week).to be_present
-        expect(week.week_number).to eq(202_552)
-        expect(week.end_date).to eq(Date.new(2026, 1, 4))
+        expect(repository.weeks.find_by(begin_date: Date.new(2025, 12, 29))).to have_attributes(
+          week_number: 202_552,
+          end_date: Date.new(2026, 1, 4)
+        )
       end
     end
   end

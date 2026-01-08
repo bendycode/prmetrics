@@ -56,5 +56,26 @@ FactoryBot.define do
         create(:review, :commented, pull_request: pr)
       end
     end
+
+    # For testing data migrations - sets week associations without triggering callbacks
+    trait :with_week_associations do
+      transient do
+        ready_for_review_week { nil }
+        merged_week { nil }
+        first_review_week { nil }
+        closed_week { nil }
+      end
+
+      after(:build, &:skip_week_association_update!)
+
+      after(:create) do |pr, evaluator|
+        updates = {}
+        updates[:ready_for_review_week_id] = evaluator.ready_for_review_week.id if evaluator.ready_for_review_week
+        updates[:merged_week_id] = evaluator.merged_week.id if evaluator.merged_week
+        updates[:first_review_week_id] = evaluator.first_review_week.id if evaluator.first_review_week
+        updates[:closed_week_id] = evaluator.closed_week.id if evaluator.closed_week
+        pr.update_columns(updates) if updates.any?
+      end
+    end
   end
 end
