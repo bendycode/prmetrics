@@ -7,39 +7,26 @@ RSpec.describe FixDuplicateYearBoundaryWeeks do
 
   describe '#up' do
     context 'when duplicate weeks exist' do
-      let!(:correct_week) do
-        create(:week,
-               repository: repository,
-               week_number: 202_552,
-               begin_date: Date.new(2025, 12, 29),
-               end_date: Date.new(2026, 1, 4))
-      end
-
-      let!(:buggy_week) do
-        create(:week,
-               repository: repository,
-               week_number: 202_600,
-               begin_date: Date.new(2025, 12, 29),
-               end_date: Date.new(2026, 1, 4))
-      end
+      let!(:correct_week) { create(:week, :dec_2025_year_boundary, repository: repository) }
+      let!(:buggy_week) { create(:week, :dec_2025_year_boundary_buggy, repository: repository) }
 
       let!(:pr_with_ready_for_review) do
-        pr = create(:pull_request, repository: repository)
-        pr.update_column(:ready_for_review_week_id, buggy_week.id)
-        pr
+        create(:pull_request, :with_week_associations,
+               repository: repository,
+               ready_for_review_week: buggy_week)
       end
 
       let!(:pr_with_merged) do
-        pr = create(:pull_request, repository: repository)
-        pr.update_column(:merged_week_id, buggy_week.id)
-        pr
+        create(:pull_request, :with_week_associations,
+               repository: repository,
+               merged_week: buggy_week)
       end
 
       it 'reassigns PR associations from buggy week to correct week' do
         migration.up
 
-        expect(pr_with_ready_for_review.reload.ready_for_review_week_id).to eq(correct_week.id)
-        expect(pr_with_merged.reload.merged_week_id).to eq(correct_week.id)
+        expect(pr_with_ready_for_review.reload.ready_for_review_week).to eq(correct_week)
+        expect(pr_with_merged.reload.merged_week).to eq(correct_week)
       end
 
       it 'deletes the buggy week' do

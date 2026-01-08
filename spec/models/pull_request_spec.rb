@@ -245,10 +245,11 @@ RSpec.describe PullRequest do
         pr.ensure_weeks_exist_and_update_associations
 
         # Should create exactly one week, not two
-        year_boundary_weeks = repository.weeks.where(begin_date: Date.new(2025, 12, 29))
-        expect(year_boundary_weeks.count).to eq(1)
-        expect(year_boundary_weeks.first.week_number).to eq(202_552)
-        expect(year_boundary_weeks.first.end_date).to eq(Date.new(2026, 1, 4))
+        expect(repository.weeks.where(begin_date: Date.new(2025, 12, 29)).count).to eq(1)
+        expect(repository.weeks.find_by(begin_date: Date.new(2025, 12, 29))).to have_attributes(
+          week_number: 202_552,
+          end_date: Date.new(2026, 1, 4)
+        )
       end
     end
   end
