@@ -68,10 +68,11 @@ heroku restart
 echo "🏥 Checking app health..."
 heroku ps
 
-# Show recent logs
+# Show recent logs (without --tail so script can complete)
 echo "📋 Recent logs:"
-heroku logs --tail -n 20
+heroku logs -n 50
 
+echo ""
 echo "✅ Deployment complete!"
 echo ""
 echo "🔗 View app: https://prmetrics.herokuapp.com"
