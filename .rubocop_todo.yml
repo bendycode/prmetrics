@@ -341,6 +341,7 @@ Rails/Output:
     - 'app/services/unified_sync_service.rb'
     - 'config/environments/production.rb'
     - 'db/data/20251013204927_backfill_late_stale_prs.rb'
+    - 'db/data/20260108202640_fix_duplicate_year_boundary_weeks.rb'
 
 # Offense count: 5
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -364,6 +365,7 @@ Rails/SkipsModelValidations:
     - 'app/jobs/sync_repository_batch_job.rb'
     - 'app/models/review.rb'
     - 'app/services/unified_sync_service.rb'
+    - 'db/data/20260108202640_fix_duplicate_year_boundary_weeks.rb'
     - 'fix_all_week_associations.rb'
     - 'fix_specific_prs.rb'
     - 'fix_week_associations_properly.rb'
