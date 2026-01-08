@@ -350,6 +350,15 @@ These features leverage AI/ML to provide intelligent insights and predictions ba
     - Keep constraints on gems where major version matters (rails, sidekiq, devise)
   - **Timeline**: 30 minutes
 
+- **Clean up or remove .saturnci/Dockerfile**
+  - **Issue**: `.saturnci/Dockerfile` uses Ruby 3.0.6 (EOL) and appears to be legacy CI config
+  - **Goal**: Remove outdated CI configuration or update if still in use
+  - **Actions**:
+    - Determine if Saturn CI is still used for this project
+    - If not used: delete `.saturnci/` directory entirely
+    - If used: update Dockerfile to use current Ruby version (3.4.8)
+  - **Timeline**: 15 minutes
+
 - Dead code removal
 - Test suite optimization
 - Documentation improvements
