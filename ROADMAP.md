@@ -339,6 +339,17 @@ These features leverage AI/ML to provide intelligent insights and predictions ba
   - **Timeline**: 3-4 hours
 
 ### Low Priority
+- **Remove unnecessary Gemfile version constraints**
+  - **Issue**: Some gems have minimum version constraints that may no longer be needed
+  - **Goal**: Simpler Gemfile, easier dependency updates
+  - **Actions**:
+    - Remove version constraint from `pg` (`~> 1.1` → no constraint)
+    - Remove version constraint from `puma` (`>= 7.0.3` → no constraint)
+    - Remove version constraint from `redis` (`>= 4.0.1` → no constraint)
+    - Run `bundle update` and verify app still works
+    - Keep constraints on gems where major version matters (rails, sidekiq, devise)
+  - **Timeline**: 30 minutes
+
 - Dead code removal
 - Test suite optimization
 - Documentation improvements
