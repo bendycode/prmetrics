@@ -62,7 +62,7 @@ group :development, :test do
   gem 'rails-controller-testing'
   gem 'rspec-rails', '~> 7.1'
   gem 'selenium-webdriver'
-  gem 'shoulda-matchers', '~> 6.5'
+  gem 'shoulda-matchers', '~> 7.0'
 end
 
 group :test do
