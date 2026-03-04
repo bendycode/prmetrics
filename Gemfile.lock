@@ -84,8 +84,8 @@ GEM
     ast (2.4.3)
     base64 (0.3.0)
     bcrypt (3.1.20)
-    benchmark (0.4.1)
-    bigdecimal (3.2.2)
+    benchmark (0.5.0)
+    bigdecimal (4.0.1)
     bindex (0.8.1)
     bootsnap (1.18.6)
       msgpack (~> 1.2)
@@ -106,8 +106,8 @@ GEM
       xpath (~> 3.2)
     childprocess (5.1.0)
       logger (~> 1.5)
-    concurrent-ruby (1.3.5)
-    connection_pool (2.5.3)
+    concurrent-ruby (1.3.6)
+    connection_pool (3.0.2)
     crass (1.0.6)
     data_migrate (11.3.0)
       activerecord (>= 6.1)
@@ -153,7 +153,7 @@ GEM
     foreman (0.88.1)
     globalid (1.2.1)
       activesupport (>= 6.1)
-    i18n (1.14.7)
+    i18n (1.14.8)
       concurrent-ruby (~> 1.0)
     importmap-rails (2.1.0)
       actionpack (>= 6.0.0)
@@ -201,7 +201,9 @@ GEM
     marcel (1.0.4)
     matrix (0.4.2)
     mini_mime (1.1.5)
-    minitest (5.25.5)
+    minitest (6.0.2)
+      drb (~> 2.0)
+      prism (~> 1.5)
     msgpack (1.8.0)
     mutex_m (0.3.0)
     net-http (0.6.0)
@@ -376,8 +378,8 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 3.0)
       websocket (~> 1.0)
-    shoulda-matchers (6.5.0)
-      activesupport (>= 5.2.0)
+    shoulda-matchers (7.0.1)
+      activesupport (>= 7.1)
     sidekiq (7.3.9)
       base64
       connection_pool (>= 2.3.0)
@@ -461,12 +463,12 @@ DEPENDENCIES
   kaminari
   letter_opener
   octokit
-  pg (~> 1.1)
-  puma (>= 7.0.3)
+  pg
+  puma
   pundit
   rails (~> 7.1.4)
   rails-controller-testing
-  redis (>= 4.0.1)
+  redis
   rspec-rails (~> 7.1)
   rubocop
   rubocop-capybara
@@ -477,7 +479,7 @@ DEPENDENCIES
   rubocop-rspec_rails
   sassc-rails
   selenium-webdriver
-  shoulda-matchers (~> 6.5)
+  shoulda-matchers (~> 7.0)
   sidekiq (~> 7.0)
   simplecov
   simplecov-console
