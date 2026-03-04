@@ -15,8 +15,8 @@ gem 'kaminari'
 gem 'octokit'
 gem 'sassc-rails'
 
-gem 'pg', '~> 1.1'
-gem 'puma', '>= 7.0.3'
+gem 'pg'
+gem 'puma'
 
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
 gem 'importmap-rails'
@@ -28,7 +28,7 @@ gem 'turbo-rails'
 gem 'stimulus-rails'
 
 # Use Redis adapter to run Action Cable in production
-gem 'redis', '>= 4.0.1'
+gem 'redis'
 gem 'sidekiq', '~> 7.0'
 
 # Data migrations - run after schema migrations for backfilling
