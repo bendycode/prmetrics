@@ -29,7 +29,7 @@ gem 'stimulus-rails'
 
 # Use Redis adapter to run Action Cable in production
 gem 'redis'
-gem 'sidekiq', '~> 7.0'
+gem 'sidekiq', '~> 8.1'
 
 # Data migrations - run after schema migrations for backfilling
 gem 'data_migrate'
