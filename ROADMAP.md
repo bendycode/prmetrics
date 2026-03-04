@@ -201,11 +201,6 @@ These features leverage AI/ML to provide intelligent insights and predictions ba
   - Include logo in Sidekiq Web UI header
 
 ### Infrastructure
-- **Enable Dependabot for automated dependency updates**
-  - Add `.github/dependabot.yml` configuration
-  - Configure for bundler (Ruby gems) and GitHub Actions
-  - Set appropriate update schedule (weekly recommended)
-  - Group minor/patch updates to reduce PR noise
 - Multi-tenant support
 - Horizontal scaling preparation
 - Data archival policies
