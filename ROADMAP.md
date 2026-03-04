@@ -350,18 +350,7 @@ These features leverage AI/ML to provide intelligent insights and predictions ba
   - **Note**: Ruby 3.5 was skipped; 4.0.0 released Dec 2025, 3.4 EOL March 2028
 
 ### Low Priority
-- **Remove unnecessary Gemfile version constraints**
-  - **Issue**: Some gems have minimum version constraints that may no longer be needed
-  - **Goal**: Simpler Gemfile, easier dependency updates
-  - **Actions**:
-    - Remove version constraint from `pg` (`~> 1.1` → no constraint)
-    - Remove version constraint from `puma` (`>= 7.0.3` → no constraint)
-    - Remove version constraint from `redis` (`>= 4.0.1` → no constraint)
-    - Run `bundle update` and verify app still works
-    - Keep constraints on gems where major version matters (rails, sidekiq, devise)
-  - **Timeline**: 30 minutes
-
-- **Clean up or remove .saturnci/Dockerfile**
+-**Clean up or remove .saturnci/Dockerfile**
   - **Issue**: `.saturnci/Dockerfile` uses Ruby 3.0.6 (EOL) and appears to be legacy CI config
   - **Goal**: Remove outdated CI configuration or update if still in use
   - **Actions**:
