@@ -188,7 +188,7 @@ RSpec.describe 'Authentication' do
         visit new_user_session_path
         click_link 'Forgot your password?'
         fill_in 'Email', with: admin_user.email
-        click_button 'Send me reset password instructions'
+        click_button 'Send me password reset instructions'
 
         expect(page).to have_content('You will receive an email')
       end
@@ -197,7 +197,7 @@ RSpec.describe 'Authentication' do
         visit new_user_session_path
         click_link 'Forgot your password?'
         fill_in 'Email', with: regular_user.email
-        click_button 'Send me reset password instructions'
+        click_button 'Send me password reset instructions'
 
         expect(page).to have_content('You will receive an email')
       end
@@ -208,7 +208,7 @@ RSpec.describe 'Authentication' do
         visit new_user_session_path
         click_link 'Forgot your password?'
         fill_in 'Email', with: invited_admin.email
-        click_button 'Send me reset password instructions'
+        click_button 'Send me password reset instructions'
 
         expect(page).to have_content('You will receive an email')
       end
@@ -219,7 +219,7 @@ RSpec.describe 'Authentication' do
         visit new_user_session_path
         click_link 'Forgot your password?'
         fill_in 'Email', with: invited_regular.email
-        click_button 'Send me reset password instructions'
+        click_button 'Send me password reset instructions'
 
         expect(page).to have_content('You will receive an email')
       end

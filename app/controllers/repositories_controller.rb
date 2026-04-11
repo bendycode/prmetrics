@@ -25,7 +25,7 @@ class RepositoriesController < ApplicationController
       RepositorySyncService.new(@repository, fetch_all: true).perform
       redirect_to @repository, notice: 'Repository added successfully. Initial sync has been queued.'
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
