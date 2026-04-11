@@ -13,13 +13,16 @@ threads min_threads_count, max_threads_count
 
 rails_env = ENV.fetch('RAILS_ENV') { 'development' }
 
-if rails_env == 'production'
-  # Puma 8 changed its default bind address to `::` (IPv6 all-interfaces)
-  # when a non-loopback IPv6 interface is available. Pin production to
-  # IPv4 all-interfaces explicitly so Heroku (and any other IPv4-only
-  # platform) keeps receiving traffic regardless of Puma's default.
-  bind "tcp://0.0.0.0:#{ENV.fetch('PORT') { 3000 }}"
+# Pin the bind address to IPv4 all-interfaces explicitly. Puma 8 changed
+# its default bind to `::` (IPv6 all-interfaces) when a non-loopback IPv6
+# interface is available, which overlaps with `0.0.0.0` on Linux and
+# breaks on platforms like Heroku where the router reaches dynos over
+# IPv4. This must be the only bind/port directive in the config --
+# combining it with a separate `port` call would cause a double-bind
+# (EADDRINUSE) because `port` uses Puma 8's new IPv6 default host.
+bind "tcp://0.0.0.0:#{ENV.fetch('PORT') { 3000 }}"
 
+if rails_env == 'production'
   # If you are running more than 1 thread per process, the workers count
   # should be equal to the number of processors (CPU cores) in production.
   #
@@ -36,9 +39,6 @@ end
 # Specifies the `worker_timeout` threshold that Puma will use to wait before
 # terminating a worker in development environments.
 worker_timeout 3600 if ENV.fetch('RAILS_ENV', 'development') == 'development'
-
-# Specifies the `port` that Puma will listen on to receive requests; default is 3000.
-port ENV.fetch('PORT') { 3000 }
 
 # Specifies the `environment` that Puma will run in.
 environment rails_env
