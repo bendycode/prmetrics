@@ -14,6 +14,12 @@ threads min_threads_count, max_threads_count
 rails_env = ENV.fetch('RAILS_ENV') { 'development' }
 
 if rails_env == 'production'
+  # Puma 8 changed its default bind address to `::` (IPv6 all-interfaces)
+  # when a non-loopback IPv6 interface is available. Pin production to
+  # IPv4 all-interfaces explicitly so Heroku (and any other IPv4-only
+  # platform) keeps receiving traffic regardless of Puma's default.
+  bind "tcp://0.0.0.0:#{ENV.fetch('PORT') { 3000 }}"
+
   # If you are running more than 1 thread per process, the workers count
   # should be equal to the number of processors (CPU cores) in production.
   #
