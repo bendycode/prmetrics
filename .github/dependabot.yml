@@ -12,6 +12,8 @@ updates:
         update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
+        exclude-patterns:
+          - "rails"
         update-types:
           - "minor"
           - "patch"
