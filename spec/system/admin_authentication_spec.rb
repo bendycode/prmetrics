@@ -68,7 +68,7 @@ RSpec.describe 'Admin Authentication' do
       expect(page).to have_content('Forgot your password?')
 
       fill_in 'Email', with: admin.email
-      click_button 'Send me reset password instructions'
+      click_button 'Send me password reset instructions'
 
       # Should redirect back to login page
       expect(page).to have_content('Sign In')

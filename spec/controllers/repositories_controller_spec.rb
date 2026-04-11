@@ -87,9 +87,9 @@ RSpec.describe RepositoriesController do
         end.not_to change(Repository, :count)
       end
 
-      it 'returns unprocessable entity status' do
+      it 'returns unprocessable content status' do
         post :create, params: { repository: invalid_attributes }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
   end
