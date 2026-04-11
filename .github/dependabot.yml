@@ -7,16 +7,9 @@ updates:
       day: "friday"
     ignore:
       # Rails major version upgrades are intentional, multi-step projects.
-      # Handle them via a dedicated upgrade PR, not a grouped bundler bump.
+      # Handle them via a dedicated upgrade PR, not a routine dependabot bump.
       - dependency-name: "rails"
         update-types: ["version-update:semver-major"]
-    groups:
-      minor-and-patch:
-        exclude-patterns:
-          - "rails"
-        update-types:
-          - "minor"
-          - "patch"
 
   - package-ecosystem: "github-actions"
     directory: "/"
