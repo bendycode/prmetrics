@@ -36,7 +36,9 @@ class HealthController < ApplicationController
   end
 
   def check_database
-    ActiveRecord::Base.connection.execute('SELECT 1')
+    ActiveRecord::Base.connection_pool.with_connection do |conn|
+      conn.execute('SELECT 1')
+    end
     { status: 'ok', message: 'Database connection successful' }
   rescue StandardError => e
     { status: 'error', message: "Database connection failed: #{e.message}" }

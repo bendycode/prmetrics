@@ -34,8 +34,6 @@ RSpec.describe HealthController do
 
     context 'when all services are healthy' do
       before do
-        allow(ActiveRecord::Base.connection).to receive(:execute).with('SELECT 1')
-
         redis_mock = instance_double(Redis)
         allow(Redis).to receive(:new).and_return(redis_mock)
         allow(redis_mock).to receive(:ping)
@@ -61,7 +59,7 @@ RSpec.describe HealthController do
 
     context 'when database is unhealthy' do
       before do
-        allow(ActiveRecord::Base.connection).to receive(:execute).with('SELECT 1').and_raise(StandardError.new('Connection failed'))
+        allow(ActiveRecord::Base.connection_pool).to receive(:with_connection).and_raise(StandardError.new('Connection failed'))
 
         redis_mock = instance_double(Redis)
         allow(Redis).to receive(:new).and_return(redis_mock)
@@ -89,8 +87,6 @@ RSpec.describe HealthController do
 
     context 'when redis is unhealthy' do
       before do
-        allow(ActiveRecord::Base.connection).to receive(:execute).with('SELECT 1')
-
         redis_mock = instance_double(Redis)
         allow(Redis).to receive(:new).and_return(redis_mock)
         allow(redis_mock).to receive(:ping).and_raise(StandardError.new('Redis unavailable'))
@@ -148,15 +144,13 @@ RSpec.describe HealthController do
 
     describe '#check_database' do
       it 'returns ok status when database is accessible' do
-        allow(ActiveRecord::Base.connection).to receive(:execute).with('SELECT 1')
-
         result = controller.send(:check_database)
         expect(result[:status]).to eq('ok')
         expect(result[:message]).to include('successful')
       end
 
       it 'returns error status when database is not accessible' do
-        allow(ActiveRecord::Base.connection).to receive(:execute).with('SELECT 1').and_raise(StandardError.new('Connection failed'))
+        allow(ActiveRecord::Base.connection_pool).to receive(:with_connection).and_raise(StandardError.new('Connection failed'))
 
         result = controller.send(:check_database)
         expect(result[:status]).to eq('error')
