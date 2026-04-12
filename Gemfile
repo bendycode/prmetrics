@@ -2,7 +2,7 @@ source 'https://rubygems.org'
 
 ruby '3.4.8'
 
-gem 'rails', '~> 7.1.6'
+gem 'rails', '~> 7.2.3'
 
 # The original asset pipeline for Rails [https://github.com/rails/sprockets-rails]
 gem 'sprockets-rails'
