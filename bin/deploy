@@ -64,17 +64,67 @@ fi
 echo "🔄 Restarting app..."
 heroku restart
 
-# Check app status
-echo "🏥 Checking app health..."
-heroku ps
+# Wait for dynos to settle after restart
+echo "⏳ Waiting for dynos to start..."
+sleep 15
 
-# Show recent logs (without --tail so script can complete)
-echo "📋 Recent logs:"
-heroku logs -n 50
+# Check that dynos reached 'up' state
+echo "🏥 Checking dyno status..."
+DYNO_STATUS=$(heroku ps 2>&1)
+echo "$DYNO_STATUS"
+
+CRASHED_DYNOS=$(echo "$DYNO_STATUS" | grep -c "crashed" || true)
+if [ "$CRASHED_DYNOS" -gt 0 ]; then
+  echo ""
+  echo "❌ DEPLOYMENT FAILED: $CRASHED_DYNOS dyno(s) crashed after restart!"
+  echo ""
+  echo "📋 Recent logs:"
+  heroku logs -n 100
+  echo ""
+  echo "⚠️  The app may be down. Check logs and consider rolling back:"
+  echo "   heroku rollback"
+  exit 1
+fi
+
+STARTING_DYNOS=$(echo "$DYNO_STATUS" | grep -c "starting" || true)
+if [ "$STARTING_DYNOS" -gt 0 ]; then
+  echo "⏳ Some dynos still starting, waiting another 15 seconds..."
+  sleep 15
+  DYNO_STATUS=$(heroku ps 2>&1)
+  echo "$DYNO_STATUS"
+
+  CRASHED_DYNOS=$(echo "$DYNO_STATUS" | grep -c "crashed" || true)
+  if [ "$CRASHED_DYNOS" -gt 0 ]; then
+    echo ""
+    echo "❌ DEPLOYMENT FAILED: $CRASHED_DYNOS dyno(s) crashed after restart!"
+    echo ""
+    echo "📋 Recent logs:"
+    heroku logs -n 100
+    echo ""
+    echo "⚠️  The app may be down. Check logs and consider rolling back:"
+    echo "   heroku rollback"
+    exit 1
+  fi
+fi
+
+# Hit the health endpoint to verify the app is actually serving requests
+APP_URL=$(heroku info --json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['app']['web_url'].rstrip('/'))" 2>/dev/null || echo "")
+if [ -n "$APP_URL" ]; then
+  echo "🔍 Checking health endpoint..."
+  HEALTH_RESPONSE=$(curl -sf "${APP_URL}/health" 2>&1 || true)
+  if echo "$HEALTH_RESPONSE" | grep -q '"status":"ok"'; then
+    echo "✅ Health check passed: $HEALTH_RESPONSE"
+  else
+    echo "⚠️  Health check did not return ok: $HEALTH_RESPONSE"
+    echo "   The app may still be starting up. Check manually:"
+    echo "   curl ${APP_URL}/health"
+  fi
+else
+  echo "⚠️  Could not determine app URL for health check"
+fi
 
 echo ""
 echo "✅ Deployment complete!"
 echo ""
-echo "🔗 View app: https://prmetrics.herokuapp.com"
 echo "📊 View logs: heroku logs --tail"
 echo "🚦 Check status: heroku ps"
