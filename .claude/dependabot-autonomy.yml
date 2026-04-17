@@ -1,0 +1,26 @@
+# Autonomy dials for the dependabot-batch skill.
+# Edit these to tune how much the skill does without asking.
+# Possible values for merge/deploy/flake dials: auto, ask
+#
+# The skill reads this file at the start of each run.
+
+# Auto-merge dev-only gems (gems only in :development or :development, :test groups)
+# for patch and minor bumps with green CI. Majors always ask (hard veto, see SKILL.md).
+merge_dev_only_with_green_ci: auto
+
+# Auto-merge runtime gems for patch and minor bumps with green CI.
+# Majors, Ruby, Rails, and anything on the never-auto list always ask.
+merge_runtime_bumps: auto
+
+# Deploy to production after a clean-green main post-batch.
+# bin/deploy handles its own failure detection (health check, crash detection).
+deploy_after_batch: auto
+
+# If CI failures match known flake fingerprints, open a separate flake-fix PR first.
+separate_flake_fix_pr: auto
+
+# Minimum Dependabot compatibility score (integer percent) required for auto-merge.
+# PRs below this threshold downgrade to "ask" regardless of the merge dials above.
+# PRs missing a compatibility score are treated as below the floor.
+# Raise this to be more cautious; lower it to be more aggressive.
+compatibility_score_floor: 85

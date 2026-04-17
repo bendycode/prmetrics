@@ -1,0 +1,7 @@
+# Gems on this list always trigger "ask" behavior regardless of the autonomy
+# dials in dependabot-autonomy.yml. Add a gem and a short reason when an
+# incident or tricky upgrade warrants manual review of every future bump.
+#
+# Format: gem_name: "reason"
+
+puma: "Puma 8 mixed bind/port directives caused EADDRINUSE in production (2026-04). Verify config on any bump."

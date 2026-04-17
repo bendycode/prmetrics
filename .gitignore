@@ -37,8 +37,10 @@
 # Ignore MacOS filesystem artifacts
 **/.DS_Store
 
-# Ignore Claude Code local settings
-.claude/
+# Share Claude Code project-scoped skills, commands, and config;
+# exclude per-user local settings and ephemeral plan files.
+.claude/settings.local.json
+.claude/plans/
 
 # Ignore SimpleCov coverage reports (but keep baseline)
 /coverage/
