@@ -39,8 +39,8 @@ RSpec.describe 'User Role Authorization', :js do
     it 'can access admin management section' do
       visit root_path
 
-      # Admin should see Administration section in sidebar
-      expect(page.html).to include('Administration')
+      # Sidebar CSS uppercases the heading, so match case-insensitively.
+      expect(page).to have_content(/administration/i)
       expect(page).to have_link('Users')
 
       # Admin should be able to access admin management
@@ -111,8 +111,8 @@ RSpec.describe 'User Role Authorization', :js do
     it 'cannot access admin management section' do
       visit root_path
 
-      # Regular user should NOT see ADMINISTRATION section in sidebar
-      expect(page).to have_no_content('Administration')
+      # Regular user should NOT see Administration section in sidebar
+      expect(page).to have_no_content(/administration/i)
       expect(page).to have_no_link('Users')
     end
 
@@ -166,6 +166,7 @@ RSpec.describe 'User Role Authorization', :js do
       fill_in 'Email', with: 'regular@example.com'
       # Leave Admin checkbox unchecked
 
+      expect(page).to have_field('Email', with: 'regular@example.com')
       click_button 'Send Invitation'
 
       # Should create regular user
@@ -176,10 +177,16 @@ RSpec.describe 'User Role Authorization', :js do
     it 'allows admin to invite admin users' do
       visit new_user_path
 
+      expect(page).to have_field('Email')
+      expect(page).to have_field('user_admin_role_admin', type: 'checkbox')
+
       # Fill out form for admin user
       fill_in 'Email', with: 'newadmin@example.com'
       check 'Admin' # Check the admin checkbox
 
+      # Wait for the check to settle before submitting so Selenium's element
+      # handle to the submit button isn't invalidated by concurrent DOM work.
+      expect(page).to have_checked_field('user_admin_role_admin')
       click_button 'Send Invitation'
 
       # Should create admin user
