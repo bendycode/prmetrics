@@ -47,6 +47,23 @@ For each PR, extract and display in a compact table:
 CI run is green (`gh run list --branch main --limit 1`). If red, bail with a
 message and stop -- do not rebase onto a broken base.
 
+**Merge-method detection.** Query the repo to find which merge strategies are
+allowed and pick the method this batch will use:
+
+```
+gh api "repos/{owner}/{repo}" --jq '{squash:.allow_squash_merge,merge:.allow_merge_commit,rebase:.allow_rebase_merge}'
+```
+
+Pick the first allowed method in this priority order: **squash → merge → rebase**.
+Squash is preferred for clean dependency-bump history; the others are fallbacks
+when the repo disallows squash. Store the chosen flag (`--squash` / `--merge` /
+`--rebase`) and reuse it for every merge in this batch. If none are allowed,
+stop and surface the repo settings to the user.
+
+Do **not** change the repo's merge-method settings to enable squash -- repo
+policy is not scoped to this skill, so flipping it would change the default
+across all merges (UI, other tools, contributors). Adapt to the repo instead.
+
 **Grouped-branch refusal.** If any PR branch matches `dependabot/bundler/multi-*`,
 refuse to process it and point the user at `.github/dependabot.yml`.
 
@@ -93,8 +110,8 @@ For each PR in order:
    |-----------|--------|
    | Hard veto (major / Ruby / Rails / never-auto list / grouped) | Announce green, wait for user merge |
    | Compat % below `compatibility_score_floor` (or N/A) | Announce green, wait for user merge |
-   | Dev-only + patch/minor + `merge_dev_only_with_green_ci: auto` | `gh pr merge <n> --squash --delete-branch` |
-   | Runtime + patch/minor + `merge_runtime_bumps: auto` | `gh pr merge <n> --squash --delete-branch` |
+   | Dev-only + patch/minor + `merge_dev_only_with_green_ci: auto` | `gh pr merge <n> <merge-flag> --delete-branch` |
+   | Runtime + patch/minor + `merge_runtime_bumps: auto` | `gh pr merge <n> <merge-flag> --delete-branch` |
    | Either dial set to `ask` | Announce green, wait for user merge |
 
 8. After each auto-merge or user-reported merge, `git checkout main && git pull --ff-only` and re-rebase the next PR on the updated main before processing it. This avoids CI running on a stale base.
