@@ -48,7 +48,7 @@ RSpec.describe DashboardHelper do
       expect(body).not_to include('closed')
     end
 
-    it 'states explicitly which days are excluded and that weekdays have no hourly cap' do
+    it 'states explicitly which days are excluded and that weekdays have no hourly cap', :aggregate_failures do
       review_def = helper.metric_definitions(:hours_to_first_review).first
       merge_def = helper.metric_definitions(:hours_to_merge).first
 
