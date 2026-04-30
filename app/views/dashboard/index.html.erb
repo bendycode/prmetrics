@@ -100,9 +100,14 @@
     <div class="col-xl-8 col-lg-7">
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">PR Velocity Trends</h6>
+                <h6 class="m-0 font-weight-bold text-primary">
+                    PR Velocity Trends
+                    <%= render 'shared/metric_info',
+                               chart_label: 'PR Velocity Trends',
+                               keys: %i[prs_started prs_merged prs_cancelled late_prs stale_prs] %>
+                </h6>
                 <small class="text-muted">
-                    Last 12 weeks 
+                    Last 12 weeks
                     <% if @selected_repository_id.present? %>
                         for <%= Repository.find(@selected_repository_id).name %>
                     <% else %>
@@ -122,7 +127,12 @@
     <div class="col-xl-4 col-lg-5">
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Review Performance</h6>
+                <h6 class="m-0 font-weight-bold text-primary">
+                    Review Performance
+                    <%= render 'shared/metric_info',
+                               chart_label: 'Review Performance',
+                               keys: %i[hours_to_first_review hours_to_merge] %>
+                </h6>
                 <small class="text-muted">
                     Average hours (weekdays only)
                     <% if @selected_repository_id.present? %>
@@ -145,7 +155,12 @@
     <div class="col-12">
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Repository Performance Comparison</h6>
+                <h6 class="m-0 font-weight-bold text-primary">
+                    Repository Performance Comparison
+                    <%= render 'shared/metric_info',
+                               chart_label: 'Repository Performance Comparison',
+                               keys: %i[four_week_window merge_rate hours_to_first_review] %>
+                </h6>
                 <small class="text-muted">Last 4 weeks average</small>
             </div>
             <div class="card-body">
