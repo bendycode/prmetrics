@@ -335,6 +335,11 @@ const ChartPreferences = {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap popovers for chart-metric info icons
+    if (typeof $ !== 'undefined' && typeof $.fn.popover === 'function') {
+        $('[data-toggle="popover"]').popover({ container: 'body' });
+    }
+
     // Enhanced PR Velocity Chart
     var ctx1 = document.getElementById('prVelocityChart').getContext('2d');
     window.prVelocityChart = new Chart(ctx1, {

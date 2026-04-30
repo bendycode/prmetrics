@@ -1,8 +1,10 @@
 <%
   definitions = metric_definitions(*keys)
-  popover_body = tag.dl(class: 'metric-definitions mb-0') do
-    safe_join(definitions.map { |d| tag.dt(d[:title]) + tag.dd(d[:body], class: 'mb-2') })
-  end
+  popover_body = safe_join(definitions.map { |d|
+    tag.div(class: 'metric-definition mb-2') do
+      tag.h6(d[:title], class: 'mb-1') + tag.p(d[:body], class: 'mb-0 small')
+    end
+  })
 %>
 <%= tag.button(
       type: 'button',
