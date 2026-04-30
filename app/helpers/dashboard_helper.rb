@@ -13,14 +13,16 @@ module DashboardHelper
       body: 'Pull requests closed during the week without being merged.'
     },
     late_prs: {
-      title: 'Late PRs',
-      body: 'Open, non-draft, approved PRs whose first approval was more than 7 ' \
-            'and fewer than 28 days before the end of the week (8-27 days approved-but-unmerged).'
+      title: 'Late Approved PRs',
+      body: 'Counted only for PRs that are open, non-draft, and have at least one approval. ' \
+            'Within that population, this is the count whose first approval landed more than 7 ' \
+            'and fewer than 28 days before the end of the week (i.e., 8-27 days approved-but-unmerged).'
     },
     stale_prs: {
-      title: 'Stale PRs',
-      body: 'Open, non-draft, approved PRs whose first approval was 28 or more days ' \
-            'before the end of the week. PRs move from Late into Stale at the 28-day mark.'
+      title: 'Stale Approved PRs',
+      body: 'Counted only for PRs that are open, non-draft, and have at least one approval. ' \
+            'Within that population, this is the count whose first approval landed 28 or more days ' \
+            'before the end of the week. PRs move from Late Approved into Stale Approved at the 28-day mark.'
     },
     hours_to_first_review: {
       title: 'Hours to First Review',

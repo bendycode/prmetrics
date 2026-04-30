@@ -26,9 +26,9 @@ RSpec.describe 'Dashboard metric popovers', :js do
 
     expect(page).to have_css('.popover.show', wait: 5)
     within('.popover.show') do
-      expect(page).to have_content('Late PRs')
+      expect(page).to have_content('Late Approved PRs')
       expect(page).to have_content('more than 7')
-      expect(page).to have_content('Stale PRs')
+      expect(page).to have_content('Stale Approved PRs')
       expect(page).to have_content('28 or more days')
     end
   end
@@ -39,7 +39,7 @@ RSpec.describe 'Dashboard metric popovers', :js do
     find('button.metric-info-trigger[aria-label*="PR Velocity"]').hover
 
     expect(page).to have_css('.popover.show', wait: 5)
-    within('.popover.show') { expect(page).to have_content('Late PRs') }
+    within('.popover.show') { expect(page).to have_content('Late Approved PRs') }
   end
 
   it 'dismisses the popover when the trigger loses both hover and focus' do

@@ -13,20 +13,21 @@ RSpec.describe DashboardHelper do
     it 'preserves the order of requested keys' do
       result = helper.metric_definitions(:stale_prs, :late_prs)
 
-      expect(result.pluck(:title)).to eq(['Stale PRs', 'Late PRs'])
+      expect(result.pluck(:title)).to eq(['Stale Approved PRs', 'Late Approved PRs'])
     end
 
-    it 'states the 7-day threshold for late PRs' do
-      definition = helper.metric_definitions(:late_prs).first
+    it 'leads the late PRs definition with the open/non-draft/approved filter' do
+      body = helper.metric_definitions(:late_prs).first[:body]
 
-      expect(definition[:body]).to include('7')
-      expect(definition[:body]).to include('28')
+      expect(body).to start_with('Counted only for PRs that are open, non-draft, and have at least one approval')
+      expect(body).to include('more than 7 and fewer than 28 days')
     end
 
-    it 'states the 28-day threshold for stale PRs' do
-      definition = helper.metric_definitions(:stale_prs).first
+    it 'leads the stale PRs definition with the open/non-draft/approved filter' do
+      body = helper.metric_definitions(:stale_prs).first[:body]
 
-      expect(definition[:body]).to include('28')
+      expect(body).to start_with('Counted only for PRs that are open, non-draft, and have at least one approval')
+      expect(body).to include('28 or more days')
     end
 
     it 'defines the cancelled, hours, merge rate, and four-week-window metrics' do
