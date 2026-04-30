@@ -1,0 +1,21 @@
+<%
+  definitions = metric_definitions(*keys)
+  popover_body = tag.dl(class: 'metric-definitions mb-0') do
+    safe_join(definitions.map { |d| tag.dt(d[:title]) + tag.dd(d[:body], class: 'mb-2') })
+  end
+%>
+<%= tag.button(
+      type: 'button',
+      class: 'btn btn-link p-0 ml-2 align-baseline metric-info-trigger',
+      data: {
+        toggle: 'popover',
+        html: 'true',
+        trigger: 'focus',
+        placement: 'bottom',
+        title: chart_label,
+        content: popover_body
+      },
+      aria: { label: "#{chart_label} metric definitions" }
+    ) do %>
+  <i class="fas fa-info-circle text-info" aria-hidden="true"></i>
+<% end %>
