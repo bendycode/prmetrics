@@ -35,6 +35,16 @@ RSpec.describe DashboardHelper do
       expect { helper.metric_definitions(*keys) }.not_to raise_error
     end
 
+    it 'states explicitly which days are excluded and that weekdays have no hourly cap' do
+      review_def = helper.metric_definitions(:hours_to_first_review).first
+      merge_def = helper.metric_definitions(:hours_to_merge).first
+
+      [review_def, merge_def].each do |defn|
+        expect(defn[:body]).to include('Saturdays and Sundays')
+        expect(defn[:body]).to include('no business-hours cap')
+      end
+    end
+
     it 'raises KeyError for unknown metric keys' do
       expect { helper.metric_definitions(:not_a_metric) }.to raise_error(KeyError)
     end

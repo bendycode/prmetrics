@@ -24,13 +24,15 @@ module DashboardHelper
     },
     hours_to_first_review: {
       title: 'Hours to First Review',
-      body: 'Average weekday hours between a PR becoming ready for review and its first review. ' \
-            'Weekends are excluded so off-hours do not skew the metric.'
+      body: 'Average hours between a PR becoming ready for review and its first review. ' \
+            'Time on Saturdays and Sundays is skipped entirely, but weekdays count all 24 hours -- ' \
+            'there is no business-hours cap, so a PR sitting overnight Tuesday into Wednesday accrues those hours.'
     },
     hours_to_merge: {
       title: 'Hours to Merge',
-      body: 'Average weekday hours between a PR becoming ready for review and being merged. ' \
-            'Weekends are excluded so off-hours do not skew the metric.'
+      body: 'Average hours between a PR becoming ready for review and being merged. ' \
+            'Time on Saturdays and Sundays is skipped entirely, but weekdays count all 24 hours -- ' \
+            'there is no business-hours cap, so a PR sitting overnight Tuesday into Wednesday accrues those hours.'
     },
     merge_rate: {
       title: 'Merge Rate (%)',
