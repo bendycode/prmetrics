@@ -57,6 +57,10 @@ module DashboardHelper
     keys.map { |key| METRIC_DEFINITIONS.fetch(key) }
   end
 
+  # Returned value is interpolated into JS string literals in dashboard/index.html.erb
+  # via `label: "<%= metric_label(:foo) %>"`. Keep titles ASCII without quotes,
+  # backslashes, or control characters so ERB's default HTML escape produces a
+  # well-formed JS string for any future title.
   def metric_label(key)
     METRIC_DEFINITIONS.fetch(key)[:title]
   end
