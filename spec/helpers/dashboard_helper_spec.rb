@@ -30,10 +30,26 @@ RSpec.describe DashboardHelper do
       expect(body).to include('28 or more days')
     end
 
-    it 'defines the cancelled, hours, merge rate, and four-week-window metrics' do
-      keys = %i[prs_cancelled hours_to_first_review hours_to_merge merge_rate four_week_window]
+    it 'defines a key whose title matches each Repository Performance Comparison chart label' do
+      total_prs = helper.metric_definitions(:total_prs_4_weeks).first
+      avg_review = helper.metric_definitions(:avg_review_time_hours).first
+      merge_rate = helper.metric_definitions(:merge_rate).first
 
-      expect { helper.metric_definitions(*keys) }.not_to raise_error
+      expect(total_prs[:title]).to eq('Total PRs (4 weeks)')
+      expect(avg_review[:title]).to eq('Avg Review Time (hours)')
+      expect(merge_rate[:title]).to eq('Merge Rate (%)')
+    end
+
+    it 'describes merge_rate as merged-divided-by-started, not merged-divided-by-closed' do
+      body = helper.metric_definitions(:merge_rate).first[:body]
+
+      expect(body).to include('merged')
+      expect(body).to include('started')
+      expect(body).not_to include('closed')
+    end
+
+    it 'no longer exposes the four_week_window meta-entry' do
+      expect { helper.metric_definitions(:four_week_window) }.to raise_error(KeyError)
     end
 
     it 'states explicitly which days are excluded and that weekdays have no hourly cap' do

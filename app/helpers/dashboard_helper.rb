@@ -38,11 +38,19 @@ module DashboardHelper
     },
     merge_rate: {
       title: 'Merge Rate (%)',
-      body: 'Percentage of PRs closed during the window that were merged (vs. cancelled).'
+      body: '(PRs merged in the last four weeks) divided by (PRs started in the last four weeks), as a percentage. ' \
+            'Note: not a strict cohort ratio -- the merged set and the started set may not be the same PRs, ' \
+            'since a PR can start outside the window and merge inside, or vice versa.'
     },
-    four_week_window: {
-      title: '4-Week Window',
-      body: 'Comparison values are averaged or summed across the most recent four full weeks of data.'
+    total_prs_4_weeks: {
+      title: 'Total PRs (4 weeks)',
+      body: 'Sum of "PRs Started" across the most recent four full weeks of data for the repository.'
+    },
+    avg_review_time_hours: {
+      title: 'Avg Review Time (hours)',
+      body: 'Average of each week\'s "Hours to First Review" across the most recent four full weeks of data ' \
+            'for the repository. Same underlying calculation as the Review Performance chart -- weekday hours only ' \
+            '(Saturdays and Sundays skipped, weekdays count all 24 hours, no business-hours cap).'
     }
   }.freeze
 
