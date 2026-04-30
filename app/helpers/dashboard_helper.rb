@@ -1,4 +1,7 @@
 module DashboardHelper
+  WEEKDAY_HOURS_RULE = 'Time on Saturdays and Sundays is skipped entirely, but weekdays count all 24 hours -- ' \
+                       'there is no business-hours cap, so a PR sitting overnight Tuesday into Wednesday accrues those hours.'.freeze
+
   METRIC_DEFINITIONS = {
     prs_started: {
       title: 'PRs Started',
@@ -26,15 +29,11 @@ module DashboardHelper
     },
     hours_to_first_review: {
       title: 'Hours to First Review',
-      body: 'Average hours between a PR becoming ready for review and its first review. ' \
-            'Time on Saturdays and Sundays is skipped entirely, but weekdays count all 24 hours -- ' \
-            'there is no business-hours cap, so a PR sitting overnight Tuesday into Wednesday accrues those hours.'
+      body: "Average hours between a PR becoming ready for review and its first review. #{WEEKDAY_HOURS_RULE}"
     },
     hours_to_merge: {
       title: 'Hours to Merge',
-      body: 'Average hours between a PR becoming ready for review and being merged. ' \
-            'Time on Saturdays and Sundays is skipped entirely, but weekdays count all 24 hours -- ' \
-            'there is no business-hours cap, so a PR sitting overnight Tuesday into Wednesday accrues those hours.'
+      body: "Average hours between a PR becoming ready for review and being merged. #{WEEKDAY_HOURS_RULE}"
     },
     merge_rate: {
       title: 'Merge Rate (%)',
@@ -56,5 +55,9 @@ module DashboardHelper
 
   def metric_definitions(*keys)
     keys.map { |key| METRIC_DEFINITIONS.fetch(key) }
+  end
+
+  def metric_label(key)
+    METRIC_DEFINITIONS.fetch(key)[:title]
   end
 end

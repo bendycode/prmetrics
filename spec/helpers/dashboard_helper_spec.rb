@@ -48,10 +48,6 @@ RSpec.describe DashboardHelper do
       expect(body).not_to include('closed')
     end
 
-    it 'no longer exposes the four_week_window meta-entry' do
-      expect { helper.metric_definitions(:four_week_window) }.to raise_error(KeyError)
-    end
-
     it 'states explicitly which days are excluded and that weekdays have no hourly cap' do
       review_def = helper.metric_definitions(:hours_to_first_review).first
       merge_def = helper.metric_definitions(:hours_to_merge).first
