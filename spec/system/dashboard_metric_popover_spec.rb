@@ -33,12 +33,22 @@ RSpec.describe 'Dashboard metric popovers', :js do
     end
   end
 
-  it 'dismisses the popover when the trigger loses focus' do
+  it 'opens the popover when the trigger is hovered, no click required' do
+    expect(page).to have_css('#prVelocityChart')
+
+    find('button.metric-info-trigger[aria-label*="PR Velocity"]').hover
+
+    expect(page).to have_css('.popover.show', wait: 5)
+    within('.popover.show') { expect(page).to have_content('Late PRs') }
+  end
+
+  it 'dismisses the popover when the trigger loses both hover and focus' do
     expect(page).to have_css('#prVelocityChart')
 
     find('button.metric-info-trigger[aria-label*="Review Performance"]').click
     expect(page).to have_css('.popover.show', wait: 5)
 
+    find('h1', text: 'Dashboard').hover
     page.execute_script(
       'document.querySelector(\'button.metric-info-trigger[aria-label*="Review Performance"]\').blur()'
     )
