@@ -54,12 +54,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@rails/ujs@7.0.0/lib/assets/compiled/rails-ujs.js"></script>
   <script>
     $(document).ready(function() {
-      // Initialize Rails UJS for method: :delete links
-      Rails.start();
-      
       // Initialize Bootstrap dropdowns
       $('.dropdown-toggle').dropdown();
-      
+
+      // Initialize Bootstrap popovers (for metric-info icons, etc.)
+      $('[data-toggle="popover"]').popover({ container: 'body' });
+
       // Ensure the entire user dropdown area is clickable
       $('#userDropdown, #userDropdown span, #userDropdown div').on('click', function(e) {
         e.preventDefault();

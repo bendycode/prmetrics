@@ -102,7 +102,7 @@
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">
                     PR Velocity Trends
-                    <%= render 'dashboard/metric_info',
+                    <%= render 'shared/metric_info',
                                chart_label: 'PR Velocity Trends',
                                keys: %i[prs_started prs_merged prs_cancelled late_prs stale_prs] %>
                 </h6>
@@ -129,7 +129,7 @@
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">
                     Review Performance
-                    <%= render 'dashboard/metric_info',
+                    <%= render 'shared/metric_info',
                                chart_label: 'Review Performance',
                                keys: %i[hours_to_first_review hours_to_merge] %>
                 </h6>
@@ -157,7 +157,7 @@
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">
                     Repository Performance Comparison
-                    <%= render 'dashboard/metric_info',
+                    <%= render 'shared/metric_info',
                                chart_label: 'Repository Performance Comparison',
                                keys: %i[four_week_window merge_rate hours_to_first_review] %>
                 </h6>
@@ -335,11 +335,6 @@ const ChartPreferences = {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Bootstrap popovers for chart-metric info icons
-    if (typeof $ !== 'undefined' && typeof $.fn.popover === 'function') {
-        $('[data-toggle="popover"]').popover({ container: 'body' });
-    }
-
     // Enhanced PR Velocity Chart
     var ctx1 = document.getElementById('prVelocityChart').getContext('2d');
     window.prVelocityChart = new Chart(ctx1, {
