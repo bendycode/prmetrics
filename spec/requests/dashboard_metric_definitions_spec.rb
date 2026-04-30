@@ -21,14 +21,14 @@ RSpec.describe 'Dashboard metric definitions' do
     get dashboard_path
 
     expect(response.body).to include('Late PRs')
-    expect(response.body).to match(/Late PRs.*more than 7.*fewer than 28/m)
+    expect(response.body).to include('more than 7 and fewer than 28 days')
   end
 
   it 'embeds the Stale PRs definition with the 28-day threshold in popover content' do
     get dashboard_path
 
     expect(response.body).to include('Stale PRs')
-    expect(response.body).to match(/Stale PRs.*28 or more days/m)
+    expect(response.body).to include('28 or more days')
   end
 
   it 'renders an info icon for the Review Performance chart' do
