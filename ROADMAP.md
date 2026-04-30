@@ -298,6 +298,33 @@ These features leverage AI/ML to provide intelligent insights and predictions ba
   - **Timeline**: 1-2 days
 
 ### Medium Priority
+- **Migrate dashboard layout to Bootstrap 5**
+  - **Issue**: `app/views/layouts/admin.html.erb` loads `bootstrap@4.6.0`
+    from a CDN at runtime, even though `Gemfile.lock` already pins
+    `bootstrap 5.3.8`. v5 syntax (`data-bs-toggle`, `btn-close`,
+    `data-bs-dismiss`) appears in places like the layout's flash
+    dismiss buttons, but those are no-ops against the v4 bundle.
+  - **Goal**: Single Bootstrap version end-to-end, with v5 attributes
+    and the gem-provided JS bundle wired through the asset pipeline.
+  - **Actions**:
+    - Replace the bootstrap@4.6.0 CDN script tag with the gem bundle
+      (or a sprockets/Importmap include).
+    - Update `data-toggle` -> `data-bs-toggle` and `data-content` ->
+      `data-bs-content` in any partials that use them, including
+      `app/views/shared/_metric_info.html.erb`.
+    - Switch the popover init in `admin.html.erb` from jQuery
+      `$('[data-toggle="popover"]').popover()` to the v5 form
+      (`new bootstrap.Popover(el)` over `querySelectorAll`).
+    - Audit existing `data-bs-*` attributes already present in the
+      layout (e.g., the alert dismiss buttons) to confirm they begin
+      working as expected post-migration.
+    - Run system specs to confirm popovers and dropdowns still work.
+  - **Timeline**: 2-4 hours
+  - **Note**: Surfaced during PR #39 (Discoverable Dashboard Chart
+    Definitions); the v4 sanitizer also stripped `<dl>/<dt>/<dd>` from
+    popover bodies, which the v5 default allowlist also rejects -- so
+    the partial's `<div>/<h6>/<p>` workaround stays valid post-migration.
+
 - **Improve rate limit messaging**
   - **Issue**: Rate limit wait times shown as raw seconds (e.g., "2387 seconds")
   - **Goal**: User-friendly messaging during GitHub API rate limiting
