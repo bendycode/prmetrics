@@ -159,7 +159,7 @@
                     Repository Performance Comparison
                     <%= render 'shared/metric_info',
                                chart_label: 'Repository Performance Comparison',
-                               keys: %i[four_week_window merge_rate hours_to_first_review] %>
+                               keys: %i[total_prs_4_weeks avg_review_time_hours merge_rate] %>
                 </h6>
                 <small class="text-muted">Last 4 weeks average</small>
             </div>
@@ -342,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
             labels: [<%= @chart_weeks.map { |w| "'#{w.begin_date.strftime('%b %d')}'" }.join(', ').html_safe %>],
             datasets: [{
-                label: 'PRs Started',
+                label: "<%= metric_label(:prs_started) %>",
                 data: [<%= @chart_weeks.map(&:num_prs_started).join(', ') %>],
                 borderColor: '#4e73df',
                 backgroundColor: 'rgba(78, 115, 223, 0.1)',
@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fill: true,
                 tension: 0.3
             }, {
-                label: 'PRs Merged',
+                label: "<%= metric_label(:prs_merged) %>",
                 data: [<%= @chart_weeks.map(&:num_prs_merged).join(', ') %>],
                 borderColor: '#1cc88a',
                 backgroundColor: 'rgba(28, 200, 138, 0.1)',
@@ -358,8 +358,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 fill: true,
                 tension: 0.3
             }, {
-                // Cancelled PRs styled as unfilled line to visually de-emphasize negative metric
-                label: 'PRs Cancelled',
+                // Unfilled line to visually de-emphasize the negative metric
+                label: "<%= metric_label(:prs_cancelled) %>",
                 data: [<%= @chart_weeks.map(&:num_prs_cancelled).join(', ') %>],
                 borderColor: '#e74a3b',
                 backgroundColor: 'rgba(231, 74, 59, 0.1)',
@@ -367,8 +367,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 fill: false,
                 tension: 0.3
             }, {
-                // Late PRs (approved 8-27 days ago) styled in orange to indicate warning
-                label: 'Late PRs',
+                // Orange to indicate warning (8-27 days approved-but-unmerged)
+                label: "<%= metric_label(:late_prs) %>",
                 data: [<%= @chart_weeks.map(&:num_prs_late).join(', ') %>],
                 borderColor: '#f6c23e',
                 backgroundColor: 'rgba(246, 194, 62, 0.1)',
@@ -376,8 +376,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 fill: true,
                 tension: 0.3
             }, {
-                // Stale PRs (approved 28+ days ago) styled in red to indicate urgency
-                label: 'Stale PRs',
+                // Red to indicate urgency (28+ days approved-but-unmerged)
+                label: "<%= metric_label(:stale_prs) %>",
                 data: [<%= @chart_weeks.map(&:num_prs_stale).join(', ') %>],
                 borderColor: '#e74a3b',
                 backgroundColor: 'rgba(231, 74, 59, 0.2)',
@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
             labels: [<%= @chart_weeks.map { |w| "'#{w.begin_date.strftime('%b %d')}'" }.join(', ').html_safe %>],
             datasets: [{
-                label: 'Hours to First Review',
+                label: "<%= metric_label(:hours_to_first_review) %>",
                 data: [<%= @chart_weeks.map { |w| w.avg_hrs_to_first_review || 0 }.join(', ') %>],
                 borderColor: '#f6c23e',
                 backgroundColor: 'rgba(246, 194, 62, 0.1)',
@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fill: true,
                 tension: 0.3
             }, {
-                label: 'Hours to Merge',
+                label: "<%= metric_label(:hours_to_merge) %>",
                 data: [<%= @chart_weeks.map { |w| w.avg_hrs_to_merge || 0 }.join(', ') %>],
                 borderColor: '#1cc88a',
                 backgroundColor: 'rgba(28, 200, 138, 0.1)',
@@ -489,20 +489,20 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
             labels: [<%= @repository_stats.map { |r| "'#{r[:name]}'" }.join(', ').html_safe %>],
             datasets: [{
-                label: 'Total PRs (4 weeks)',
+                label: "<%= metric_label(:total_prs_4_weeks) %>",
                 data: [<%= @repository_stats.map { |r| r[:total_prs] }.join(', ') %>],
                 backgroundColor: '#4e73df',
                 borderColor: '#4e73df',
                 borderWidth: 1
             }, {
-                label: 'Avg Review Time (hours)',
+                label: "<%= metric_label(:avg_review_time_hours) %>",
                 data: [<%= @repository_stats.map { |r| r[:avg_review_time].round(1) }.join(', ') %>],
                 backgroundColor: '#f6c23e',
                 borderColor: '#f6c23e',
                 borderWidth: 1,
                 yAxisID: 'y1'
             }, {
-                label: 'Merge Rate (%)',
+                label: "<%= metric_label(:merge_rate) %>",
                 data: [<%= @repository_stats.map { |r| r[:merge_rate] }.join(', ') %>],
                 backgroundColor: '#1cc88a',
                 borderColor: '#1cc88a',

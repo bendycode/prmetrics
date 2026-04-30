@@ -40,7 +40,7 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', :js do
 
         expect(page).to have_content('PR Velocity Trends')
         expect(page).to have_css('canvas#prVelocityChart')
-        expect(page.html).to include('Late PRs')
+        expect(page.html).to include('Late Approved PRs')
       end
 
       it 'shows Stale PRs dataset in chart on main dashboard' do
@@ -48,7 +48,7 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', :js do
 
         expect(page).to have_content('PR Velocity Trends')
         expect(page).to have_css('canvas#prVelocityChart')
-        expect(page.html).to include('Stale PRs')
+        expect(page.html).to include('Stale Approved PRs')
       end
 
       it 'does not show old PRs Approved dataset' do
@@ -63,8 +63,8 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', :js do
 
         expect(page).to have_content('PR Velocity Trends')
         expect(page).to have_css('canvas#prVelocityChart')
-        expect(page.html).to include('Late PRs')
-        expect(page.html).to include('Stale PRs')
+        expect(page.html).to include('Late Approved PRs')
+        expect(page.html).to include('Stale Approved PRs')
         expect(page).to have_content("for #{repository.name}")
       end
     end
@@ -87,8 +87,8 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', :js do
 
         expect(page).to have_content('PR Velocity Trends')
         expect(page).to have_css('canvas#prVelocityChart')
-        expect(page.html).to include('Late PRs')
-        expect(page.html).to include('Stale PRs')
+        expect(page.html).to include('Late Approved PRs')
+        expect(page.html).to include('Stale Approved PRs')
       end
     end
   end
