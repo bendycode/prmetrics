@@ -223,11 +223,51 @@ These Claude Code features are particularly useful for prmetrics development:
 To enable automatic nightly syncing using GitHub Actions (saves $25/month vs Heroku Scheduler):
 
 #### 1. GitHub Secrets Setup
-1. Get Heroku API token: `heroku authorizations:create --description "GitHub Actions Sync"`
-2. Go to GitHub repository → Settings → Secrets and variables → Actions
-3. Add secret:
-   - **Name**: `HEROKU_API_KEY`
-   - **Value**: Your Heroku API token
+Create a Heroku authorization and install it as the `HEROKU_API_KEY` repository
+secret in a single pipeline, so the token never lands in terminal scrollback or
+shell history:
+
+```bash
+heroku authorizations:create \
+  --description "GitHub Actions - PRMetrics Nightly Sync (YYYY-MM)" \
+  --scope write,identity \
+  --json \
+| jq -r '.access_token.token' \
+| gh secret set HEROKU_API_KEY --repo bendycode/prmetrics
+```
+
+Two details are easy to get wrong, and both fail in the workflow rather than at
+creation time:
+
+- **The jq path is `.access_token.token`, not `.access_token`.** The latter is an
+  object; jq serializes it into the secret complete with newlines, and the
+  workflow then dies with `TypeError: Invalid character in header content`. A
+  correct token is a single line of 65 characters.
+- **The scope must be `write,identity`.** `write` alone fails with
+  `Couldn't find that user` / `Error ID: not_found`, because the Heroku CLI
+  cannot read the account identity needed to start the one-off dyno. `global`
+  works too, but grants far more than this job needs.
+
+#### 1a. Rotating the Token
+The authorization has no expiration, so rotation is scheduled hygiene rather
+than a break-fix. Create, install, verify, and only then revoke, so the old
+token stays a working rollback for the entire window:
+
+1. Run the pipeline above with a fresh date in the description.
+2. Verify with a real production run before revoking anything:
+   ```bash
+   gh workflow run "nightly-sync.yml" --repo bendycode/prmetrics
+   gh run list --repo bendycode/prmetrics --workflow=nightly-sync.yml --limit 1
+   ```
+3. Revoke the previous authorization only once step 2 is green:
+   ```bash
+   heroku authorizations
+   heroku authorizations:revoke <old-id>
+   ```
+
+`heroku authorizations` also lists the local machine's own `Heroku CLI` logins.
+Revoking one of those signs the laptop out of Heroku; only the
+`GitHub Actions - PRMetrics Nightly Sync` entry belongs to this workflow.
 
 #### 2. Workflow Configuration
 The workflow is already configured in `.github/workflows/nightly-sync.yml`:
