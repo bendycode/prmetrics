@@ -29,3 +29,13 @@
 
 en:
   hello: "Hello world"
+  date:
+    formats:
+      us: "%m/%d/%Y"
+  time:
+    formats:
+      # Deliberately not the plain `us` key. Faker defines en.time.formats.us
+      # and is a development/test-only gem, so a view reaching for `us` renders
+      # green in every spec and raises I18n::MissingTranslationData in
+      # production, where faker is absent.
+      us_zone: "%m/%d/%Y %-l:%M %p %Z"
