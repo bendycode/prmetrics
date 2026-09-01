@@ -308,3 +308,6 @@ heroku run bundle exec rake sync:list
 - No additional dyno management required
 - Built-in error reporting
 - Use bin/deploy for deploying to production. Script remembers extra support work, such as pending migrations.
+
+## Roadmap Maintenance
+Always remove finished projects and tasks from ROADMAP.md as part of keeping it as tight and succinct as possible, focusing on items still outstanding to do.
