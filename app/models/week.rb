@@ -11,7 +11,11 @@ class Week < ApplicationRecord
   validates :week_number, presence: true, uniqueness: { scope: :repository_id }
   validates :begin_date, :end_date, presence: true
 
-  scope :ordered, -> { order(begin_date: :desc) }
+  # id breaks ties: two weeks can share a begin_date, and the repository page
+  # pages this scope with LIMIT/OFFSET, where rows tied on the sort key are free
+  # to come back in a different order per query -- putting a tied week on two
+  # pages or on neither.
+  scope :ordered, -> { order(begin_date: :desc, id: :desc) }
 
   def self.find_by_date(date)
     return nil unless date
@@ -42,12 +46,21 @@ class Week < ApplicationRecord
     end
   end
 
+  # Compared as (begin_date, id) pairs for the same reason `ordered` sorts on
+  # both: weeks tied on begin_date would otherwise be unreachable from each
+  # other, each skipping past its twin to the same neighbour.
   def previous_week
-    repository.weeks.where('begin_date < ?', begin_date).order(begin_date: :desc).first
+    repository.weeks
+              .where('(begin_date, id) < (?, ?)', begin_date, id)
+              .order(begin_date: :desc, id: :desc)
+              .first
   end
 
   def next_week
-    repository.weeks.where('begin_date > ?', begin_date).order(:begin_date).first
+    repository.weeks
+              .where('(begin_date, id) > (?, ?)', begin_date, id)
+              .order(:begin_date, :id)
+              .first
   end
 
   def open_prs

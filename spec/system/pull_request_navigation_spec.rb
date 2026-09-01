@@ -10,6 +10,19 @@ RSpec.describe 'Pull Request Navigation' do
     sign_in admin
   end
 
+  describe 'pull request ordering' do
+    it 'lists the most recently opened pull requests first' do
+      create(:pull_request, repository: repository, title: 'Oldest', gh_created_at: 3.days.ago)
+      create(:pull_request, repository: repository, title: 'Newest', gh_created_at: 1.hour.ago)
+      create(:pull_request, repository: repository, title: 'Middle', gh_created_at: 1.day.ago)
+
+      visit repository_pull_requests_path(repository)
+
+      titles = page.all('#pull-requests li a').map(&:text)
+      expect(titles).to eq(%w[Newest Middle Oldest])
+    end
+  end
+
   describe 'pull requests index' do
     let!(:pull_requests) do
       [
