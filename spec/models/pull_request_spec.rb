@@ -155,7 +155,7 @@ RSpec.describe PullRequest do
     end
 
     it 'correctly sets first_review_week based on valid reviews only' do
-      week = create(:week, repository: repository, begin_date: 1.week.ago, end_date: Date.today)
+      week = create(:week, repository: repository, begin_date: 1.week.ago, end_date: Date.current)
 
       # Earlier invalid review
       create(:review,
@@ -199,7 +199,7 @@ RSpec.describe PullRequest do
 
     context 'with no approved reviews' do
       it 'returns 0' do
-        week = create(:week, repository: repository, end_date: Date.today)
+        week = create(:week, repository: repository, end_date: Date.current)
         expect(pr.days_since_first_approval(week.end_date)).to eq(0)
       end
     end
