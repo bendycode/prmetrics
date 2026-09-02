@@ -417,7 +417,7 @@ RSpec.describe Week do
 
       describe '#late_prs and #stale_prs' do
         let(:repository) { create(:repository) }
-        let(:week) { create(:week, repository: repository, begin_date: 1.week.ago.to_date, end_date: Date.today) }
+        let(:week) { create(:week, repository: repository, begin_date: 1.week.ago.to_date, end_date: Date.current) }
 
         context 'with PRs approved at different times' do
           let!(:fresh_pr) do
