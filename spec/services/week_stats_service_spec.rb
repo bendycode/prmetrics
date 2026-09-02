@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe WeekStatsService do
   let(:repository) { create(:repository) }
-  let(:week) { create(:week, repository: repository, begin_date: 1.week.ago.to_date, end_date: Date.today) }
+  let(:week) { create(:week, repository: repository, begin_date: 1.week.ago.to_date, end_date: Date.current) }
   let(:service) { described_class.new(week) }
 
   describe '#update_stats' do
