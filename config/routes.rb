@@ -20,7 +20,7 @@ Rails.application.routes.draw do
       post :sync
     end
     resources :pull_requests, only: [:index]
-    resources :weeks, only: %i[index show] do
+    resources :weeks, only: [:show] do
       member do
         get 'pr_list'
       end

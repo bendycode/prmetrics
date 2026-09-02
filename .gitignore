@@ -41,6 +41,7 @@
 # exclude per-user local settings and ephemeral plan files.
 .claude/settings.local.json
 .claude/plans/
+.claude/gauntlets/
 
 # Ignore SimpleCov coverage reports (but keep baseline)
 /coverage/

@@ -230,6 +230,22 @@ RSpec.describe Week do
 
           expect(Week.ordered).to eq([week3, week1, week2])
         end
+
+        it 'breaks ties on begin_date so paginated pages stay stable' do
+          # Two weeks can share a begin_date -- the year-boundary week_number bug
+          # produced exactly that, and db/data carries a repair for it. Ordering
+          # on begin_date alone leaves tied rows in an order the database is free
+          # to vary between queries, so under the LIMIT/OFFSET the repository page
+          # now paginates with, a tied week can land on two pages or on none.
+          repository = create(:repository)
+          shared_date = Date.new(2025, 12, 29)
+          first = create(:week, repository: repository, week_number: 202_552,
+                                begin_date: shared_date, end_date: shared_date + 6)
+          second = create(:week, repository: repository, week_number: 202_600,
+                                 begin_date: shared_date, end_date: shared_date + 6)
+
+          expect(repository.weeks.ordered).to eq([second, first])
+        end
       end
     end
 
@@ -262,6 +278,20 @@ RSpec.describe Week do
         end
       end
 
+      describe 'neighbours when two weeks share a begin_date' do
+        it 'reaches each tied week from the other' do
+          repository = create(:repository)
+          shared = Date.new(2025, 12, 29)
+          first = create(:week, repository: repository, week_number: 202_552,
+                                begin_date: shared, end_date: shared + 6)
+          second = create(:week, repository: repository, week_number: 202_600,
+                                 begin_date: shared, end_date: shared + 6)
+
+          expect(first.next_week).to eq(second)
+          expect(second.previous_week).to eq(first)
+        end
+      end
+
       describe '#next_week' do
         it 'returns the week after the current week' do
           expect(current_week.next_week).to eq(next_week)
@@ -269,8 +299,9 @@ RSpec.describe Week do
       end
 
       describe '#open_prs' do
-        before { Time.zone = 'Eastern Time (US & Canada)' }
-        after  { Time.zone = 'UTC' }
+        around do |example|
+          Time.use_zone('Eastern Time (US & Canada)') { example.run }
+        end
 
         let(:repository) { create(:repository) }
         let(:week) do

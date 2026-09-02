@@ -257,6 +257,22 @@ RSpec.describe PullRequest do
   end
 
   describe 'scopes' do
+    describe '.newest_first' do
+      it 'breaks ties on gh_created_at so paginated pages stay stable' do
+        # GitHub timestamps are second-precision, so several pull requests opened
+        # in the same second -- a bot run, a batch import -- share a
+        # gh_created_at. Ordering on it alone leaves those rows in an order the
+        # database may vary per query, and the pull requests index pages this
+        # scope with LIMIT/OFFSET.
+        repository = create(:repository)
+        opened_at = Time.zone.parse('2026-03-04 10:00:00')
+        first = create(:pull_request, repository: repository, gh_created_at: opened_at)
+        second = create(:pull_request, repository: repository, gh_created_at: opened_at)
+
+        expect(repository.pull_requests.newest_first).to eq([second, first])
+      end
+    end
+
     describe '.approved' do
       let!(:approved_pr) { create(:pull_request, :approved, repository: repository) }
       let!(:unapproved_pr) { create(:pull_request, repository: repository) }

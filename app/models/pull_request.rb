@@ -17,6 +17,11 @@ class PullRequest < ApplicationRecord
   validates :state, presence: true
 
   # Scopes for querying approved/open/unmerged PRs
+  # id breaks ties: GitHub timestamps are second-precision, so pull requests
+  # opened in the same second share a gh_created_at, and the index pages this
+  # scope with LIMIT/OFFSET, where tied rows may come back in a different order
+  # per query.
+  scope :newest_first, -> { order(gh_created_at: :desc, id: :desc) }
   scope :approved, lambda {
     joins(:reviews).merge(Review.approved).distinct
   }

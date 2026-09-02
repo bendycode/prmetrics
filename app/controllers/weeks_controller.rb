@@ -1,9 +1,4 @@
 class WeeksController < ApplicationController
-  def index
-    @repository = Repository.find(params[:repository_id])
-    @weeks = @repository.weeks.ordered
-  end
-
   def show
     @repository = Repository.find(params[:repository_id])
     @week = @repository.weeks.find(params[:id])
