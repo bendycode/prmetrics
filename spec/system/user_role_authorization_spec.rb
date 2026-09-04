@@ -174,7 +174,7 @@ RSpec.describe 'User Role Authorization', :js do
       # reading the new document, or the content check can race the
       # navigation and Chrome reports the old page's nodes as detached.
       expect(page).to have_current_path(users_path)
-      expect(page).to have_content('regular@example.com')
+      expect(page).to have_content('Invitation sent to regular@example.com')
     end
 
     it 'allows admin to invite admin users' do
@@ -191,7 +191,7 @@ RSpec.describe 'User Role Authorization', :js do
       click_button 'Send Invitation'
 
       expect(page).to have_current_path(users_path)
-      expect(page).to have_content('newadmin@example.com')
+      expect(page).to have_content('Invitation sent to newadmin@example.com')
     end
   end
 
