@@ -14,7 +14,7 @@ RSpec.describe Review do
                     end_date: Date.new(2023, 1, 8))
     end
 
-    let(:pr) { create(:pull_request, repository: repo1, ready_for_review_at: Date.new(2023, 1, 3).to_time) }
+    let(:pr) { create(:pull_request, repository: repo1, ready_for_review_at: Time.zone.local(2023, 1, 3)) }
     let(:author) { create(:contributor) }
 
     describe 'automatic first review week assignment' do
@@ -23,7 +23,7 @@ RSpec.describe Review do
         create(:review,
                pull_request: pr,
                author: author,
-               submitted_at: Date.new(2023, 1, 5).to_time,
+               submitted_at: Time.zone.local(2023, 1, 5),
                state: 'APPROVED')
 
         pr.reload
@@ -38,7 +38,7 @@ RSpec.describe Review do
         create(:review,
                pull_request: pr,
                author: author,
-               submitted_at: Date.new(2023, 1, 5).to_time,
+               submitted_at: Time.zone.local(2023, 1, 5),
                state: 'APPROVED')
 
         pr.reload
@@ -51,7 +51,7 @@ RSpec.describe Review do
         create(:review,
                pull_request: pr,
                author: author,
-               submitted_at: Date.new(2023, 1, 6).to_time,
+               submitted_at: Time.zone.local(2023, 1, 6),
                state: 'APPROVED')
 
         pr.reload
@@ -61,7 +61,7 @@ RSpec.describe Review do
         create(:review,
                pull_request: pr,
                author: create(:contributor), # Different author
-               submitted_at: Date.new(2023, 1, 4).to_time,
+               submitted_at: Time.zone.local(2023, 1, 4),
                state: 'COMMENTED')
 
         pr.reload

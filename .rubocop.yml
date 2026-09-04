@@ -46,3 +46,7 @@ Capybara/NegationMatcherAfterVisit:
     - 'spec/features/authentication_spec.rb'
     - 'spec/system/user_role_authorization_spec.rb'
     - 'spec/system/week_navigation_spec.rb'
+
+# Date#to_time builds a system-zone Time; Time.zone.local keeps fixtures in the app zone
+Rails/Date:
+  AllowToTime: false

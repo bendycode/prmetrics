@@ -45,9 +45,9 @@ RSpec.describe PullRequest do
     describe 'automatic week assignment' do
       it 'assigns weeks from the correct repository' do
         # Set dates that fall within our test weeks
-        pr.ready_for_review_at = Date.new(2023, 1, 5).to_time
-        pr.gh_merged_at = Date.new(2023, 1, 6).to_time
-        pr.gh_closed_at = Date.new(2023, 1, 6).to_time
+        pr.ready_for_review_at = Time.zone.local(2023, 1, 5)
+        pr.gh_merged_at = Time.zone.local(2023, 1, 6)
+        pr.gh_closed_at = Time.zone.local(2023, 1, 6)
 
         pr.update_week_associations
 
@@ -67,7 +67,7 @@ RSpec.describe PullRequest do
                       begin_date: Date.new(2023, 1, 9),
                       end_date: Date.new(2023, 1, 15))
 
-        pr.gh_merged_at = Date.new(2023, 1, 10).to_time
+        pr.gh_merged_at = Time.zone.local(2023, 1, 10)
         pr.update_week_associations # This method doesn't create weeks
 
         # Should be nil because repo1 doesn't have a week for this date
@@ -80,7 +80,7 @@ RSpec.describe PullRequest do
                       begin_date: Date.new(2023, 1, 9),
                       end_date: Date.new(2023, 1, 15))
 
-        pr.gh_merged_at = Date.new(2023, 1, 10).to_time
+        pr.gh_merged_at = Time.zone.local(2023, 1, 10)
         pr.ensure_weeks_exist_and_update_associations
 
         # Should create a week for repo1 and assign it
