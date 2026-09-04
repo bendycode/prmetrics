@@ -25,14 +25,14 @@
 <div id="pr-list-container"></div>
 
 <% if @previous_week %>
-  <%= link_to 'Previous Week', repository_week_path(@repository, @previous_week) %>
+  <%= link_to 'Previous Week', repository_week_path(@repository, @previous_week, page: params[:page]) %>
 <% end %>
 
 <% if @next_week %>
-  <%= link_to 'Next Week', repository_week_path(@repository, @next_week) %>
+  <%= link_to 'Next Week', repository_week_path(@repository, @next_week, page: params[:page]) %>
 <% end %>
 
-<%= link_to 'Back to Repository', repository_path(@repository) %>
+<%= link_to 'Back to Repository', repository_path(@repository, page: params[:page]) %>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
