@@ -121,7 +121,7 @@ RSpec.describe GithubService do
             'x-ratelimit-reset' => reset_timestamp.to_s
           }
 
-          expect(service.send(:calculate_wait_time, headers, 1)).to be_within(1).of(300)
+          expect(service.send(:calculate_wait_time, headers, 1)).to eq(300)
         end
       end
 
