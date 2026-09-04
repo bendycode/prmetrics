@@ -44,7 +44,13 @@ RSpec.describe 'Dashboard' do
 
     context 'with sample data' do
       let!(:repository) { create(:repository, name: 'test/repo') }
-      let!(:week) { create(:week, repository: repository, week_number: 1) }
+      # Hardcoded rather than rebuilt with the same helper and format key the
+      # view uses, which would pass even if the format itself were wrong.
+      let!(:week) do
+        create(:week, repository: repository, week_number: 1,
+                      begin_date: Date.new(2026, 8, 31), end_date: Date.new(2026, 9, 6))
+      end
+      let(:week_label) { 'Week of 08/31/2026' }
       let!(:pull_request) { create(:pull_request, repository: repository, number: 123) }
       let!(:user) { create(:contributor, username: 'testuser') }
       let!(:review) { create(:review, pull_request: pull_request, author: user) }
@@ -55,15 +61,15 @@ RSpec.describe 'Dashboard' do
         expect(page).to have_content('Dashboard')
 
         # Should show actual counts
-        expect(page).to have_content('1') # repositories count
+        expect(page).to have_css('.card', text: /Total Repositories.*1/m)
 
         # Should show repository in list
         expect(page).to have_content('test/repo')
         expect(page).to have_link('test/repo')
 
         # Should show week data
-        expect(page).to have_content('Week 1')
-        expect(page).to have_link('Week 1')
+        expect(page).to have_content(week_label)
+        expect(page).to have_link(week_label)
       end
 
       it 'allows navigation to repositories' do
@@ -76,7 +82,7 @@ RSpec.describe 'Dashboard' do
       it 'allows navigation to week details' do
         visit root_path
 
-        click_link 'Week 1'
+        click_link week_label
         expect(page).to have_current_path(repository_week_path(repository, week))
       end
     end

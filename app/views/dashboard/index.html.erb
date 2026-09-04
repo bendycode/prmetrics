@@ -223,10 +223,10 @@
                             </div>
                         </div>
                         <div class="font-weight-bold">
-                            <%= link_to "Week #{week.week_number}", repository_week_path(week.repository, week), 
+                            <%= link_to "Week of #{l(week.begin_date, format: :us)}", repository_week_path(week.repository, week),
                                 class: "text-decoration-none" %>
                             <div class="small text-gray-500">
-                                <%= week.repository.name %> - <%= week.begin_date.strftime("%b %d") %> to <%= week.end_date.strftime("%b %d") %>
+                                <%= week.repository.name %> - through <%= l(week.end_date, format: :us) %>
                             </div>
                         </div>
                     </div>
