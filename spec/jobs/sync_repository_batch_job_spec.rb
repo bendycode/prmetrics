@@ -371,7 +371,7 @@ RSpec.describe SyncRepositoryBatchJob do
     end
 
     it 'calculates wait time from rate limit reset' do
-      reset_time = (Time.now + 120).to_i
+      reset_time = (Time.current + 120).to_i
       headers = { 'x-ratelimit-remaining' => '0', 'x-ratelimit-reset' => reset_time.to_s }
 
       wait_time = job.send(:calculate_wait_time, headers, 0)
@@ -385,7 +385,7 @@ RSpec.describe SyncRepositoryBatchJob do
     end
 
     it 'uses exponential backoff when rate limit reset time is past' do
-      reset_time = (Time.now - 60).to_i # Past time
+      reset_time = (Time.current - 60).to_i # Past time
       headers = { 'x-ratelimit-remaining' => '0', 'x-ratelimit-reset' => reset_time.to_s }
 
       wait_time = job.send(:calculate_wait_time, headers, 0)

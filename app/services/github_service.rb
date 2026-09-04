@@ -265,8 +265,8 @@ class GithubService
     if headers['retry-after']
       headers['retry-after'].to_i
     elsif headers['x-ratelimit-remaining'].to_i == 0 && headers['x-ratelimit-reset']
-      reset_time = Time.at(headers['x-ratelimit-reset'].to_i)
-      wait_time = [reset_time - Time.now, 0].max
+      reset_time = Time.zone.at(headers['x-ratelimit-reset'].to_i)
+      wait_time = [reset_time - Time.current, 0].max
 
       # If we're still hitting rate limits and wait time is 0,
       # use exponential backoff instead
