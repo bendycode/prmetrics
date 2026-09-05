@@ -363,6 +363,11 @@ RSpec.describe SyncRepositoryBatchJob do
 
   describe '#calculate_wait_time' do
     let(:job) { described_class.new }
+    let(:current_time) { Time.zone.local(2025, 3, 24, 17, 38, 29) }
+
+    before do
+      travel_to(current_time)
+    end
 
     it 'uses retry-after header when available' do
       headers = { 'retry-after' => '60' }
@@ -371,12 +376,11 @@ RSpec.describe SyncRepositoryBatchJob do
     end
 
     it 'calculates wait time from rate limit reset' do
-      reset_time = (Time.now + 120).to_i
+      reset_time = current_time.to_i + 120
       headers = { 'x-ratelimit-remaining' => '0', 'x-ratelimit-reset' => reset_time.to_s }
 
       wait_time = job.send(:calculate_wait_time, headers, 0)
-      expect(wait_time).to be > 110
-      expect(wait_time).to be < 130
+      expect(wait_time).to eq(120)
     end
 
     it 'uses exponential backoff for nil headers' do
@@ -385,7 +389,7 @@ RSpec.describe SyncRepositoryBatchJob do
     end
 
     it 'uses exponential backoff when rate limit reset time is past' do
-      reset_time = (Time.now - 60).to_i # Past time
+      reset_time = current_time.to_i - 60
       headers = { 'x-ratelimit-remaining' => '0', 'x-ratelimit-reset' => reset_time.to_s }
 
       wait_time = job.send(:calculate_wait_time, headers, 0)

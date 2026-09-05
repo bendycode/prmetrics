@@ -98,10 +98,10 @@ RSpec.describe GithubService do
   end
 
   describe '#calculate_wait_time' do
-    let(:current_time) { Time.new(2025, 3, 24, 17, 38, 29) }
+    let(:current_time) { Time.zone.local(2025, 3, 24, 17, 38, 29) }
 
     before do
-      allow(Time).to receive(:now).and_return(current_time)
+      travel_to(current_time)
     end
 
     context 'when retry-after header is present' do
@@ -121,7 +121,7 @@ RSpec.describe GithubService do
             'x-ratelimit-reset' => reset_timestamp.to_s
           }
 
-          expect(service.send(:calculate_wait_time, headers, 1)).to be_within(1).of(300)
+          expect(service.send(:calculate_wait_time, headers, 1)).to eq(300)
         end
       end
 

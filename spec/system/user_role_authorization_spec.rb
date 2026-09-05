@@ -56,6 +56,7 @@ RSpec.describe 'User Role Authorization', :js do
       expect(page).to have_link('Invite User')
 
       click_link 'Invite User'
+      expect(page).to have_current_path(new_user_path)
       expect(page).to have_content('Admin')
       expect(page).to have_field('user_admin_role_admin', type: 'checkbox')
     end
@@ -169,9 +170,11 @@ RSpec.describe 'User Role Authorization', :js do
       expect(page).to have_field('Email', with: 'regular@example.com')
       click_button 'Send Invitation'
 
-      # Should create regular user
-      expect(page).to have_content('regular@example.com')
-      # User should be regular_user role by default
+      # The submit navigates away; wait for the redirect to land before
+      # reading the new document, or the content check can race the
+      # navigation and Chrome reports the old page's nodes as detached.
+      expect(page).to have_current_path(users_path)
+      expect(page).to have_content('Invitation sent to regular@example.com')
     end
 
     it 'allows admin to invite admin users' do
@@ -184,14 +187,11 @@ RSpec.describe 'User Role Authorization', :js do
       fill_in 'Email', with: 'newadmin@example.com'
       check 'Admin' # Check the admin checkbox
 
-      # Wait for the check to settle before submitting so Selenium's element
-      # handle to the submit button isn't invalidated by concurrent DOM work.
       expect(page).to have_checked_field('user_admin_role_admin')
       click_button 'Send Invitation'
 
-      # Should create admin user
-      expect(page).to have_content('newadmin@example.com')
-      # User should have admin role
+      expect(page).to have_current_path(users_path)
+      expect(page).to have_content('Invitation sent to newadmin@example.com')
     end
   end
 

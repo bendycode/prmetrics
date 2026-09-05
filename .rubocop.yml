@@ -46,3 +46,14 @@ Capybara/NegationMatcherAfterVisit:
     - 'spec/features/authentication_spec.rb'
     - 'spec/system/user_role_authorization_spec.rb'
     - 'spec/system/week_navigation_spec.rb'
+
+# Date#to_time builds a system-zone Time; Time.zone.local keeps fixtures in the
+# app zone. The option flags to_time on every receiver, so a TimeWithZone#to_time
+# would trip it too, with a message that mentions Date.
+Rails/Date:
+  AllowToTime: false
+
+# DateTime.now / .parse / .new read the system zone and none of the Rails cops
+# check the DateTime constant; Time.zone covers every use this app has.
+Style/DateTime:
+  Enabled: true

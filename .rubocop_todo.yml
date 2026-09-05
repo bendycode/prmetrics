@@ -267,16 +267,6 @@ RSpec/VerifiedDoubles:
     - 'spec/services/github_service_spec.rb'
     - 'spec/services/unified_sync_service_spec.rb'
 
-# Offense count: 4
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: EnforcedStyle, AllowToTime.
-# SupportedStyles: strict, flexible
-Rails/Date:
-  Exclude:
-    - 'spec/models/pull_request_spec.rb'
-    - 'spec/models/week_spec.rb'
-    - 'spec/services/week_stats_service_spec.rb'
-
 # Offense count: 20
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: Whitelist, AllowedMethods, AllowedReceivers.
@@ -371,23 +361,6 @@ Rails/SkipsModelValidations:
     - 'fix_week_associations_properly.rb'
     - 'spec/db/data/fix_duplicate_year_boundary_weeks_spec.rb'
     - 'spec/factories/pull_requests.rb'
-
-# Offense count: 8
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: strict, flexible
-Rails/TimeZone:
-  Exclude:
-    - 'app/jobs/sync_repository_batch_job.rb'
-    - 'app/services/github_service.rb'
-    - 'spec/factories/pull_requests.rb'
-    - 'spec/jobs/sync_repository_batch_job_spec.rb'
-    - 'spec/services/github_service_spec.rb'
-
-# Offense count: 2
-Rails/TimeZoneAssignment:
-  Exclude:
-    - 'spec/models/week_spec.rb'
 
 # Offense count: 4
 Rails/UniqueValidationWithoutIndex:

@@ -7,7 +7,7 @@ FactoryBot.define do
     state { 'open' }
     draft { false }
     gh_created_at { Time.current }
-    gh_updated_at { Time.now }
+    gh_updated_at { Time.current }
 
     # NOTE: Week associations are automatically set by the model callback
     # No need for explicit after(:create) hook
