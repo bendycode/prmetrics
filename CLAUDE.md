@@ -55,9 +55,6 @@ bundle exec rspec spec/models/pull_request_spec.rb:42
 bundle exec rspec spec/models/
 ```
 
-**Note**: Ruby 3.3.5 may show harmless DidYouMean deprecation warnings from upstream gems.
-These are safe to ignore and will be resolved when gems update their DidYouMean API usage.
-
 ### Code Quality (RuboCop)
 ```bash
 # Run RuboCop linter
@@ -113,8 +110,8 @@ rake weeks:update_stats
 ### Environment Setup
 - Set GitHub Personal Access Token: `export GITHUB_ACCESS_TOKEN=your_token_here`
 - Database: PostgreSQL
-- Ruby version: 3.4.8
-- Rails version: ~> 7.1.4
+- Ruby version: see `.ruby-version`
+- Rails version: see the Gemfile
 - Redis: Required for Sidekiq background jobs
 - Development admin login: admin@example.com / password123
 
