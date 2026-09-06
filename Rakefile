@@ -5,5 +5,8 @@ require_relative 'config/application'
 
 Rails.application.load_tasks
 
-# Default task runs RuboCop first, then RSpec
+# Rake prerequisites are additive, and rspec-rails hooks `spec` onto `default`
+# while the tasks load above. Empty the inherited list first so the order
+# declared here is the order that runs: lint in seconds, then the suite.
+task(:default).clear_prerequisites
 task default: %w[rubocop spec]
