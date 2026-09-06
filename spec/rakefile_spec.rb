@@ -1,7 +1,7 @@
 require 'rails_helper'
 require 'open3'
 
-RSpec.describe 'Rakefile', type: :task do
+RSpec.describe 'Rakefile' do
   # The Rakefile is read in a subprocess. Loading it in-process would pull
   # every lib/tasks file into the coverage report as uncovered lines.
   it 'runs RuboCop before RSpec' do
