@@ -25,16 +25,16 @@
 
 <div class="btn-group" role="group">
   <% if @previous_week %>
-    <%= link_to 'Previous Week', repository_week_path(@repository, @previous_week, page: params[:page]),
+    <%= link_to 'Previous Week', repository_week_path(@repository, @previous_week, page: page_param),
         class: 'btn btn-outline-secondary' %>
   <% end %>
 
   <% if @next_week %>
-    <%= link_to 'Next Week', repository_week_path(@repository, @next_week, page: params[:page]),
+    <%= link_to 'Next Week', repository_week_path(@repository, @next_week, page: page_param),
         class: 'btn btn-outline-secondary' %>
   <% end %>
 
-  <%= link_to 'Back to Repository', repository_path(@repository, page: params[:page]), class: 'btn btn-secondary' %>
+  <%= link_to 'Back to Repository', repository_path(@repository, page: page_param), class: 'btn btn-secondary' %>
 </div>
 
 <script>
