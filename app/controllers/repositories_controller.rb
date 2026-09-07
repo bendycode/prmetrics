@@ -8,7 +8,7 @@ class RepositoriesController < ApplicationController
 
   def show
     authorize @repository
-    @weeks = @repository.weeks.ordered.page(params[:page]).per(25)
+    @weeks = @repository.weeks.ordered.page(page_param).per(25)
   end
 
   def new

@@ -92,7 +92,7 @@
       <tr>
         <td class="pr-5"><%= l(week.begin_date, format: :us) %></td>
         <td class="pr-5"><%= l(week.end_date, format: :us) %></td>
-        <td><%= link_to 'Details', repository_week_path(@repository, week, page: params[:page]) %></td>
+        <td><%= link_to 'Details', repository_week_path(@repository, week, page: page_param) %></td>
       </tr>
     <% end %>
   </tbody>

@@ -2,7 +2,7 @@ class PullRequestUsersController < ApplicationController
   def index
     @pull_request = PullRequest.find(params[:pull_request_id])
     @pull_request_users = @pull_request.pull_request_users.includes(:user)
-                                       .order(id: :desc).page(params[:page]).per(10)
+                                       .order(id: :desc).page(page_param).per(10)
   end
 
   def show
