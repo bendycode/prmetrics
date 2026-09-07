@@ -366,7 +366,7 @@ These features leverage AI/ML to provide intelligent insights and predictions ba
   - **Timeline**: 3-4 hours
 
 - **Upgrade to Ruby 4.1** (when released)
-  - **Issue**: Currently on Ruby 3.4.8; Ruby 4.1 expected ~December 2026
+  - **Issue**: Currently on Ruby 3.4 (see `.ruby-version`); Ruby 4.1 expected ~December 2026
   - **Goal**: Stay current with Ruby releases for security and performance
   - **Prerequisite**: Ruby 4.1 available via asdf (`asdf list all ruby | grep "^4\.1"`)
   - **Actions**:
@@ -383,7 +383,7 @@ These features leverage AI/ML to provide intelligent insights and predictions ba
   - **Actions**:
     - Determine if Saturn CI is still used for this project
     - If not used: delete `.saturnci/` directory entirely
-    - If used: update Dockerfile to use current Ruby version (3.4.8)
+    - If used: update Dockerfile to the Ruby version in `.ruby-version`
   - **Timeline**: 15 minutes
 
 - Dead code removal

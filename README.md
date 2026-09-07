@@ -29,8 +29,8 @@ prmetrics is a Rails application designed to fetch and analyze pull request data
 
 ## Prerequisites
 
-- Ruby 3.4.8 or later
-- Rails 6.0 or later
+- Ruby at the version in `.ruby-version`
+- Rails at the version in the Gemfile (installed by `bundle install`)
 - PostgreSQL
 - GitHub Personal Access Token with repo scope
 

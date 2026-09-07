@@ -72,8 +72,8 @@ PRs are associated with different weeks based on lifecycle events:
 
 ## Technical Stack
 
-- **Framework**: Ruby on Rails 7.1.4
-- **Ruby Version**: 3.3.5
+- **Framework**: Ruby on Rails, at the version in the Gemfile
+- **Ruby Version**: see `.ruby-version`
 - **Database**: PostgreSQL
 - **Background Jobs**: Sidekiq with Redis
 - **Testing**: RSpec with FactoryBot
