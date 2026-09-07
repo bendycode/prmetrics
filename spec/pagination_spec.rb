@@ -1,11 +1,15 @@
 require 'rails_helper'
 
 RSpec.describe 'Pagination' do
-  # Source text with Ruby comment lines and ERB comments removed, keyed by
-  # path, so a comment that mentions params[:page] does not read as a caller.
+  # Source text with comments removed, keyed by path, so a comment that
+  # mentions params[:page] does not read as a caller. Ruby files lose
+  # comment lines; ERB files lose <%# %> blocks, since a leading # there is
+  # template text.
   let(:sources) do
     Rails.root.glob('app/**/*.{rb,erb}').to_h do |file|
-      code = file.read.lines.reject { |line| line.lstrip.start_with?('#') }.join.gsub(/<%#.*?%>/m, '')
+      code = file.read
+      code = code.lines.reject { |line| line.lstrip.start_with?('#') }.join if file.extname == '.rb'
+      code = code.gsub(/<%#.*?%>/m, '') if file.extname == '.erb'
       [file.relative_path_from(Rails.root).to_s, code]
     end
   end
