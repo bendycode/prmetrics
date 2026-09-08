@@ -3,7 +3,16 @@
     "allow": [
       "Bash(bundle exec rspec *)",
       "Bash(bundle exec rubocop *)",
-      "Bash(heroku releases *)"
+      "Bash(heroku releases *)",
+      "Bash(bundle exec rake)",
+      "Bash(git fetch *)",
+      "Bash(stale-branches)",
+      "Bash(bundle exec rake -P)",
+      "Bash(bundle exec rake --prereqs)",
+      "Bash(heroku authorizations)",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__claude_ai_Google_Calendar__list_events",
+      "mcp__claude_ai_Google_Calendar__search_events"
     ]
   }
 }
