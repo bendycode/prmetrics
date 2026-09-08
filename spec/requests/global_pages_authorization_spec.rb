@@ -22,6 +22,26 @@ RSpec.describe 'Global Pages Authorization' do
     end
   end
 
+  describe 'GET /dashboard?repository_id=:id' do
+    let(:repository) { create(:repository) }
+
+    it 'renders the filtered dashboard for a regular user' do
+      get dashboard_path(repository_id: repository.id)
+
+      expect(response).to have_http_status(:success)
+    end
+
+    it 'redirects home when the repository policy denies the filtered repository' do
+      denying_policy = instance_double(RepositoryPolicy, show?: false)
+      allow(RepositoryPolicy).to receive(:new).with(user, repository).and_return(denying_policy)
+
+      get dashboard_path(repository_id: repository.id)
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:alert]).to eq('You are not authorized')
+    end
+  end
+
   describe 'GET /contributors' do
     it 'redirects home when the contributor policy denies the list' do
       denying_policy = instance_double(ContributorPolicy, index?: false)

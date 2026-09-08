@@ -4,6 +4,8 @@ class DashboardController < ApplicationController
     @repositories = Repository.includes(:weeks).order(:name)
     @total_repositories = @repositories.count
     @selected_repository_id = params[:repository_id]
+    selected_repository = Repository.find_by(id: @selected_repository_id) if @selected_repository_id.present?
+    authorize selected_repository, :show? if selected_repository
 
     # Filter by repository if selected
     weeks_scope = Week.includes(:repository)
