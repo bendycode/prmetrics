@@ -236,6 +236,8 @@ RSpec.describe UsersController do
   describe 'private methods' do
     describe '#user_params' do
       controller do
+        skip_after_action :verify_authorized
+
         def test_user_params
           render json: user_params
         end
@@ -265,6 +267,8 @@ RSpec.describe UsersController do
 
     describe '#can_delete_user?' do
       controller do
+        skip_after_action :verify_authorized
+
         def test_can_delete
           set_user
           render json: { can_delete: can_delete_user? }
