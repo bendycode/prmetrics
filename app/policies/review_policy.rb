@@ -1,5 +1,5 @@
 class ReviewPolicy < ApplicationPolicy
   def show?
-    RepositoryPolicy.new(user, record.pull_request.repository).show?
+    Pundit.policy!(user, record.pull_request).show?
   end
 end
