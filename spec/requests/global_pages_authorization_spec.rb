@@ -30,6 +30,13 @@ RSpec.describe 'Global Pages Authorization' do
       expect(response).to have_http_status(:success)
     end
 
+    it 'renders the unfiltered dashboard when repository_id is not a single id' do
+      get dashboard_path(repository_id: [repository.id, create(:repository).id])
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).not_to include("for #{repository.name}")
+    end
+
     it 'redirects home when the repository policy denies the filtered repository' do
       deny_policy(RepositoryPolicy, :show?, user, on: repository)
 
