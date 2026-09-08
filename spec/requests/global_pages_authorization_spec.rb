@@ -67,6 +67,12 @@ RSpec.describe 'Global Pages Authorization' do
   end
 
   describe 'GET /account/edit' do
+    it 'renders for a regular user editing their own account' do
+      get edit_account_path
+
+      expect(response).to have_http_status(:success)
+    end
+
     it 'redirects home when the user policy denies editing the account' do
       denying_policy = instance_double(UserPolicy, edit?: false)
       allow(UserPolicy).to receive(:new).with(user, user).and_return(denying_policy)
@@ -79,6 +85,12 @@ RSpec.describe 'Global Pages Authorization' do
   end
 
   describe 'PATCH /account' do
+    it 'saves for a regular user editing their own account' do
+      patch account_path, params: { user: { email: 'changed@example.com' } }
+
+      expect(user.reload.email).to eq('changed@example.com')
+    end
+
     it 'redirects home when the user policy denies updating the account' do
       denying_policy = instance_double(UserPolicy, update?: false)
       allow(UserPolicy).to receive(:new).with(user, user).and_return(denying_policy)
