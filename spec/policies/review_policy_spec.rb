@@ -1,29 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe ReviewPolicy, type: :policy do
-  let(:admin_user) { build(:user, :admin) }
-  let(:regular_user) { build(:user) }
-  let(:repository) { build(:repository) }
-  let(:pull_request) { build(:pull_request, repository: repository) }
-  let(:review) { build(:review, pull_request: pull_request) }
+  let(:parent) { build(:pull_request) }
+  let(:record) { build(:review, pull_request: parent) }
 
   describe '#show?' do
-    it 'allows admin users to view reviews' do
-      policy = described_class.new(admin_user, review)
-      expect(policy.show?).to be true
-    end
-
-    it 'allows regular users to view reviews' do
-      policy = described_class.new(regular_user, review)
-      expect(policy.show?).to be true
-    end
-
-    it 'denies viewing when the pull request policy denies the owning pull request' do
-      denying_policy = instance_double(PullRequestPolicy, show?: false)
-      allow(PullRequestPolicy).to receive(:new).with(regular_user, pull_request).and_return(denying_policy)
-
-      policy = described_class.new(regular_user, review)
-      expect(policy.show?).to be false
-    end
+    it_behaves_like 'a policy that delegates show? to its parent', PullRequestPolicy
   end
 end

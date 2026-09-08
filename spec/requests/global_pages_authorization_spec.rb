@@ -12,8 +12,7 @@ RSpec.describe 'Global Pages Authorization' do
     # The not-authorized handler redirects to the dashboard itself, so this
     # only asserts the redirect and never follows it.
     it 'redirects when the dashboard policy denies' do
-      denying_policy = instance_double(DashboardPolicy, index?: false)
-      allow(DashboardPolicy).to receive(:new).with(user, :dashboard).and_return(denying_policy)
+      deny_policy(DashboardPolicy, :index?, user, on: :dashboard)
 
       get dashboard_path
 
@@ -32,8 +31,7 @@ RSpec.describe 'Global Pages Authorization' do
     end
 
     it 'redirects home when the repository policy denies the filtered repository' do
-      denying_policy = instance_double(RepositoryPolicy, show?: false)
-      allow(RepositoryPolicy).to receive(:new).with(user, repository).and_return(denying_policy)
+      deny_policy(RepositoryPolicy, :show?, user, on: repository)
 
       get dashboard_path(repository_id: repository.id)
 
@@ -44,8 +42,7 @@ RSpec.describe 'Global Pages Authorization' do
 
   describe 'GET /contributors' do
     it 'redirects home when the contributor policy denies the list' do
-      denying_policy = instance_double(ContributorPolicy, index?: false)
-      allow(ContributorPolicy).to receive(:new).with(user, Contributor).and_return(denying_policy)
+      deny_policy(ContributorPolicy, :index?, user, on: Contributor)
 
       get contributors_path
 
@@ -56,8 +53,7 @@ RSpec.describe 'Global Pages Authorization' do
 
   describe 'GET /contributors/:id' do
     it 'redirects home when the contributor policy denies the record' do
-      denying_policy = instance_double(ContributorPolicy, show?: false)
-      allow(ContributorPolicy).to receive(:new).with(user, contributor).and_return(denying_policy)
+      deny_policy(ContributorPolicy, :show?, user, on: contributor)
 
       get contributor_path(contributor)
 
@@ -74,8 +70,7 @@ RSpec.describe 'Global Pages Authorization' do
     end
 
     it 'redirects home when the user policy denies editing the account' do
-      denying_policy = instance_double(UserPolicy, edit?: false)
-      allow(UserPolicy).to receive(:new).with(user, user).and_return(denying_policy)
+      deny_policy(UserPolicy, :edit?, user, on: user)
 
       get edit_account_path
 
@@ -91,9 +86,8 @@ RSpec.describe 'Global Pages Authorization' do
       expect(user.reload.email).to eq('changed@example.com')
     end
 
-    it 'redirects home when the user policy denies updating the account' do
-      denying_policy = instance_double(UserPolicy, update?: false)
-      allow(UserPolicy).to receive(:new).with(user, user).and_return(denying_policy)
+    it 'redirects home when the user policy denies updating the account', :aggregate_failures do
+      deny_policy(UserPolicy, :update?, user, on: user)
 
       patch account_path, params: { user: { email: 'changed@example.com' } }
 

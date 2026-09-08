@@ -11,12 +11,15 @@ RSpec.describe 'Repository Data Authorization' do
   let(:review) { create(:review, pull_request: pull_request) }
   let(:pull_request_user) { create(:pull_request_user, pull_request: pull_request) }
 
+  # A second repository, so a page that consulted the wrong one would trip
+  # the denial stub's .with constraint instead of passing.
+  before { create(:repository) }
+
   before { sign_in user }
 
   shared_examples 'a page governed by the repository policy' do
     it 'redirects home when the repository policy denies the owning repository' do
-      denying_policy = instance_double(RepositoryPolicy, show?: false)
-      allow(RepositoryPolicy).to receive(:new).with(user, repository).and_return(denying_policy)
+      deny_policy(RepositoryPolicy, :show?, user, on: repository)
 
       get path
 
@@ -25,6 +28,9 @@ RSpec.describe 'Repository Data Authorization' do
     end
   end
 
+  # Only the pages no other spec requests as a regular user include this;
+  # the pagination request spec covers the pull request list and page, the
+  # review list, the participant list, and the week page.
   shared_examples 'a page open to regular users' do
     it 'renders for a regular user' do
       get path
@@ -49,7 +55,6 @@ RSpec.describe 'Repository Data Authorization' do
     let(:path) { repository_week_path(repository, week) }
 
     it_behaves_like 'a page governed by the repository policy'
-    it_behaves_like 'a page open to regular users'
   end
 
   describe 'GET /repositories/:repository_id/weeks/:id/pr_list' do
