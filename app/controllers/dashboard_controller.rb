@@ -1,5 +1,6 @@
 class DashboardController < ApplicationController
   def index
+    authorize :dashboard
     @repositories = Repository.includes(:weeks).order(:name)
     @total_repositories = @repositories.count
     @selected_repository_id = params[:repository_id]
