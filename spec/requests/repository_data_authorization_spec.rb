@@ -11,11 +11,12 @@ RSpec.describe 'Repository Data Authorization' do
   let(:review) { create(:review, pull_request: pull_request) }
   let(:pull_request_user) { create(:pull_request_user, pull_request: pull_request) }
 
-  # A second repository, so a page that consulted the wrong one would trip
-  # the denial stub's .with constraint instead of passing.
-  before { create(:repository) }
-
-  before { sign_in user }
+  before do
+    # A second repository, so a page that consulted the wrong one would trip
+    # the denial stub's .with constraint instead of passing.
+    create(:repository)
+    sign_in user
+  end
 
   shared_examples 'a page governed by the repository policy' do
     it 'redirects home when the repository policy denies the owning repository' do
