@@ -3,6 +3,9 @@ class RepositoryPolicy < ApplicationPolicy
     true
   end
 
+  # The repository list is Repository.all, not a policy scope. A rule that
+  # hides a repository from some users must also be applied there before it
+  # takes full effect.
   def index?
     true
   end
