@@ -2,6 +2,7 @@ class WeeksController < ApplicationController
   def show
     @repository = Repository.find(params[:repository_id])
     @week = @repository.weeks.find(params[:id])
+    authorize @week
     @previous_week = @week.previous_week
     @next_week = @week.next_week
   end
@@ -9,6 +10,7 @@ class WeeksController < ApplicationController
   def pr_list
     @repository = Repository.find(params[:repository_id])
     @week = @repository.weeks.find(params[:id])
+    authorize @week, :show?
     @category = params[:category]
     @prs = case @category
            when 'started'
