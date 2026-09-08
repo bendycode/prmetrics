@@ -33,7 +33,7 @@ RSpec.describe DashboardController do
     context 'with repository filter' do
       it 'filters data by selected repository' do
         get :index, params: { repository_id: repo1.id }
-        expect(assigns(:selected_repository_id)).to eq(repo1.id.to_s)
+        expect(assigns(:selected_repository)).to eq(repo1)
       end
 
       it 'shows filtered week data' do

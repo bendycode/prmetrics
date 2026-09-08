@@ -1,0 +1,10 @@
+require 'rails_helper'
+
+RSpec.describe PullRequestUserPolicy, type: :policy do
+  let(:parent) { build(:pull_request) }
+  let(:record) { build(:pull_request_user, pull_request: parent) }
+
+  describe '#show?' do
+    it_behaves_like 'a policy that delegates show? to its parent', PullRequestPolicy
+  end
+end

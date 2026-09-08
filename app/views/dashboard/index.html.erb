@@ -108,8 +108,8 @@
                 </h6>
                 <small class="text-muted">
                     Last 12 weeks
-                    <% if @selected_repository_id.present? %>
-                        for <%= Repository.find(@selected_repository_id).name %>
+                    <% if @selected_repository %>
+                        for <%= @selected_repository.name %>
                     <% else %>
                         across all repositories
                     <% end %>
@@ -135,8 +135,8 @@
                 </h6>
                 <small class="text-muted">
                     Average hours (weekdays only)
-                    <% if @selected_repository_id.present? %>
-                        <br><%= Repository.find(@selected_repository_id).name %>
+                    <% if @selected_repository %>
+                        <br><%= @selected_repository.name %>
                     <% end %>
                 </small>
             </div>

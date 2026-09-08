@@ -2,6 +2,7 @@ class ApplicationController < ActionController::Base
   include Pundit::Authorization
 
   before_action :authenticate_user!
+  after_action :verify_authorized, unless: :devise_controller?
   layout 'admin'
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized

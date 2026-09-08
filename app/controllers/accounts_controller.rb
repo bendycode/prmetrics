@@ -2,9 +2,12 @@ class AccountsController < ApplicationController
   before_action :set_user
   before_action :set_minimum_password_length, only: [:edit]
 
-  def edit; end
+  def edit
+    authorize @user
+  end
 
   def update
+    authorize @user
     if update_user
       redirect_to edit_account_path, notice: 'Account was successfully updated.'
     else
