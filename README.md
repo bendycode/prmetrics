@@ -72,11 +72,13 @@ prmetrics implements role-based access control with two user roles:
 - Can manage repositories (add, edit, delete)
 - Can invite new users with either role
 - Can view all data and metrics
+- Can open the Sidekiq dashboard at `/sidekiq`
 - Default development login: `admin@example.com` / `password123`
 
 ### Regular User Role
 - **Read-only access** to repository data and metrics
 - Cannot manage repositories or invite users
+- Cannot open the Sidekiq dashboard (`/sidekiq` answers 404)
 - Can view dashboards and reports
 - Suitable for team members who need visibility but not management access
 

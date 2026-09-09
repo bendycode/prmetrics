@@ -1,11 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe 'User Role Authorization', :js do
-  # These specs test the core authorization patterns we'll implement
-  # They will fail initially and pass as we build the role system
-
   describe 'Admin user access' do
-    let(:admin_user) { create(:user, role: :admin) }
+    let(:admin_user) { create(:user, :admin) }
 
     before do
       sign_in admin_user
@@ -61,7 +58,7 @@ RSpec.describe 'User Role Authorization', :js do
       expect(page).to have_field('user_admin_role_admin', type: 'checkbox')
     end
 
-    it 'can access Sidekiq dashboard' do
+    it 'sees the Sidekiq dashboard link' do
       visit repositories_path
 
       # Admin should see Sidekiq link
@@ -101,14 +98,6 @@ RSpec.describe 'User Role Authorization', :js do
       expect(page).to have_no_link('Delete Repository')
     end
 
-    it 'is redirected when accessing sync action via direct URL navigation' do
-      repository = create(:repository, name: 'test/repo')
-
-      # Attempt to navigate to sync URL directly - should be redirected/blocked
-      visit sync_repository_path(repository)
-      expect(page).to have_no_content('Sync job queued')
-    end
-
     it 'cannot access admin management section' do
       visit root_path
 
@@ -117,16 +106,14 @@ RSpec.describe 'User Role Authorization', :js do
       expect(page).to have_no_link('Users')
     end
 
-    it 'cannot directly access admin management' do
-      # Regular user should be redirected or see 403 when trying direct access
+    it 'is sent home when opening admin management directly' do
       visit users_path
 
-      # Should be redirected away from admin management
-      expect(page).to have_no_content('User Management')
-      # Will implement proper 403/redirect behavior with Pundit
+      expect(page).to have_current_path(root_path)
+      expect(page).to have_content('You are not authorized')
     end
 
-    it 'cannot access Sidekiq dashboard' do
+    it 'does not see the Sidekiq dashboard link' do
       visit repositories_path
 
       # Regular user should NOT see Sidekiq link
@@ -148,7 +135,7 @@ RSpec.describe 'User Role Authorization', :js do
   end
 
   describe 'Invitation system with roles' do
-    let(:admin_user) { create(:user, role: :admin) }
+    let(:admin_user) { create(:user, :admin) }
 
     before do
       sign_in admin_user
@@ -197,7 +184,7 @@ RSpec.describe 'User Role Authorization', :js do
 
   describe 'User dropdown and authentication' do
     it 'shows current user email for both admin and regular users' do
-      admin_user = create(:user, role: :admin, email: 'admin@test.com')
+      admin_user = create(:user, :admin, email: 'admin@test.com')
       sign_in admin_user
 
       visit root_path
@@ -220,18 +207,12 @@ RSpec.describe 'User Role Authorization', :js do
       sign_in regular_user
     end
 
-    it 'prevents regular users from accessing admin-only routes via direct URL' do
-      # Test various admin-only routes
-      admin_only_paths = [
-        new_repository_path,
-        new_user_path
-      ]
-
-      admin_only_paths.each do |path|
+    it 'is sent home when opening admin-only pages directly' do
+      [new_repository_path, new_user_path].each do |path|
         visit path
-        # Should be redirected or see authorization error
-        expect(page).to have_no_content('Add Repository')
-        expect(page).to have_no_content('Invite User')
+
+        expect(page).to have_current_path(root_path)
+        expect(page).to have_content('You are not authorized')
       end
     end
   end

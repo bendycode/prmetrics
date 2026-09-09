@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Week show metric definitions' do
-  let(:user) { create(:user, role: :admin) }
+  let(:user) { create(:user, :admin) }
   let(:repository) { create(:repository, name: 'test/week-show') }
   let(:week) do
     create(:week, repository: repository, begin_date: 1.week.ago,

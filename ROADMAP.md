@@ -24,10 +24,6 @@ This document outlines future development plans for prmetrics. For completed wor
    - Fix identified code smells and anti-patterns
 
 2. **Test Suite Optimization**
-   - ⏳ Enable pending specs (10 currently skipped with xit/xcontext)
-     - Review and fix skipped search specs in spec/features/search_spec.rb
-     - Fix webhook specs in spec/controllers/webhooks_controller_spec.rb
-     - Enable Sidekiq dashboard and mentor invitation specs
    - ⏱️ Identify and optimize slowest 3 specs
      - Profile test suite to find performance bottlenecks
      - Target specs taking >5 seconds individually
