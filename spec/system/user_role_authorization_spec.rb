@@ -61,7 +61,7 @@ RSpec.describe 'User Role Authorization', :js do
       expect(page).to have_field('user_admin_role_admin', type: 'checkbox')
     end
 
-    it 'can access Sidekiq dashboard' do
+    it 'sees the Sidekiq dashboard link' do
       visit repositories_path
 
       # Admin should see Sidekiq link
@@ -126,7 +126,7 @@ RSpec.describe 'User Role Authorization', :js do
       # Will implement proper 403/redirect behavior with Pundit
     end
 
-    it 'cannot access Sidekiq dashboard' do
+    it 'does not see the Sidekiq dashboard link' do
       visit repositories_path
 
       # Regular user should NOT see Sidekiq link

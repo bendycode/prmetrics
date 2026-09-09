@@ -3,8 +3,10 @@ require 'sidekiq/web'
 Rails.application.routes.draw do
   devise_for :users
 
-  # Secure Sidekiq Web UI with Devise authentication
-  authenticate :user do
+  # Only admins reach the Sidekiq web UI. A signed-in regular user fails the
+  # lambda, so the route does not match and Rails answers 404; a signed-out
+  # visitor gets Devise's sign-in redirect.
+  authenticate :user, ->(user) { user.admin? } do
     mount Sidekiq::Web => '/sidekiq'
   end
 
