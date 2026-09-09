@@ -1,9 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe 'User Role Authorization', :js do
-  # These specs test the core authorization patterns we'll implement
-  # They will fail initially and pass as we build the role system
-
   describe 'Admin user access' do
     let(:admin_user) { create(:user, role: :admin) }
 
@@ -117,13 +114,11 @@ RSpec.describe 'User Role Authorization', :js do
       expect(page).to have_no_link('Users')
     end
 
-    it 'cannot directly access admin management' do
-      # Regular user should be redirected or see 403 when trying direct access
+    it 'is sent home when opening admin management directly' do
       visit users_path
 
-      # Should be redirected away from admin management
-      expect(page).to have_no_content('User Management')
-      # Will implement proper 403/redirect behavior with Pundit
+      expect(page).to have_current_path(root_path)
+      expect(page).to have_content('You are not authorized')
     end
 
     it 'does not see the Sidekiq dashboard link' do
