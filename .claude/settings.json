@@ -17,7 +17,9 @@
       "Bash(git rev-list *)",
       "Bash(heroku releases:info *)",
       "Bash(gh label list *)",
-      "Bash(ruby -v)"
+      "Bash(ruby -v)",
+      "Bash(gh-issue-sync checklist *)",
+      "Bash(stale-branches --repo *)"
     ]
   }
 }
