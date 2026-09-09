@@ -12,7 +12,12 @@
       "Bash(heroku authorizations)",
       "mcp__claude-in-chrome__tabs_context_mcp",
       "mcp__claude_ai_Google_Calendar__list_events",
-      "mcp__claude_ai_Google_Calendar__search_events"
+      "mcp__claude_ai_Google_Calendar__search_events",
+      "Bash(git check-ignore *)",
+      "Bash(git rev-list *)",
+      "Bash(heroku releases:info *)",
+      "Bash(gh label list *)",
+      "Bash(ruby -v)"
     ]
   }
 }
