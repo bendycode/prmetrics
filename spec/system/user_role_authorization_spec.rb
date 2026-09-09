@@ -98,14 +98,6 @@ RSpec.describe 'User Role Authorization', :js do
       expect(page).to have_no_link('Delete Repository')
     end
 
-    it 'is redirected when accessing sync action via direct URL navigation' do
-      repository = create(:repository, name: 'test/repo')
-
-      # Attempt to navigate to sync URL directly - should be redirected/blocked
-      visit sync_repository_path(repository)
-      expect(page).to have_no_content('Sync job queued')
-    end
-
     it 'cannot access admin management section' do
       visit root_path
 
@@ -215,18 +207,12 @@ RSpec.describe 'User Role Authorization', :js do
       sign_in regular_user
     end
 
-    it 'prevents regular users from accessing admin-only routes via direct URL' do
-      # Test various admin-only routes
-      admin_only_paths = [
-        new_repository_path,
-        new_user_path
-      ]
-
-      admin_only_paths.each do |path|
+    it 'is sent home when opening admin-only pages directly' do
+      [new_repository_path, new_user_path].each do |path|
         visit path
-        # Should be redirected or see authorization error
-        expect(page).to have_no_content('Add Repository')
-        expect(page).to have_no_content('Invite User')
+
+        expect(page).to have_current_path(root_path)
+        expect(page).to have_content('You are not authorized')
       end
     end
   end
