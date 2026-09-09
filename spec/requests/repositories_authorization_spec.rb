@@ -4,7 +4,7 @@ RSpec.describe 'Repositories Authorization' do
   let(:repository) { create(:repository, name: 'test/repo') }
 
   describe 'Admin user access' do
-    let(:admin_user) { create(:user, role: :admin) }
+    let(:admin_user) { create(:user, :admin) }
 
     before do
       sign_in admin_user

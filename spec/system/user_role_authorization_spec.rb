@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe 'User Role Authorization', :js do
   describe 'Admin user access' do
-    let(:admin_user) { create(:user, role: :admin) }
+    let(:admin_user) { create(:user, :admin) }
 
     before do
       sign_in admin_user
@@ -143,7 +143,7 @@ RSpec.describe 'User Role Authorization', :js do
   end
 
   describe 'Invitation system with roles' do
-    let(:admin_user) { create(:user, role: :admin) }
+    let(:admin_user) { create(:user, :admin) }
 
     before do
       sign_in admin_user
@@ -192,7 +192,7 @@ RSpec.describe 'User Role Authorization', :js do
 
   describe 'User dropdown and authentication' do
     it 'shows current user email for both admin and regular users' do
-      admin_user = create(:user, role: :admin, email: 'admin@test.com')
+      admin_user = create(:user, :admin, email: 'admin@test.com')
       sign_in admin_user
 
       visit root_path

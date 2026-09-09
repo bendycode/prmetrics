@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Dashboard metric definitions' do
-  let(:user) { create(:user, role: :admin) }
+  let(:user) { create(:user, :admin) }
 
   before do
     repository = create(:repository, name: 'test/metrics')

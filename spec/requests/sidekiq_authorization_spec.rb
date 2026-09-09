@@ -10,7 +10,7 @@ RSpec.describe 'Sidekiq Authorization' do
   describe 'GET /sidekiq' do
     it 'reaches the Sidekiq web UI for an admin' do
       allow(Sidekiq::Web).to receive(:call).and_return([200, { 'content-type' => 'text/plain' }, ['ok']])
-      sign_in create(:user, role: :admin)
+      sign_in create(:user, :admin)
 
       get '/sidekiq'
 
