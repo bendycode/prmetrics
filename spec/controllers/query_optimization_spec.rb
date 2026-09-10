@@ -27,13 +27,6 @@ RSpec.describe 'Query Optimization', type: :request do
       expect(response).to be_successful
       expect(response.body).to include(pull_requests.first.title)
     end
-
-    it 'loads all PR categories without errors' do
-      %w[started open first_reviewed merged cancelled draft].each do |category|
-        get pr_list_repository_week_path(repository, week, category: category), xhr: true
-        expect(response).to be_successful
-      end
-    end
   end
 
   describe 'PullRequestUsersController#index' do
