@@ -19,14 +19,19 @@
     <% prs.each do |pr| %>
       <tr>
         <td><%= link_to "##{pr.number}", github_pr_url(pr), target: "_blank" %></td>
-        <td><%= link_to pr.author&.username, "https://github.com/#{pr.author.username}", target: "_blank" %></td>
+        <td>
+          <% if pr.author %>
+            <%= link_to pr.author.username, "https://github.com/#{pr.author.username}", target: "_blank" %>
+          <% end %>
+        </td>
         <td><%= link_to pr.title, github_pr_url(pr), target: "_blank" %></td>
         <td><%= pr.state %></td>
         <td><%= pr.gh_created_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %></td>
         <td><%= pr.ready_for_review_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %></td>
+        <% first_review = pr.valid_first_review %>
         <td>
-          <% if pr.valid_first_review %>
-            <%= pr.valid_first_review&.submitted_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %>
+          <% if first_review %>
+            <%= first_review.submitted_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %>
           <% end %>
         </td>
         <td>
