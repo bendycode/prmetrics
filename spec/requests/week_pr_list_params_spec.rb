@@ -27,13 +27,11 @@ RSpec.describe 'Week PR list category param' do
     let(:inside_week) { week.begin_date.in_time_zone + 12.hours }
 
     let!(:open_pr) do
-      create(:pull_request, repository: repository, title: 'Still open this week',
-                            draft: false, gh_created_at: inside_week)
+      create(:pull_request, repository: repository, title: 'Still open this week', gh_created_at: inside_week)
     end
 
     before do
-      create(:pull_request, repository: repository, title: 'Draft this week',
-                            draft: true, gh_created_at: inside_week)
+      create(:pull_request, :draft, repository: repository, title: 'Draft this week', gh_created_at: inside_week)
       create(:pull_request, :with_week_associations, repository: repository,
                                                      title: 'Merged this week',
                                                      gh_created_at: inside_week,
@@ -41,8 +39,7 @@ RSpec.describe 'Week PR list category param' do
       create(:pull_request, :with_week_associations, repository: repository,
                                                      title: 'Cancelled this week',
                                                      gh_created_at: inside_week,
-                                                     gh_closed_at: inside_week,
-                                                     gh_merged_at: nil, closed_week: week)
+                                                     gh_closed_at: inside_week, closed_week: week)
       create(:pull_request, :with_week_associations, repository: repository,
                                                      title: 'First reviewed this week',
                                                      gh_created_at: inside_week,
