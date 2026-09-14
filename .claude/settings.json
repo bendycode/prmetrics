@@ -19,7 +19,12 @@
       "Bash(gh label list *)",
       "Bash(ruby -v)",
       "Bash(gh-issue-sync checklist *)",
-      "Bash(stale-branches --repo *)"
+      "Bash(stale-branches --repo *)",
+      "Bash(gh run watch *)",
+      "Bash(gh-issue-sync --help)",
+      "Bash(heroku info *)",
+      "Bash(heroku apps:info *)",
+      "Bash(git merge-base *)"
     ]
   }
 }
