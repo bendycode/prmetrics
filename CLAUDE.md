@@ -216,6 +216,17 @@ These Claude Code features are particularly useful for prmetrics development:
 
 ## Production Deployment
 
+### Production URL
+Production is served at https://prmetrics.io (and `www.prmetrics.io`), custom
+domains on the `prmetrics-production` Heroku app. The app also answers on its
+Heroku hostname, `prmetrics-production-d956ade90e74.herokuapp.com`, which is
+what `heroku info` reports as the web URL and what `bin/deploy`'s health check
+requests.
+
+Browser checks against production go through prmetrics.io. The session cookie is
+scoped to whichever host set it, so a browser signed in on prmetrics.io is sent
+to the sign-in page on the Heroku hostname.
+
 ### GitHub Actions for Nightly Sync (Recommended - Free!)
 To enable automatic nightly syncing using GitHub Actions (saves $25/month vs Heroku Scheduler):
 
