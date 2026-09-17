@@ -39,13 +39,14 @@ RSpec.describe 'Global Pages Authorization' do
       expect(response.body).not_to include("for #{repository.name}")
     end
 
-    it 'redirects home when the repository policy denies the filtered repository' do
-      deny_policy(RepositoryPolicy, :show?, user, on: repository)
+    it 'renders the unfiltered dashboard for an ungranted repository, as for a missing one', :aggregate_failures do
+      hidden_repository = create(:repository)
 
-      get dashboard_path(repository_id: repository.id)
+      get dashboard_path(repository_id: hidden_repository.id)
 
-      expect(response).to redirect_to(root_path)
-      expect(flash[:alert]).to eq('You are not authorized')
+      expect(response).to have_http_status(:success)
+      expect(flash[:alert]).to be_nil
+      expect(response.body).not_to include("for #{hidden_repository.name}")
     end
   end
 

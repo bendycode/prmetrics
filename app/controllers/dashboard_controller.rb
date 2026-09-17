@@ -3,12 +3,12 @@ class DashboardController < ApplicationController
     authorize :dashboard
     @repositories = Repository.includes(:weeks).order(:name)
     @total_repositories = @repositories.count
-    # Only a single numeric id selects a repository; anything else (blank, an
-    # array, a deleted id) renders the unfiltered dashboard. Every filter below
-    # derives from the authorized record, never from the raw param.
+    # Only a single numeric id of a repository the user may see selects it;
+    # anything else (blank, an array, a deleted or ungranted id) renders the
+    # unfiltered dashboard. Every filter below derives from the found record,
+    # never from the raw param.
     repository_id = params[:repository_id].to_s[/\A\d+\z/]
-    @selected_repository = Repository.find_by(id: repository_id) if repository_id
-    authorize @selected_repository, :show? if @selected_repository
+    @selected_repository = policy_scope(Repository).find_by(id: repository_id) if repository_id
     @selected_repository_id = @selected_repository&.id
 
     # Filter by repository if selected
