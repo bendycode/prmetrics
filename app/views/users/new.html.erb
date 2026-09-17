@@ -29,10 +29,21 @@
           </div>
           <div class="form-text">
             <strong>Admin:</strong> Full access to all features including repository management, user invitations, and all data.<br>
-            <strong>Regular User:</strong> Read-only access to dashboards, metrics, and reports. Cannot manage repositories or invite users.
+            <strong>Regular User:</strong> Read-only access to dashboards, metrics, and reports for the repositories checked below. Cannot manage repositories or invite users.
           </div>
         </fieldset>
       </div>
+
+      <fieldset class="mb-3">
+        <legend class="form-label">Repositories</legend>
+        <%= form.collection_check_boxes :granted_repository_ids, @repositories, :id, :name do |box| %>
+          <div class="form-check">
+            <%= box.check_box(class: "form-check-input") %>
+            <%= box.label(class: "form-check-label") %>
+          </div>
+        <% end %>
+        <div class="form-text">Applies to a regular user. Admins see every repository.</div>
+      </fieldset>
 
       <div class="d-flex justify-content-between">
         <%= form.submit "Send Invitation", class: "btn btn-primary" %>

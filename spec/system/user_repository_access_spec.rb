@@ -52,4 +52,15 @@ RSpec.describe 'Managing a user\'s repository access' do
 
     within('tr', text: other_admin.email) { expect(page).to have_no_link('Repository access') }
   end
+
+  it 'lets an admin choose repositories while inviting a regular user' do
+    sign_in admin
+    visit new_user_path
+    fill_in 'Email', with: 'invitee@example.com'
+    check 'owner/second'
+    click_button 'Send Invitation'
+
+    expect(page).to have_content('Invitation sent to invitee@example.com')
+    expect(User.find_by!(email: 'invitee@example.com').granted_repositories).to contain_exactly(second_repository)
+  end
 end
