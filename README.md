@@ -71,22 +71,23 @@ prmetrics implements role-based access control with two user roles:
 - **Full access** to all application features
 - Can manage repositories (add, edit, delete)
 - Can invite new users with either role
-- Can view all data and metrics
+- Can view every repository's data and metrics without needing grants
 - Can open the Sidekiq dashboard at `/sidekiq`
 - Default development login: `admin@example.com` / `password123`
 
 ### Regular User Role
-- **Read-only access** to repository data and metrics
+- **Read-only access** to the repositories an admin has granted them, and nothing else: other repositories, their pull requests, and their contributors are absent from every list and total, and their pages answer 404
 - Cannot manage repositories or invite users
 - Cannot open the Sidekiq dashboard (`/sidekiq` answers 404)
-- Can view dashboards and reports
+- Can view dashboards and reports for their granted repositories
 - Suitable for team members who need visibility but not management access
 
 ### Authorization Model
 The application uses [Pundit](https://github.com/varvet/pundit) for authorization:
-- `RepositoryPolicy` - Controls repository management access
+- `RepositoryPolicy` - Controls repository management access, and its scope limits a regular user to granted repositories (`RepositoryGrant`)
+- The week, pull request, review, participant, and contributor policy scopes narrow through the repository scope, and every list and record lookup reads through them
 - `UserPolicy` - Controls user management and invitation features
-- All controller actions are properly authorized
+- All controller actions are authorized, and every index action must call `policy_scope`
 - UI elements are conditionally shown based on user permissions
 
 ### User Management
