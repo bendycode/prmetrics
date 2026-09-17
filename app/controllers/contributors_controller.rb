@@ -7,7 +7,8 @@ class ContributorsController < ApplicationController
   def show
     @contributor = policy_scope(Contributor).find(params[:id])
     authorize @contributor
-    @pull_request_users = @contributor.pull_request_users.includes(:pull_request)
-                                      .order(id: :desc).page(page_param).per(10)
+    @pull_request_users = policy_scope(@contributor.pull_request_users)
+                          .includes(:pull_request)
+                          .order(id: :desc).page(page_param).per(10)
   end
 end

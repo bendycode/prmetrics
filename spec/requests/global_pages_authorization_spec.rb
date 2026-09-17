@@ -61,12 +61,31 @@ RSpec.describe 'Global Pages Authorization' do
   end
 
   describe 'GET /contributors/:id' do
+    let(:granted_repository) { create(:repository) }
+
+    before { grant_access(user, granted_repository) }
+
     it 'answers not found for a contributor with no activity in a granted repository' do
       hidden_contributor = create(:pull_request, repository: create(:repository)).author
 
       get contributor_path(hidden_contributor)
 
       expect(response).to have_http_status(:not_found)
+    end
+
+    it 'lists only pull requests from granted repositories', :aggregate_failures do
+      participant = create(:contributor)
+      create(:pull_request_user, user: participant,
+                                 pull_request: create(:pull_request, repository: granted_repository,
+                                                                     title: 'Granted work'))
+      create(:pull_request_user, user: participant,
+                                 pull_request: create(:pull_request, repository: create(:repository),
+                                                                     title: 'Hidden work'))
+
+      get contributor_path(participant)
+
+      expect(response.body).to include('Granted work')
+      expect(response.body).not_to include('Hidden work')
     end
   end
 
