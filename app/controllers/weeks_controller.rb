@@ -23,7 +23,7 @@ class WeeksController < ApplicationController
   private
 
   def set_week
-    @repository = Repository.find(params[:repository_id])
+    @repository = policy_scope(Repository).find(params[:repository_id])
     @week = @repository.weeks.find(params[:id])
   end
 

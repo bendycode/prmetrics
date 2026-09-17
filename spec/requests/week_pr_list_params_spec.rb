@@ -118,16 +118,16 @@ RSpec.describe 'Week PR list category param' do
       end
     end
 
-    # The policy runs before the category is looked at, so a malformed category on a week
-    # the user may not see is refused rather than answered. Were the guard hoisted above
-    # authorize, this endpoint would report which weeks exist to a denied user.
-    it 'refuses a forbidden week rather than answering for it' do
-      deny_policy(RepositoryPolicy, :show?, user, on: repository)
+    # The week is found through the user's granted repositories before the category is looked
+    # at, so a malformed category on a week the user may not see answers as a missing week
+    # does. Were the guard hoisted above the lookup, this endpoint would report which weeks
+    # exist to a user who was not granted their repository.
+    it 'answers a week in an ungranted repository as not found' do
+      hidden_week = create(:week, repository: create(:repository))
 
-      get path, params: { category: ['started'] }
+      get pr_list_repository_week_path(hidden_week.repository, hidden_week), params: { category: ['started'] }
 
-      expect(response).to redirect_to(root_path)
-      expect(flash[:alert]).to eq('You are not authorized')
+      expect(response).to have_http_status(:not_found)
     end
   end
 

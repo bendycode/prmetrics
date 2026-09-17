@@ -53,6 +53,20 @@ RSpec.describe 'Repositories Authorization' do
       get repository_path(repository)
       expect(response).to have_http_status(:success)
     end
+
+    it 'gets not found when syncing an ungranted repository' do
+      post sync_repository_path(create(:repository))
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'gets not found when destroying an ungranted repository' do
+      hidden_repository = create(:repository)
+
+      delete repository_path(hidden_repository)
+
+      expect(response).to have_http_status(:not_found)
+      expect(Repository).to exist(hidden_repository.id)
+    end
   end
 
   describe 'Unauthenticated access' do

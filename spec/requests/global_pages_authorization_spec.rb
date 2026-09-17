@@ -61,13 +61,12 @@ RSpec.describe 'Global Pages Authorization' do
   end
 
   describe 'GET /contributors/:id' do
-    it 'redirects home when the contributor policy denies the record' do
-      deny_policy(ContributorPolicy, :show?, user, on: contributor)
+    it 'answers not found for a contributor with no activity in a granted repository' do
+      hidden_contributor = create(:pull_request, repository: create(:repository)).author
 
-      get contributor_path(contributor)
+      get contributor_path(hidden_contributor)
 
-      expect(response).to redirect_to(root_path)
-      expect(flash[:alert]).to eq('You are not authorized')
+      expect(response).to have_http_status(:not_found)
     end
   end
 

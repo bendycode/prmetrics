@@ -1,8 +1,9 @@
 require 'rails_helper'
 
-# Every page under a repository consults RepositoryPolicy#show? for that
-# repository, so a rule that tightens who may see a repository applies to
-# its weeks, pull requests, reviews, and participants at the same time.
+# A regular user reaches a repository's pages, and its weeks, pull requests,
+# reviews, and participants, only when that repository was granted to them.
+# Every other record answers exactly as a record that does not exist, so the
+# response never confirms which ids are real.
 RSpec.describe 'Repository Data Authorization' do
   let(:user) { create(:user) }
   let(:repository) { create(:repository) }
@@ -10,85 +11,107 @@ RSpec.describe 'Repository Data Authorization' do
   let(:pull_request) { create(:pull_request, repository: repository) }
   let(:review) { create(:review, pull_request: pull_request) }
   let(:pull_request_user) { create(:pull_request_user, pull_request: pull_request) }
+  let(:missing_id) { 0 }
 
-  before do
-    # A second repository, so a page that consulted the wrong one would trip
-    # the denial stub's .with constraint instead of passing.
-    create(:repository)
-    grant_access(user, repository)
-    sign_in user
-  end
+  before { sign_in user }
 
-  shared_examples 'a page governed by the repository policy' do
-    it 'redirects home when the repository policy denies the owning repository' do
-      deny_policy(RepositoryPolicy, :show?, user, on: repository)
+  shared_examples 'a page limited to granted repositories' do
+    it 'renders when the owning repository is granted' do
+      grant_access(user, repository)
 
-      get path
-
-      expect(response).to redirect_to(root_path)
-      expect(flash[:alert]).to eq('You are not authorized')
-    end
-  end
-
-  # Only the pages no other spec requests as a regular user include this;
-  # the pagination request spec covers the pull request list and page, the
-  # review list, the participant list, and the week page.
-  shared_examples 'a page open to regular users' do
-    it 'renders for a regular user' do
       get path
 
       expect(response).to have_http_status(:success)
     end
+
+    it 'answers not found when the owning repository is not granted' do
+      grant_access(user, create(:repository))
+
+      get path
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'answers not found for an id that does not exist' do
+      grant_access(user, repository)
+
+      get missing_path
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe 'GET /repositories/:id' do
+    let(:path) { repository_path(repository) }
+    let(:missing_path) { repository_path(missing_id) }
+
+    it_behaves_like 'a page limited to granted repositories'
   end
 
   describe 'GET /repositories/:repository_id/pull_requests' do
     let(:path) { repository_pull_requests_path(repository) }
+    let(:missing_path) { repository_pull_requests_path(missing_id) }
 
-    it_behaves_like 'a page governed by the repository policy'
+    it_behaves_like 'a page limited to granted repositories'
   end
 
   describe 'GET /pull_requests/:id' do
     let(:path) { pull_request_path(pull_request) }
+    let(:missing_path) { pull_request_path(missing_id) }
 
-    it_behaves_like 'a page governed by the repository policy'
+    it_behaves_like 'a page limited to granted repositories'
   end
 
   describe 'GET /repositories/:repository_id/weeks/:id' do
     let(:path) { repository_week_path(repository, week) }
+    let(:missing_path) { repository_week_path(repository, missing_id) }
 
-    it_behaves_like 'a page governed by the repository policy'
+    it_behaves_like 'a page limited to granted repositories'
   end
 
   describe 'GET /repositories/:repository_id/weeks/:id/pr_list' do
     let(:path) { pr_list_repository_week_path(repository, week, category: 'started') }
+    let(:missing_path) { pr_list_repository_week_path(repository, missing_id, category: 'started') }
 
-    it_behaves_like 'a page governed by the repository policy'
-    it_behaves_like 'a page open to regular users'
+    it_behaves_like 'a page limited to granted repositories'
   end
 
   describe 'GET /pull_requests/:pull_request_id/reviews' do
     let(:path) { pull_request_reviews_path(pull_request) }
+    let(:missing_path) { pull_request_reviews_path(missing_id) }
 
-    it_behaves_like 'a page governed by the repository policy'
+    it_behaves_like 'a page limited to granted repositories'
   end
 
   describe 'GET /reviews/:id' do
     let(:path) { review_path(review) }
+    let(:missing_path) { review_path(missing_id) }
 
-    it_behaves_like 'a page governed by the repository policy'
-    it_behaves_like 'a page open to regular users'
+    it_behaves_like 'a page limited to granted repositories'
   end
 
   describe 'GET /pull_requests/:pull_request_id/pull_request_users' do
     let(:path) { pull_request_pull_request_users_path(pull_request) }
+    let(:missing_path) { pull_request_pull_request_users_path(missing_id) }
 
-    it_behaves_like 'a page governed by the repository policy'
+    it_behaves_like 'a page limited to granted repositories'
   end
 
   describe 'GET /pull_request_users/:id' do
     let(:path) { pull_request_user_path(pull_request_user) }
+    let(:missing_path) { pull_request_user_path(missing_id) }
 
-    it_behaves_like 'a page governed by the repository policy'
-    it_behaves_like 'a page open to regular users'
+    it_behaves_like 'a page limited to granted repositories'
+  end
+
+  describe 'a week reached through a repository it does not belong to' do
+    it 'answers not found even when both repositories are granted' do
+      other_repository = create(:repository)
+      grant_access(user, repository, other_repository)
+
+      get repository_week_path(other_repository, week)
+
+      expect(response).to have_http_status(:not_found)
+    end
   end
 end
