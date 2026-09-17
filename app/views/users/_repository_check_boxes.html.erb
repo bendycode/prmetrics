@@ -1,7 +1,7 @@
 <div class="mb-3">
   <fieldset>
     <legend class="form-label">Repositories</legend>
-    <% if repositories.none? %>
+    <% if repositories.load.empty? %>
       <p class="text-muted">No repositories have been added yet.</p>
     <% end %>
     <%= form.collection_check_boxes :granted_repository_ids, repositories, :id, :name do |box| %>

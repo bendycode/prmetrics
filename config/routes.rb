@@ -8,7 +8,7 @@ Rails.application.routes.draw do
     get 'users/invitation/accept', to: 'devise/invitations#edit', as: :accept_user_invitation
     get 'users/invitation/remove', to: 'devise/invitations#destroy', as: :remove_user_invitation
     patch 'users/invitation', to: 'devise/invitations#update', as: :user_invitation
-    put 'users/invitation', to: 'devise/invitations#update'
+    put 'users/invitation', to: 'devise/invitations#update', as: nil
   end
 
   # Only admins reach the Sidekiq web UI. A signed-in regular user fails the
