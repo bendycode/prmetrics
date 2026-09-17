@@ -110,8 +110,10 @@
                     Last 12 weeks
                     <% if @selected_repository %>
                         for <%= @selected_repository.name %>
-                    <% else %>
+                    <% elsif policy(Repository).new? %>
                         across all repositories
+                    <% else %>
+                        across your repositories
                     <% end %>
                 </small>
             </div>
@@ -201,11 +203,13 @@
                 <% if @repositories.empty? %>
                     <div class="text-center py-4">
                         <i class="fas fa-code-branch fa-3x text-gray-300 mb-3"></i>
-                        <% if current_user.admin? %>
-                            <p class="text-gray-500">No repositories configured yet.</p>
-                        <% else %>
-                            <p class="text-gray-500">No repositories have been shared with you yet. Ask an admin for access.</p>
-                        <% end %>
+                        <p class="text-gray-500">
+                            <% if policy(Repository).new? %>
+                                No repositories configured yet.
+                            <% else %>
+                                No repositories have been shared with you yet. Ask an admin for access.
+                            <% end %>
+                        </p>
                     </div>
                 <% end %>
             </div>

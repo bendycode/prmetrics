@@ -3,7 +3,7 @@ class RepositoriesController < ApplicationController
 
   def index
     authorize Repository
-    @repositories = policy_scope(Repository)
+    @repositories = policy_scope(Repository).order(:name)
   end
 
   def show
