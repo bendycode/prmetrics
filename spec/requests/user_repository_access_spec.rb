@@ -55,4 +55,54 @@ RSpec.describe 'User repository access management' do
       expect(response).to redirect_to(root_path)
     end
   end
+
+  describe 'POST /users' do
+    before { sign_in admin }
+
+    def invite(email, role: 'regular_user', repositories: [])
+      post users_path, params: {
+        user: { email: email, admin_role_admin: role, granted_repository_ids: [''] + repositories.map(&:id) }
+      }
+    end
+
+    it 'grants a newly invited regular user the checked repositories' do
+      invite('new@example.com', repositories: [first_repository])
+
+      expect(User.find_by!(email: 'new@example.com').granted_repositories).to contain_exactly(first_repository)
+    end
+
+    it 'grants a newly invited admin nothing, since admins see every repository' do
+      invite('new-admin@example.com', role: 'admin', repositories: [first_repository])
+
+      expect(User.find_by!(email: 'new-admin@example.com').granted_repositories).to be_empty
+    end
+
+    it 'creates no grants when the invitation fails' do
+      expect { invite('not-an-email', repositories: [first_repository]) }.not_to change(RepositoryGrant, :count)
+    end
+
+    it "leaves an existing user's grants unchanged when their email is invited again", :aggregate_failures do
+      grant_access(regular_user, first_repository)
+
+      invite(regular_user.email, repositories: [second_repository])
+
+      expect(response.body).to include('has already been taken')
+      expect(regular_user.reload.granted_repositories).to contain_exactly(first_repository)
+    end
+
+    context 'when the email belongs to a pending invitation' do
+      let(:pending_user) { create(:user, :pending, email: 'pending@example.com') }
+
+      before { grant_access(pending_user, first_repository) }
+
+      it 'resends the invitation without changing role or grants', :aggregate_failures do
+        invite(pending_user.email, role: 'admin', repositories: [second_repository])
+
+        expect(response).to redirect_to(users_path)
+        expect(flash[:notice]).to eq('Invitation resent to pending@example.com; role and repository access unchanged')
+        expect(pending_user.reload).to be_regular_user
+        expect(pending_user.granted_repositories).to contain_exactly(first_repository)
+      end
+    end
+  end
 end

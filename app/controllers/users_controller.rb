@@ -9,6 +9,7 @@ class UsersController < ApplicationController
   def new
     authorize User
     @user = User.new
+    @repositories = policy_scope(Repository).order(:name)
   end
 
   def edit
@@ -18,11 +19,16 @@ class UsersController < ApplicationController
 
   def create
     authorize User
+    pending_user = User.invitation_not_accepted.find_by(email: user_params[:email].to_s.strip.downcase)
+    return resend_invitation(pending_user) if pending_user
+
     @user = User.invite!(user_params, current_user)
 
     if @user.errors.empty?
+      @user.update!(granted_repository_ids: grant_params.fetch(:granted_repository_ids, [])) if @user.regular_user?
       redirect_to users_path, notice: "Invitation sent to #{@user.email}"
     else
+      @repositories = policy_scope(Repository).order(:name)
       render :new
     end
   end
@@ -53,6 +59,14 @@ class UsersController < ApplicationController
     permitted = params.require(:user).permit(:email, :admin_role_admin)
     permitted[:role] = permitted.delete(:admin_role_admin) == 'admin' ? :admin : :regular_user
     permitted
+  end
+
+  # Inviting an email whose invitation is still pending resends it and nothing
+  # more: the form's role and repositories would otherwise overwrite what the
+  # admin chose when first inviting that person.
+  def resend_invitation(user)
+    user.invite!(current_user)
+    redirect_to users_path, notice: "Invitation resent to #{user.email}; role and repository access unchanged"
   end
 
   def grant_params
