@@ -1,7 +1,7 @@
 class DashboardController < ApplicationController
   def index
     authorize :dashboard
-    @repositories = Repository.includes(:weeks).order(:name)
+    @repositories = policy_scope(Repository).includes(:weeks).order(:name)
     @total_repositories = @repositories.count
     # Only a single numeric id of a repository the user may see selects it;
     # anything else (blank, an array, a deleted or ungranted id) renders the
@@ -12,7 +12,7 @@ class DashboardController < ApplicationController
     @selected_repository_id = @selected_repository&.id
 
     # Filter by repository if selected
-    weeks_scope = Week.includes(:repository)
+    weeks_scope = policy_scope(Week).includes(:repository)
     weeks_scope = weeks_scope.where(repository_id: @selected_repository_id) if @selected_repository_id.present?
 
     # Get latest week data for overview
@@ -31,7 +31,7 @@ class DashboardController < ApplicationController
                      # For all repositories, group by week and aggregate
                      # Preload associations needed for approved_prs calculation
                      aggregate_weeks_data(
-                       Week.includes(repository: { pull_requests: :reviews })
+                       policy_scope(Week).includes(repository: { pull_requests: :reviews })
                            .order(begin_date: :desc)
                            .group_by(&:begin_date)
                            .values
@@ -44,16 +44,14 @@ class DashboardController < ApplicationController
     @repository_stats = prepare_repository_stats
 
     # Calculate overall statistics (filtered by repository if selected)
-    pull_requests_scope = PullRequest.joins(:repository)
+    pull_requests_scope = policy_scope(PullRequest)
     pull_requests_scope = pull_requests_scope.where(repository_id: @selected_repository_id) if @selected_repository_id.present?
 
     @total_prs = pull_requests_scope.count
-    @total_reviews = Review.joins(pull_request: :repository)
-    @total_reviews = @total_reviews.where(pull_requests: { repository_id: @selected_repository_id }) if @selected_repository_id.present?
-    @total_reviews = @total_reviews.count
+    @total_reviews = policy_scope(Review).where(pull_request: pull_requests_scope).count
 
-    @avg_time_to_review = calculate_avg_time_to_review(@selected_repository_id)
-    @avg_time_to_merge = calculate_avg_time_to_merge(@selected_repository_id)
+    @avg_time_to_review = calculate_avg_time_to_review(pull_requests_scope)
+    @avg_time_to_merge = calculate_avg_time_to_merge(pull_requests_scope)
   end
 
   private
@@ -129,12 +127,10 @@ class DashboardController < ApplicationController
     (weighted_sum / total_weight).round(1)
   end
 
-  def calculate_avg_time_to_review(repository_id = nil)
-    prs_with_first_review = PullRequest.joins(:reviews)
-                                       .where.not(ready_for_review_at: nil)
-                                       .distinct
-
-    prs_with_first_review = prs_with_first_review.where(repository_id: repository_id) if repository_id.present?
+  def calculate_avg_time_to_review(pull_requests)
+    prs_with_first_review = pull_requests.joins(:reviews)
+                                         .where.not(ready_for_review_at: nil)
+                                         .distinct
 
     return 0 if prs_with_first_review.empty?
 
@@ -148,10 +144,8 @@ class DashboardController < ApplicationController
     (total_hours / prs_with_first_review.count).round(1)
   end
 
-  def calculate_avg_time_to_merge(repository_id = nil)
-    merged_prs = PullRequest.where.not(gh_merged_at: nil, ready_for_review_at: nil)
-
-    merged_prs = merged_prs.where(repository_id: repository_id) if repository_id.present?
+  def calculate_avg_time_to_merge(pull_requests)
+    merged_prs = pull_requests.where.not(gh_merged_at: nil, ready_for_review_at: nil)
 
     return 0 if merged_prs.empty?
 

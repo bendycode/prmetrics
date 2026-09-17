@@ -75,7 +75,9 @@ RSpec.describe 'Pagination params' do
     let(:overflow_username) { format('user_%02d', per_page + 1) }
 
     before do
-      (1..(per_page + 1)).each { |n| create(:contributor, username: format('user_%02d', n)) }
+      (1..(per_page + 1)).each do |n|
+        create(:pull_request, repository: repository, author: create(:contributor, username: format('user_%02d', n)))
+      end
     end
 
     hostile_pages.each do |shape, value|

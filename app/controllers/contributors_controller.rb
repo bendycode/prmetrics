@@ -1,7 +1,7 @@
 class ContributorsController < ApplicationController
   def index
     authorize Contributor
-    @contributors = Contributor.order(:username, :id).page(page_param).per(10)
+    @contributors = policy_scope(Contributor).order(:username, :id).page(page_param).per(10)
   end
 
   def show
