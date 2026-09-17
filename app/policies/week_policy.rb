@@ -1,6 +1,6 @@
 class WeekPolicy < ApplicationPolicy
   def show?
-    Pundit.policy!(user, record.repository).show?
+    Scope.new(user, Week).resolve.exists?(record.id)
   end
 
   class Scope < ApplicationPolicy::Scope

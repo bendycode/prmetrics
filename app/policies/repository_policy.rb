@@ -28,8 +28,8 @@ class RepositoryPolicy < ApplicationPolicy
   # scopes all narrow through this one.
   class Scope < ApplicationPolicy::Scope
     def resolve
-      return scope.all if user&.admin?
       return scope.none unless user
+      return scope.all if user.admin?
 
       scope.where(id: user.repository_grants.select(:repository_id))
     end

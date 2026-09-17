@@ -1,6 +1,6 @@
 class ReviewPolicy < ApplicationPolicy
   def show?
-    Pundit.policy!(user, record.pull_request).show?
+    Scope.new(user, Review).resolve.exists?(record.id)
   end
 
   class Scope < ApplicationPolicy::Scope
