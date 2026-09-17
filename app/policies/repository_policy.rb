@@ -29,9 +29,8 @@ class RepositoryPolicy < ApplicationPolicy
   class Scope < ApplicationPolicy::Scope
     def resolve
       return scope.none unless user
-      return scope.all if user.admin?
 
-      scope.where(id: user.repository_grants.select(:repository_id))
+      scope.visible_to(user)
     end
   end
 end

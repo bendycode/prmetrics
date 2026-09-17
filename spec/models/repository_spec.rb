@@ -42,4 +42,24 @@ RSpec.describe Repository do
     association = described_class.reflect_on_association(:pull_requests)
     expect(association.macro).to eq :has_many
   end
+
+  describe '.visible_to' do
+    let(:granted_repository) { create(:repository) }
+    let!(:other_repository) { create(:repository) }
+
+    it 'returns every repository for an admin' do
+      expect(described_class.visible_to(create(:user, :admin))).to include(granted_repository, other_repository)
+    end
+
+    it 'returns only the repositories granted to a regular user' do
+      user = create(:user)
+      grant_access(user, granted_repository)
+
+      expect(described_class.visible_to(user)).to contain_exactly(granted_repository)
+    end
+
+    it 'returns nothing for a regular user with no grants' do
+      expect(described_class.visible_to(create(:user))).to be_empty
+    end
+  end
 end
