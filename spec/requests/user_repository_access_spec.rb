@@ -150,6 +150,19 @@ RSpec.describe 'User repository access management' do
       expect(regular_user.reload.granted_repositories).to contain_exactly(first_repository)
     end
 
+    it "re-renders a taken email's form as a new invitation with the admin's choices", :aggregate_failures do
+      grant_access(regular_user, first_repository)
+
+      invite(regular_user.email, admin: true, repositories: [second_repository])
+
+      page = Capybara.string(response.body)
+      expect(page).to have_css("form[action='#{users_path}']")
+      expect(page).to have_no_field('_method', type: :hidden, visible: :all)
+      expect(page).to have_checked_field('Admin')
+      expect(page).to have_checked_field('owner/second')
+      expect(page).to have_unchecked_field('owner/first')
+    end
+
     context 'when the email belongs to a pending invitation' do
       let(:pending_user) { create(:user, :pending, email: 'pending@example.com') }
 

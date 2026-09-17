@@ -24,7 +24,7 @@
         <fieldset>
           <legend class="form-label">User Role</legend>
           <div class="form-check">
-            <%= form.check_box :admin_role_admin, { class: "form-check-input" }, "admin", "regular_user" %>
+            <%= form.check_box :admin_role_admin, { class: "form-check-input", checked: @user.admin? }, "admin", "regular_user" %>
             <%= form.label :admin_role_admin, "Admin", class: "form-check-label" %>
           </div>
           <div class="form-text">

@@ -25,6 +25,7 @@ class UsersController < ApplicationController
     end
 
     if @user.errors.any?
+      @user = unsent_invitation(@user.errors)
       set_repositories
       render :new, status: :unprocessable_content
     elsif @user.previously_new_record?
@@ -52,6 +53,14 @@ class UsersController < ApplicationController
 
   def set_repositories
     @repositories = policy_scope(Repository).order(:name)
+  end
+
+  # A failed invitation can hand back an existing user whose email was taken,
+  # so the form re-renders from the submitted values on a new, unsaved user.
+  def unsent_invitation(errors)
+    User.new(invite_params.slice(:email, :role, :granted_repository_ids)).tap do |user|
+      user.errors.merge!(errors)
+    end
   end
 
   def invite_params
