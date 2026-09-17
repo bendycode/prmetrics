@@ -81,7 +81,7 @@ RSpec.describe UsersController do
         it 'redirects to users index with success notice' do
           post :create, params: valid_params
           expect(response).to redirect_to(users_path)
-          expect(flash[:notice]).to eq('Invitation sent to newuser@example.com')
+          expect(flash[:notice]).to eq('Invitation sent to newuser@example.com.')
         end
       end
 
@@ -99,7 +99,7 @@ RSpec.describe UsersController do
         it 'redirects to users index with success notice' do
           post :create, params: admin_params
           expect(response).to redirect_to(users_path)
-          expect(flash[:notice]).to eq('Invitation sent to newadmin@example.com')
+          expect(flash[:notice]).to eq('Invitation sent to newadmin@example.com.')
         end
       end
 
@@ -234,22 +234,22 @@ RSpec.describe UsersController do
   end
 
   describe 'private methods' do
-    describe '#user_params' do
+    describe '#invite_params' do
       controller do
         skip_after_action :verify_authorized
 
-        def test_user_params
-          render json: user_params
+        def test_invite_params
+          render json: invite_params
         end
       end
 
       before do
-        routes.draw { get 'test_user_params' => 'users#test_user_params' }
+        routes.draw { get 'test_invite_params' => 'users#test_invite_params' }
       end
 
       context 'when admin_role_admin is "admin"' do
         it 'converts to admin role' do
-          get :test_user_params, params: { user: { email: 'test@example.com', admin_role_admin: 'admin' } }
+          get :test_invite_params, params: { user: { email: 'test@example.com', admin_role_admin: 'admin' } }
           parsed_response = JSON.parse(response.body)
           expect(parsed_response['role']).to eq('admin')
           expect(parsed_response['email']).to eq('test@example.com')
@@ -258,7 +258,7 @@ RSpec.describe UsersController do
 
       context 'when admin_role_admin is not "admin"' do
         it 'converts to regular_user role' do
-          get :test_user_params, params: { user: { email: 'test@example.com', admin_role_admin: 'anything_else' } }
+          get :test_invite_params, params: { user: { email: 'test@example.com', admin_role_admin: 'anything_else' } }
           parsed_response = JSON.parse(response.body)
           expect(parsed_response['role']).to eq('regular_user')
         end

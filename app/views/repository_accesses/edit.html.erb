@@ -1,0 +1,15 @@
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <h1>Repository Access</h1>
+    <p class="text-muted"><%= @user.email %> sees only the repositories checked here.</p>
+
+    <%= form_with(model: @user, url: user_repository_access_path(@user), method: :patch) do |form| %>
+      <%= render "users/repository_check_boxes", form: form, repositories: @repositories %>
+
+      <div class="d-flex justify-content-between">
+        <%= form.submit "Save Access", class: "btn btn-primary" %>
+        <%= link_to "Cancel", users_path, class: "btn btn-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

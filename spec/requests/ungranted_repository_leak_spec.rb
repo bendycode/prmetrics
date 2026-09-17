@@ -21,7 +21,7 @@ RSpec.describe 'Ungranted repository data never renders' do
       'accounts#edit' => [:success, -> { edit_account_path }],
       'users#index' => [:redirect, -> { users_path }],
       'users#new' => [:redirect, -> { new_user_path }],
-      'users#edit' => [:redirect, -> { edit_user_path(user) }],
+      'repository_accesses#edit' => [:redirect, -> { edit_user_repository_access_path(user) }],
       'repositories#index' => [:success, -> { repositories_path }],
       'repositories#new' => [:redirect, -> { new_repository_path }],
       'contributors#index' => [:success, -> { contributors_path }]

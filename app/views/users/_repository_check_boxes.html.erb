@@ -1,0 +1,17 @@
+<div class="mb-3">
+  <fieldset>
+    <legend class="form-label">Repositories</legend>
+    <% if repositories.none? %>
+      <p class="text-muted">No repositories have been added yet.</p>
+    <% end %>
+    <%= form.collection_check_boxes :granted_repository_ids, repositories, :id, :name do |box| %>
+      <div class="form-check">
+        <%= box.check_box(class: "form-check-input") %>
+        <%= box.label(class: "form-check-label") %>
+      </div>
+    <% end %>
+    <% if local_assigns[:hint] %>
+      <div class="form-text"><%= hint %></div>
+    <% end %>
+  </fieldset>
+</div>

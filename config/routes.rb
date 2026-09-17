@@ -23,7 +23,9 @@ Rails.application.routes.draw do
   get 'health', to: 'health#show'
 
   resource :account, only: %i[edit update]
-  resources :users, only: %i[index new create edit update destroy]
+  resources :users, only: %i[index new create destroy] do
+    resource :repository_access, only: %i[edit update]
+  end
 
   resources :repositories, only: %i[index show new create destroy] do
     member do

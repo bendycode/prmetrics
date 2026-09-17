@@ -2,7 +2,7 @@
   <div class="col-md-6">
     <h1>Invite User</h1>
     
-    <%= form_with(model: @user, local: true) do |form| %>
+    <%= form_with(model: @user) do |form| %>
       <% if @user.errors.any? %>
         <div class="alert alert-danger">
           <h6><%= pluralize(@user.errors.count, "error") %> prohibited this user from being invited:</h6>
@@ -34,16 +34,8 @@
         </fieldset>
       </div>
 
-      <fieldset class="mb-3">
-        <legend class="form-label">Repositories</legend>
-        <%= form.collection_check_boxes :granted_repository_ids, @repositories, :id, :name do |box| %>
-          <div class="form-check">
-            <%= box.check_box(class: "form-check-input") %>
-            <%= box.label(class: "form-check-label") %>
-          </div>
-        <% end %>
-        <div class="form-text">Applies to a regular user. Admins see every repository.</div>
-      </fieldset>
+      <%= render "repository_check_boxes", form: form, repositories: @repositories,
+                                           hint: "Applies to a regular user. Admins see every repository." %>
 
       <div class="d-flex justify-content-between">
         <%= form.submit "Send Invitation", class: "btn btn-primary" %>

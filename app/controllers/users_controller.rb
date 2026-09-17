@@ -1,5 +1,5 @@
 class UsersController < ApplicationController
-  before_action :set_user, only: %i[edit update destroy]
+  before_action :set_user, only: [:destroy]
 
   def index
     authorize User
@@ -9,34 +9,29 @@ class UsersController < ApplicationController
   def new
     authorize User
     @user = User.new
-    @repositories = policy_scope(Repository).order(:name)
+    set_repositories
   end
 
-  def edit
-    authorize @user, :manage_grants?
-    @repositories = policy_scope(Repository).order(:name)
-  end
-
+  # devise_invitable resends an invitation whose email is still pending. The
+  # block runs before the user is saved and the email is sent, and only for a
+  # brand-new user, so a resend changes nothing else about that person.
   def create
     authorize User
-    pending_user = User.invitation_not_accepted.find_by(email: user_params[:email].to_s.strip.downcase)
-    return resend_invitation(pending_user) if pending_user
+    @user = User.invite!({ email: invite_params[:email] }, current_user) do |user|
+      next unless user.new_record?
 
-    @user = User.invite!(user_params, current_user)
-
-    if @user.errors.empty?
-      @user.update!(granted_repository_ids: grant_params.fetch(:granted_repository_ids, [])) if @user.regular_user?
-      redirect_to users_path, notice: "Invitation sent to #{@user.email}"
-    else
-      @repositories = policy_scope(Repository).order(:name)
-      render :new
+      user.role = invite_params[:role]
+      user.granted_repository_ids = invite_params[:granted_repository_ids] if user.regular_user?
     end
-  end
 
-  def update
-    authorize @user, :manage_grants?
-    @user.update!(granted_repository_ids: grant_params.fetch(:granted_repository_ids, []))
-    redirect_to users_path, notice: "Repository access updated for #{@user.email}"
+    if @user.errors.any?
+      set_repositories
+      render :new, status: :unprocessable_content
+    elsif @user.previously_new_record?
+      redirect_to users_path, notice: "Invitation sent to #{@user.email}."
+    else
+      redirect_to users_path, notice: "Invitation resent to #{@user.email}. Role and repository access are unchanged."
+    end
   end
 
   def destroy
@@ -55,22 +50,17 @@ class UsersController < ApplicationController
     @user = User.find(params[:id])
   end
 
-  def user_params
-    permitted = params.require(:user).permit(:email, :admin_role_admin)
-    permitted[:role] = permitted.delete(:admin_role_admin) == 'admin' ? :admin : :regular_user
-    permitted
+  def set_repositories
+    @repositories = policy_scope(Repository).order(:name)
   end
 
-  # Inviting an email whose invitation is still pending resends it and nothing
-  # more: the form's role and repositories would otherwise overwrite what the
-  # admin chose when first inviting that person.
-  def resend_invitation(user)
-    user.invite!(current_user)
-    redirect_to users_path, notice: "Invitation resent to #{user.email}; role and repository access unchanged"
-  end
-
-  def grant_params
-    params.fetch(:user, {}).permit(granted_repository_ids: [])
+  def invite_params
+    @invite_params ||= begin
+      permitted = params.require(:user).permit(:email, :admin_role_admin, granted_repository_ids: [])
+      permitted[:role] = permitted.delete(:admin_role_admin) == 'admin' ? :admin : :regular_user
+      permitted[:granted_repository_ids] = Repository.where(id: permitted[:granted_repository_ids]).ids
+      permitted
+    end
   end
 
   def can_delete_user?
