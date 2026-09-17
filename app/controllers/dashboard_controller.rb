@@ -145,7 +145,7 @@ class DashboardController < ApplicationController
   end
 
   def calculate_avg_time_to_merge(pull_requests)
-    merged_prs = pull_requests.where.not(gh_merged_at: nil, ready_for_review_at: nil)
+    merged_prs = pull_requests.where.not(gh_merged_at: nil).where.not(ready_for_review_at: nil)
 
     return 0 if merged_prs.empty?
 
