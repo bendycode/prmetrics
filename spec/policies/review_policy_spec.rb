@@ -1,10 +1,9 @@
 require 'rails_helper'
 
 RSpec.describe ReviewPolicy, type: :policy do
-  let(:parent) { build(:pull_request) }
-  let(:record) { build(:review, pull_request: parent) }
+  let(:granted_repository) { create(:repository) }
+  let(:record_in_granted) { create(:review, pull_request: create(:pull_request, repository: granted_repository)) }
+  let(:record_in_ungranted) { create(:review, pull_request: create(:pull_request, repository: create(:repository))) }
 
-  describe '#show?' do
-    it_behaves_like 'a policy that delegates show? to its parent', PullRequestPolicy
-  end
+  it_behaves_like 'a policy limited to granted repositories'
 end

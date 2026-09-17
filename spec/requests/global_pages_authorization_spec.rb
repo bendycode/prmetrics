@@ -24,6 +24,8 @@ RSpec.describe 'Global Pages Authorization' do
   describe 'GET /dashboard?repository_id=:id' do
     let(:repository) { create(:repository) }
 
+    before { grant_access(user, repository) }
+
     it 'renders the filtered dashboard for a regular user' do
       get dashboard_path(repository_id: repository.id)
 

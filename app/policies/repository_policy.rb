@@ -1,11 +1,8 @@
 class RepositoryPolicy < ApplicationPolicy
   def show?
-    true
+    Scope.new(user, Repository).resolve.exists?(record.id)
   end
 
-  # The repository list is Repository.all, not a policy scope. A rule that
-  # hides a repository from some users must also be applied there before it
-  # takes full effect.
   def index?
     true
   end
@@ -26,9 +23,15 @@ class RepositoryPolicy < ApplicationPolicy
     admin?
   end
 
+  # Every record a regular user may see belongs to a repository they were
+  # granted; the week, pull request, review, participant, and contributor
+  # scopes all narrow through this one.
   class Scope < ApplicationPolicy::Scope
     def resolve
-      scope.all
+      return scope.all if user&.admin?
+      return scope.none unless user
+
+      scope.where(id: user.repository_grants.select(:repository_id))
     end
   end
 end

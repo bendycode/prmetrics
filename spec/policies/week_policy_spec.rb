@@ -1,10 +1,9 @@
 require 'rails_helper'
 
 RSpec.describe WeekPolicy, type: :policy do
-  let(:parent) { build(:repository) }
-  let(:record) { build(:week, repository: parent) }
+  let(:granted_repository) { create(:repository) }
+  let(:record_in_granted) { create(:week, repository: granted_repository) }
+  let(:record_in_ungranted) { create(:week, repository: create(:repository)) }
 
-  describe '#show?' do
-    it_behaves_like 'a policy that delegates show? to its parent', RepositoryPolicy
-  end
+  it_behaves_like 'a policy limited to granted repositories'
 end

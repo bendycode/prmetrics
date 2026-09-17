@@ -28,6 +28,7 @@ RSpec.describe 'Repositories Authorization' do
     let(:regular_user) { create(:user, role: :regular_user) }
 
     before do
+      grant_access(regular_user, repository)
       sign_in regular_user
     end
 

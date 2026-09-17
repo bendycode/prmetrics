@@ -5,16 +5,10 @@ RSpec.describe RepositoryPolicy, type: :policy do
   let(:regular_user) { build(:user) }
   let(:repository) { build(:repository) }
 
-  describe '#show?' do
-    it 'allows admin users to view repositories' do
-      policy = RepositoryPolicy.new(admin_user, repository)
-      expect(policy.show?).to be true
-    end
-
-    it 'allows regular users to view repositories' do
-      policy = RepositoryPolicy.new(regular_user, repository)
-      expect(policy.show?).to be true
-    end
+  it_behaves_like 'a policy limited to granted repositories' do
+    let(:granted_repository) { create(:repository) }
+    let(:record_in_granted) { granted_repository }
+    let(:record_in_ungranted) { create(:repository) }
   end
 
   describe '#index?' do

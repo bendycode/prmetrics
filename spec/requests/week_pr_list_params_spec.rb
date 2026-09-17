@@ -10,7 +10,10 @@ RSpec.describe 'Week PR list category param' do
   let(:week) { create(:week, repository: repository) }
   let(:path) { pr_list_repository_week_path(repository, week) }
 
-  before { sign_in user }
+  before do
+    grant_access(user, repository)
+    sign_in user
+  end
 
   hostile_categories = {
     'an array' => ['started'],

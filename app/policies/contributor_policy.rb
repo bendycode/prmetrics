@@ -1,12 +1,23 @@
 class ContributorPolicy < ApplicationPolicy
-  # Contributor pages list a person's pull requests across every repository
-  # and are not scoped by RepositoryPolicy. A rule that hides a repository
-  # from some users must also be applied here before it takes full effect.
   def index?
     true
   end
 
   def show?
-    true
+    Scope.new(user, Contributor).resolve.exists?(record.id)
+  end
+
+  # A regular user sees a contributor only through activity in a granted
+  # repository: an authored pull request, a review, or participation.
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      return scope.all if user&.admin?
+
+      pull_requests = PullRequestPolicy::Scope.new(user, PullRequest).resolve
+
+      scope.where(id: pull_requests.select(:author_id))
+           .or(scope.where(id: Review.where(pull_request: pull_requests).select(:author_id)))
+           .or(scope.where(id: PullRequestUser.where(pull_request: pull_requests).select(:user_id)))
+    end
   end
 end

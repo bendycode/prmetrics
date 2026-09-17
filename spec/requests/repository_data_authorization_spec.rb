@@ -15,6 +15,7 @@ RSpec.describe 'Repository Data Authorization' do
     # A second repository, so a page that consulted the wrong one would trip
     # the denial stub's .with constraint instead of passing.
     create(:repository)
+    grant_access(user, repository)
     sign_in user
   end
 
