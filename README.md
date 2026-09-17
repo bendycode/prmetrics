@@ -91,10 +91,11 @@ The application uses [Pundit](https://github.com/varvet/pundit) for authorizatio
 - UI elements are conditionally shown based on user permissions
 
 ### User Management
-- Admins can invite new users via the `/users/invitations/new` page
+- Admins invite new users with the Invite User button on the user list (`/users/new`)
 - Invited users receive email invitations to set up their accounts
 - Role assignment happens during the invitation process
-- Admins choose a regular user's repositories on the invitation form, and change them later from the user list's Repository access link; inviting an email whose invitation is still pending only resends it
+- Admins choose a regular user's repositories on the invitation form, and change them later from the Repository Access link on the user list
+- Inviting an email whose invitation is still pending resends the invitation without changing the person's role or repositories
 - Users authenticate via email/password through Devise
 
 ## Usage
