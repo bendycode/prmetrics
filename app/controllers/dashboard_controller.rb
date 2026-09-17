@@ -19,12 +19,11 @@ class DashboardController < ApplicationController
 
     # A selected repository charts its own last 12 weeks; otherwise each week
     # sums across the repositories the user can see.
-    chart_scope = weeks_scope.includes(repository: { pull_requests: :reviews })
     @chart_weeks = if @selected_repository
-                     chart_scope.order(begin_date: :asc).last(12)
+                     weeks_scope.order(begin_date: :asc).last(12)
                    else
                      aggregate_weeks_data(
-                       chart_scope.order(begin_date: :desc).group_by(&:begin_date).values.first(12).reverse
+                       weeks_scope.order(begin_date: :desc).group_by(&:begin_date).values.first(12).reverse
                      )
                    end
 
