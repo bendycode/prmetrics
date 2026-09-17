@@ -9,21 +9,26 @@ RSpec.shared_examples 'a policy limited to granted repositories' do
   before { grant_access(regular_user, granted_repository) }
 
   describe 'Scope' do
+    let!(:records) { [record_in_granted, record_in_ungranted] }
+
     def resolved_for(user)
-      described_class::Scope.new(user, record_in_granted.class).resolve
+      described_class::Scope.new(user, records.first.class).resolve
     end
 
     it 'includes records from every repository for an admin' do
-      expect(resolved_for(admin_user)).to include(record_in_granted, record_in_ungranted)
+      expect(resolved_for(admin_user)).to match_array(records)
     end
 
     it "includes only records from a regular user's granted repositories" do
-      expect(resolved_for(regular_user)).to include(record_in_granted)
-      expect(resolved_for(regular_user)).not_to include(record_in_ungranted)
+      expect(resolved_for(regular_user)).to contain_exactly(record_in_granted)
     end
 
     it 'includes nothing for a regular user with no grants' do
       expect(resolved_for(create(:user))).to be_empty
+    end
+
+    it 'includes nothing when no one is signed in' do
+      expect(resolved_for(nil)).to be_empty
     end
   end
 

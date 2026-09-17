@@ -2,8 +2,8 @@ require 'rails_helper'
 
 # A regular user reaches a repository's pages, and its weeks, pull requests,
 # reviews, and participants, only when that repository was granted to them.
-# Every other record answers exactly as a record that does not exist, so the
-# response never confirms which ids are real.
+# Every other record answers not found, as a record that does not exist does,
+# so the status never confirms which ids are real.
 RSpec.describe 'Repository Data Authorization' do
   let(:user) { create(:user) }
   let(:repository) { create(:repository) }

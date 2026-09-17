@@ -22,28 +22,33 @@ RSpec.describe ContributorPolicy, type: :policy do
     let(:record_in_ungranted) { create(:pull_request, repository: create(:repository)).author }
   end
 
-  describe 'Scope' do
+  describe 'Scope for a regular user' do
     let(:granted_repository) { create(:repository) }
     let(:granted_pull_request) { create(:pull_request, repository: granted_repository) }
-    let(:regular_user) { create(:user) }
-    let(:resolved) { described_class::Scope.new(regular_user, Contributor).resolve }
+    let(:ungranted_pull_request) { create(:pull_request, repository: create(:repository)) }
+    let(:viewer) { create(:user) }
+    let(:resolved) { described_class::Scope.new(viewer, Contributor).resolve }
 
-    before { grant_access(regular_user, granted_repository) }
+    before { grant_access(viewer, granted_repository) }
 
-    it 'includes a contributor who reviewed a pull request in a granted repository' do
-      reviewer = create(:review, pull_request: granted_pull_request).author
+    it 'includes reviewers of pull requests in granted repositories and no others' do
+      visible_reviewer = create(:review, pull_request: granted_pull_request).author
+      create(:review, pull_request: ungranted_pull_request)
 
-      expect(resolved).to include(reviewer)
+      expect(resolved).to contain_exactly(granted_pull_request.author, visible_reviewer)
     end
 
-    it 'includes a contributor who participated in a pull request in a granted repository' do
-      participant = create(:pull_request_user, pull_request: granted_pull_request).user
+    it 'includes participants in pull requests in granted repositories and no others' do
+      visible_participant = create(:pull_request_user, pull_request: granted_pull_request).user
+      create(:pull_request_user, pull_request: ungranted_pull_request)
 
-      expect(resolved).to include(participant)
+      expect(resolved).to contain_exactly(granted_pull_request.author, visible_participant)
     end
 
     it 'excludes a contributor with no activity in any repository' do
-      expect(resolved).not_to include(create(:contributor))
+      create(:contributor)
+
+      expect(resolved).to contain_exactly(granted_pull_request.author)
     end
 
     it 'lists a contributor once when they have several kinds of activity' do

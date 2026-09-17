@@ -1,10 +1,9 @@
 require 'rails_helper'
 
-# The pages that are not scoped to a repository still consult a policy, so a
+# The pages whose URLs sit outside a repository still consult a policy, so a
 # rule restricting them has a home and a forgotten authorize call is caught.
 RSpec.describe 'Global Pages Authorization' do
   let(:user) { create(:user) }
-  let(:contributor) { create(:contributor) }
 
   before { sign_in user }
 

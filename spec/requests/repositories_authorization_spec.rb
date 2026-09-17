@@ -59,7 +59,7 @@ RSpec.describe 'Repositories Authorization' do
       expect(response).to have_http_status(:not_found)
     end
 
-    it 'gets not found when destroying an ungranted repository' do
+    it 'gets not found when destroying an ungranted repository', :aggregate_failures do
       hidden_repository = create(:repository)
 
       delete repository_path(hidden_repository)
