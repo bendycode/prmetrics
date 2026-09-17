@@ -29,10 +29,6 @@ RSpec.describe RepositoryGrant do
       expect(user.granted_repositories).to contain_exactly(repository)
     end
 
-    it 'lists granted users on the repository' do
-      expect(repository.granted_users).to contain_exactly(user)
-    end
-
     it 'removes the grant when the user is destroyed' do
       expect { user.destroy }.to change(described_class, :count).by(-1)
     end

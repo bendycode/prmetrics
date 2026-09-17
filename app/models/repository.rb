@@ -2,7 +2,6 @@ class Repository < ApplicationRecord
   has_many :pull_requests, dependent: :destroy
   has_many :weeks, dependent: :destroy
   has_many :repository_grants, dependent: :delete_all
-  has_many :granted_users, through: :repository_grants, source: :user
 
   validates :name, presence: true, uniqueness: true
   validates :url, presence: true, uniqueness: true
