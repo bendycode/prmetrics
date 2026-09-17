@@ -18,4 +18,17 @@ RSpec.describe 'Dashboard averages' do
 
     expect(summary_card_value('Avg Time to Merge')).to eq('4.0')
   end
+
+  it "averages time to first review from each pull request's earliest review" do
+    slow = create(:pull_request, repository: repository, ready_for_review_at: wednesday)
+    create(:review, pull_request: slow, submitted_at: wednesday + 6.hours)
+    create(:review, pull_request: slow, submitted_at: wednesday + 2.hours)
+    fast = create(:pull_request, repository: repository, ready_for_review_at: wednesday)
+    create(:review, pull_request: fast, submitted_at: wednesday + 4.hours)
+    create(:pull_request, repository: repository, ready_for_review_at: wednesday)
+
+    get dashboard_path
+
+    expect(summary_card_value('Avg Time to Review')).to eq('3.0')
+  end
 end
