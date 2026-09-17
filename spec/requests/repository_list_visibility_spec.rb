@@ -3,45 +3,37 @@ require 'rails_helper'
 # The pages that list or total across repositories show a regular user only
 # the repositories granted to them, and an admin every repository.
 RSpec.describe 'Repository list visibility' do
-  let(:user) { create(:user) }
-  let(:week_start) { 2.weeks.ago.beginning_of_week }
-  let(:granted_repository) { create(:repository, name: 'granted/visible') }
+  include_context 'with a regular user granted one repository'
+
   let(:hidden_repository) { create(:repository, name: 'hidden/secret') }
-
-  before do
-    grant_access(user, granted_repository)
-    sign_in user
-  end
-
-  def summary_card_value(label)
-    card = response.body[/#{Regexp.escape(label)}.*?font-weight-bold text-gray-800">([^<]*)</m, 1]
-    card&.strip
-  end
+  let(:wednesday) { week_start + 2.days + 9.hours }
+  let(:week_attributes) { { begin_date: week_start, end_date: week_start.end_of_week, week_number: 1 } }
 
   describe 'GET /repositories' do
-    it 'lists granted repositories and no others', :aggregate_failures do
+    it 'lists granted repositories by name and no others', :aggregate_failures do
       hidden_repository
+      grant_access(user, create(:repository, name: 'another/also-granted'))
 
       get repositories_path
 
       expect(response.body).to include(granted_repository.name)
       expect(response.body).not_to include(hidden_repository.name)
+      expect(response.body.index('another/also-granted')).to be < response.body.index(granted_repository.name)
     end
   end
 
   describe 'GET /dashboard' do
     before do
-      create(:week, repository: granted_repository, begin_date: week_start, end_date: week_start.end_of_week,
-                    week_number: 1, num_prs_started: 13)
-      create(:week, repository: hidden_repository, begin_date: week_start, end_date: week_start.end_of_week,
-                    week_number: 1, num_prs_started: 29)
+      create(:week, repository: granted_repository, num_prs_started: 13, **week_attributes)
+      create(:week, repository: hidden_repository, num_prs_started: 29, **week_attributes)
       create_list(:pull_request, 2, repository: granted_repository)
       create_list(:pull_request, 3, repository: hidden_repository)
     end
 
-    it 'names only granted repositories' do
+    it 'names only granted repositories', :aggregate_failures do
       get dashboard_path
 
+      expect(response.body).to include(granted_repository.name)
       expect(response.body).not_to include(hidden_repository.name)
     end
 
@@ -52,15 +44,14 @@ RSpec.describe 'Repository list visibility' do
       expect(summary_card_value('Total Pull Requests')).to eq('2')
     end
 
-    it 'charts weekly totals from granted repositories only', :aggregate_failures do
+    it 'charts weekly totals from granted repositories only, across the user\'s repositories', :aggregate_failures do
       get dashboard_path
 
-      expect(response.body).to include('data: [13]')
-      expect(response.body).not_to include('data: [42]')
+      expect(chart_dataset_values('PRs Started')).to eq('13')
+      expect(response.body).to include('across your repositories')
     end
 
     it 'averages merge time over granted repositories only' do
-      wednesday = week_start + 2.days + 9.hours
       create(:pull_request, repository: granted_repository, ready_for_review_at: wednesday,
                             gh_merged_at: wednesday + 2.hours)
       create(:pull_request, repository: hidden_repository, ready_for_review_at: wednesday,
@@ -72,26 +63,27 @@ RSpec.describe 'Repository list visibility' do
     end
 
     it 'averages time to first review over granted repositories only' do
-      wednesday = week_start + 2.days + 9.hours
-      create(:review, submitted_at: wednesday + 3.hours,
-                      pull_request: create(:pull_request, repository: granted_repository,
-                                                          ready_for_review_at: wednesday))
-      create(:review, submitted_at: wednesday + 21.hours,
-                      pull_request: create(:pull_request, repository: hidden_repository,
-                                                          ready_for_review_at: wednesday))
+      granted_pull_request = create(:pull_request, repository: granted_repository, ready_for_review_at: wednesday)
+      create(:review, pull_request: granted_pull_request, submitted_at: wednesday + 3.hours)
+      hidden_pull_request = create(:pull_request, repository: hidden_repository, ready_for_review_at: wednesday)
+      create(:review, pull_request: hidden_pull_request, submitted_at: wednesday + 21.hours)
 
       get dashboard_path
 
       expect(summary_card_value('Avg Time to Review')).to eq('3.0')
     end
 
-    it 'shows an admin every repository', :aggregate_failures do
-      sign_in create(:user, :admin)
+    context 'when signed in as an admin' do
+      before { sign_in create(:user, :admin) }
 
-      get dashboard_path
+      it 'shows every repository, its pull requests, and its weekly totals', :aggregate_failures do
+        get dashboard_path
 
-      expect(response.body).to include(hidden_repository.name)
-      expect(summary_card_value('Total Pull Requests')).to eq('5')
+        expect(response.body).to include(hidden_repository.name)
+        expect(summary_card_value('Total Pull Requests')).to eq('5')
+        expect(chart_dataset_values('PRs Started')).to eq('42')
+        expect(response.body).to include('across all repositories')
+      end
     end
   end
 
