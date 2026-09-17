@@ -3,6 +3,9 @@ class ApplicationController < ActionController::Base
 
   before_action :authenticate_user!
   after_action :verify_authorized, unless: :devise_controller?
+  # A list action must read through a policy scope, so a new list cannot show
+  # records from repositories the user was not granted.
+  after_action :verify_policy_scoped, if: -> { action_name == 'index' }, unless: :devise_controller?
   layout 'admin'
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
