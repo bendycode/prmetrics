@@ -54,8 +54,11 @@ RSpec.describe 'Repositories Authorization' do
       expect(response).to have_http_status(:success)
     end
 
-    it 'gets not found when syncing an ungranted repository' do
-      post sync_repository_path(create(:repository))
+    it 'gets not found when syncing an ungranted repository, and queues nothing', :aggregate_failures do
+      hidden_repository = create(:repository)
+
+      expect { post sync_repository_path(hidden_repository) }.not_to have_enqueued_job
+
       expect(response).to have_http_status(:not_found)
     end
 

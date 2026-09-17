@@ -105,11 +105,18 @@ RSpec.describe 'Repository Data Authorization' do
   end
 
   describe 'a week reached through a repository it does not belong to' do
-    it 'answers not found even when both repositories are granted' do
-      other_repository = create(:repository)
-      grant_access(user, repository, other_repository)
+    let(:other_repository) { create(:repository) }
 
+    before { grant_access(user, repository, other_repository) }
+
+    it 'answers not found for the week page even when both repositories are granted' do
       get repository_week_path(other_repository, week)
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'answers not found for the week pull request list even when both repositories are granted' do
+      get pr_list_repository_week_path(other_repository, week, category: 'started')
 
       expect(response).to have_http_status(:not_found)
     end
