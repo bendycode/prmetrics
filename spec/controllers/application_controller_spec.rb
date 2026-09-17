@@ -43,6 +43,9 @@ RSpec.describe ApplicationController do
   describe 'authorization enforcement' do
     controller do
       skip_before_action :authenticate_user!
+      # PolicyScopingNotPerformedError subclasses AuthorizationNotPerformedError,
+      # so the scoping check would satisfy the expectation below on its own.
+      skip_after_action :verify_policy_scoped
 
       def index
         render plain: 'never authorized'
@@ -69,7 +72,8 @@ RSpec.describe ApplicationController do
     controller do
       def index
         authorize :dashboard, :index?
-        render plain: 'unscoped list'
+        policy_scope(Repository) if params[:scoped]
+        render plain: 'list'
       end
 
       def show
@@ -78,20 +82,20 @@ RSpec.describe ApplicationController do
       end
     end
 
-    before do
-      routes.draw do
-        get 'index' => 'anonymous#index'
-        get 'show' => 'anonymous#show'
-      end
-      sign_in create(:user)
-    end
+    before { sign_in create(:user) }
 
     it 'refuses an index action that never applies a policy scope' do
       expect { get :index }.to raise_error(Pundit::PolicyScopingNotPerformedError)
     end
 
+    it 'renders an index action that applies a policy scope' do
+      get :index, params: { scoped: true }
+
+      expect(response.body).to eq('list')
+    end
+
     it 'does not require a policy scope on other actions' do
-      get :show
+      get :show, params: { id: 1 }
 
       expect(response.body).to eq('single record')
     end

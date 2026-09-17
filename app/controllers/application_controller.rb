@@ -3,8 +3,10 @@ class ApplicationController < ActionController::Base
 
   before_action :authenticate_user!
   after_action :verify_authorized, unless: :devise_controller?
-  # A list action must read through a policy scope, so a new list cannot show
-  # records from repositories the user was not granted.
+  # An index action that never calls policy_scope raises, so a new list is not
+  # written as Model.all by accident; the ungranted-repository leak spec checks
+  # what each page actually renders. The lambda, rather than only: :index,
+  # keeps controllers with no index action from raising on a missing callback.
   after_action :verify_policy_scoped, if: -> { action_name == 'index' }, unless: :devise_controller?
   layout 'admin'
 
