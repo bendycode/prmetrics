@@ -189,4 +189,22 @@ RSpec.describe UserPolicy, type: :policy do
       end
     end
   end
+
+  describe '#manage_grants?' do
+    it "allows an admin to manage a regular user's repository grants" do
+      expect(described_class.new(admin_user, target_user).manage_grants?).to be true
+    end
+
+    it "denies a regular user managing another user's repository grants" do
+      expect(described_class.new(regular_user, target_user).manage_grants?).to be false
+    end
+
+    it 'denies an admin managing grants for an admin, who sees every repository' do
+      expect(described_class.new(admin_user, build(:user, :admin)).manage_grants?).to be false
+    end
+
+    it 'denies a regular user managing their own repository grants' do
+      expect(described_class.new(regular_user, regular_user).manage_grants?).to be false
+    end
+  end
 end

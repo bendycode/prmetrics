@@ -23,6 +23,13 @@ class UserPolicy < ApplicationPolicy
     admin?
   end
 
+  # Separate from update?, which also lets users edit their own account:
+  # only an admin decides which repositories a regular user may see. Admins
+  # see every repository, so they have no grants to manage.
+  def manage_grants?
+    admin? && record.regular_user?
+  end
+
   def change_role?
     admin? && !user_owns_record?
   end

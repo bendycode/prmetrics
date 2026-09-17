@@ -1,5 +1,5 @@
 class UsersController < ApplicationController
-  before_action :set_user, only: [:destroy]
+  before_action :set_user, only: %i[edit update destroy]
 
   def index
     authorize User
@@ -11,6 +11,11 @@ class UsersController < ApplicationController
     @user = User.new
   end
 
+  def edit
+    authorize @user, :manage_grants?
+    @repositories = policy_scope(Repository).order(:name)
+  end
+
   def create
     authorize User
     @user = User.invite!(user_params, current_user)
@@ -20,6 +25,12 @@ class UsersController < ApplicationController
     else
       render :new
     end
+  end
+
+  def update
+    authorize @user, :manage_grants?
+    @user.update!(granted_repository_ids: grant_params.fetch(:granted_repository_ids, []))
+    redirect_to users_path, notice: "Repository access updated for #{@user.email}"
   end
 
   def destroy
@@ -42,6 +53,10 @@ class UsersController < ApplicationController
     permitted = params.require(:user).permit(:email, :admin_role_admin)
     permitted[:role] = permitted.delete(:admin_role_admin) == 'admin' ? :admin : :regular_user
     permitted
+  end
+
+  def grant_params
+    params.fetch(:user, {}).permit(granted_repository_ids: [])
   end
 
   def can_delete_user?
