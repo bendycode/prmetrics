@@ -51,6 +51,9 @@
               <%= user.last_sign_in_at&.strftime('%Y-%m-%d %H:%M') if user.respond_to?(:last_sign_in_at) %>
             </td>
             <td>
+              <% if policy(user).manage_grants? %>
+                <%= link_to 'Repository access', edit_user_path(user), class: 'btn btn-sm btn-outline-primary' %>
+              <% end %>
               <% if user != current_user %>
                 <%= button_to 'Remove', user_path(user),
                     method: :delete,
