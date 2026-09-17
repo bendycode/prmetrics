@@ -126,10 +126,15 @@ class DashboardController < ApplicationController
     average_weekday_hours(merge_windows)
   end
 
+  # Weekday hours depend on the day each time falls on, so both ends move into
+  # the configured time zone first: a plucked SQL aggregate such as MIN comes
+  # back as a UTC Time rather than a zoned attribute.
   def average_weekday_hours(windows)
     return 0 if windows.empty?
 
-    total_hours = windows.sum { |from, to| WeekdayHours.weekday_hours_between(from, to) }
+    total_hours = windows.sum do |from, to|
+      WeekdayHours.weekday_hours_between(from&.in_time_zone, to&.in_time_zone)
+    end
     (total_hours / windows.size).round(1)
   end
 end

@@ -27,4 +27,14 @@ RSpec.describe 'Dashboard averages' do
 
     expect(summary_card_value('Avg Time to Review')).to eq('3.0')
   end
+
+  it 'counts a Friday evening review in the configured time zone' do
+    friday_afternoon = Time.zone.parse('2026-09-11 17:00')
+    pull_request = create(:pull_request, repository: repository, ready_for_review_at: friday_afternoon)
+    create(:review, pull_request: pull_request, submitted_at: friday_afternoon + 3.hours)
+
+    get dashboard_path
+
+    expect(summary_card_value('Avg Time to Review')).to eq('3.0')
+  end
 end
