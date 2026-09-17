@@ -201,7 +201,11 @@
                 <% if @repositories.empty? %>
                     <div class="text-center py-4">
                         <i class="fas fa-code-branch fa-3x text-gray-300 mb-3"></i>
-                        <p class="text-gray-500">No repositories configured yet.</p>
+                        <% if current_user.admin? %>
+                            <p class="text-gray-500">No repositories configured yet.</p>
+                        <% else %>
+                            <p class="text-gray-500">No repositories have been shared with you yet. Ask an admin for access.</p>
+                        <% end %>
                     </div>
                 <% end %>
             </div>

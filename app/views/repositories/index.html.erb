@@ -14,8 +14,13 @@
   <div class="card">
     <div class="card-body text-center py-5">
       <i class="fas fa-code-branch fa-3x text-gray-300 mb-3"></i>
-      <h4>No repositories yet</h4>
-      <p class="text-muted">Add your first repository to start tracking pull request metrics.</p>
+      <% if policy(Repository).new? %>
+        <h4>No repositories yet</h4>
+        <p class="text-muted">Add your first repository to start tracking pull request metrics.</p>
+      <% else %>
+        <h4>No repositories have been shared with you yet</h4>
+        <p class="text-muted">Ask an admin for access.</p>
+      <% end %>
       <% if policy(Repository).new? %>
         <%= button_to 'Add Repository', new_repository_path, method: :get, class: 'btn btn-primary' %>
       <% end %>
