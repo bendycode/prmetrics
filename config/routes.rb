@@ -1,7 +1,15 @@
 require 'sidekiq/web'
 
 Rails.application.routes.draw do
-  devise_for :users
+  # Invitations are sent through UsersController, which only admins reach;
+  # devise_invitable keeps just the pages an invitee uses to accept or decline.
+  devise_for :users, skip: :invitations
+  devise_scope :user do
+    get 'users/invitation/accept', to: 'devise/invitations#edit', as: :accept_user_invitation
+    get 'users/invitation/remove', to: 'devise/invitations#destroy', as: :remove_user_invitation
+    patch 'users/invitation', to: 'devise/invitations#update', as: :user_invitation
+    put 'users/invitation', to: 'devise/invitations#update'
+  end
 
   # Only admins reach the Sidekiq web UI. A signed-in regular user fails the
   # lambda, so the route does not match and Rails answers 404; a signed-out
