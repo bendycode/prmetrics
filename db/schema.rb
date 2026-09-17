@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_10_13_204816) do
+ActiveRecord::Schema[7.2].define(version: 2026_09_17_104319) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -84,6 +84,15 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_13_204816) do
     t.text "last_sync_error"
     t.integer "sync_progress"
     t.index ["name"], name: "idx_repositories_name"
+  end
+
+  create_table "repository_grants", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "repository_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["repository_id"], name: "index_repository_grants_on_repository_id"
+    t.index ["user_id", "repository_id"], name: "index_repository_grants_on_user_id_and_repository_id", unique: true
   end
 
   create_table "reviews", force: :cascade do |t|
@@ -160,6 +169,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_13_204816) do
   add_foreign_key "pull_requests", "weeks", column: "first_review_week_id"
   add_foreign_key "pull_requests", "weeks", column: "merged_week_id"
   add_foreign_key "pull_requests", "weeks", column: "ready_for_review_week_id"
+  add_foreign_key "repository_grants", "repositories"
+  add_foreign_key "repository_grants", "users"
   add_foreign_key "reviews", "contributors", column: "author_id"
   add_foreign_key "reviews", "pull_requests"
   add_foreign_key "weeks", "repositories"
