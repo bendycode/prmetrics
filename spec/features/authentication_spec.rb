@@ -58,9 +58,11 @@ RSpec.describe 'Authentication' do
       end
 
       it 'hides repository management controls from regular user' do
+        grant_access(regular_user, create(:repository, name: 'test/repo'))
         sign_in regular_user
         visit repositories_path
 
+        expect(page).to have_content('test/repo')
         expect(page).to have_no_button('Add Repository')
         expect(page).to have_no_button('Sync All')
         expect(page).to have_no_button('Delete')
@@ -110,11 +112,13 @@ RSpec.describe 'Authentication' do
 
     describe 'session management' do
       it 'maintains role-based permissions across page navigation' do
+        grant_access(regular_user, create(:repository, name: 'test/repo'))
         sign_in regular_user
         visit repositories_path
         visit root_path
         visit repositories_path
 
+        expect(page).to have_content('test/repo')
         expect(page).to have_no_button('Add Repository')
         expect(page).to have_no_button('Sync All')
       end
