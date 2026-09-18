@@ -3,7 +3,6 @@ class Repository < ApplicationRecord
   has_many :weeks, dependent: :destroy
   has_many :repository_grants, dependent: :delete_all
 
-  # Admins see every repository; everyone else sees the ones granted to them.
   scope :visible_to, ->(user) { user.admin? ? all : where(id: user.repository_grants.select(:repository_id)) }
 
   validates :name, presence: true, uniqueness: true
