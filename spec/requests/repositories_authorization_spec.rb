@@ -28,6 +28,7 @@ RSpec.describe 'Repositories Authorization' do
     let(:regular_user) { create(:user, role: :regular_user) }
 
     before do
+      grant_access(regular_user, repository)
       sign_in regular_user
     end
 
@@ -51,6 +52,23 @@ RSpec.describe 'Repositories Authorization' do
     it 'can view repository show' do
       get repository_path(repository)
       expect(response).to have_http_status(:success)
+    end
+
+    it 'gets not found when syncing an ungranted repository, and queues nothing', :aggregate_failures do
+      hidden_repository = create(:repository)
+
+      expect { post sync_repository_path(hidden_repository) }.not_to have_enqueued_job
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'gets not found when destroying an ungranted repository', :aggregate_failures do
+      hidden_repository = create(:repository)
+
+      delete repository_path(hidden_repository)
+
+      expect(response).to have_http_status(:not_found)
+      expect(Repository).to exist(hidden_repository.id)
     end
   end
 

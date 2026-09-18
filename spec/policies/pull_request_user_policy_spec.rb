@@ -1,10 +1,9 @@
 require 'rails_helper'
 
 RSpec.describe PullRequestUserPolicy, type: :policy do
-  let(:parent) { build(:pull_request) }
-  let(:record) { build(:pull_request_user, pull_request: parent) }
-
-  describe '#show?' do
-    it_behaves_like 'a policy that delegates show? to its parent', PullRequestPolicy
+  it_behaves_like 'a policy limited to granted repositories' do
+    let(:granted_repository) { create(:repository) }
+    let(:record_in_granted) { create(:pull_request_user, pull_request: create(:pull_request, repository: granted_repository)) }
+    let(:record_in_ungranted) { create(:pull_request_user, pull_request: create(:pull_request, repository: create(:repository))) }
   end
 end
