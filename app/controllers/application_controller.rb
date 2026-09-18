@@ -3,6 +3,11 @@ class ApplicationController < ActionController::Base
 
   before_action :authenticate_user!
   after_action :verify_authorized, unless: :devise_controller?
+  # An index action that never calls policy_scope raises, so a new list is not
+  # written as Model.all by accident; the ungranted-repository leak spec checks
+  # what each page actually renders. The lambda, rather than only: :index,
+  # keeps controllers with no index action from raising on a missing callback.
+  after_action :verify_policy_scoped, if: -> { action_name == 'index' }, unless: :devise_controller?
   layout 'admin'
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
