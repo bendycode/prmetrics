@@ -9,16 +9,29 @@ class UsersController < ApplicationController
   def new
     authorize User
     @user = User.new
+    set_repositories
   end
 
+  # devise_invitable resends an invitation whose email is still pending. The
+  # block runs before the user is saved and the email is sent, and only for a
+  # brand-new user, so a resend changes nothing else about that person.
   def create
     authorize User
-    @user = User.invite!(user_params, current_user)
+    @user = User.invite!({ email: invite_params[:email] }, current_user) do |user|
+      next unless user.new_record?
 
-    if @user.errors.empty?
-      redirect_to users_path, notice: "Invitation sent to #{@user.email}"
+      user.role = invite_params[:role]
+      user.granted_repository_ids = invite_params[:granted_repository_ids] if user.regular_user?
+    end
+
+    if @user.errors.any?
+      @user = unsent_invitation(@user.errors)
+      set_repositories
+      render :new, status: :unprocessable_content
+    elsif @user.previously_new_record?
+      redirect_to users_path, notice: "Invitation sent to #{@user.email}."
     else
-      render :new
+      redirect_to users_path, notice: "Invitation resent to #{@user.email}. Role and repository access are unchanged."
     end
   end
 
@@ -38,10 +51,25 @@ class UsersController < ApplicationController
     @user = User.find(params[:id])
   end
 
-  def user_params
-    permitted = params.require(:user).permit(:email, :admin_role_admin)
-    permitted[:role] = permitted.delete(:admin_role_admin) == 'admin' ? :admin : :regular_user
-    permitted
+  def set_repositories
+    @repositories = policy_scope(Repository).order(:name)
+  end
+
+  # A failed invitation can hand back an existing user whose email was taken,
+  # so the form re-renders from the submitted values on a new, unsaved user.
+  def unsent_invitation(errors)
+    User.new(invite_params.slice(:email, :role, :granted_repository_ids)).tap do |user|
+      user.errors.merge!(errors)
+    end
+  end
+
+  def invite_params
+    @invite_params ||= begin
+      permitted = params.require(:user).permit(:email, :admin_role_admin, granted_repository_ids: [])
+      permitted[:role] = permitted.delete(:admin_role_admin) == 'admin' ? :admin : :regular_user
+      permitted[:granted_repository_ids] = Repository.where(id: permitted[:granted_repository_ids]).ids
+      permitted
+    end
   end
 
   def can_delete_user?
