@@ -1,10 +1,9 @@
 require 'rails_helper'
 
-# The pages that are not scoped to a repository still consult a policy, so a
+# The pages whose URLs sit outside a repository still consult a policy, so a
 # rule restricting them has a home and a forgotten authorize call is caught.
 RSpec.describe 'Global Pages Authorization' do
   let(:user) { create(:user) }
-  let(:contributor) { create(:contributor) }
 
   before { sign_in user }
 
@@ -24,6 +23,8 @@ RSpec.describe 'Global Pages Authorization' do
   describe 'GET /dashboard?repository_id=:id' do
     let(:repository) { create(:repository) }
 
+    before { grant_access(user, repository) }
+
     it 'renders the filtered dashboard for a regular user' do
       get dashboard_path(repository_id: repository.id)
 
@@ -37,13 +38,14 @@ RSpec.describe 'Global Pages Authorization' do
       expect(response.body).not_to include("for #{repository.name}")
     end
 
-    it 'redirects home when the repository policy denies the filtered repository' do
-      deny_policy(RepositoryPolicy, :show?, user, on: repository)
+    it 'renders the unfiltered dashboard for an ungranted repository, as for a missing one', :aggregate_failures do
+      hidden_repository = create(:repository)
 
-      get dashboard_path(repository_id: repository.id)
+      get dashboard_path(repository_id: hidden_repository.id)
 
-      expect(response).to redirect_to(root_path)
-      expect(flash[:alert]).to eq('You are not authorized')
+      expect(response).to have_http_status(:success)
+      expect(flash[:alert]).to be_nil
+      expect(response.body).not_to include("for #{hidden_repository.name}")
     end
   end
 
@@ -59,13 +61,31 @@ RSpec.describe 'Global Pages Authorization' do
   end
 
   describe 'GET /contributors/:id' do
-    it 'redirects home when the contributor policy denies the record' do
-      deny_policy(ContributorPolicy, :show?, user, on: contributor)
+    let(:granted_repository) { create(:repository) }
 
-      get contributor_path(contributor)
+    before { grant_access(user, granted_repository) }
 
-      expect(response).to redirect_to(root_path)
-      expect(flash[:alert]).to eq('You are not authorized')
+    it 'answers not found for a contributor with no activity in a granted repository' do
+      hidden_contributor = create(:pull_request, repository: create(:repository)).author
+
+      get contributor_path(hidden_contributor)
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'lists only pull requests from granted repositories', :aggregate_failures do
+      participant = create(:contributor)
+      create(:pull_request_user, user: participant,
+                                 pull_request: create(:pull_request, repository: granted_repository,
+                                                                     title: 'Granted work'))
+      create(:pull_request_user, user: participant,
+                                 pull_request: create(:pull_request, repository: create(:repository),
+                                                                     title: 'Hidden work'))
+
+      get contributor_path(participant)
+
+      expect(response.body).to include('Granted work')
+      expect(response.body).not_to include('Hidden work')
     end
   end
 

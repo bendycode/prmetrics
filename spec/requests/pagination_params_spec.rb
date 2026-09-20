@@ -4,9 +4,12 @@ RSpec.describe 'Pagination params' do
   let(:user) { create(:user) }
   let(:repository) { create(:repository) }
   let(:pull_request) { create(:pull_request, repository: repository) }
-  let(:contributor) { create(:contributor) }
+  let(:contributor) { pull_request.author }
 
-  before { sign_in user }
+  before do
+    grant_access(user, repository)
+    sign_in user
+  end
 
   hostile_pages = {
     'an array' => ['1'],

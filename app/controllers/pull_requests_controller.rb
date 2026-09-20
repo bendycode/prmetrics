@@ -1,12 +1,12 @@
 class PullRequestsController < ApplicationController
   def index
-    @repository = Repository.find(params[:repository_id])
+    @repository = policy_scope(Repository).find(params[:repository_id])
     authorize @repository, :show?
     @pull_requests = @repository.pull_requests.newest_first.page(page_param).per(10)
   end
 
   def show
-    @pull_request = PullRequest.find(params[:id])
+    @pull_request = policy_scope(PullRequest).find(params[:id])
     authorize @pull_request
     @reviews = @pull_request.reviews.includes(:author).ordered
     @first_review_time = @reviews.last&.submitted_at
