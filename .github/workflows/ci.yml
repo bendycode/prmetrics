@@ -3,8 +3,9 @@ name: CI
 on:
   push:
     branches: [ main ]
+  # Every pull request, whatever its base: a stacked pull request targets the
+  # branch below it, and filtering by base leaves those with no run at all.
   pull_request:
-    branches: [ main ]
 
 jobs:
   test:
