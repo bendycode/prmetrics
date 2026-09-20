@@ -24,7 +24,15 @@
       "Bash(gh-issue-sync --help)",
       "Bash(heroku info *)",
       "Bash(heroku apps:info *)",
-      "Bash(git merge-base *)"
+      "Bash(git merge-base *)",
+      "Bash(heroku authorizations:info *)",
+      "Bash(gh-issue-sync section *)",
+      "Bash(gh-issue-sync reconcile *)",
+      "mcp__claude-in-chrome__navigate",
+      "mcp__claude-in-chrome__get_page_text",
+      "mcp__claude-in-chrome__read_page",
+      "mcp__claude-in-chrome__find",
+      "mcp__claude-in-chrome__computer"
     ]
   }
 }
