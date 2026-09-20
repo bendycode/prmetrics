@@ -1,8 +1,4 @@
 class UserPolicy < ApplicationPolicy
-  def show?
-    true
-  end
-
   def index?
     admin?
   end
@@ -19,12 +15,11 @@ class UserPolicy < ApplicationPolicy
     admin? && !user_owns_record?
   end
 
-  def invite?
-    admin?
-  end
-
-  def change_role?
-    admin? && !user_owns_record?
+  # Separate from update?, which also lets users edit their own account:
+  # only an admin decides which repositories a regular user may see. Admins
+  # see every repository, so they have no grants to manage.
+  def manage_grants?
+    admin? && record.regular_user?
   end
 
   class Scope < ApplicationPolicy::Scope

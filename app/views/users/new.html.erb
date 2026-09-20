@@ -2,7 +2,7 @@
   <div class="col-md-6">
     <h1>Invite User</h1>
     
-    <%= form_with(model: @user, local: true) do |form| %>
+    <%= form_with(model: @user) do |form| %>
       <% if @user.errors.any? %>
         <div class="alert alert-danger">
           <h6><%= pluralize(@user.errors.count, "error") %> prohibited this user from being invited:</h6>
@@ -24,15 +24,18 @@
         <fieldset>
           <legend class="form-label">User Role</legend>
           <div class="form-check">
-            <%= form.check_box :admin_role_admin, { class: "form-check-input" }, "admin", "regular_user" %>
+            <%= form.check_box :admin_role_admin, { class: "form-check-input", checked: @user.admin? }, "admin", "regular_user" %>
             <%= form.label :admin_role_admin, "Admin", class: "form-check-label" %>
           </div>
           <div class="form-text">
             <strong>Admin:</strong> Full access to all features including repository management, user invitations, and all data.<br>
-            <strong>Regular User:</strong> Read-only access to dashboards, metrics, and reports. Cannot manage repositories or invite users.
+            <strong>Regular User:</strong> Read-only access to dashboards, metrics, and reports for the repositories checked below. Cannot manage repositories or invite users.
           </div>
         </fieldset>
       </div>
+
+      <%= render "repository_check_boxes", form: form, repositories: @repositories,
+                                           hint: "Applies to a regular user. Admins see every repository." %>
 
       <div class="d-flex justify-content-between">
         <%= form.submit "Send Invitation", class: "btn btn-primary" %>
