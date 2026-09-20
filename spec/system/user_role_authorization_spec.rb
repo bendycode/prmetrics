@@ -74,8 +74,10 @@ RSpec.describe 'User Role Authorization', :js do
     end
 
     it 'can view repositories but not modify them' do
-      create(:repository, name: 'test/repo')
+      grant_access(regular_user, create(:repository, name: 'test/repo'))
       visit repositories_path
+
+      expect(page).to have_content('test/repo')
 
       # Regular user should NOT see add repository button
       expect(page).to have_no_button('Add Repository')
@@ -87,7 +89,10 @@ RSpec.describe 'User Role Authorization', :js do
 
     it 'cannot access sync or delete actions on repository show page' do
       repository = create(:repository, name: 'test/repo')
+      grant_access(regular_user, repository)
       visit repository_path(repository)
+
+      expect(page).to have_content('test/repo')
 
       # Regular user should NOT see sync controls section
       expect(page).to have_no_content('Sync Status')

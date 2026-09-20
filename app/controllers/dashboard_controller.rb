@@ -1,66 +1,47 @@
 class DashboardController < ApplicationController
   def index
     authorize :dashboard
-    @repositories = Repository.includes(:weeks).order(:name)
+    repositories = policy_scope(Repository)
+    @repositories = repositories.includes(:weeks).order(:name)
     @total_repositories = @repositories.count
     # Only a single numeric id of a repository the user may see selects it;
     # anything else (blank, an array, a deleted or ungranted id) renders the
     # unfiltered dashboard. Every filter below derives from the found record,
     # never from the raw param.
     repository_id = params[:repository_id].to_s[/\A\d+\z/]
-    @selected_repository = policy_scope(Repository).find_by(id: repository_id) if repository_id
+    @selected_repository = repositories.find_by(id: repository_id) if repository_id
     @selected_repository_id = @selected_repository&.id
 
-    # Filter by repository if selected
-    weeks_scope = Week.includes(:repository)
-    weeks_scope = weeks_scope.where(repository_id: @selected_repository_id) if @selected_repository_id.present?
+    weeks_scope = policy_scope(Week)
+    weeks_scope = weeks_scope.where(repository: @selected_repository) if @selected_repository
 
-    # Get latest week data for overview
-    @latest_weeks = weeks_scope
-                    .order(begin_date: :desc)
-                    .limit(10)
+    @latest_weeks = weeks_scope.includes(:repository).order(begin_date: :desc).limit(10)
 
-    # Get data for charts (last 12 weeks for trends)
-    # When filtering by repository, get all weeks; otherwise limit to 12
-    @chart_weeks = if @selected_repository_id.present?
-                     weeks_scope
-                       .includes(repository: { pull_requests: :reviews })
-                       .order(begin_date: :asc)
-                       .last(12)
+    # A selected repository charts its own last 12 weeks; otherwise each week
+    # sums across the repositories the user can see.
+    @chart_weeks = if @selected_repository
+                     weeks_scope.order(begin_date: :asc).last(12)
                    else
-                     # For all repositories, group by week and aggregate
-                     # Preload associations needed for approved_prs calculation
                      aggregate_weeks_data(
-                       Week.includes(repository: { pull_requests: :reviews })
-                           .order(begin_date: :desc)
-                           .group_by(&:begin_date)
-                           .values
-                           .first(12)
-                           .reverse
+                       weeks_scope.order(begin_date: :desc).group_by(&:begin_date).values.first(12).reverse
                      )
                    end
 
-    # Prepare repository comparison data
     @repository_stats = prepare_repository_stats
 
-    # Calculate overall statistics (filtered by repository if selected)
-    pull_requests_scope = PullRequest.joins(:repository)
-    pull_requests_scope = pull_requests_scope.where(repository_id: @selected_repository_id) if @selected_repository_id.present?
+    pull_requests_scope = policy_scope(PullRequest)
+    pull_requests_scope = pull_requests_scope.where(repository: @selected_repository) if @selected_repository
 
     @total_prs = pull_requests_scope.count
-    @total_reviews = Review.joins(pull_request: :repository)
-    @total_reviews = @total_reviews.where(pull_requests: { repository_id: @selected_repository_id }) if @selected_repository_id.present?
-    @total_reviews = @total_reviews.count
-
-    @avg_time_to_review = calculate_avg_time_to_review(@selected_repository_id)
-    @avg_time_to_merge = calculate_avg_time_to_merge(@selected_repository_id)
+    @avg_time_to_review = calculate_avg_time_to_review(pull_requests_scope)
+    @avg_time_to_merge = calculate_avg_time_to_merge(pull_requests_scope)
   end
 
   private
 
   def prepare_repository_stats
     @repositories.map do |repo|
-      recent_weeks = repo.weeks.order(:begin_date).last(4) # Last 4 weeks
+      recent_weeks = repo.weeks.sort_by(&:begin_date).last(4)
       next if recent_weeks.empty?
 
       # Calculate averages only from weeks that have data
@@ -87,7 +68,7 @@ class DashboardController < ApplicationController
 
   def aggregate_weeks_data(grouped_weeks)
     grouped_weeks.map do |weeks_for_date|
-      # Aggregate data from all repositories for this week
+      # Sum this week across the repositories the user can see
       first_week = weeks_for_date.first
       aggregated_week = Week.new(
         begin_date: first_week.begin_date,
@@ -129,36 +110,30 @@ class DashboardController < ApplicationController
     (weighted_sum / total_weight).round(1)
   end
 
-  def calculate_avg_time_to_review(repository_id = nil)
-    prs_with_first_review = PullRequest.joins(:reviews)
-                                       .where.not(ready_for_review_at: nil)
-                                       .distinct
-
-    prs_with_first_review = prs_with_first_review.where(repository_id: repository_id) if repository_id.present?
-
-    return 0 if prs_with_first_review.empty?
-
-    total_hours = prs_with_first_review.sum do |pr|
-      first_review = pr.reviews.order(:submitted_at).first
-      next 0 unless first_review&.submitted_at && pr.ready_for_review_at
-
-      WeekdayHours.weekday_hours_between(pr.ready_for_review_at, first_review.submitted_at)
-    end
-
-    (total_hours / prs_with_first_review.count).round(1)
+  def calculate_avg_time_to_review(pull_requests)
+    review_windows = pull_requests.where.not(ready_for_review_at: nil)
+                                  .joins(:reviews)
+                                  .group('pull_requests.id')
+                                  .pluck(:ready_for_review_at, Arel.sql('MIN(reviews.submitted_at)'))
+    average_weekday_hours(review_windows)
   end
 
-  def calculate_avg_time_to_merge(repository_id = nil)
-    merged_prs = PullRequest.where.not(gh_merged_at: nil, ready_for_review_at: nil)
+  def calculate_avg_time_to_merge(pull_requests)
+    merge_windows = pull_requests.where.not(gh_merged_at: nil)
+                                 .where.not(ready_for_review_at: nil)
+                                 .pluck(:ready_for_review_at, :gh_merged_at)
+    average_weekday_hours(merge_windows)
+  end
 
-    merged_prs = merged_prs.where(repository_id: repository_id) if repository_id.present?
+  # Weekday hours depend on the day each time falls on, so both ends move into
+  # the configured time zone first: a plucked SQL aggregate such as MIN comes
+  # back as a UTC Time rather than a zoned attribute.
+  def average_weekday_hours(windows)
+    return 0 if windows.empty?
 
-    return 0 if merged_prs.empty?
-
-    total_hours = merged_prs.sum do |pr|
-      WeekdayHours.weekday_hours_between(pr.ready_for_review_at, pr.gh_merged_at)
+    total_hours = windows.sum do |from, to|
+      WeekdayHours.weekday_hours_between(from&.in_time_zone, to&.in_time_zone)
     end
-
-    (total_hours / merged_prs.count).round(1)
+    (total_hours / windows.size).round(1)
   end
 end

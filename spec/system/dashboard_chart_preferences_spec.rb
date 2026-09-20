@@ -14,6 +14,7 @@ RSpec.describe 'Dashboard Chart Preferences', :js do
            num_prs_late: 3,
            num_prs_stale: 1)
 
+    grant_access(user, repository)
     sign_in user
     visit dashboard_path
   end
