@@ -12,6 +12,10 @@ class Repository < ApplicationRecord
 
   before_validation :normalize_github_url
 
+  def development_pull_requests
+    pull_requests.development
+  end
+
   # A promotion deploys work rather than developing it: it merges into a
   # branch the default branch itself is merged into, such as main into
   # production. Keying on the target branch rather than the head keeps

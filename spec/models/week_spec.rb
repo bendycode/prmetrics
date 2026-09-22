@@ -9,6 +9,26 @@ RSpec.describe Week do
     it { is_expected.to have_many(:closed_prs).class_name('PullRequest') }
   end
 
+  describe 'pull requests counted toward the week' do
+    let(:week) { create(:week) }
+
+    # Sets the week directly; saving would otherwise re-derive it from dates
+    def pull_request_in_week(foreign_key, *traits)
+      build(:pull_request, *traits, repository: week.repository, foreign_key => week.id)
+        .tap(&:skip_week_association_update!).tap(&:save!)
+    end
+
+    %i[ready_for_review_prs first_review_prs merged_prs closed_prs].each do |association|
+      it "leaves promotions out of #{association}" do
+        foreign_key = described_class.reflect_on_association(association).foreign_key
+        development = pull_request_in_week(foreign_key)
+        pull_request_in_week(foreign_key, :promotion)
+
+        expect(week.public_send(association)).to contain_exactly(development)
+      end
+    end
+  end
+
   describe 'validations' do
     subject { build(:week, repository: repo) }
 

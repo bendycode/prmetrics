@@ -3,10 +3,11 @@ class Week < ApplicationRecord
 
   belongs_to :repository
 
-  has_many :ready_for_review_prs, class_name: 'PullRequest', foreign_key: 'ready_for_review_week_id'
-  has_many :first_review_prs, class_name: 'PullRequest', foreign_key: 'first_review_week_id'
-  has_many :merged_prs, class_name: 'PullRequest', foreign_key: 'merged_week_id'
-  has_many :closed_prs, class_name: 'PullRequest', foreign_key: 'closed_week_id'
+  # Promotion pull requests deploy rather than develop, so no week counts them
+  has_many :ready_for_review_prs, -> { development }, class_name: 'PullRequest', foreign_key: 'ready_for_review_week_id'
+  has_many :first_review_prs, -> { development }, class_name: 'PullRequest', foreign_key: 'first_review_week_id'
+  has_many :merged_prs, -> { development }, class_name: 'PullRequest', foreign_key: 'merged_week_id'
+  has_many :closed_prs, -> { development }, class_name: 'PullRequest', foreign_key: 'closed_week_id'
 
   validates :week_number, presence: true, uniqueness: { scope: :repository_id }
   validates :begin_date, :end_date, presence: true

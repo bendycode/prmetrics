@@ -43,6 +43,16 @@ RSpec.describe Repository do
     expect(association.macro).to eq :has_many
   end
 
+  describe '#development_pull_requests' do
+    it 'leaves promotions out' do
+      repository = create(:repository)
+      development = create(:pull_request, repository: repository)
+      create(:pull_request, :promotion, repository: repository)
+
+      expect(repository.development_pull_requests).to contain_exactly(development)
+    end
+  end
+
   describe '#refresh_promotions!' do
     let(:repository) { create(:repository, default_branch: 'main') }
 

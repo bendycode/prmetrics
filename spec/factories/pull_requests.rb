@@ -16,6 +16,13 @@ FactoryBot.define do
       draft { true }
     end
 
+    # A deploy from the default branch into a branch it is released through
+    trait :promotion do
+      head_ref { 'main' }
+      base_ref { 'production' }
+      promotion { true }
+    end
+
     trait :approved do
       after(:create) do |pr|
         create(:review, pull_request: pr)
