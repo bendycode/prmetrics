@@ -38,13 +38,22 @@ RSpec.describe 'Promotion pull requests never count toward a week' do
   end
 
   def promotions(repository)
-    promotion(repository, 'PROMOTION merged', approved: week_start + 1.day,
-                                              merged: week_start + 2.days, closed: week_start + 2.days)
+    # Timings unlike the development twin's, so the averages move if it counts
+    promotion(repository, 'PROMOTION merged', approved: week_start + 3.hours,
+                                              merged: week_start + 6.hours, closed: week_start + 6.hours)
     promotion(repository, 'PROMOTION cancelled', closed: week_start + 3.days)
     promotion(repository, 'PROMOTION late', created: week_start - 13.days, approved: week_start - 12.days)
     promotion(repository, 'PROMOTION stale', created: week_start - 40.days, approved: week_start - 35.days)
     promotion(repository, 'PROMOTION open')
     promotion(repository, 'PROMOTION draft', draft: true)
+  end
+
+  def unflag_promotions
+    PullRequest.where(promotion: true).find_each { |pull_request| pull_request.update!(promotion: false) }
+  end
+
+  def figures
+    Week.column_names.grep(/\A(num|avg)_/)
   end
 
   def week_of(repository)
@@ -60,9 +69,17 @@ RSpec.describe 'Promotion pull requests never count toward a week' do
   end
 
   it 'leaves every cached weekly figure as it would be without them' do
-    figures = Week.column_names.grep(/\A(num|avg)_/)
-
     expect(week_of(with_promotions).slice(*figures)).to eq(week_of(plain).slice(*figures))
+  end
+
+  # Without this, a figure no fixture promotion affects would compare equal
+  # either way, and its exclusion would go untested while appearing covered.
+  it 'has a promotion that moves every figure, so the comparison above can fail' do
+    unflag_promotions
+
+    counted = week_of(with_promotions).slice(*figures)
+    unchanged = figures.select { |figure| counted[figure] == week_of(plain)[figure] }
+    expect(unchanged).to be_empty
   end
 
   describe 'the week page and its lists' do
@@ -70,16 +87,28 @@ RSpec.describe 'Promotion pull requests never count toward a week' do
 
     before { sign_in admin }
 
-    it 'never lists a promotion' do
+    it 'counts only development work' do
       get repository_week_path(with_promotions, week)
-      expect(response.body).not_to include('PROMOTION')
+
+      expect(response.body).to include('Open PRs: 1', 'PRs Started: 3', 'PRs First Reviewed: 1',
+                                       'Late Approved PRs: 1', 'Stale Approved PRs: 0', 'PRs Merged: 1',
+                                       'PRs Cancelled: 1', 'Draft PRs: 1')
     end
 
     WeeksController::PR_LISTS.each_key do |category|
       it "leaves promotions out of the #{category} list" do
         get pr_list_repository_week_path(with_promotions, week, category: category)
 
+        expect(response).to have_http_status(:ok)
         expect(response.body).not_to include('PROMOTION')
+      end
+
+      it "has a promotion in the #{category} list when it counts, so the example above can fail" do
+        unflag_promotions
+
+        get pr_list_repository_week_path(with_promotions, week, category: category)
+
+        expect(response.body).to include('PROMOTION')
       end
     end
   end
