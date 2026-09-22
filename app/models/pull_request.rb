@@ -111,8 +111,9 @@ class PullRequest < ApplicationRecord
   # The wait from ready for review to approval for each of these pull
   # requests, as the pairs the weekday-hours math takes
   def self.approval_windows
-    ready_times = where(id: approved_times.keys).pluck(:id, :ready_for_review_at).to_h
-    approved_times.map { |id, approved_at| [ready_times[id], approved_at] }
+    approvals = approved_times
+    ready_times = where(id: approvals.keys).pluck(:id, :ready_for_review_at).to_h
+    approvals.map { |id, approved_at| [ready_times[id], approved_at] }
   end
 
   # One arithmetic for both the per-record reader and the batch: the earlier of
