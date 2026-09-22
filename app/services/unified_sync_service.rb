@@ -1,4 +1,7 @@
 class UnifiedSyncService
+  # Sizes the progress bar when GitHub's count is unavailable
+  FALLBACK_PR_ESTIMATE = 100
+
   attr_reader :repository, :progress_callback
 
   def initialize(repo_name, fetch_all: false, progress_callback: nil)
@@ -140,8 +143,9 @@ class UnifiedSyncService
     # Get a rough count of PRs to sync
     # This is an estimate for progress tracking
     if @fetch_all
-      # For full sync, get total count from GitHub
-      github_service.get_pull_request_count(@repo_name)
+      # GithubService answers nil when GitHub's search API fails
+      count = github_service.get_pull_request_count(@repo_name).to_i
+      count.positive? ? count : FALLBACK_PR_ESTIMATE
     else
       # For incremental sync, estimate based on time since last sync
       days_since_sync = if @repository.last_fetched_at
@@ -155,7 +159,7 @@ class UnifiedSyncService
     end
   rescue StandardError => e
     Rails.logger.warn "Could not estimate PR count: #{e.message}"
-    100 # Default estimate
+    FALLBACK_PR_ESTIMATE
   end
 
   def update_progress
