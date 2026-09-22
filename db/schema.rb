@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_09_22_165736) do
+ActiveRecord::Schema[7.2].define(version: 2026_09_22_194627) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -22,6 +22,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_22_165736) do
     t.string "github_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "bot", default: false, null: false
     t.index ["github_id"], name: "index_contributors_on_github_id", unique: true
     t.index ["username"], name: "index_contributors_on_username"
   end
@@ -62,12 +63,14 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_22_165736) do
     t.string "head_ref"
     t.string "head_repository"
     t.boolean "promotion", default: false, null: false
+    t.bigint "merged_by_id"
     t.index ["author_id"], name: "index_pull_requests_on_author_id"
     t.index ["closed_week_id"], name: "index_pull_requests_on_closed_week_id"
     t.index ["first_review_week_id"], name: "index_pull_requests_on_first_review_week_id"
     t.index ["gh_closed_at"], name: "idx_pull_requests_gh_closed"
     t.index ["gh_created_at"], name: "idx_pull_requests_gh_created"
     t.index ["gh_merged_at"], name: "idx_pull_requests_gh_merged"
+    t.index ["merged_by_id"], name: "index_pull_requests_on_merged_by_id"
     t.index ["merged_week_id"], name: "index_pull_requests_on_merged_week_id"
     t.index ["ready_for_review_at"], name: "idx_pull_requests_ready_for_review"
     t.index ["ready_for_review_week_id"], name: "index_pull_requests_on_ready_for_review_week_id"
@@ -170,6 +173,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_22_165736) do
   add_foreign_key "pull_request_users", "contributors", column: "user_id"
   add_foreign_key "pull_request_users", "pull_requests"
   add_foreign_key "pull_requests", "contributors", column: "author_id"
+  add_foreign_key "pull_requests", "contributors", column: "merged_by_id"
   add_foreign_key "pull_requests", "repositories"
   add_foreign_key "pull_requests", "weeks", column: "closed_week_id"
   add_foreign_key "pull_requests", "weeks", column: "first_review_week_id"
