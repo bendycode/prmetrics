@@ -11,9 +11,9 @@
 <ul>
   <li>Open PRs: <%= @week.open_prs.count %> (<a href="#" class="view-prs" data-category="open">View PRs</a>)</li>
   <li>PRs Started: <%= @week.started_prs.count %> (<a href="#" class="view-prs" data-category="started">View PRs</a>)</li>
-  <li>PRs First Feedback: <%= @week.first_review_prs.count %> (<a href="#" class="view-prs" data-category="first_reviewed">View PRs</a>)</li>
+  <li>PRs With First Feedback: <%= @week.num_prs_initially_reviewed %> (<a href="#" class="view-prs" data-category="first_feedback">View PRs</a>)</li>
   <li>Avg Hours to First Feedback: <%= @week.avg_hrs_to_first_review&.round(2) || 'N/A' %> hrs</li>
-  <li>PRs Approved: <%= @week.first_approval_prs.count %> (<a href="#" class="view-prs" data-category="approved">View PRs</a>)</li>
+  <li>PRs Approved: <%= @week.num_prs_approved %> (<a href="#" class="view-prs" data-category="approved">View PRs</a>)</li>
   <li>Avg Hours to Approval: <%= @week.avg_hrs_to_approval&.round(2) || 'N/A' %> hrs</li>
   <li>Late Approved PRs: <%= @week.num_prs_late %> (<a href="#" class="view-prs" data-category="late">View PRs</a>)</li>
   <li>Stale Approved PRs: <%= @week.num_prs_stale %> (<a href="#" class="view-prs" data-category="stale">View PRs</a>)</li>

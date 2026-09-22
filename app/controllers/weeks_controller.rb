@@ -5,7 +5,7 @@ class WeeksController < ApplicationController
   PR_LISTS = {
     'started' => ->(week) { week.started_prs.includes(:author) },
     'open' => ->(week) { week.open_prs.includes(:author) },
-    'first_reviewed' => ->(week) { week.first_review_prs.includes(:author) },
+    'first_feedback' => ->(week) { week.first_review_prs.includes(:author) },
     'approved' => ->(week) { week.first_approval_prs.includes(:author) },
     'late' => ->(week) { week.late_prs },
     'stale' => ->(week) { week.stale_prs },
@@ -29,11 +29,13 @@ class WeeksController < ApplicationController
     return head :no_content unless list
 
     prs = list.call(@week)
+    # One query for the whole list, rather than one per row from the partial
+    approvals = PullRequest.where(id: prs.map(&:id)).approved_times
 
     # Only HTML: every other action refuses a format suffix with 406, and an explicit
     # render would answer one with the partial's HTML under a lying content type.
     respond_to do |format|
-      format.html { render partial: 'pr_list', locals: { prs: prs, category: category } }
+      format.html { render partial: 'pr_list', locals: { prs: prs, category: category, approvals: approvals } }
     end
   end
 

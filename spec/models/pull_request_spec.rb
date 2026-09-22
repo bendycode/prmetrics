@@ -56,6 +56,27 @@ RSpec.describe PullRequest do
     end
   end
 
+  describe '.approved_times' do
+    it 'agrees with what each pull request says about itself' do
+      ready_at = Time.zone.parse('2026-09-16 09:00')
+      author = create(:contributor)
+      approved = create(:pull_request, author: author, gh_created_at: ready_at, ready_for_review_at: ready_at)
+      create(:review, pull_request: approved, state: 'APPROVED', submitted_at: ready_at + 3.hours)
+      draft_approved = create(:pull_request, author: author, gh_created_at: ready_at, ready_for_review_at: ready_at)
+      create(:review, pull_request: draft_approved, state: 'APPROVED', submitted_at: ready_at - 2.hours)
+      self_merged = create(:pull_request, author: author, gh_created_at: ready_at, ready_for_review_at: ready_at,
+                                          merged_by: author, gh_merged_at: ready_at + 8.hours)
+      bot_approved = create(:pull_request, gh_created_at: ready_at, ready_for_review_at: ready_at)
+      create(:review, pull_request: bot_approved, state: 'APPROVED', submitted_at: ready_at + 1.hour,
+                      author: create(:contributor, bot: true))
+
+      expect(described_class.all.approved_times)
+        .to eq(approved.id => approved.approved_at, draft_approved.id => draft_approved.approved_at,
+               self_merged.id => self_merged.approved_at)
+      expect(bot_approved.approved_at).to be_nil
+    end
+  end
+
   describe '#approved_at' do
     let(:ready_at) { Time.zone.parse('2026-09-16 09:00') }
     let(:author) { create(:contributor) }

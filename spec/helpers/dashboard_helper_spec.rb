@@ -31,7 +31,7 @@ RSpec.describe DashboardHelper do
     end
 
     it 'defines a key whose title matches each Repository Performance Comparison chart label' do
-      titles = helper.metric_definitions(:total_prs_4_weeks, :avg_review_time_hours, :avg_approval_time_hours,
+      titles = helper.metric_definitions(:total_prs_4_weeks, :avg_feedback_time_hours, :avg_approval_time_hours,
                                          :merge_rate).pluck(:title)
 
       expect(titles).to eq(['Total PRs (4 weeks)', 'Avg Feedback Time (hours)', 'Avg Approval Time (hours)',

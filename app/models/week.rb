@@ -133,31 +133,4 @@ class Week < ApplicationRecord
   def cancelled_prs
     closed_prs.where(gh_merged_at: nil)
   end
-
-  # excluding weekends
-  def avg_hours_to_first_review
-    valid_prs = first_review_prs.select do |pr|
-      pr.time_to_first_review.present?
-    end
-    total_hours = valid_prs.sum do |pr|
-      pr.time_to_first_review / 1.hour
-    end
-
-    count = valid_prs.length
-    count > 0 ? (total_hours.to_f / count).round(2) : nil
-  end
-
-  # Average hours to merge excluding weekends
-  def avg_hours_to_merge
-    valid_prs = merged_prs.where.not(ready_for_review_at: nil).select do |pr|
-      pr.weekday_hours_to_merge.present?
-    end
-
-    total_hours = valid_prs.sum do |pr|
-      pr.weekday_hours_to_merge / 1.hour
-    end
-
-    count = valid_prs.length
-    count > 0 ? (total_hours / count).round(2) : nil
-  end
 end

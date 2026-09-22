@@ -28,6 +28,28 @@ RSpec.describe 'Dashboard averages' do
     expect(summary_card_value('Avg Time to Feedback')).to eq('3.0')
   end
 
+  describe 'the Review Performance chart' do
+    let(:week_start) { Date.new(2026, 9, 14) }
+
+    before do
+      create(:week, repository: repository, week_number: 202_637, begin_date: week_start,
+                    end_date: week_start.end_of_week, num_prs_initially_reviewed: 2, num_prs_approved: 2,
+                    avg_hrs_to_first_review: 8.5, avg_hrs_to_approval: 12.5, avg_hrs_to_merge: 20.0)
+    end
+
+    it 'plots the approval hours of every repository the viewer can see' do
+      get dashboard_path
+
+      expect(chart_dataset_values('Hours to Approval')).to include('12.5')
+    end
+
+    it 'plots the approval hours of a single repository' do
+      get dashboard_path(repository_id: repository.id)
+
+      expect(chart_dataset_values('Hours to Approval')).to include('12.5')
+    end
+  end
+
   describe 'the approval card' do
     let(:author) { create(:contributor) }
 

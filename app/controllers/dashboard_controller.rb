@@ -46,14 +46,14 @@ class DashboardController < ApplicationController
       next if recent_weeks.empty?
 
       # Calculate averages only from weeks that have data
-      review_times = recent_weeks.map(&:avg_hrs_to_first_review).compact
+      feedback_times = recent_weeks.map(&:avg_hrs_to_first_review).compact
       approval_times = recent_weeks.map(&:avg_hrs_to_approval).compact
       merge_times = recent_weeks.map(&:avg_hrs_to_merge).compact
 
       {
         name: repo.name,
         total_prs: recent_weeks.sum { |w| w.num_prs_started || 0 },
-        avg_review_time: review_times.empty? ? 0 : (review_times.sum / review_times.count).round(1),
+        avg_feedback_time: feedback_times.empty? ? 0 : (feedback_times.sum / feedback_times.count).round(1),
         avg_approval_time: approval_times.empty? ? 0 : (approval_times.sum / approval_times.count).round(1),
         avg_merge_time: merge_times.empty? ? 0 : (merge_times.sum / merge_times.count).round(1),
         merge_rate: calculate_merge_rate(recent_weeks)
@@ -80,7 +80,9 @@ class DashboardController < ApplicationController
         num_prs_started: weeks_for_date.sum { |w| w.num_prs_started || 0 },
         num_prs_merged: weeks_for_date.sum { |w| w.num_prs_merged || 0 },
         num_prs_cancelled: weeks_for_date.sum { |w| w.num_prs_cancelled || 0 },
-        avg_hrs_to_first_review: calculate_weighted_avg(weeks_for_date, :avg_hrs_to_first_review, :num_prs_started),
+        avg_hrs_to_first_review: calculate_weighted_avg(weeks_for_date, :avg_hrs_to_first_review,
+                                                        :num_prs_initially_reviewed),
+        avg_hrs_to_approval: calculate_weighted_avg(weeks_for_date, :avg_hrs_to_approval, :num_prs_approved),
         avg_hrs_to_merge: calculate_weighted_avg(weeks_for_date, :avg_hrs_to_merge, :num_prs_merged)
       )
 
@@ -114,15 +116,13 @@ class DashboardController < ApplicationController
   end
 
   def calculate_avg_time_to_approval(pull_requests)
-    cleared = PullRequest.cleared_times(pull_requests)
-    windows = pull_requests.where(id: cleared.keys).pluck(:id, :ready_for_review_at)
-                           .map { |id, ready_at| [ready_at, cleared[id]] }
-    average_weekday_hours(windows)
+    average_weekday_hours(pull_requests.approval_windows)
   end
 
   def calculate_avg_time_to_feedback(pull_requests)
     review_windows = pull_requests.where.not(ready_for_review_at: nil)
                                   .joins(:reviews)
+                                  .where('reviews.submitted_at > pull_requests.ready_for_review_at')
                                   .group('pull_requests.id')
                                   .pluck(:ready_for_review_at, Arel.sql('MIN(reviews.submitted_at)'))
     average_weekday_hours(review_windows)

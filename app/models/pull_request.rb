@@ -74,21 +74,24 @@ class PullRequest < ApplicationRecord
   def weekday_hours_to_merge
     return nil unless ready_for_review_at && gh_merged_at
 
-    # Call the method from the WeekdayHours module directly
     WeekdayHours.weekday_hours_between(ready_for_review_at, gh_merged_at) * 1.hour
+  end
+
+  def weekday_hours_to_approval
+    approved = approved_at
+    return nil unless approved
+
+    WeekdayHours.weekday_hours_between(ready_for_review_at, approved) * 1.hour
   end
 
   # When the pull request was cleared to merge: the first approval from a
   # person, or the author's own merge, whichever came first. An author merging
   # their own work is that pull request's approval, which is how a repository
   # where authors merge their own work gets an approval time at all.
+  # An approval given while it was still a draft counts from the moment it
+  # became ready for review, so nothing is approved before it was askable.
   def approved_at
-    cleared = cleared_at
-    return nil unless ready_for_review_at && cleared
-
-    # An approval given while it was still a draft counts from the moment it
-    # became ready for review, so nothing is approved before it was askable
-    [cleared, ready_for_review_at].max
+    self.class.approval_time(first_approval_at, self_merged_at, ready_for_review_at)
   end
 
   # When it was cleared to merge, whether or not it had been marked ready for
@@ -97,21 +100,33 @@ class PullRequest < ApplicationRecord
     [first_approval_at, self_merged_at].compact.min
   end
 
-  # When each of these pull requests was cleared to merge, as {id => time}, in
-  # two queries rather than one per pull request. A pull request nobody cleared
-  # is absent. Same rule as #approved_at: a person's approval or the author's
-  # own merge, whichever came first, never before it was ready for review.
-  def self.cleared_times(pull_requests)
-    approvals = Review.approved.by_people.where(pull_request_id: pull_requests)
+  # When each of these pull requests was approved, as {id => time}, in two
+  # queries rather than one per pull request. One nobody cleared is absent.
+  def self.approved_times
+    approvals = Review.approved.by_people.where(pull_request_id: all)
                       .group(:pull_request_id).minimum(:submitted_at)
-    ready = pull_requests.where.not(ready_for_review_at: nil)
-                         .pluck(:id, :ready_for_review_at, :gh_merged_at, :merged_by_id, :author_id)
+    candidates = where.not(ready_for_review_at: nil)
+                      .pluck(:id, :ready_for_review_at, :gh_merged_at, :merged_by_id, :author_id)
 
-    ready.filter_map do |id, ready_at, merged_at, merged_by_id, author_id|
-      self_merged_at = merged_at if merged_by_id && merged_by_id == author_id
-      cleared = [approvals[id]&.in_time_zone, self_merged_at].compact.min
-      [id, [cleared, ready_at].max] if cleared
+    candidates.filter_map do |id, ready_at, merged_at, merged_by_id, author_id|
+      self_merged_at = merged_by_id == author_id ? merged_at : nil
+      approved_at = approval_time(approvals[id]&.in_time_zone, self_merged_at, ready_at)
+      [id, approved_at] if approved_at
     end.to_h
+  end
+
+  # The wait from ready for review to approval for each of these pull
+  # requests, as the pairs the weekday-hours math takes
+  def self.approval_windows
+    ready_times = where(id: approved_times.keys).pluck(:id, :ready_for_review_at).to_h
+    approved_times.map { |id, approved_at| [ready_times[id], approved_at] }
+  end
+
+  # One arithmetic for both the per-record reader and the batch: the earlier of
+  # a person's approval and the author's own merge, never before ready.
+  def self.approval_time(first_approval_at, self_merged_at, ready_at)
+    cleared = [first_approval_at, self_merged_at].compact.min
+    [cleared, ready_at].max if cleared && ready_at
   end
 
   def valid_first_review_at

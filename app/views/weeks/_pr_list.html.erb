@@ -41,7 +41,7 @@
             <%= (pr.time_to_first_review / 1.hour).round(2) %> hrs
           <% end %>
         </td>
-        <% approved_at = pr.approved_at %>
+        <% approved_at = approvals[pr.id] %>
         <td>
           <% if approved_at %>
             <%= approved_at.in_time_zone('Central Time (US & Canada)').strftime('%m/%d/%y %I:%M%p') %>
@@ -54,8 +54,8 @@
         </td>
         <td><%= pr.gh_merged_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %></td>
         <td>
-          <% if pr.ready_for_review_at && pr.gh_merged_at %>
-            <%= WeekdayHours.weekday_hours_between(pr.ready_for_review_at, pr.gh_merged_at).round(2) %> hrs
+          <% if pr.weekday_hours_to_merge %>
+            <%= (pr.weekday_hours_to_merge / 1.hour).round(2) %> hrs
           <% end %>
         </td>
         <td>

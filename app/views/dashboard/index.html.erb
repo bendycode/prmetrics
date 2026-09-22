@@ -75,11 +75,11 @@
 
     <!-- Average Time to Approval Card -->
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
+        <div class="card border-left-danger shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
                             Avg Time to Approval (Hours)</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @avg_time_to_approval %></div>
                     </div>
@@ -179,7 +179,7 @@
                     Repository Performance Comparison
                     <%= render 'shared/metric_info',
                                chart_label: 'Repository Performance Comparison',
-                               keys: %i[total_prs_4_weeks avg_review_time_hours avg_approval_time_hours
+                               keys: %i[total_prs_4_weeks avg_feedback_time_hours avg_approval_time_hours
                                         merge_rate] %>
                 </h6>
                 <small class="text-muted">Last 4 weeks average</small>
@@ -283,7 +283,9 @@
 
 // Chart Preferences Utility for localStorage persistence
 const ChartPreferences = {
-  STORAGE_KEY: 'prmetrics_chart_preferences',
+  // Preferences name their datasets, so renaming a series retires the old key
+  // rather than hiding every series a returning viewer had chosen to see.
+  STORAGE_KEY: 'prmetrics_chart_preferences_feedback_and_approval',
 
   /**
    * Load all preferences from localStorage
@@ -530,15 +532,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 borderColor: '#4e73df',
                 borderWidth: 1
             }, {
-                label: "<%= metric_label(:avg_review_time_hours) %>",
-                data: [<%= @repository_stats.map { |r| r[:avg_review_time].round(1) }.join(', ') %>],
+                label: "<%= metric_label(:avg_feedback_time_hours) %>",
+                data: [<%= @repository_stats.map { |r| r[:avg_feedback_time] }.join(', ') %>],
                 backgroundColor: '#f6c23e',
                 borderColor: '#f6c23e',
                 borderWidth: 1,
                 yAxisID: 'y1'
             }, {
                 label: "<%= metric_label(:avg_approval_time_hours) %>",
-                data: [<%= @repository_stats.map { |r| r[:avg_approval_time].round(1) }.join(', ') %>],
+                data: [<%= @repository_stats.map { |r| r[:avg_approval_time] }.join(', ') %>],
                 backgroundColor: '#36b9cc',
                 borderColor: '#36b9cc',
                 borderWidth: 1,

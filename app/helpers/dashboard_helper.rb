@@ -58,7 +58,7 @@ module DashboardHelper
       title: 'Total PRs (4 weeks)',
       body: 'Sum of "PRs Started" across the most recent four full weeks of data for the repository.'
     },
-    avg_review_time_hours: {
+    avg_feedback_time_hours: {
       title: 'Avg Feedback Time (hours)',
       body: 'Average of each week\'s "Hours to First Feedback" across the most recent four full weeks of data ' \
             'for the repository. Same underlying calculation as the Review Performance chart -- weekday hours only ' \

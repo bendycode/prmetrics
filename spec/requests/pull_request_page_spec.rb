@@ -18,12 +18,15 @@ RSpec.describe 'Pull request page' do
     expect(response.body).to include('First feedback at:', 'September 16, 2026 12:00')
   end
 
-  it 'shows when it was approved and how long that took' do
+  it 'shows when it was approved and how long that took, apart from its first feedback' do
+    create(:review, pull_request: pull_request, state: 'COMMENTED', submitted_at: ready_at + 1.hour)
     create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: ready_at + 5.hours)
 
     get pull_request_path(pull_request)
 
-    expect(response.body).to include('Approved at:', 'Time to approval:')
+    expect(response.body).to match(%r{Approved at:</strong>\s*September 16, 2026 14:00})
+    expect(response.body).to match(%r{Time to approval:</strong>\s*about 5 hours})
+    expect(response.body).to match(%r{First feedback at:</strong>\s*September 16, 2026 10:00})
   end
 
   it 'says nobody has approved it when nobody has' do
