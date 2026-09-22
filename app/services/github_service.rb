@@ -21,7 +21,7 @@ class GithubService
   # The processor is called with each pull request's GitHub data once it is
   # stored; it owns week associations and statistics.
   def fetch_and_store_pull_requests(repo_name, processor:, fetch_all: false)
-    repository = Repository.find_or_create_by(name: repo_name)
+    repository = Repository.find_by!(name: repo_name)
     last_fetched_at = fetch_all ? nil : repository.last_fetched_at&.iso8601
 
     page = 1
@@ -49,7 +49,7 @@ class GithubService
       page += 1
     end
 
-    repository.update(last_fetched_at: most_recent_update) if most_recent_update
+    repository.update!(last_fetched_at: most_recent_update) if most_recent_update
 
     Rails.logger.info "Processed #{total_processed} pull requests for #{repo_name}"
     Rails.logger.info "Most recent update: #{most_recent_update}"

@@ -171,6 +171,22 @@ RSpec.describe GithubService do
         expect(processed.map(&:first)).to contain_exactly(1, 2, 3)
       end
     end
+
+    it 'refuses a repository that is not already stored' do
+      expect do
+        service.fetch_and_store_pull_requests('someone/unknown', processor: processor)
+      end.to raise_error(ActiveRecord::RecordNotFound)
+    end
+
+    it 'raises when the repository cannot record its last fetch' do
+      github_pages([github_pr(1, 1.day.ago)])
+      repository.name = 'not a repository name'
+      repository.save(validate: false)
+
+      expect do
+        service.fetch_and_store_pull_requests(repository.name, processor: processor)
+      end.to raise_error(ActiveRecord::RecordInvalid)
+    end
   end
 
   describe '#fetch_and_store_users' do
