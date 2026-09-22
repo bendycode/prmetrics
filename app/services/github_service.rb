@@ -159,7 +159,7 @@ class GithubService
     author = Contributor.find_or_create_from_github(pr.user)
     ready_for_review_at = pr.draft ? nil : determine_ready_for_review_at(repo_name, pr.number, pr.created_at)
 
-    pull_request.update(
+    pull_request.update!(
       title: pr.title,
       state: pr.state,
       draft: pr.draft,

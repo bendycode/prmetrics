@@ -90,6 +90,16 @@ RSpec.describe GithubService do
       expect(pr.ready_for_review_at).to be_nil
     end
 
+    it 'raises when GitHub data fails validation instead of skipping the pull request' do
+      existing = create(:pull_request, repository: repository, number: 123, title: 'Before')
+      allow(pr_data).to receive(:title).and_return('')
+
+      expect do
+        service.send(:process_pull_request, repository, 'test/repo', pr_data)
+      end.to raise_error(ActiveRecord::RecordInvalid)
+      expect(existing.reload.title).to eq('Before')
+    end
+
     it 'associates the pull request with its weeks' do
       expect_any_instance_of(PullRequest).to receive(:update_week_associations).at_least(:once)
       service.send(:process_pull_request, repository, 'test/repo', pr_data)
