@@ -2,7 +2,7 @@
 # that the sync began recording after these pull requests were stored, then
 # flags the promotions among them. Safe to rerun: a pull request whose branch
 # names are already filled is left alone, and a repository with none left to
-# fill asks GitHub for nothing.
+# fill does not walk GitHub's pull request list at all.
 class PullRequestRefsBackfill
   def initialize(github_service, output: $stdout)
     @github_service = github_service

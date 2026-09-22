@@ -112,6 +112,15 @@ RSpec.describe Repository do
       expect(into_release.reload).not_to be_promotion
     end
 
+    it "ignores a fork's branch that shares a deploy branch's name" do
+      deploy = pull_request(head: 'main', base: 'production')
+      pull_request(head: 'production', base: 'main', head_repository: 'someone-else/app')
+
+      repository.refresh_promotions!
+
+      expect(deploy.reload).to be_promotion
+    end
+
     it 'waits for the deploy to merge before treating its branch as a deploy target' do
       pull_request(head: 'main', base: 'production', merged: false)
       later = pull_request(head: 'hotfix', base: 'production')

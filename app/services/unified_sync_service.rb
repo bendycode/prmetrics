@@ -24,7 +24,9 @@ class UnifiedSyncService
         sync_progress: 0
       )
 
-      @repository.update!(default_branch: github_service.default_branch(@repo_name))
+      # A blank answer would empty the deploy branches and unflag every promotion
+      branch = github_service.default_branch(@repo_name)
+      @repository.update!(default_branch: branch) if branch.present?
 
       # Fetch and process PRs with real-time updates
       fetch_and_process_pull_requests

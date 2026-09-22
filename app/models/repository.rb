@@ -44,8 +44,12 @@ class Repository < ApplicationRecord
     candidates - branches_merged_into_default
   end
 
+  # Our own branches only, on this side too: a fork's branch named after a
+  # deploy branch would otherwise disqualify that branch and unflag every
+  # promotion in the repository.
   def branches_merged_into_default
-    pull_requests.merged.into_branch(default_branch).where.not(head_ref: nil).distinct.pluck(:head_ref)
+    pull_requests.merged.into_branch(default_branch).where(head_repository: name)
+                 .where.not(head_ref: nil).distinct.pluck(:head_ref)
   end
 
   def valid_github_repository_format
