@@ -9,7 +9,6 @@ class PullRequestsController < ApplicationController
     @pull_request = policy_scope(PullRequest).find(params[:id])
     authorize @pull_request
     @reviews = @pull_request.reviews.includes(:author).ordered
-    @first_review_time = @reviews.last&.submitted_at
     @pull_request_users = @pull_request.pull_request_users.order(id: :desc).page(page_param).per(10)
   end
 end
