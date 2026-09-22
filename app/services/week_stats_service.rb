@@ -95,24 +95,21 @@ class WeekStatsService
   end
 
   def calculate_prs_approved
-    @repository.development_pull_requests.where(first_approval_week_id: @week.id).count
+    @week.first_approval_prs.count
   end
 
-  # Hours a pull request waited, counting only weekdays, as every figure the
-  # week page and the metric popovers describe does.
+  # Every wait counts weekdays only, which is what the week page and the metric
+  # popovers describe.
   def calculate_avg_hrs_to_first_review
-    average_wait(first_review_week_id: @week.id, &:valid_first_review_at)
+    average_wait(@week.first_review_prs, &:valid_first_review_at)
   end
 
   def calculate_avg_hrs_to_approval
-    average_wait(first_approval_week_id: @week.id, &:approved_at)
+    average_wait(@week.first_approval_prs, &:approved_at)
   end
 
-  def average_wait(week_condition)
-    pull_requests = @repository.development_pull_requests.where(week_condition)
-                               .where.not(ready_for_review_at: nil).includes(:reviews)
-
-    waits = pull_requests.filter_map do |pull_request|
+  def average_wait(pull_requests)
+    waits = pull_requests.where.not(ready_for_review_at: nil).filter_map do |pull_request|
       reached_at = yield(pull_request)
       WeekdayHours.weekday_hours_between(pull_request.ready_for_review_at, reached_at) if reached_at
     end
@@ -121,18 +118,7 @@ class WeekStatsService
   end
 
   def calculate_avg_hrs_to_merge
-    # Use week association for consistency
-    merged_prs = @repository.development_pull_requests
-                            .where(merged_week_id: @week.id)
-                            .where.not(ready_for_review_at: nil)
-
-    total_hours = merged_prs.sum do |pr|
-      ((pr.gh_merged_at - pr.ready_for_review_at) / 1.hour).round(2)
-    end
-
-    count = merged_prs.count
-
-    count > 0 ? (total_hours / count).round(2) : nil
+    average_wait(@week.merged_prs, &:gh_merged_at)
   end
 
   def calculate_num_prs_late

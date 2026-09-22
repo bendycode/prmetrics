@@ -1,6 +1,10 @@
 class PullRequest < ApplicationRecord
   include WeekdayHours
 
+  # Every week a pull request points at; Week.unreferenced reads them all
+  WEEK_COLUMNS = %i[ready_for_review_week_id first_review_week_id first_approval_week_id
+                    merged_week_id closed_week_id].freeze
+
   belongs_to :repository
   belongs_to :author, class_name: 'Contributor'
   belongs_to :merged_by, class_name: 'Contributor', optional: true, inverse_of: :merged_pull_requests
@@ -31,10 +35,10 @@ class PullRequest < ApplicationRecord
   scope :missing_merger, -> { merged.where(merged_by_id: nil) }
   scope :from_branch, ->(ref) { where(head_ref: ref) }
   scope :into_branch, ->(refs) { where(base_ref: refs) }
-  # Cleared to merge by a person; a bot's approval is feedback, not approval
-  scope :approved, lambda {
-    joins(:reviews).merge(Review.approved.by_people).distinct
-  }
+  # Cleared to merge by a person; a bot's approval is feedback, not approval.
+  # A subquery rather than a join, so composing this with joins(:author) cannot
+  # silently move the bot filter onto the pull request's own author.
+  scope :approved, -> { where(id: Review.approved.by_people.select(:pull_request_id)) }
 
   scope :open_at, lambda { |timestamp|
     where('gh_created_at <= ?', timestamp)
@@ -77,15 +81,14 @@ class PullRequest < ApplicationRecord
   # When the pull request was cleared to merge: the first approval from a
   # person, or the author's own merge, whichever came first. An author merging
   # their own work is that pull request's approval, which is how a repository
-  # where authors merge their own work gets an approval time at all. An
-  # approval given while it was still a draft counts from the moment it became
-  # ready for review, so no pull request is approved before it was askable.
+  # where authors merge their own work gets an approval time at all.
   def approved_at
-    return nil unless ready_for_review_at && cleared_at
+    cleared = cleared_at
+    return nil unless ready_for_review_at && cleared
 
     # An approval given while it was still a draft counts from the moment it
     # became ready for review, so nothing is approved before it was askable
-    [cleared_at, ready_for_review_at].max
+    [cleared, ready_for_review_at].max
   end
 
   # When it was cleared to merge, whether or not it had been marked ready for
@@ -123,8 +126,11 @@ class PullRequest < ApplicationRecord
     reviews.approved.by_people.minimum(:submitted_at)&.in_time_zone
   end
 
+  # A person merging their own work is that pull request's approval. A bot
+  # merging its own, which is how an update bot ships, is not: no person
+  # cleared it, just as a bot's review is feedback rather than approval.
   def self_merged_at
-    gh_merged_at if merged_by_id && merged_by_id == author_id
+    gh_merged_at if merged_by_id && merged_by_id == author_id && !author.bot?
   end
 
   def update_week_associations
@@ -173,10 +179,14 @@ class PullRequest < ApplicationRecord
 
   def update_week_associations_if_needed
     # Only update if lifecycle dates changed to avoid unnecessary work
+    # merged_by decides whether a merge was the author's own, which is what
+    # gives a self-merged pull request its approval week
     if saved_change_to_ready_for_review_at? ||
        saved_change_to_gh_merged_at? ||
        saved_change_to_gh_closed_at? ||
-       saved_change_to_gh_created_at?
+       saved_change_to_gh_created_at? ||
+       saved_change_to_merged_by_id? ||
+       saved_change_to_author_id?
       update_week_associations
     end
   end

@@ -30,7 +30,7 @@ class Review < ApplicationRecord
 
   # A review changes both the week a pull request was first reviewed in and
   # the week it was approved in, so one method keeps the pair in step.
-  def update_pull_request_review_weeks(pull_request = self.pull_request)
+  def update_pull_request_review_weeks
     return unless pull_request&.ready_for_review_at
 
     weeks = pull_request.repository.weeks
@@ -38,7 +38,7 @@ class Review < ApplicationRecord
     new_weeks = { first_review_week_id: weeks.find_by_date(pull_request.valid_first_review&.submitted_at)&.id,
                   first_approval_week_id: weeks.find_by_date(pull_request.approved_at)&.id }
 
-    changed = new_weeks.reject { |column, week_id| pull_request.public_send(column) == week_id }
-    pull_request.update_columns(changed) if changed.any?
+    moved = new_weeks.reject { |column, week_id| pull_request[column] == week_id }
+    pull_request.update_columns(moved) if moved.any?
   end
 end

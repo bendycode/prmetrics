@@ -6,6 +6,7 @@ class Week < ApplicationRecord
   # Promotion pull requests deploy rather than develop, so no week counts them
   has_many :ready_for_review_prs, -> { development }, class_name: 'PullRequest', foreign_key: 'ready_for_review_week_id'
   has_many :first_review_prs, -> { development }, class_name: 'PullRequest', foreign_key: 'first_review_week_id'
+  has_many :first_approval_prs, -> { development }, class_name: 'PullRequest', foreign_key: 'first_approval_week_id'
   has_many :merged_prs, -> { development }, class_name: 'PullRequest', foreign_key: 'merged_week_id'
   has_many :closed_prs, -> { development }, class_name: 'PullRequest', foreign_key: 'closed_week_id'
 
@@ -23,10 +24,9 @@ class Week < ApplicationRecord
   # this, and a week deleted while a promotion still references it would
   # violate the foreign keys.
   scope :unreferenced, lambda {
-    where.not(id: PullRequest.where.not(ready_for_review_week_id: nil).select(:ready_for_review_week_id))
-         .where.not(id: PullRequest.where.not(first_review_week_id: nil).select(:first_review_week_id))
-         .where.not(id: PullRequest.where.not(merged_week_id: nil).select(:merged_week_id))
-         .where.not(id: PullRequest.where.not(closed_week_id: nil).select(:closed_week_id))
+    PullRequest::WEEK_COLUMNS.reduce(all) do |weeks, column|
+      weeks.where.not(id: PullRequest.where.not(column => nil).select(column))
+    end
   }
 
   def self.find_by_date(date)
@@ -94,7 +94,7 @@ class Week < ApplicationRecord
   end
 
   def approved_prs
-    open_prs.joins(:reviews).merge(Review.approved).distinct
+    open_prs.approved
   end
 
   # Cached columns (num_prs_late, num_prs_stale) represent historical snapshot at end_date
