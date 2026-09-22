@@ -18,6 +18,17 @@ class Week < ApplicationRecord
   # pages or on neither.
   scope :ordered, -> { order(begin_date: :desc, id: :desc) }
 
+  # No pull request of any kind points at these weeks, promotions included:
+  # the week associations above leave promotions out, so they cannot answer
+  # this, and a week deleted while a promotion still references it would
+  # violate the foreign keys.
+  scope :unreferenced, lambda {
+    where.not(id: PullRequest.where.not(ready_for_review_week_id: nil).select(:ready_for_review_week_id))
+         .where.not(id: PullRequest.where.not(first_review_week_id: nil).select(:first_review_week_id))
+         .where.not(id: PullRequest.where.not(merged_week_id: nil).select(:merged_week_id))
+         .where.not(id: PullRequest.where.not(closed_week_id: nil).select(:closed_week_id))
+  }
+
   def self.find_by_date(date)
     return nil unless date
 

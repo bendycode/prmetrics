@@ -1,6 +1,12 @@
 require 'rails_helper'
 
 RSpec.describe Week do
+  # Sets the week directly; saving would otherwise re-derive it from dates
+  def pull_request_in_week(foreign_key, *traits)
+    build(:pull_request, *traits, repository: week.repository, foreign_key => week.id)
+      .tap(&:skip_week_association_update!).tap(&:save!)
+  end
+
   describe 'associations' do
     it { is_expected.to belong_to(:repository) }
     it { is_expected.to have_many(:ready_for_review_prs).class_name('PullRequest') }
@@ -12,12 +18,6 @@ RSpec.describe Week do
   describe 'pull requests counted toward the week' do
     let(:week) { create(:week) }
 
-    # Sets the week directly; saving would otherwise re-derive it from dates
-    def pull_request_in_week(foreign_key, *traits)
-      build(:pull_request, *traits, repository: week.repository, foreign_key => week.id)
-        .tap(&:skip_week_association_update!).tap(&:save!)
-    end
-
     %i[ready_for_review_prs first_review_prs merged_prs closed_prs].each do |association|
       it "leaves promotions out of #{association}" do
         foreign_key = described_class.reflect_on_association(association).foreign_key
@@ -25,6 +25,23 @@ RSpec.describe Week do
         pull_request_in_week(foreign_key, :promotion)
 
         expect(week.public_send(association)).to contain_exactly(development)
+      end
+    end
+  end
+
+  describe '.unreferenced' do
+    let(:week) { create(:week) }
+
+    it 'finds a week no pull request points at' do
+      expect(week.repository.weeks.unreferenced).to contain_exactly(week)
+    end
+
+    %i[ready_for_review_prs first_review_prs merged_prs closed_prs].each do |association|
+      it "keeps a week a #{association.to_s.sub('_prs', '')} pull request points at, promotion or not" do
+        foreign_key = described_class.reflect_on_association(association).foreign_key
+        pull_request_in_week(foreign_key, :promotion)
+
+        expect(week.repository.weeks.unreferenced).to be_empty
       end
     end
   end
