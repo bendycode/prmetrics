@@ -105,6 +105,18 @@ RSpec.describe UnifiedSyncService do
       end
     end
 
+    context "when counting GitHub's pull requests raises" do
+      let(:service) { described_class.new(repo_name, fetch_all: true, progress_callback: ->(_msg) {}) }
+
+      before { allow(github_service).to receive(:get_pull_request_count).and_raise(Octokit::ServerError) }
+
+      it 'still completes a full sync' do
+        service.sync!
+
+        expect(repository.reload).to have_attributes(sync_status: 'completed', last_sync_error: nil)
+      end
+    end
+
     context 'with custom progress callback' do
       let(:progress_messages) { [] }
       let(:service) { described_class.new(repo_name, progress_callback: ->(msg) { progress_messages << msg }) }
