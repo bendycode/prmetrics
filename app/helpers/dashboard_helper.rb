@@ -20,7 +20,7 @@ module DashboardHelper
       body: 'Counted only for PRs that are open, non-draft, and approved by a person. ' \
             'Within that population, this is the count whose first approval landed more than 7 ' \
             'and fewer than 28 days before the end of the week (i.e., 8-27 days approved-but-unmerged). ' \
-            'A bot review is feedback, not approval; an author merging their own work counts as approval.'
+            'A bot review is feedback, not approval.'
     },
     stale_prs: {
       title: 'Stale Approved PRs',

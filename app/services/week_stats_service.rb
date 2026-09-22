@@ -114,7 +114,7 @@ class WeekStatsService
       WeekdayHours.weekday_hours_between(pull_request.ready_for_review_at, reached_at) if reached_at
     end
 
-    (waits.sum / waits.size).round(2) if waits.any?
+    waits.sum.fdiv(waits.size).round(2) if waits.any?
   end
 
   def calculate_avg_hrs_to_merge

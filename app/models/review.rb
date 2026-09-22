@@ -16,7 +16,9 @@ class Review < ApplicationRecord
 
   scope :ordered, -> { order(submitted_at: :desc) }
   scope :approved, -> { where(state: 'APPROVED') }
-  scope :by_people, -> { joins(:author).where(contributors: { bot: false }) }
+  # An unknown reviewer is not a bot: reviews.author_id is nullable, and rows
+  # stored before the sync recorded reviewers still count as approvals.
+  scope :by_people, -> { left_joins(:author).where(contributors: { bot: [false, nil] }) }
 
   def skip_week_association_update
     @skip_week_association_update || false

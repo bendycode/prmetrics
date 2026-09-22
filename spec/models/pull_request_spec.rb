@@ -407,6 +407,14 @@ RSpec.describe PullRequest do
         end
       end
 
+      it 'counts an approval whose reviewer is unknown, since an unknown reviewer is not a bot' do
+        authorless = create(:pull_request, repository: repository)
+        review = build(:review, pull_request: authorless, state: 'APPROVED', author: nil)
+        review.save(validate: false)
+
+        expect(described_class.approved).to include(authorless)
+      end
+
       it 'returns only pull requests a person approved' do
         expect(described_class.approved).to contain_exactly(approved_pr)
       end

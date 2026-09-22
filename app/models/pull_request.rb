@@ -115,11 +115,12 @@ class PullRequest < ApplicationRecord
   # @param reference_date [Time/Date] The date to calculate from (defaults to current time)
   # @return [Integer] Number of days since first approval, or 0 if no approved reviews
   def days_since_first_approval(reference_date = Time.current)
-    return 0 unless cleared_at
+    cleared = cleared_at
+    return 0 unless cleared
 
     # Use end_of_day for reference_date to be consistent with week boundaries
     reference_timestamp = reference_date.in_time_zone.end_of_day
-    ((reference_timestamp - cleared_at) / 1.day).to_i
+    ((reference_timestamp - cleared) / 1.day).to_i
   end
 
   def first_approval_at
