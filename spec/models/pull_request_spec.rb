@@ -119,7 +119,6 @@ RSpec.describe PullRequest do
 
         # From Monday 9am to Monday 5pm = 8 hours
         expect(pull_request.time_to_first_review).to eq(8.hours)
-        expect(pull_request.raw_time_to_first_review).to eq(8.to_f)
       end
 
       it 'excludes weekend hours for review spanning a weekend' do
@@ -128,10 +127,6 @@ RSpec.describe PullRequest do
                author: contributor,
                submitted_at: Time.zone.local(2024, 1, 15, 13, 0, 0), # Next Monday 1 PM
                state: 'approved')
-
-        # Raw time would include weekend hours
-        # From Monday 9am to next Monday 1pm = (7*24 + 4) = 172 hours
-        expect(pull_request.raw_time_to_first_review).to be_within(0.1).of(172.0)
 
         # Weekday hours calculation (Monday 9-midnight = 15, Tuesday-Friday 24*4 = 96, Monday midnight-1pm = 13)
         # (15 + 96 + 13 = 124 hours)
@@ -149,9 +144,6 @@ RSpec.describe PullRequest do
                author: contributor,
                submitted_at: Time.zone.local(2024, 1, 8, 14, 0, 0), # Monday 2 PM
                state: 'approved')
-
-        # Raw time would be from Saturday 10am to Monday 2pm = 52 hours
-        expect(weekend_pr.raw_time_to_first_review).to be_within(0.1).of(52.0)
 
         # Weekday hours should only count Monday 12am to 2pm = 14 hours
         expect(weekend_pr.time_to_first_review).to be_within(0.1).of(14.hours)

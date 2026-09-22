@@ -55,17 +55,6 @@ class PullRequest < ApplicationRecord
   after_destroy :cleanup_orphaned_contributor
   after_save :update_week_associations_if_needed, unless: :skip_week_association_update
 
-  # Original method that doesn't exclude weekends
-  def raw_time_to_first_review
-    return nil unless ready_for_review_at
-
-    first_review = valid_first_review
-    return nil unless first_review
-
-    # Return in hours instead of seconds for consistency
-    (first_review.submitted_at - ready_for_review_at) / 1.hour
-  end
-
   # New method that excludes weekends
   def time_to_first_review
     return nil unless ready_for_review_at

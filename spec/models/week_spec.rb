@@ -188,9 +188,6 @@ RSpec.describe Week do
           # Average: (68 + 72) / 2 = 70 hours
 
           expect(current_week.avg_hours_to_first_review).to eq(70.0)
-
-          # Raw calculation would include weekend for PR1
-          expect(current_week.raw_avg_hours_to_first_review).to be > 22.0
         end
       end
 
@@ -274,9 +271,6 @@ RSpec.describe Week do
           # PR2: Monday 9 AM to Wednesday 5 PM = 56 hours weekday time
           # Average: (94 + 56) / 2 = 75 hours
           expect(current_week.avg_hours_to_merge).to eq(75.0)
-
-          # Raw calculation would include weekend for PR1
-          expect(current_week.raw_avg_hours_to_merge).to be > 39.0
         end
       end
 

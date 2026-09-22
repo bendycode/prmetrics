@@ -147,19 +147,6 @@ class Week < ApplicationRecord
     count > 0 ? (total_hours.to_f / count).round(2) : nil
   end
 
-  def raw_avg_hours_to_first_review
-    valid_prs = first_review_prs.select do |pr|
-      pr.raw_time_to_first_review.present?
-    end
-
-    total_hours = valid_prs.sum do |pr|
-      pr.raw_time_to_first_review # / 1.hour
-    end
-
-    count = valid_prs.length
-    count > 0 ? (total_hours / count).round(2) : nil
-  end
-
   # Average hours to merge excluding weekends
   def avg_hours_to_merge
     valid_prs = merged_prs.where.not(ready_for_review_at: nil).select do |pr|
@@ -172,12 +159,5 @@ class Week < ApplicationRecord
 
     count = valid_prs.length
     count > 0 ? (total_hours / count).round(2) : nil
-  end
-
-  # Original average hours to merge calculation that includes weekends
-  def raw_avg_hours_to_merge
-    merged_prs.where.not(ready_for_review_at: nil)
-              .average('EXTRACT(EPOCH FROM (gh_merged_at - ready_for_review_at)) / 3600')
-              &.round(2)
   end
 end
