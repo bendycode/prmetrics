@@ -21,7 +21,7 @@ class RepositoriesController < ApplicationController
     @repository = Repository.new(repository_params)
 
     if @repository.save
-      UnifiedSyncJob.perform_later(@repository.name, fetch_all: true)
+      UnifiedSyncJob.perform_later(@repository, fetch_all: true)
       redirect_to @repository, notice: 'Repository added successfully. Initial sync has been queued.'
     else
       render :new, status: :unprocessable_content
@@ -32,7 +32,7 @@ class RepositoriesController < ApplicationController
     authorize @repository
     fetch_all = params[:fetch_all] == 'true'
 
-    UnifiedSyncJob.perform_later(@repository.name, fetch_all: fetch_all)
+    UnifiedSyncJob.perform_later(@repository, fetch_all: fetch_all)
 
     redirect_to @repository, notice: "Sync job queued for #{@repository.name}"
   end

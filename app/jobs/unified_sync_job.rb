@@ -1,24 +1,20 @@
 class UnifiedSyncJob < ApplicationJob
   queue_as :default
 
-  def perform(repo_name, fetch_all: false)
-    # Log to Sidekiq output
-    logger.info "Starting unified sync for #{repo_name} (#{fetch_all ? 'full' : 'incremental'})"
+  def perform(repository, fetch_all: false)
+    logger.info "Starting unified sync for #{repository.name} (#{fetch_all ? 'full' : 'incremental'})"
 
-    # Create service with a logger-based progress callback
     service = UnifiedSyncService.new(
-      repo_name,
+      repository.name,
       fetch_all: fetch_all,
       progress_callback: ->(message) { logger.info "[UnifiedSync] #{message}" }
     )
-
-    # Perform the sync
     service.sync!
 
     # The sync refreshes only the weeks its pull requests touched; a sync
     # started from the app also rebuilds every week, as rake weeks:update_stats does.
     UpdateRepositoryStatsJob.perform_later(service.repository.id)
 
-    logger.info "Unified sync completed for #{repo_name}"
+    logger.info "Unified sync completed for #{repository.name}"
   end
 end

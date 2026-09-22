@@ -19,13 +19,13 @@ RSpec.describe UnifiedSyncJob do
         progress_callback: anything
       ).and_return(service)
 
-      described_class.perform_now(repo_name)
+      described_class.perform_now(repository)
     end
 
     it 'calls sync! on the service' do
       expect(service).to receive(:sync!)
 
-      described_class.perform_now(repo_name)
+      described_class.perform_now(repository)
     end
 
     context 'with fetch_all option' do
@@ -36,13 +36,13 @@ RSpec.describe UnifiedSyncJob do
           progress_callback: anything
         ).and_return(service)
 
-        described_class.perform_now(repo_name, fetch_all: true)
+        described_class.perform_now(repository, fetch_all: true)
       end
     end
 
     it 'refreshes weeks and statistics across every repository once the sync finishes' do
       expect do
-        described_class.perform_now(repo_name)
+        described_class.perform_now(repository)
       end.to have_enqueued_job(UpdateRepositoryStatsJob).with(repository.id)
     end
 
@@ -50,18 +50,16 @@ RSpec.describe UnifiedSyncJob do
       allow(service).to receive(:sync!).and_raise(StandardError, 'GitHub unavailable')
 
       expect do
-        described_class.perform_now(repo_name)
-      rescue StandardError
-        nil
+        expect { described_class.perform_now(repository) }.to raise_error(StandardError, 'GitHub unavailable')
       end.not_to have_enqueued_job(UpdateRepositoryStatsJob)
     end
 
     it 'logs progress messages' do
       # The job logs directly with logger.info
-      job = described_class.new(repo_name)
+      job = described_class.new(repository)
       allow(job.logger).to receive(:info)
 
-      job.perform(repo_name)
+      job.perform(repository)
 
       expect(job.logger).to have_received(:info).with(/Starting unified sync/)
       expect(job.logger).to have_received(:info).with(/Unified sync completed/)
@@ -76,12 +74,24 @@ RSpec.describe UnifiedSyncJob do
         service
       end
 
-      job = described_class.new(repo_name)
-      job.perform(repo_name)
+      job = described_class.new(repository)
+      job.perform(repository)
 
       # Test that the callback logs with the expected prefix
       expect(job.logger).to receive(:info).with('[UnifiedSync] Test progress message')
       callback_captured.call('Test progress message') if callback_captured
+    end
+  end
+
+  describe 'a repository deleted before its sync runs' do
+    include ActiveJob::TestHelper
+
+    it 'drops the sync rather than recreating the repository' do
+      repository = create(:repository, name: repo_name)
+      described_class.perform_later(repository)
+      repository.destroy
+
+      expect { perform_enqueued_jobs }.not_to change(Repository, :count)
     end
   end
 
