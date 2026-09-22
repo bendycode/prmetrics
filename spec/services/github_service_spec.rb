@@ -298,6 +298,32 @@ RSpec.describe GithubService do
       expect(octokit_client).to have_received(:post).with('/graphql', /cursor-1/)
     end
 
+    it 'says what GitHub complained about rather than dying on an empty answer' do
+      errors = Sawyer::Resource.new(Sawyer::Agent.new('https://api.github.com'),
+                                    data: nil, errors: [{ message: 'Bad credentials' }])
+      allow(octokit_client).to receive(:post).and_return(errors)
+
+      expect { service.merged_pull_requests('owner/app') }.to raise_error(/Bad credentials/)
+    end
+
+    it 'says so when the repository is not one the token can see' do
+      missing = Sawyer::Resource.new(Sawyer::Agent.new('https://api.github.com'), data: { repository: nil })
+      allow(octokit_client).to receive(:post).and_return(missing)
+
+      expect { service.merged_pull_requests('owner/app') }.to raise_error(%r{owner/app})
+    end
+
+    it 'waits and retries when GitHub answers that the query is rate limited' do
+      limited = Sawyer::Resource.new(Sawyer::Agent.new('https://api.github.com'),
+                                     data: nil, errors: [{ type: 'RATE_LIMITED', message: 'API rate limit exceeded' }])
+      allow(service).to receive(:sleep)
+      allow(octokit_client).to receive(:post).and_return(limited, graphql_page([]))
+
+      service.merged_pull_requests('owner/app')
+
+      expect(service).to have_received(:sleep).once
+    end
+
     it 'reports no merger for a pull request whose merger GitHub no longer knows' do
       allow(octokit_client).to receive(:post).and_return(graphql_page([{ number: 3, mergedBy: nil }]))
 

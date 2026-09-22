@@ -3,16 +3,21 @@
 module GithubRateLimiting
   MAX_RETRIES = 5
 
+  # GitHub's GraphQL API reports its rate limit in a 200 response's errors
+  # rather than as an HTTP status, so that call raises this instead.
+  class RateLimited < StandardError; end
+
   private
 
   def with_rate_limit_handling
     retries = 0
     begin
       yield
-    rescue Octokit::TooManyRequests => e
+    rescue Octokit::TooManyRequests, RateLimited => e
       raise 'Max retries reached. Unable to complete the request due to rate limiting.' unless retries < MAX_RETRIES
 
-      wait_time = calculate_wait_time(e.response_headers, retries)
+      headers = e.response_headers if e.respond_to?(:response_headers)
+      wait_time = calculate_wait_time(headers, retries)
       Rails.logger.warn "Rate limit exceeded. Waiting for #{wait_time} seconds before retrying..."
       sleep(wait_time)
       retries += 1

@@ -4,6 +4,13 @@
 # call. Safe to rerun: a pull request whose merger is known is left alone, and
 # a repository with none left to fill is not asked about at all.
 class MergerBackfill
+  # The fields Contributor.find_or_create_from_github reads off Octokit's user
+  GithubUser = Struct.new(:id, :login, :type) do
+    def name = nil
+    def avatar_url = nil
+    def email = nil
+  end
+
   def initialize(github_service, output: $stdout)
     @github_service = github_service
     @output = output
@@ -33,20 +40,26 @@ class MergerBackfill
   end
 
   def record_page(nodes, unknown)
-    nodes.count do |node|
+    recorded = 0
+    nodes.each do |node|
       pull_request = unknown.delete(node[:number])
-      next false unless pull_request && node[:merged_by]
+      next unless pull_request
 
-      pull_request.update!(merged_by: contributor_for(node[:merged_by]))
+      contributor = contributor_for(node[:merged_by])
+      next unless contributor
+
+      pull_request.update!(merged_by: contributor)
+      recorded += 1
     end
+    recorded
   end
 
-  # A merger GitHub no longer knows (a deleted account) comes back without a
-  # login, and that pull request keeps no merger.
+  # GitHub reports no merger for a deleted account, and no id for an account
+  # type the query does not ask one of, such as an imported mannequin. Either
+  # way that pull request keeps no merger rather than an empty contributor.
   def contributor_for(merger)
-    Contributor.find_or_create_from_github(
-      Struct.new(:id, :login, :name, :avatar_url, :email, :type)
-            .new(merger[:id], merger[:login], nil, nil, nil, merger[:type])
-    )
+    return nil if merger.blank? || merger[:id].blank? || merger[:login].blank?
+
+    Contributor.find_or_create_from_github(GithubUser.new(*merger.values_at(:id, :login, :type)))
   end
 end

@@ -39,11 +39,11 @@ class GithubService
   # thousands of calls on a repository of any age.
   def merged_pull_requests(repo_name, after: nil)
     owner, name = repo_name.split('/')
-    response = with_rate_limit_handling do
-      @client.post('/graphql', { query: MERGED_PULL_REQUESTS_QUERY,
-                                 variables: { owner: owner, name: name, after: after } }.to_json)
+    page = with_rate_limit_handling do
+      response = @client.post('/graphql', { query: MERGED_PULL_REQUESTS_QUERY,
+                                            variables: { owner: owner, name: name, after: after } }.to_json)
+      merged_pull_requests_from(response, repo_name)
     end
-    page = response.data.repository.pullRequests
 
     { nodes: page.nodes.map { |node| merged_pull_request(node) },
       has_next_page: page.pageInfo.hasNextPage,
@@ -152,6 +152,21 @@ class GithubService
   end
 
   private
+
+  # GitHub answers a GraphQL failure with a 200 and an errors array, so the
+  # response has to be read before its data is trusted. A rate-limited query
+  # arrives the same way, and is raised as the error the retry logic waits on.
+  def merged_pull_requests_from(response, repo_name)
+    errors = Array(response.errors)
+    raise GithubRateLimiting::RateLimited if errors.any? { |error| error.type == 'RATE_LIMITED' }
+
+    raise "GitHub rejected the query for #{repo_name}: #{errors.map(&:message).join('; ')}" if errors.any?
+
+    repository = response.data&.repository
+    raise "GitHub returned no repository named #{repo_name}; is it visible to this token?" unless repository
+
+    repository.pullRequests
+  end
 
   def merged_pull_request(node)
     merger = node.mergedBy
