@@ -26,11 +26,8 @@ This ensures associations stay consistent when:
 - `gh_closed_at` changes  
 - `gh_created_at` changes
 
-### Service Integration ✅
-All sync services call `update_week_associations`:
-- `GithubService.process_pull_request`
-- `SyncRepositoryBatchJob.process_single_pull_request`
-- `UnifiedSyncService`
+### Service Integration
+During a sync, `UnifiedSyncService`'s processor calls `ensure_weeks_exist_and_update_associations` for each pull request `GithubService.process_pull_request` stores, and the model's save callback covers later date changes.
 
 ## Data Integrity Checks
 

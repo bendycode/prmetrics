@@ -100,7 +100,7 @@ The application uses [Pundit](https://github.com/varvet/pundit) for authorizatio
 
 ## Usage
 
-### Unified Sync (Recommended)
+### Sync
 
 The unified sync command combines PR fetching, week generation, and statistics updates into a single command with real-time progress:
 

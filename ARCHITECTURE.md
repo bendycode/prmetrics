@@ -41,16 +41,17 @@ Calculates weekly statistics for repositories:
 - Calculates average review and merge times
 - Excludes weekends from time calculations
 
-#### RepositorySyncService
-Determines optimal sync strategy:
-- Routes to batch processing for large repositories
-- Manages sync status and error handling
+#### UnifiedSyncService
+Runs one repository's sync:
+- Fetches pull requests and reviews through GithubService, incrementally or in full
+- Creates the weeks each pull request touches and refreshes their statistics
+- Records sync status, progress, and errors on the repository
 
 ### Background Processing
 
 Uses Sidekiq with Redis for asynchronous operations:
-- **SyncRepositoryJob**: Standard sync for smaller repositories
-- **SyncRepositoryBatchJob**: Batch processing (100 PRs at a time) to avoid timeouts
+- **UnifiedSyncJob**: Runs UnifiedSyncService for the app's Sync buttons and `rake sync:repository_async`; the nightly `rake sync:all_repositories` runs the service directly
+- **UpdateRepositoryStatsJob** (`low` queue): Rebuilds every repository's weeks and statistics after a sync from the app
 - Sync status tracking: `in_progress`, `completed`, `failed`
 
 ### Key Design Patterns
@@ -90,10 +91,10 @@ The application uses distinct models for different types of users:
 
 **Rationale**: Keeps authentication separate from domain logic, while unifying GitHub user data to eliminate duplication and simplify relationships.
 
-### Batch Processing for Large Repositories
-Large repository syncs are automatically batched to avoid Heroku's 30-minute timeout.
+### One Job per Sync
+A sync runs as a single background job that pages through GitHub's pull requests. A worker restart mid-sync starts it over from the first page, which the current repositories (a few thousand pull requests each) tolerate.
 
-**Rationale**: Prevents job failures and provides better progress tracking.
+**Rationale**: One implementation serves the nightly task and the Sync buttons.
 
 ### Weekday-Only Time Calculations
 Review and merge times exclude weekends by default.
@@ -139,7 +140,6 @@ Repository deletion cascades to all associated data with smart contributor clean
 
 ### Background Processing
 - Asynchronous GitHub API calls prevent request timeouts
-- Batch processing for large data sets
 - Progress tracking for long-running operations
 
 ## Deployment
