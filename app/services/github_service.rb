@@ -22,6 +22,18 @@ class GithubService
     with_rate_limit_handling { @client.repository(repo_name).default_branch }
   end
 
+  # Yields every pull request GitHub lists for the repository, open or closed
+  def each_pull_request(repo_name, &)
+    page = 1
+    loop do
+      pull_requests = fetch_pull_requests_page(repo_name, page, 100)
+      break if pull_requests.empty?
+
+      pull_requests.each(&)
+      page += 1
+    end
+  end
+
   # The processor is called with each pull request's GitHub data once it is
   # stored; it owns week associations and statistics.
   def fetch_and_store_pull_requests(repo_name, processor:, fetch_all: false)

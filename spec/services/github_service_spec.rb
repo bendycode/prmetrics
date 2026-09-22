@@ -226,6 +226,16 @@ RSpec.describe GithubService do
     end
   end
 
+  describe '#each_pull_request' do
+    it 'yields every pull request on every page' do
+      pages = [[double(number: 1), double(number: 2)], [double(number: 3)]]
+      allow(octokit_client).to receive(:pull_requests) { |_repo, options| pages[options[:page] - 1] || [] }
+
+      expect { |block| service.each_pull_request('owner/repo', &block) }
+        .to yield_successive_args(*pages.flatten)
+    end
+  end
+
   describe '#default_branch' do
     it "reads the repository's default branch from GitHub" do
       allow(octokit_client).to receive(:repository).with('owner/repo').and_return(double(default_branch: 'main'))
