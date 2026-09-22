@@ -104,12 +104,12 @@ RSpec.describe PullRequest do
       expect(pull_request.approved_at).to eq(ready_at + 2.hours)
     end
 
-    it "is nothing for a bot's own merge of its own pull request" do
+    it "is a bot's own merge of its own pull request, which an update bot does to ship" do
       bot = create(:contributor, bot: true)
       bot_pull_request = create(:pull_request, author: bot, merged_by: bot, ready_for_review_at: ready_at,
                                                gh_created_at: ready_at, gh_merged_at: ready_at + 1.hour)
 
-      expect(bot_pull_request.approved_at).to be_nil
+      expect(bot_pull_request.approved_at).to eq(ready_at + 1.hour)
     end
 
     it 'is nothing for a pull request someone else merged without approving' do

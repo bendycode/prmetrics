@@ -126,11 +126,11 @@ class PullRequest < ApplicationRecord
     reviews.approved.by_people.minimum(:submitted_at)&.in_time_zone
   end
 
-  # A person merging their own work is that pull request's approval. A bot
-  # merging its own, which is how an update bot ships, is not: no person
-  # cleared it, just as a bot's review is feedback rather than approval.
+  # An author merging their own work is that pull request's approval, a bot's
+  # own merge included: an update bot merging its own pull request has cleared
+  # it, where a bot reviewing someone else's work has only answered.
   def self_merged_at
-    gh_merged_at if merged_by_id && merged_by_id == author_id && !author.bot?
+    gh_merged_at if merged_by_id && merged_by_id == author_id
   end
 
   def update_week_associations
