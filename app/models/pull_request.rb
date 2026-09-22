@@ -96,6 +96,10 @@ class PullRequest < ApplicationRecord
     [first_approval_at, self_merged_at].compact.min
   end
 
+  def valid_first_review_at
+    valid_first_review&.submitted_at
+  end
+
   def valid_first_review
     return nil unless ready_for_review_at
 

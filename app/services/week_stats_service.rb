@@ -46,9 +46,11 @@ class WeekStatsService
       num_prs_merged: calculate_prs_merged,
       num_prs_initially_reviewed: calculate_num_prs_initially_reviewed,
       num_prs_cancelled: calculate_prs_cancelled,
+      num_prs_approved: calculate_prs_approved,
       num_prs_late: calculate_num_prs_late,
       num_prs_stale: calculate_num_prs_stale,
       avg_hrs_to_first_review: calculate_avg_hrs_to_first_review,
+      avg_hrs_to_approval: calculate_avg_hrs_to_approval,
       avg_hrs_to_merge: calculate_avg_hrs_to_merge
     )
   end
@@ -92,25 +94,30 @@ class WeekStatsService
                .count
   end
 
+  def calculate_prs_approved
+    @repository.development_pull_requests.where(first_approval_week_id: @week.id).count
+  end
+
+  # Hours a pull request waited, counting only weekdays, as every figure the
+  # week page and the metric popovers describe does.
   def calculate_avg_hrs_to_first_review
-    # Calculate average hours for PRs that had their first review in this week
-    prs_with_first_review = @repository.development_pull_requests
-                                       .where(first_review_week_id: @week.id)
-                                       .where.not(ready_for_review_at: nil)
-                                       .includes(:reviews)
+    average_wait(first_review_week_id: @week.id, &:valid_first_review_at)
+  end
 
-    total_hours = prs_with_first_review.sum do |pr|
-      first_review = pr.valid_first_review
-      next 0 unless first_review
+  def calculate_avg_hrs_to_approval
+    average_wait(first_approval_week_id: @week.id, &:approved_at)
+  end
 
-      time_to_review = ((first_review.submitted_at - pr.ready_for_review_at) / 1.hour).round(2)
-      raise "negative time to review for pr #{pr.id}: #{time_to_review} hours" if time_to_review.negative?
+  def average_wait(week_condition)
+    pull_requests = @repository.development_pull_requests.where(week_condition)
+                               .where.not(ready_for_review_at: nil).includes(:reviews)
 
-      time_to_review
+    waits = pull_requests.filter_map do |pull_request|
+      reached_at = yield(pull_request)
+      WeekdayHours.weekday_hours_between(pull_request.ready_for_review_at, reached_at) if reached_at
     end
 
-    count = prs_with_first_review.count
-    count > 0 ? (total_hours / count).round(2) : nil
+    (waits.sum / waits.size).round(2) if waits.any?
   end
 
   def calculate_avg_hrs_to_merge
