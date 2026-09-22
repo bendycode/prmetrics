@@ -67,7 +67,7 @@ class UnifiedSyncService
 
   def fetch_and_process_pull_requests
     # Get total count for progress tracking
-    @total_prs = estimate_total_prs(github_service)
+    @total_prs = estimate_total_prs
     log_progress("Estimated #{@total_prs} pull requests to process")
 
     # Step 1: Fetch PRs with our custom processor
@@ -164,7 +164,7 @@ class UnifiedSyncService
     end
   end
 
-  def estimate_total_prs(github_service)
+  def estimate_total_prs
     # Get a rough count of PRs to sync
     # This is an estimate for progress tracking
     if @fetch_all

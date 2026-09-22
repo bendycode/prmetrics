@@ -41,9 +41,15 @@ Calculates weekly statistics for repositories:
 - Calculates average review and merge times
 - Excludes weekends from time calculations
 
+#### Promotions vs Development Work
+A promotion pull request deploys rather than develops: it merges into one of the repository's deploy branches, such as `main` into `production`. A deploy branch is one the default branch's own merged pull requests go into and that never merges back into the default branch, which is what tells it from a long-lived feature branch someone merged the default branch into to catch it up. Each sync records the repository's default branch and reclassifies its pull requests.
+
+Promotions stay stored and readable on the pull request pages; they count toward no metric. `PullRequest.development`, `Repository#development_pull_requests` and the `Week` associations apply the exclusion, so every figure, average and week list reads through it.
+
 #### UnifiedSyncService
 Runs one repository's sync:
 - Fetches pull requests and reviews through GithubService, incrementally or in full
+- Records the repository's default branch and reclassifies its promotions
 - Creates the weeks each pull request touches and refreshes their statistics
 - Records sync status, progress, and errors on the repository
 

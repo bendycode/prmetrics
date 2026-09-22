@@ -7,7 +7,7 @@ require 'rake'
 # a discrepancy.
 RSpec.describe 'Week statistics checks' do
   let(:repository) { create(:repository) }
-  let(:merged_at) { 3.days.ago }
+  let(:merged_at) { Time.zone.parse('2026-09-16 10:00') }
 
   before do
     # rake_require loads each file once per process, however often it is called

@@ -6,8 +6,8 @@ class WeeksController < ApplicationController
     'started' => ->(week) { week.started_prs.includes(:author) },
     'open' => ->(week) { week.open_prs.includes(:author) },
     'first_reviewed' => ->(week) { week.first_review_prs.includes(:author) },
-    'late' => lambda(&:late_prs),
-    'stale' => lambda(&:stale_prs),
+    'late' => ->(week) { week.late_prs },
+    'stale' => ->(week) { week.stale_prs },
     'merged' => ->(week) { week.merged_prs.includes(:author) },
     'cancelled' => ->(week) { week.cancelled_prs.includes(:author) },
     'draft' => ->(week) { week.draft_prs.includes(:author) }
