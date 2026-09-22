@@ -20,9 +20,6 @@ RSpec.describe 'Repository Sync' do
     it 'allows incremental sync of repository' do
       visit repository_path(repository)
 
-      # Mock the GitHub API call to avoid actual API requests
-      allow_any_instance_of(GithubService).to receive(:fetch_and_store_pull_requests).and_return(true)
-
       click_button 'Sync Updates'
 
       expect(page).to have_content('Sync job queued')

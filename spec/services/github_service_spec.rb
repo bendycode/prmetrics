@@ -90,10 +90,79 @@ RSpec.describe GithubService do
       expect(pr.ready_for_review_at).to be_nil
     end
 
-    it 'calls update_week_associations after processing' do
-      # The service calls it explicitly, and the model callback also calls it
+    it 'associates the pull request with its weeks' do
       expect_any_instance_of(PullRequest).to receive(:update_week_associations).at_least(:once)
       service.send(:process_pull_request, repository, 'test/repo', pr_data)
+    end
+  end
+
+  describe '#determine_ready_for_review_at' do
+    it 'returns ready_for_review event time when available' do
+      ready_event = double(event: 'ready_for_review', created_at: 2.days.ago)
+      other_event = double(event: 'labeled', created_at: 1.day.ago)
+      allow(octokit_client).to receive(:issue_events).with('owner/repo', 123).and_return([other_event, ready_event])
+
+      result = service.send(:determine_ready_for_review_at, 'owner/repo', 123, 3.days.ago)
+      expect(result).to eq(ready_event.created_at)
+    end
+
+    it 'returns created_at when no ready_for_review event exists' do
+      created_time = 3.days.ago
+      allow(octokit_client).to receive(:issue_events).with('owner/repo', 123)
+                                                     .and_return([double(event: 'labeled', created_at: 1.day.ago)])
+
+      result = service.send(:determine_ready_for_review_at, 'owner/repo', 123, created_time)
+      expect(result).to eq(created_time)
+    end
+  end
+
+  describe '#with_rate_limit_handling' do
+    before { allow(service).to receive(:sleep) }
+
+    it 'yields to block when no errors' do
+      expect(service.send(:with_rate_limit_handling) { 'success' }).to eq('success')
+    end
+
+    it 'retries on rate limit errors' do
+      call_count = 0
+
+      result = service.send(:with_rate_limit_handling) do
+        call_count += 1
+        if call_count == 1
+          error = Octokit::TooManyRequests.new
+          allow(error).to receive(:response_headers).and_return({ 'retry-after' => '1' })
+          raise error
+        end
+
+        'success'
+      end
+
+      expect(result).to eq('success')
+      expect(call_count).to eq(2)
+    end
+
+    it 'retries on connection errors' do
+      call_count = 0
+
+      result = service.send(:with_rate_limit_handling) do
+        call_count += 1
+        raise Faraday::ConnectionFailed, 'Connection failed' if call_count == 1
+
+        'success'
+      end
+
+      expect(result).to eq('success')
+      expect(call_count).to eq(2)
+    end
+
+    it 'raises after max retries' do
+      expect do
+        service.send(:with_rate_limit_handling) do
+          error = Octokit::TooManyRequests.new
+          allow(error).to receive(:response_headers).and_return(nil)
+          raise error
+        end
+      end.to raise_error(/Max retries reached/)
     end
   end
 
