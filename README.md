@@ -20,7 +20,9 @@ prmetrics is a Rails application designed to fetch and analyze pull request data
   - PRs started
   - PRs merged
   - PRs canceled
-  - Hours to first PR review
+  - PRs approved
+  - Hours to first feedback (any review, bots included)
+  - Hours to approval (a person's approval, or the author's own merge)
   - Hours to PR merge
 - Store data locally to reduce API calls and enable offline analysis
 - Incremental updates to minimize data transfer and processing time

@@ -40,7 +40,7 @@ Handles all GitHub API interactions using Octokit gem:
 #### WeekStatsService
 Calculates weekly statistics for repositories:
 - Aggregates PR counts by lifecycle stage
-- Calculates average review and merge times
+- Calculates average feedback, approval and merge times, in weekday hours
 - Excludes weekends from time calculations
 
 #### Promotions vs Development Work
