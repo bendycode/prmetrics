@@ -148,11 +148,26 @@ class GithubService
     end
   end
 
-  def determine_ready_for_review_at(repo_name, pr_number, created_at)
-    events = with_rate_limit_handling do
-      @client.issue_events(repo_name, pr_number)
+  # GitHub serves a pull request's events oldest first, 30 to a page by
+  # default, so the events this sync reads -- ready_for_review, and the merge
+  # -- are the ones a busy pull request pushes off the first page.
+  def issue_events(repo_name, pr_number)
+    events = []
+    page = 1
+    loop do
+      batch = with_rate_limit_handling do
+        @client.issue_events(repo_name, pr_number, page: page, per_page: 100)
+      end
+      events.concat(batch)
+      break if batch.size < 100
+
+      page += 1
     end
-    ready_for_review_event = events.find { |e| e.event == 'ready_for_review' }
+    events
+  end
+
+  def determine_ready_for_review_at(repo_name, pr_number, created_at)
+    ready_for_review_event = issue_events(repo_name, pr_number).find { |e| e.event == 'ready_for_review' }
 
     if ready_for_review_event
       ready_for_review_event.created_at

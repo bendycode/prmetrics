@@ -255,11 +255,29 @@ RSpec.describe GithubService do
     end
   end
 
+  describe '#issue_events' do
+    it 'reads every page of a busy pull request' do
+      pages = [Array.new(100) { double(event: 'labeled') }, [double(event: 'ready_for_review')]]
+      allow(octokit_client).to receive(:issue_events) { |_repo, _number, options| pages[options[:page] - 1] || [] }
+
+      expect(service.send(:issue_events, 'owner/repo', 123).map(&:event)).to include('ready_for_review')
+    end
+
+    it 'asks for the largest page GitHub serves' do
+      allow(octokit_client).to receive(:issue_events).and_return([])
+
+      service.send(:issue_events, 'owner/repo', 123)
+
+      expect(octokit_client).to have_received(:issue_events).with('owner/repo', 123, hash_including(per_page: 100))
+    end
+  end
+
   describe '#determine_ready_for_review_at' do
     it 'returns ready_for_review event time when available' do
       ready_event = double(event: 'ready_for_review', created_at: 2.days.ago)
       other_event = double(event: 'labeled', created_at: 1.day.ago)
-      allow(octokit_client).to receive(:issue_events).with('owner/repo', 123).and_return([other_event, ready_event])
+      allow(octokit_client).to receive(:issue_events).with('owner/repo', 123, anything)
+                                                     .and_return([other_event, ready_event])
 
       result = service.send(:determine_ready_for_review_at, 'owner/repo', 123, 3.days.ago)
       expect(result).to eq(ready_event.created_at)
@@ -267,7 +285,7 @@ RSpec.describe GithubService do
 
     it 'returns created_at when no ready_for_review event exists' do
       created_time = 3.days.ago
-      allow(octokit_client).to receive(:issue_events).with('owner/repo', 123)
+      allow(octokit_client).to receive(:issue_events).with('owner/repo', 123, anything)
                                                      .and_return([double(event: 'labeled', created_at: 1.day.ago)])
 
       result = service.send(:determine_ready_for_review_at, 'owner/repo', 123, created_time)
