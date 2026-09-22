@@ -9,7 +9,8 @@ RSpec.describe UnifiedSyncService do
 
   before do
     allow(GithubService).to receive(:new).and_return(github_service)
-    allow(github_service).to receive_messages(get_pull_request_count: 10, fetch_recent_review_activity: 0)
+    allow(github_service).to receive_messages(get_pull_request_count: 10, fetch_recent_review_activity: 0,
+                                              default_branch: 'main')
   end
 
   # Stands in for GithubService: stores the pull request, then hands its
@@ -53,6 +54,38 @@ RSpec.describe UnifiedSyncService do
 
       merged_week = repository.pull_requests.find_by(number: 123).merged_week
       expect(merged_week).to have_attributes(num_prs_merged: 1)
+    end
+
+    it "records the repository's current default branch from GitHub" do
+      repository.update!(default_branch: 'master')
+
+      service.sync!
+
+      expect(repository.reload.default_branch).to eq('main')
+    end
+
+    context 'when an earlier pull request turns out to be a promotion' do
+      let!(:earlier_deploy) do
+        create(:pull_request, repository: repository, number: 7, head_ref: 'master', base_ref: 'production',
+                              gh_created_at: merged_at - 20.days, gh_merged_at: merged_at - 19.days,
+                              gh_closed_at: merged_at - 19.days, state: 'closed')
+          .tap(&:ensure_weeks_exist_and_update_associations)
+      end
+
+      before do
+        allow(github_service).to receive(:fetch_and_store_pull_requests) do |_name, processor:, **|
+          create(:pull_request, repository: repository, number: 123, head_ref: 'main', base_ref: 'production')
+          processor.call(pr_data)
+        end
+        allow(WeekStatsService).to receive(:new).and_call_original
+      end
+
+      it 'flags it and refreshes the statistics of the weeks it touched' do
+        service.sync!
+
+        expect(earlier_deploy.reload).to be_promotion
+        expect(WeekStatsService).to have_received(:new).with(earlier_deploy.merged_week)
+      end
     end
 
     context 'when the fetch fails' do

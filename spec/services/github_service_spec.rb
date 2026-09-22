@@ -226,6 +226,14 @@ RSpec.describe GithubService do
     end
   end
 
+  describe '#default_branch' do
+    it "reads the repository's default branch from GitHub" do
+      allow(octokit_client).to receive(:repository).with('owner/repo').and_return(double(default_branch: 'main'))
+
+      expect(service.default_branch('owner/repo')).to eq('main')
+    end
+  end
+
   describe '#determine_ready_for_review_at' do
     it 'returns ready_for_review event time when available' do
       ready_event = double(event: 'ready_for_review', created_at: 2.days.ago)

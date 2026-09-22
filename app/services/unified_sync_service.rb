@@ -24,8 +24,12 @@ class UnifiedSyncService
         sync_progress: 0
       )
 
+      @repository.update!(default_branch: github_service.default_branch(@repo_name))
+
       # Fetch and process PRs with real-time updates
       fetch_and_process_pull_requests
+
+      refresh_promotions
 
       # Final stats update for all affected weeks
       update_week_statistics
@@ -57,9 +61,11 @@ class UnifiedSyncService
 
   private
 
-  def fetch_and_process_pull_requests
-    github_service = GithubService.new(ENV.fetch('GITHUB_ACCESS_TOKEN', nil))
+  def github_service
+    @github_service ||= GithubService.new(ENV.fetch('GITHUB_ACCESS_TOKEN', nil))
+  end
 
+  def fetch_and_process_pull_requests
     # Get total count for progress tracking
     @total_prs = estimate_total_prs(github_service)
     log_progress("Estimated #{@total_prs} pull requests to process")
@@ -105,6 +111,15 @@ class UnifiedSyncService
     return unless @processed_prs % 10 == 0 || @processed_prs == @total_prs
 
     log_progress("Processed #{@processed_prs} pull requests...")
+  end
+
+  # A pull request this sync never touched can still change status, when the
+  # branch it merged into first receives a pull request from the default
+  # branch; its weeks need fresh statistics too.
+  def refresh_promotions
+    changed = @repository.refresh_promotions!
+    log_progress("Reclassified #{changed.size} pull requests as promotions or development work") if changed.any?
+    changed.each { |pull_request| track_created_weeks(pull_request) }
   end
 
   def track_created_weeks(pull_request)

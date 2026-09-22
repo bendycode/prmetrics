@@ -18,6 +18,10 @@ class GithubService
     nil
   end
 
+  def default_branch(repo_name)
+    with_rate_limit_handling { @client.repository(repo_name).default_branch }
+  end
+
   # The processor is called with each pull request's GitHub data once it is
   # stored; it owns week associations and statistics.
   def fetch_and_store_pull_requests(repo_name, processor:, fetch_all: false)
