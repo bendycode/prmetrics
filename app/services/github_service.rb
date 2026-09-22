@@ -220,6 +220,16 @@ class GithubService
     events.find { |event| event.event == 'ready_for_review' }&.created_at || created_at
   end
 
+  # GitHub reports no actor on the merge event of some merges by accounts that
+  # have since been deleted, and the backfill reads the merger from a different
+  # endpoint, so a merger already recorded is left alone rather than erased.
+  def merger_attribute(pr, events)
+    return { merged_by: nil } unless pr.merged_at
+
+    merger = merger_of(events)
+    merger ? { merged_by: merger } : {}
+  end
+
   # GitHub's merge event names whoever pressed Merge, which is the actor that
   # enabled auto-merge when the merge came from the queue.
   def merger_of(events)
@@ -246,7 +256,7 @@ class GithubService
       base_ref: pr.base.ref,
       head_ref: pr.head.ref,
       head_repository: pr.head.repo&.full_name,
-      merged_by: (merger_of(events) if pr.merged_at)
+      **merger_attribute(pr, events)
     )
 
     fetch_and_store_reviews(pull_request, repo_name, pr.number)

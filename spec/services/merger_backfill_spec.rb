@@ -14,7 +14,7 @@ RSpec.describe MergerBackfill do
   before do
     allow(github_service).to receive(:merged_pull_requests).with('owner/app', after: nil)
                                                            .and_return({ nodes: [github_merger(1, 'the-merger'),
-                                                                                 github_merger(2, 'helper[bot]',
+                                                                                 github_merger(2, 'copilot-style-name',
                                                                                                type: 'Bot')],
                                                                          has_next_page: false, end_cursor: nil })
   end
@@ -51,24 +51,35 @@ RSpec.describe MergerBackfill do
     expect(github_service).not_to have_received(:merged_pull_requests)
   end
 
-  it 'reads the next page until it has every merger it needs' do
+  it 'reads the next page, from the cursor it was given, until it has every merger it needs' do
     create(:pull_request, repository: repository, number: 3, gh_merged_at: 2.days.ago)
-    allow(github_service).to receive(:merged_pull_requests).with('owner/app', after: nil)
-                                                           .and_return({ nodes: [github_merger(1, 'one')],
-                                                                         has_next_page: true, end_cursor: 'cursor-1' })
-    allow(github_service).to receive(:merged_pull_requests).with('owner/app', after: 'cursor-1')
-                                                           .and_return({ nodes: [github_merger(3, 'three')],
-                                                                         has_next_page: false, end_cursor: nil })
+    allow(github_service).to receive(:merged_pull_requests)
+      .and_return({ nodes: [github_merger(1, 'one')], has_next_page: true, end_cursor: 'cursor-1' },
+                  { nodes: [github_merger(3, 'three')], has_next_page: false, end_cursor: nil })
 
     backfill.run(repository)
 
     expect(repository.pull_requests.find_by(number: 3).merged_by).to have_attributes(username: 'three')
+    expect(github_service).to have_received(:merged_pull_requests).with('owner/app', after: 'cursor-1')
   end
 
   it 'ignores pull requests GitHub reports that are not stored' do
-    create(:pull_request, repository: repository, number: 9, gh_merged_at: 2.days.ago)
+    stored = create(:pull_request, repository: repository, number: 9, gh_merged_at: 2.days.ago)
 
     expect { backfill.run(repository) }.not_to change(PullRequest, :count)
+    expect(stored.reload.merged_by).to be_nil
+  end
+
+  it 'keeps no merger for a pull request GitHub reports without one' do
+    merged = create(:pull_request, repository: repository, number: 4, gh_merged_at: 2.days.ago)
+    allow(github_service).to receive(:merged_pull_requests)
+      .with('owner/app', after: nil)
+      .and_return({ nodes: [{ number: 4, merged_by: nil }], has_next_page: false, end_cursor: nil })
+
+    backfill.run(repository)
+
+    expect(merged.reload.merged_by).to be_nil
+    expect(output.string).to include('recorded 0 mergers')
   end
 
   it 'records no merger, and counts none, for an account GitHub gives no id for' do
@@ -89,6 +100,6 @@ RSpec.describe MergerBackfill do
 
     backfill.run(repository)
 
-    expect(output.string).to include('owner/app: recorded 1 merger')
+    expect(output.string.strip).to eq('owner/app: recorded 1 merger')
   end
 end

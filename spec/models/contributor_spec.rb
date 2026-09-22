@@ -14,6 +14,41 @@ RSpec.describe Contributor do
     end
   end
 
+  describe '.find_or_create_from_github' do
+    # GitHub reports the account type; a GitHub App's login usually ends in
+    # [bot], but an account like Copilot does not, which is why the type rules
+    def github_user(id, login, type)
+      double(id: id, login: login, name: nil, avatar_url: nil, email: nil, type: type)
+    end
+
+    it 'flags a contributor GitHub reports as a Bot' do
+      contributor = described_class.find_or_create_from_github(github_user(9_100_001, 'copilot-style-name', 'Bot'))
+
+      expect(contributor).to be_bot
+    end
+
+    it 'leaves a person unflagged' do
+      expect(described_class.find_or_create_from_github(github_user(9_100_002, 'a-person', 'User'))).not_to be_bot
+    end
+
+    it 'flags a contributor stored before GitHub reported it as a Bot' do
+      stored = create(:contributor, github_id: '9100003', username: 'stored-earlier', bot: false)
+
+      described_class.find_or_create_from_github(github_user(9_100_003, 'stored-earlier', 'Bot'))
+
+      expect(stored.reload).to be_bot
+    end
+
+    it 'leaves a flagged contributor flagged when GitHub says nothing about its type' do
+      stored = create(:contributor, github_id: '9100004', username: 'known-bot', bot: true)
+      typeless = double(id: 9_100_004, login: 'known-bot', name: nil, avatar_url: nil, email: nil)
+
+      described_class.find_or_create_from_github(typeless)
+
+      expect(stored.reload).to be_bot
+    end
+  end
+
   describe '.orphaned' do
     it 'finds a contributor with no pull requests, reviews or participation' do
       unused = create(:contributor)

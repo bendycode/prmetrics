@@ -60,7 +60,6 @@ RSpec.describe GithubService do
              updated_at: 1.day.ago,
              merged_at: nil,
              closed_at: nil,
-             merged_by: nil,
              base: double(ref: 'main'),
              head: double(ref: 'feature/login', repo: double(full_name: 'test/repo')))
     end
@@ -114,8 +113,9 @@ RSpec.describe GithubService do
 
       before do
         allow(pr_data).to receive_messages(merged_at: 1.day.ago, state: 'closed')
-        allow(service).to receive(:issue_events).and_return([double(event: 'labeled', actor: nil),
-                                                             double(event: 'merged', actor: merger)])
+        labeller = double(id: 9_000_778, login: 'the-labeller', name: nil, avatar_url: nil, email: nil, type: 'User')
+        allow(service).to receive(:issue_events).and_return([double(event: 'merged', actor: merger),
+                                                             double(event: 'labeled', actor: labeller)])
       end
 
       it 'records who merged it, from the merge event' do
@@ -124,8 +124,8 @@ RSpec.describe GithubService do
         expect(repository.pull_requests.find_by(number: 123).merged_by).to have_attributes(username: 'the-merger')
       end
 
-      it 'records a merger GitHub calls a Bot as one' do
-        allow(merger).to receive(:type).and_return('Bot')
+      it 'records a merger GitHub calls a Bot as one, whatever its login looks like' do
+        allow(merger).to receive_messages(type: 'Bot', login: 'copilot-style-name')
 
         service.send(:process_pull_request, repository, 'test/repo', pr_data)
 
@@ -133,10 +133,40 @@ RSpec.describe GithubService do
       end
     end
 
-    it 'leaves the merger empty while a pull request is open' do
+    it 'keeps a merger it already knows when GitHub reports no merge event' do
+      recorded = create(:contributor, username: 'recorded-earlier')
+      create(:pull_request, repository: repository, number: 123, gh_merged_at: 1.day.ago, merged_by: recorded)
+      allow(pr_data).to receive_messages(merged_at: 1.day.ago, state: 'closed')
+
+      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+      expect(repository.pull_requests.find_by(number: 123).merged_by).to eq(recorded)
+    end
+
+    it 'leaves the merger empty while a pull request is open, whatever its events say' do
+      merger = double(id: 9_000_779, login: 'too-early', name: nil, avatar_url: nil, email: nil, type: 'User')
+      allow(service).to receive(:issue_events).and_return([double(event: 'merged', actor: merger)])
+
       service.send(:process_pull_request, repository, 'test/repo', pr_data)
 
       expect(repository.pull_requests.find_by(number: 123).merged_by).to be_nil
+    end
+
+    it 'reads the events of the pull request it is processing' do
+      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+      expect(service).to have_received(:issue_events).with('test/repo', 123)
+    end
+
+    it 'records the merger of a draft that was merged' do
+      merger = double(id: 9_000_780, login: 'draft-merger', name: nil, avatar_url: nil, email: nil, type: 'User')
+      allow(pr_data).to receive_messages(draft: true, merged_at: 1.day.ago, state: 'closed')
+      allow(service).to receive(:issue_events).and_return([double(event: 'merged', actor: merger)])
+
+      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+      expect(repository.pull_requests.find_by(number: 123))
+        .to have_attributes(ready_for_review_at: nil, merged_by: have_attributes(username: 'draft-merger'))
     end
 
     it 'records the branch it merges into and the branch it comes from' do
@@ -230,22 +260,6 @@ RSpec.describe GithubService do
     end
   end
 
-  describe '#find_or_create_contributor' do
-    it 'flags a contributor GitHub reports as a Bot' do
-      github_user = double(id: 9_000_888, login: 'helper[bot]', name: nil, avatar_url: nil, email: nil, type: 'Bot')
-
-      contributor = service.send(:find_or_create_contributor, github_user)
-
-      expect(contributor).to be_bot
-    end
-
-    it 'leaves a person unflagged' do
-      github_user = double(id: 9_000_889, login: 'a-person', name: nil, avatar_url: nil, email: nil, type: 'User')
-
-      expect(service.send(:find_or_create_contributor, github_user)).not_to be_bot
-    end
-  end
-
   describe '#store_author' do
     let(:pull_request) { create(:pull_request, repository: repository) }
     let(:author) { double(id: 9_000_501, login: 'the-author', name: nil, avatar_url: nil, email: nil) }
@@ -290,12 +304,14 @@ RSpec.describe GithubService do
       )
     end
 
-    it 'asks for the page after the cursor it is given' do
+    it 'asks about that repository, from the cursor it is given' do
       allow(octokit_client).to receive(:post).and_return(graphql_page([]))
 
       service.merged_pull_requests('owner/app', after: 'cursor-1')
 
-      expect(octokit_client).to have_received(:post).with('/graphql', /cursor-1/)
+      posted = nil
+      expect(octokit_client).to have_received(:post) { |_path, body| posted = JSON.parse(body) }
+      expect(posted['variables']).to eq('owner' => 'owner', 'name' => 'app', 'after' => 'cursor-1')
     end
 
     it 'says what GitHub complained about rather than dying on an empty answer' do
@@ -359,11 +375,15 @@ RSpec.describe GithubService do
   end
 
   describe '#issue_events' do
-    it 'reads every page of a busy pull request' do
-      pages = [Array.new(100) { double(event: 'labeled') }, [double(event: 'ready_for_review')]]
+    it 'keeps the events of every page, not only the last' do
+      pages = [Array.new(99) { double(event: 'labeled') } + [double(event: 'merged')],
+               [double(event: 'ready_for_review')]]
       allow(octokit_client).to receive(:issue_events) { |_repo, _number, options| pages[options[:page] - 1] || [] }
 
-      expect(service.send(:issue_events, 'owner/repo', 123).map(&:event)).to include('ready_for_review')
+      events = service.send(:issue_events, 'owner/repo', 123)
+
+      expect(events.size).to be(101)
+      expect(events.map(&:event)).to include('merged', 'ready_for_review')
     end
 
     it 'asks for the largest page GitHub serves' do
