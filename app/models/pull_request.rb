@@ -83,6 +83,18 @@ class PullRequest < ApplicationRecord
     WeekdayHours.weekday_hours_between(ready_for_review_at, gh_merged_at) * 1.hour
   end
 
+  # When the pull request was cleared to merge: the first approval from a
+  # person, or the author's own merge, whichever came first. An author merging
+  # their own work is that pull request's approval, which is how a repository
+  # where authors merge their own work gets an approval time at all. An
+  # approval given while it was still a draft counts from the moment it became
+  # ready for review, so no pull request is approved before it was askable.
+  def approved_at
+    return nil unless ready_for_review_at
+
+    [first_approval_at, self_merged_at].compact.min
+  end
+
   def valid_first_review
     return nil unless ready_for_review_at
 
@@ -107,6 +119,17 @@ class PullRequest < ApplicationRecord
     # Use end_of_day for reference_date to be consistent with week boundaries
     reference_timestamp = reference_date.in_time_zone.end_of_day
     ((reference_timestamp - first_approved_review.submitted_at) / 1.day).to_i
+  end
+
+  def first_approval_at
+    approved_at = reviews.approved.by_people.minimum(:submitted_at)
+    return nil unless approved_at
+
+    [approved_at.in_time_zone, ready_for_review_at].max
+  end
+
+  def self_merged_at
+    gh_merged_at if merged_by_id && merged_by_id == author_id
   end
 
   def update_week_associations

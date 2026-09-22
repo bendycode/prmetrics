@@ -5,6 +5,65 @@ RSpec.describe PullRequest do
   let(:author) { create(:github_user) }
   let(:contributor) { create(:contributor) }
 
+  describe '#approved_at' do
+    let(:ready_at) { Time.zone.parse('2026-09-16 09:00') }
+    let(:author) { create(:contributor) }
+    let(:pull_request) do
+      create(:pull_request, author: author, ready_for_review_at: ready_at, gh_created_at: ready_at)
+    end
+
+    it 'is when a person first approved it' do
+      create(:review, pull_request: pull_request, state: 'COMMENTED', submitted_at: ready_at + 1.hour)
+      create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: ready_at + 3.hours)
+      create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: ready_at + 5.hours)
+
+      expect(pull_request.approved_at).to eq(ready_at + 3.hours)
+    end
+
+    it 'ignores an approval from a bot' do
+      create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: ready_at + 1.hour,
+                      author: create(:contributor, bot: true))
+
+      expect(pull_request.approved_at).to be_nil
+    end
+
+    it 'counts an approval given while it was still a draft from the moment it was ready' do
+      create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: ready_at - 2.hours)
+
+      expect(pull_request.approved_at).to eq(ready_at)
+    end
+
+    it 'is when its author merged it, for a pull request nobody approved' do
+      pull_request.update!(merged_by: author, gh_merged_at: ready_at + 8.hours)
+
+      expect(pull_request.approved_at).to eq(ready_at + 8.hours)
+    end
+
+    it 'prefers the approval when a reviewer approved before its author merged it' do
+      create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: ready_at + 2.hours)
+      pull_request.update!(merged_by: author, gh_merged_at: ready_at + 8.hours)
+
+      expect(pull_request.approved_at).to eq(ready_at + 2.hours)
+    end
+
+    it 'is nothing for a pull request someone else merged without approving' do
+      pull_request.update!(merged_by: create(:contributor), gh_merged_at: ready_at + 8.hours)
+
+      expect(pull_request.approved_at).to be_nil
+    end
+
+    it 'is nothing while it is still open and unapproved' do
+      expect(pull_request.approved_at).to be_nil
+    end
+
+    it 'is nothing before it is ready for review' do
+      draft = create(:pull_request, :draft, ready_for_review_at: nil)
+      create(:review, pull_request: draft, state: 'APPROVED', submitted_at: ready_at)
+
+      expect(draft.approved_at).to be_nil
+    end
+  end
+
   describe 'weekday hours calculation' do
     let(:pull_request) do
       create(:pull_request,

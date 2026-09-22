@@ -16,6 +16,7 @@ class Review < ApplicationRecord
 
   scope :ordered, -> { order(submitted_at: :desc) }
   scope :approved, -> { where(state: 'APPROVED') }
+  scope :by_people, -> { joins(:author).where(contributors: { bot: false }) }
 
   def skip_week_association_update
     @skip_week_association_update || false
