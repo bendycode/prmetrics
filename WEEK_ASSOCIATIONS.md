@@ -7,7 +7,8 @@ This document explains how week associations work in prmetrics and how to mainta
 Week associations link pull requests to specific weeks based on when lifecycle events occur:
 
 - `ready_for_review_week_id` - Week when PR became ready for review
-- `first_review_week_id` - Week when first review was submitted  
+- `first_review_week_id` - Week when first review was submitted
+- `first_approval_week_id` - Week when a person approved it, or its own author merged it
 - `merged_week_id` - Week when PR was merged
 - `closed_week_id` - Week when PR was closed
 

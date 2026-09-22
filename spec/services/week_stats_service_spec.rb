@@ -175,9 +175,9 @@ RSpec.describe WeekStatsService do
         expect(week.reload.num_prs_approved).to be(2)
       end
 
-      it 'averages the weekday hours from ready for review to approval' do
+      it 'averages the weekday hours from ready for review to approval, self-merges included' do
         approved_pull_request(ready: monday, approved: monday + 2.hours)
-        approved_pull_request(ready: monday, approved: monday + 4.hours)
+        approved_pull_request(ready: monday, merged_by: author, merged_at: monday + 4.hours)
 
         service.update_stats
 
@@ -193,7 +193,9 @@ RSpec.describe WeekStatsService do
         expect(week.reload.avg_hrs_to_approval).to eq(24.0)
       end
 
-      it 'leaves the approval average empty for a week with no approvals' do
+      it 'clears a stale approval figure when the week no longer has one' do
+        week.update!(num_prs_approved: 7, avg_hrs_to_approval: 9.99)
+
         service.update_stats
 
         expect(week.reload).to have_attributes(num_prs_approved: 0, avg_hrs_to_approval: nil)

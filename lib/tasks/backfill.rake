@@ -10,5 +10,6 @@ namespace :backfill do
   task mergers: :environment do
     backfill = MergerBackfill.new(GithubService.new(ENV.fetch('GITHUB_ACCESS_TOKEN')))
     Repository.order(:name).each { |repository| backfill.run(repository) }
+    puts 'Next: weeks:update_stats, so self-merged pull requests count toward their weeks'
   end
 end

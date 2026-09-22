@@ -12,18 +12,29 @@ RSpec.describe PullRequest do
       create(:pull_request, author: author, ready_for_review_at: ready_at, gh_created_at: ready_at)
     end
 
-    it 'records the week a person first approved it in' do
-      create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: ready_at + 3.hours)
+    it 'records the week a person approved it in, not the week it was first commented on' do
+      create(:review, pull_request: pull_request, state: 'COMMENTED', submitted_at: ready_at + 1.hour)
+      create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: ready_at + 8.days)
       pull_request.ensure_weeks_exist_and_update_associations
 
-      expect(pull_request.reload.first_approval_week).to eq(pull_request.first_review_week)
+      expect(pull_request.reload.first_approval_week.begin_date).to eq((ready_at + 8.days).to_date.beginning_of_week)
+      expect(pull_request.first_review_week.begin_date).to eq(ready_at.to_date.beginning_of_week)
     end
 
     it 'records the week its author merged it in, for a pull request nobody approved' do
-      pull_request.update!(merged_by: author, gh_merged_at: ready_at + 8.days)
+      merged_at = ready_at + 8.days
+      pull_request.update!(merged_by: author, gh_merged_at: merged_at)
       pull_request.ensure_weeks_exist_and_update_associations
 
-      expect(pull_request.reload.first_approval_week).to eq(pull_request.merged_week)
+      expect(pull_request.reload.first_approval_week.begin_date).to eq(merged_at.to_date.beginning_of_week)
+    end
+
+    it 'records the approval week when the merger is recorded later' do
+      pull_request.update!(gh_merged_at: ready_at + 8.days)
+      pull_request.ensure_weeks_exist_and_update_associations
+
+      expect { pull_request.update!(merged_by: author) }
+        .to change { pull_request.reload.first_approval_week }.from(nil)
     end
 
     it 'clears the approval week when the approving review goes away' do
@@ -34,11 +45,14 @@ RSpec.describe PullRequest do
     end
 
     it 'records the approval week when a review arrives later' do
+      later_week = create(:week, repository: pull_request.repository, week_number: 202_638,
+                                 begin_date: (ready_at + 8.days).to_date.beginning_of_week,
+                                 end_date: (ready_at + 8.days).to_date.end_of_week)
       pull_request.ensure_weeks_exist_and_update_associations
 
       expect do
-        create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: ready_at + 3.hours)
-      end.to change { pull_request.reload.first_approval_week }.from(nil)
+        create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: ready_at + 8.days)
+      end.to change { pull_request.reload.first_approval_week }.from(nil).to(later_week)
     end
   end
 
@@ -81,6 +95,21 @@ RSpec.describe PullRequest do
       pull_request.update!(merged_by: author, gh_merged_at: ready_at + 8.hours)
 
       expect(pull_request.approved_at).to eq(ready_at + 2.hours)
+    end
+
+    it 'prefers the merge when its author merged before a reviewer approved' do
+      pull_request.update!(merged_by: author, gh_merged_at: ready_at + 2.hours)
+      create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: ready_at + 8.hours)
+
+      expect(pull_request.approved_at).to eq(ready_at + 2.hours)
+    end
+
+    it "is nothing for a bot's own merge of its own pull request" do
+      bot = create(:contributor, bot: true)
+      bot_pull_request = create(:pull_request, author: bot, merged_by: bot, ready_for_review_at: ready_at,
+                                               gh_created_at: ready_at, gh_merged_at: ready_at + 1.hour)
+
+      expect(bot_pull_request.approved_at).to be_nil
     end
 
     it 'is nothing for a pull request someone else merged without approving' do
@@ -285,6 +314,14 @@ RSpec.describe PullRequest do
   describe '#days_since_first_approval' do
     let(:pr) { create(:pull_request, repository: repository) }
 
+    it 'counts from the approval itself, even one given before it was ready for review' do
+      ready_at = Time.zone.parse('2026-09-16 09:00')
+      draft_approved = create(:pull_request, ready_for_review_at: ready_at, gh_created_at: ready_at - 5.days)
+      create(:review, pull_request: draft_approved, state: 'APPROVED', submitted_at: ready_at - 2.days)
+
+      expect(draft_approved.days_since_first_approval(ready_at.to_date)).to be(2)
+    end
+
     context 'with no approved reviews' do
       it 'returns 0' do
         week = create(:week, repository: repository, end_date: Date.current)
@@ -363,10 +400,19 @@ RSpec.describe PullRequest do
 
     describe '.approved' do
       let!(:approved_pr) { create(:pull_request, :approved, repository: repository) }
-      let!(:unapproved_pr) { create(:pull_request, repository: repository) }
+      let!(:_unapproved_pr) { create(:pull_request, repository: repository) }
+      let!(:_bot_approved_pr) do
+        create(:pull_request, repository: repository).tap do |pull_request|
+          create(:review, pull_request: pull_request, state: 'APPROVED', author: create(:contributor, bot: true))
+        end
+      end
 
-      it 'returns only PRs with approved reviews' do
-        expect(PullRequest.approved).to contain_exactly(approved_pr)
+      it 'returns only pull requests a person approved' do
+        expect(described_class.approved).to contain_exactly(approved_pr)
+      end
+
+      it 'still answers with the reviewer rule when composed with the author association' do
+        expect(described_class.approved.joins(:author)).to contain_exactly(approved_pr)
       end
     end
 
