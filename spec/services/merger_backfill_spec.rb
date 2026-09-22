@@ -63,6 +63,16 @@ RSpec.describe MergerBackfill do
     expect(github_service).to have_received(:merged_pull_requests).with('owner/app', after: 'cursor-1')
   end
 
+  it 'records no merger, and counts none, when the contributor cannot be stored' do
+    merged = create(:pull_request, repository: repository, number: 1, gh_merged_at: 2.days.ago)
+    create(:contributor, username: 'the-merger', github_id: 'placeholder_earlier')
+
+    backfill.run(repository)
+
+    expect(merged.reload.merged_by).to be_nil
+    expect(output.string.strip).to eq('owner/app: recorded 0 mergers')
+  end
+
   it 'ignores pull requests GitHub reports that are not stored' do
     stored = create(:pull_request, repository: repository, number: 9, gh_merged_at: 2.days.ago)
 

@@ -31,6 +31,21 @@ RSpec.describe GithubService do
       end
     end
 
+    context 'when a pull request has more reviews than one page holds' do
+      it 'stores the reviews on every page' do
+        pages = [Array.new(100) { |n| double(state: 'COMMENTED', submitted_at: n.hours.ago, user: user) },
+                 [double(state: 'APPROVED', submitted_at: Time.current, user: user)]]
+        allow(octokit_client).to receive(:pull_request_reviews) do |_repo, _number, options|
+          pages[options[:page] - 1] || []
+        end
+        allow(service).to receive(:find_or_create_contributor).and_return(create(:contributor))
+
+        expect do
+          service.send(:fetch_and_store_reviews, pull_request, repo_name, pr_number)
+        end.to change(Review, :count).by(101)
+      end
+    end
+
     context 'when review timestamps are nil' do
       let(:invalid_review) { double('review', state: 'approved', submitted_at: nil, user: user) }
 
@@ -137,6 +152,19 @@ RSpec.describe GithubService do
       recorded = create(:contributor, username: 'recorded-earlier')
       create(:pull_request, repository: repository, number: 123, gh_merged_at: 1.day.ago, merged_by: recorded)
       allow(pr_data).to receive_messages(merged_at: 1.day.ago, state: 'closed')
+
+      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+      expect(repository.pull_requests.find_by(number: 123).merged_by).to eq(recorded)
+    end
+
+    it 'keeps a merger it already knows when the one GitHub names cannot be stored' do
+      recorded = create(:contributor, username: 'recorded-earlier')
+      create(:pull_request, repository: repository, number: 123, gh_merged_at: 1.day.ago, merged_by: recorded)
+      create(:contributor, username: 'the-merger', github_id: 'placeholder_earlier')
+      merger = double(id: 9_000_781, login: 'the-merger', name: nil, avatar_url: nil, email: nil, type: 'User')
+      allow(pr_data).to receive_messages(merged_at: 1.day.ago, state: 'closed')
+      allow(service).to receive(:issue_events).and_return([double(event: 'merged', actor: merger)])
 
       service.send(:process_pull_request, repository, 'test/repo', pr_data)
 

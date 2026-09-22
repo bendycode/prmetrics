@@ -32,7 +32,8 @@ class MergerBackfill
     loop do
       page = @github_service.merged_pull_requests(repository.name, after: cursor)
       recorded += record_page(page[:nodes], unknown)
-      break if unknown.empty? || !page[:has_next_page]
+      # A cursor that does not advance would ask for the same page forever
+      break if unknown.empty? || !page[:has_next_page] || page[:end_cursor].blank? || page[:end_cursor] == cursor
 
       cursor = page[:end_cursor]
     end
@@ -60,6 +61,9 @@ class MergerBackfill
   def contributor_for(merger)
     return nil if merger.blank? || merger[:id].blank? || merger[:login].blank?
 
-    Contributor.find_or_create_from_github(GithubUser.new(*merger.values_at(:id, :login, :type)))
+    # An unsaved contributor, whose username another row already holds, would
+    # be written as no merger at all and still counted as recorded
+    contributor = Contributor.find_or_create_from_github(GithubUser.new(*merger.values_at(:id, :login, :type)))
+    contributor if contributor&.persisted?
   end
 end
