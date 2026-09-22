@@ -77,13 +77,6 @@ class PullRequest < ApplicationRecord
     WeekdayHours.weekday_hours_between(ready_for_review_at, gh_merged_at) * 1.hour
   end
 
-  def weekday_hours_to_approval
-    approved = approved_at
-    return nil unless approved
-
-    WeekdayHours.weekday_hours_between(ready_for_review_at, approved) * 1.hour
-  end
-
   # When the pull request was cleared to merge: the first approval from a
   # person, or the author's own merge, whichever came first. An author merging
   # their own work is that pull request's approval, which is how a repository
