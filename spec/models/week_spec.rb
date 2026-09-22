@@ -29,6 +29,39 @@ RSpec.describe Week do
     end
   end
 
+  describe 'late and stale pull requests' do
+    let(:week) do
+      create(:week, repository: create(:repository), week_number: 202_637,
+                    begin_date: Date.new(2026, 9, 14), end_date: Date.new(2026, 9, 20))
+    end
+    let(:approved_at) { Time.zone.parse('2026-08-31 09:00') }
+
+    def waiting_pull_request(approved_by:)
+      pull_request = create(:pull_request, repository: week.repository, gh_created_at: approved_at - 1.day,
+                                           ready_for_review_at: approved_at - 1.day)
+      create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: approved_at, author: approved_by)
+      pull_request
+    end
+
+    it 'counts a pull request a person approved and nobody merged' do
+      waiting = waiting_pull_request(approved_by: create(:contributor))
+
+      expect(week.late_prs).to contain_exactly(waiting)
+    end
+
+    it 'leaves out a pull request only a bot approved' do
+      waiting_pull_request(approved_by: create(:contributor, bot: true))
+
+      expect(week.late_prs).to be_empty
+    end
+
+    it 'leaves a bot-approved pull request out of the stale list too' do
+      waiting_pull_request(approved_by: create(:contributor, bot: true)).update!(ready_for_review_at: 3.months.ago)
+
+      expect(week.stale_prs).to be_empty
+    end
+  end
+
   describe '.unreferenced' do
     let(:week) { create(:week) }
 

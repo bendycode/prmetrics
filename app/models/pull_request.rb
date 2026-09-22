@@ -31,8 +31,9 @@ class PullRequest < ApplicationRecord
   scope :missing_merger, -> { merged.where(merged_by_id: nil) }
   scope :from_branch, ->(ref) { where(head_ref: ref) }
   scope :into_branch, ->(refs) { where(base_ref: refs) }
+  # Cleared to merge by a person; a bot's approval is feedback, not approval
   scope :approved, lambda {
-    joins(:reviews).merge(Review.approved).distinct
+    joins(:reviews).merge(Review.approved.by_people).distinct
   }
 
   scope :open_at, lambda { |timestamp|
@@ -91,8 +92,16 @@ class PullRequest < ApplicationRecord
   # approval given while it was still a draft counts from the moment it became
   # ready for review, so no pull request is approved before it was askable.
   def approved_at
-    return nil unless ready_for_review_at
+    return nil unless ready_for_review_at && cleared_at
 
+    # An approval given while it was still a draft counts from the moment it
+    # became ready for review, so nothing is approved before it was askable
+    [cleared_at, ready_for_review_at].max
+  end
+
+  # When it was cleared to merge, whether or not it had been marked ready for
+  # review by then. Late and stale ask only how long it has waited since.
+  def cleared_at
     [first_approval_at, self_merged_at].compact.min
   end
 
@@ -114,23 +123,15 @@ class PullRequest < ApplicationRecord
   # @param reference_date [Time/Date] The date to calculate from (defaults to current time)
   # @return [Integer] Number of days since first approval, or 0 if no approved reviews
   def days_since_first_approval(reference_date = Time.current)
-    first_approved_review = reviews
-                            .where(state: 'APPROVED')
-                            .order(:submitted_at)
-                            .first
-
-    return 0 unless first_approved_review
+    return 0 unless cleared_at
 
     # Use end_of_day for reference_date to be consistent with week boundaries
     reference_timestamp = reference_date.in_time_zone.end_of_day
-    ((reference_timestamp - first_approved_review.submitted_at) / 1.day).to_i
+    ((reference_timestamp - cleared_at) / 1.day).to_i
   end
 
   def first_approval_at
-    approved_at = reviews.approved.by_people.minimum(:submitted_at)
-    return nil unless approved_at
-
-    [approved_at.in_time_zone, ready_for_review_at].max
+    reviews.approved.by_people.minimum(:submitted_at)&.in_time_zone
   end
 
   def self_merged_at
