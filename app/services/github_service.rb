@@ -201,7 +201,7 @@ class GithubService
     )
 
     fetch_and_store_reviews(pull_request, repo_name, pr.number)
-    fetch_and_store_users(pull_request, pr)
+    store_author(pull_request, pr)
   end
 
   def fetch_and_store_reviews(pull_request, repo_name, pr_number)
@@ -248,9 +248,11 @@ class GithubService
     )
   end
 
-  def fetch_and_store_users(pull_request, pr)
+  # The author's participation row, which the contributor pages read. The
+  # merger lives on the pull request itself; GitHub's list payload, the only
+  # place this ever looked for one, does not carry it.
+  def store_author(pull_request, pr)
     store_user(pull_request, pr.user, 'author')
-    store_user(pull_request, pr.merged_by, 'merger') if pr.merged_by
   end
 
   def with_rate_limit_handling

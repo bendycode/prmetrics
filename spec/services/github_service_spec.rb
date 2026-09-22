@@ -68,7 +68,7 @@ RSpec.describe GithubService do
     before do
       allow(service).to receive(:issue_events).and_return([])
       allow(service).to receive(:fetch_and_store_reviews)
-      allow(service).to receive(:fetch_and_store_users)
+      allow(service).to receive(:store_author)
     end
 
     it 'creates a pull request and sets ready_for_review_at' do
@@ -246,29 +246,22 @@ RSpec.describe GithubService do
     end
   end
 
-  describe '#fetch_and_store_users' do
+  describe '#store_author' do
     let(:pull_request) { create(:pull_request, repository: repository) }
     let(:author) { double(id: 9_000_501, login: 'the-author', name: nil, avatar_url: nil, email: nil) }
-    let(:merger) { double(id: 9_000_502, login: 'the-merger', name: nil, avatar_url: nil, email: nil) }
 
-    it 'records the author and the merger' do
-      service.send(:fetch_and_store_users, pull_request, double(user: author, merged_by: merger))
+    it "records the pull request's author as a participant" do
+      service.send(:store_author, pull_request, double(user: author))
 
       expect(pull_request.pull_request_users.map { |pru| [pru.role, pru.user.username] })
-        .to contain_exactly(%w[author the-author], %w[merger the-merger])
-    end
-
-    it 'records only the author of an unmerged pull request' do
-      service.send(:fetch_and_store_users, pull_request, double(user: author, merged_by: nil))
-
-      expect(pull_request.pull_request_users.pluck(:role)).to eq(['author'])
+        .to contain_exactly(%w[author the-author])
     end
 
     it 'finds a contributor by username when GitHub sends no id' do
       existing = create(:contributor, username: 'no-id-user')
       username_only = double(login: 'no-id-user', name: nil, email: nil)
 
-      service.send(:fetch_and_store_users, pull_request, double(user: username_only, merged_by: nil))
+      service.send(:store_author, pull_request, double(user: username_only))
 
       expect(pull_request.pull_request_users.sole.user).to eq(existing)
     end
