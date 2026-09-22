@@ -357,5 +357,18 @@ heroku run bundle exec rake sync:list
 - Built-in error reporting
 - Use bin/deploy for deploying to production. Script remembers extra support work, such as pending migrations.
 
+## Issue Keys
+Work is tracked in this repository's GitHub issues, and an issue's key is
+`PRM-` plus its number: issue #83 is PRM-83. The prefix tells prmetrics work
+apart from other projects' issues at a glance.
+
+- Branch, plan-file, and session slugs start with the key in lowercase:
+  `prm-83-leave-promotion-prs-out-of-metrics`.
+- In prose (PR bodies, commit bodies, comments) write `PRM-83`; an autolink
+  reference on the repository turns it into a link to the issue. `CS-NNN` links
+  to an issue in bendyworks/claude-skills the same way.
+- Keep `#83` where GitHub reads it as a machine token: `Closes #83` and
+  `Refs: #83` trailers.
+
 ## Roadmap Maintenance
 Always remove finished projects and tasks from ROADMAP.md as part of keeping it as tight and succinct as possible, focusing on items still outstanding to do.
