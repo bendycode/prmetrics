@@ -6,6 +6,7 @@ class PullRequest < ApplicationRecord
   belongs_to :merged_by, class_name: 'Contributor', optional: true, inverse_of: :merged_pull_requests
   belongs_to :ready_for_review_week, class_name: 'Week', optional: true
   belongs_to :first_review_week, class_name: 'Week', optional: true
+  belongs_to :first_approval_week, class_name: 'Week', optional: true
   belongs_to :merged_week, class_name: 'Week', optional: true
   belongs_to :closed_week, class_name: 'Week', optional: true
 
@@ -140,6 +141,7 @@ class PullRequest < ApplicationRecord
     first_valid_review = valid_first_review
 
     self.first_review_week = repository.weeks.find_by_date(first_valid_review&.submitted_at)
+    self.first_approval_week = repository.weeks.find_by_date(approved_at)
     self.merged_week = repository.weeks.find_by_date(gh_merged_at)
     self.closed_week = repository.weeks.find_by_date(gh_closed_at)
     save
@@ -147,7 +149,7 @@ class PullRequest < ApplicationRecord
 
   def ensure_weeks_exist_and_update_associations
     # First ensure all required weeks exist
-    dates = [ready_for_review_at, valid_first_review&.submitted_at, gh_merged_at, gh_closed_at].compact
+    dates = [ready_for_review_at, valid_first_review&.submitted_at, approved_at, gh_merged_at, gh_closed_at].compact
 
     dates.each do |date|
       ct_date = date.in_time_zone('America/Chicago')
@@ -200,6 +202,7 @@ class PullRequest < ApplicationRecord
     week_associations = {
       ready_for_review_week: ready_for_review_week,
       first_review_week: first_review_week,
+      first_approval_week: first_approval_week,
       merged_week: merged_week,
       closed_week: closed_week
     }

@@ -5,6 +5,43 @@ RSpec.describe PullRequest do
   let(:author) { create(:github_user) }
   let(:contributor) { create(:contributor) }
 
+  describe 'week associations' do
+    let(:ready_at) { Time.zone.parse('2026-09-16 09:00') }
+    let(:author) { create(:contributor) }
+    let(:pull_request) do
+      create(:pull_request, author: author, ready_for_review_at: ready_at, gh_created_at: ready_at)
+    end
+
+    it 'records the week a person first approved it in' do
+      create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: ready_at + 3.hours)
+      pull_request.ensure_weeks_exist_and_update_associations
+
+      expect(pull_request.reload.first_approval_week).to eq(pull_request.first_review_week)
+    end
+
+    it 'records the week its author merged it in, for a pull request nobody approved' do
+      pull_request.update!(merged_by: author, gh_merged_at: ready_at + 8.days)
+      pull_request.ensure_weeks_exist_and_update_associations
+
+      expect(pull_request.reload.first_approval_week).to eq(pull_request.merged_week)
+    end
+
+    it 'clears the approval week when the approving review goes away' do
+      review = create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: ready_at + 3.hours)
+      pull_request.ensure_weeks_exist_and_update_associations
+
+      expect { review.destroy }.to change { pull_request.reload.first_approval_week }.to(nil)
+    end
+
+    it 'records the approval week when a review arrives later' do
+      pull_request.ensure_weeks_exist_and_update_associations
+
+      expect do
+        create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: ready_at + 3.hours)
+      end.to change { pull_request.reload.first_approval_week }.from(nil)
+    end
+  end
+
   describe '#approved_at' do
     let(:ready_at) { Time.zone.parse('2026-09-16 09:00') }
     let(:author) { create(:contributor) }

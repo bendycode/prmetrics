@@ -139,6 +139,7 @@ class UnifiedSyncService
     weeks = [
       pull_request.ready_for_review_week,
       pull_request.first_review_week,
+      pull_request.first_approval_week,
       pull_request.merged_week,
       pull_request.closed_week
     ].compact.uniq

@@ -11,8 +11,8 @@ class Review < ApplicationRecord
     message: 'review already exists for this pull request, author, and state combination'
   }
 
-  after_destroy :update_pull_request_first_review_week, unless: :skip_week_association_update
-  after_save :update_pull_request_first_review_week, unless: :skip_week_association_update
+  after_destroy :update_pull_request_review_weeks, unless: :skip_week_association_update
+  after_save :update_pull_request_review_weeks, unless: :skip_week_association_update
 
   scope :ordered, -> { order(submitted_at: :desc) }
   scope :approved, -> { where(state: 'APPROVED') }
@@ -28,16 +28,17 @@ class Review < ApplicationRecord
 
   private
 
-  def update_pull_request_first_review_week
+  # A review changes both the week a pull request was first reviewed in and
+  # the week it was approved in, so one method keeps the pair in step.
+  def update_pull_request_review_weeks(pull_request = self.pull_request)
     return unless pull_request&.ready_for_review_at
 
-    # Find the first valid review and update the week association
-    first_review = pull_request.valid_first_review
-    # Use repository-scoped week lookup to prevent cross-repository associations
-    new_week = first_review ? pull_request.repository.weeks.find_by_date(first_review.submitted_at) : nil
+    weeks = pull_request.repository.weeks
+    # Repository-scoped lookups prevent cross-repository associations
+    new_weeks = { first_review_week_id: weeks.find_by_date(pull_request.valid_first_review&.submitted_at)&.id,
+                  first_approval_week_id: weeks.find_by_date(pull_request.approved_at)&.id }
 
-    return unless pull_request.first_review_week != new_week
-
-    pull_request.update_column(:first_review_week_id, new_week&.id)
+    changed = new_weeks.reject { |column, week_id| pull_request.public_send(column) == week_id }
+    pull_request.update_columns(changed) if changed.any?
   end
 end
