@@ -16,17 +16,17 @@ RSpec.describe DashboardHelper do
       expect(result.pluck(:title)).to eq(['Stale Approved PRs', 'Late Approved PRs'])
     end
 
-    it 'leads the late PRs definition with the open/non-draft/approved filter' do
+    it 'leads the late PRs definition with the open, non-draft, person-approved filter' do
       body = helper.metric_definitions(:late_prs).first[:body]
 
-      expect(body).to start_with('Counted only for PRs that are open, non-draft, and have at least one approval')
+      expect(body).to start_with('Counted only for PRs that are open, non-draft, and approved by a person')
       expect(body).to include('more than 7 and fewer than 28 days')
     end
 
-    it 'leads the stale PRs definition with the open/non-draft/approved filter' do
+    it 'leads the stale PRs definition with the open, non-draft, person-approved filter' do
       body = helper.metric_definitions(:stale_prs).first[:body]
 
-      expect(body).to start_with('Counted only for PRs that are open, non-draft, and have at least one approval')
+      expect(body).to start_with('Counted only for PRs that are open, non-draft, and approved by a person')
       expect(body).to include('28 or more days')
     end
 
