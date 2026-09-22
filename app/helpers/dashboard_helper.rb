@@ -28,9 +28,21 @@ module DashboardHelper
             'Within that population, this is the count whose first approval landed 28 or more days ' \
             'before the end of the week. PRs move from Late Approved into Stale Approved at the 28-day mark.'
     },
-    hours_to_first_review: {
-      title: 'Hours to First Review',
-      body: "Average hours between a PR becoming ready for review and its first review. #{WEEKDAY_HOURS_RULE}"
+    prs_approved: {
+      title: 'PRs Approved',
+      body: 'Pull requests first cleared to merge during the week: approved by a person, or merged by their own ' \
+            'author. A repository where authors merge their own work is cleared that way rather than by review.'
+    },
+    hours_to_first_feedback: {
+      title: 'Hours to First Feedback',
+      body: 'Average hours between a PR becoming ready for review and the first review of any kind, from anyone, ' \
+            "bots included. This says how soon a PR got an answer, not whether it was cleared. #{WEEKDAY_HOURS_RULE}"
+    },
+    hours_to_approval: {
+      title: 'Hours to Approval',
+      body: 'Average hours between a PR becoming ready for review and being cleared to merge: the first approval ' \
+            'from a person, or its own author merging it. A bot review is feedback, not approval. ' \
+            "#{WEEKDAY_HOURS_RULE}"
     },
     hours_to_merge: {
       title: 'Hours to Merge',
@@ -47,10 +59,15 @@ module DashboardHelper
       body: 'Sum of "PRs Started" across the most recent four full weeks of data for the repository.'
     },
     avg_review_time_hours: {
-      title: 'Avg Review Time (hours)',
-      body: 'Average of each week\'s "Hours to First Review" across the most recent four full weeks of data ' \
+      title: 'Avg Feedback Time (hours)',
+      body: 'Average of each week\'s "Hours to First Feedback" across the most recent four full weeks of data ' \
             'for the repository. Same underlying calculation as the Review Performance chart -- weekday hours only ' \
             '(Saturdays and Sundays skipped, weekdays count all 24 hours, no business-hours cap).'
+    },
+    avg_approval_time_hours: {
+      title: 'Avg Approval Time (hours)',
+      body: 'Average of each week\'s "Hours to Approval" across the most recent four full weeks of data for the ' \
+            'repository, on the same weekday-hours basis as the feedback figure beside it.'
     }
   }.freeze
 

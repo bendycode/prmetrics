@@ -19,7 +19,7 @@ RSpec.describe 'Dashboard' do
         expect(page).to have_content('Dashboard')
         expect(page).to have_content('Total Repositories')
         expect(page).to have_content('Total Pull Requests')
-        expect(page).to have_content('Avg Time to Review')
+        expect(page).to have_content('Avg Time to Feedback')
         expect(page).to have_content('Avg Time to Merge')
 
         # Should show zero values
@@ -131,7 +131,7 @@ RSpec.describe 'Dashboard' do
       expect(page).to have_css('.col-lg-6')
 
       # Check that cards are present
-      expect(page).to have_css('.card', count: 9) # 4 metric cards + 3 chart cards + 2 data cards
+      expect(page).to have_css('.card', count: 10) # 5 metric cards + 3 chart cards + 2 data cards
     end
   end
 
@@ -172,12 +172,12 @@ RSpec.describe 'Dashboard' do
       expect(page_source).to include('PRs Cancelled')
 
       # Should include review performance data
-      expect(page_source).to include('Hours to First Review')
+      expect(page_source).to include('Hours to First Feedback')
       expect(page_source).to include('Hours to Merge')
 
       # Should include repository comparison data
       expect(page_source).to include('Total PRs (4 weeks)')
-      expect(page_source).to include('Avg Review Time (hours)')
+      expect(page_source).to include('Avg Feedback Time (hours)')
       expect(page_source).to include('Merge Rate (%)')
     end
 

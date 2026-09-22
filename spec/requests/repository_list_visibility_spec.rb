@@ -62,7 +62,7 @@ RSpec.describe 'Repository list visibility' do
       expect(summary_card_value('Avg Time to Merge')).to eq('2.0')
     end
 
-    it 'averages time to first review over granted repositories only' do
+    it 'averages time to first feedback over granted repositories only' do
       granted_pull_request = create(:pull_request, repository: granted_repository, ready_for_review_at: wednesday)
       create(:review, pull_request: granted_pull_request, submitted_at: wednesday + 3.hours)
       hidden_pull_request = create(:pull_request, repository: hidden_repository, ready_for_review_at: wednesday)
@@ -70,7 +70,7 @@ RSpec.describe 'Repository list visibility' do
 
       get dashboard_path
 
-      expect(summary_card_value('Avg Time to Review')).to eq('3.0')
+      expect(summary_card_value('Avg Time to Feedback')).to eq('3.0')
     end
 
     context 'when signed in as an admin' do

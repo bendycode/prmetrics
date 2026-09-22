@@ -31,13 +31,11 @@ RSpec.describe DashboardHelper do
     end
 
     it 'defines a key whose title matches each Repository Performance Comparison chart label' do
-      total_prs = helper.metric_definitions(:total_prs_4_weeks).first
-      avg_review = helper.metric_definitions(:avg_review_time_hours).first
-      merge_rate = helper.metric_definitions(:merge_rate).first
+      titles = helper.metric_definitions(:total_prs_4_weeks, :avg_review_time_hours, :avg_approval_time_hours,
+                                         :merge_rate).pluck(:title)
 
-      expect(total_prs[:title]).to eq('Total PRs (4 weeks)')
-      expect(avg_review[:title]).to eq('Avg Review Time (hours)')
-      expect(merge_rate[:title]).to eq('Merge Rate (%)')
+      expect(titles).to eq(['Total PRs (4 weeks)', 'Avg Feedback Time (hours)', 'Avg Approval Time (hours)',
+                            'Merge Rate (%)'])
     end
 
     it 'describes merge_rate as merged-divided-by-started, not merged-divided-by-closed' do
@@ -49,10 +47,9 @@ RSpec.describe DashboardHelper do
     end
 
     it 'states explicitly which days are excluded and that weekdays have no hourly cap', :aggregate_failures do
-      review_def = helper.metric_definitions(:hours_to_first_review).first
-      merge_def = helper.metric_definitions(:hours_to_merge).first
+      definitions = helper.metric_definitions(:hours_to_first_feedback, :hours_to_approval, :hours_to_merge)
 
-      [review_def, merge_def].each do |defn|
+      definitions.each do |defn|
         expect(defn[:body]).to include('Saturdays and Sundays')
         expect(defn[:body]).to include('no business-hours cap')
       end

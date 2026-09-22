@@ -35,7 +35,7 @@ RSpec.describe 'Dashboard metric definitions' do
     get dashboard_path
 
     expect(response.body).to match(/aria-label="[^"]*Review Performance[^"]*"/)
-    expect(response.body).to include('Hours to First Review')
+    expect(response.body).to include('Hours to First Feedback')
     expect(response.body).to include('Hours to Merge')
   end
 

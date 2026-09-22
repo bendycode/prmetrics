@@ -55,18 +55,36 @@
         </div>
     </div>
 
-    <!-- Average Time to Review Card -->
+    <!-- Average Time to Feedback Card -->
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card border-left-warning shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Avg Time to Review (Hours)</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @avg_time_to_review %></div>
+                            Avg Time to Feedback (Hours)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @avg_time_to_feedback %></div>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Average Time to Approval Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Avg Time to Approval (Hours)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800"><%= @avg_time_to_approval %></div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
@@ -133,7 +151,7 @@
                     Review Performance
                     <%= render 'shared/metric_info',
                                chart_label: 'Review Performance',
-                               keys: %i[hours_to_first_review hours_to_merge] %>
+                               keys: %i[hours_to_first_feedback hours_to_approval hours_to_merge] %>
                 </h6>
                 <small class="text-muted">
                     Average hours (weekdays only)
@@ -161,7 +179,8 @@
                     Repository Performance Comparison
                     <%= render 'shared/metric_info',
                                chart_label: 'Repository Performance Comparison',
-                               keys: %i[total_prs_4_weeks avg_review_time_hours merge_rate] %>
+                               keys: %i[total_prs_4_weeks avg_review_time_hours avg_approval_time_hours
+                                        merge_rate] %>
                 </h6>
                 <small class="text-muted">Last 4 weeks average</small>
             </div>
@@ -434,10 +453,18 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
             labels: [<%= @chart_weeks.map { |w| "'#{w.begin_date.strftime('%b %d')}'" }.join(', ').html_safe %>],
             datasets: [{
-                label: "<%= metric_label(:hours_to_first_review) %>",
+                label: "<%= metric_label(:hours_to_first_feedback) %>",
                 data: [<%= @chart_weeks.map { |w| w.avg_hrs_to_first_review || 0 }.join(', ') %>],
                 borderColor: '#f6c23e',
                 backgroundColor: 'rgba(246, 194, 62, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.3
+            }, {
+                label: "<%= metric_label(:hours_to_approval) %>",
+                data: [<%= @chart_weeks.map { |w| w.avg_hrs_to_approval || 0 }.join(', ') %>],
+                borderColor: '#36b9cc',
+                backgroundColor: 'rgba(54, 185, 204, 0.1)',
                 borderWidth: 3,
                 fill: true,
                 tension: 0.3
@@ -507,6 +534,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 data: [<%= @repository_stats.map { |r| r[:avg_review_time].round(1) }.join(', ') %>],
                 backgroundColor: '#f6c23e',
                 borderColor: '#f6c23e',
+                borderWidth: 1,
+                yAxisID: 'y1'
+            }, {
+                label: "<%= metric_label(:avg_approval_time_hours) %>",
+                data: [<%= @repository_stats.map { |r| r[:avg_approval_time].round(1) }.join(', ') %>],
+                backgroundColor: '#36b9cc',
+                borderColor: '#36b9cc',
                 borderWidth: 1,
                 yAxisID: 'y1'
             }, {

@@ -8,8 +8,10 @@
       <th>State</th>
       <th>Created</th>
       <th>Review Ready</th>
-      <th>First Reviewed</th>
-      <th>Time to Review</th>
+      <th>First Feedback</th>
+      <th>Time to Feedback</th>
+      <th>Approved</th>
+      <th>Time to Approval</th>
       <th>Merged</th>
       <th>Time to Merge</th>
       <th>Cancelled</th>
@@ -39,10 +41,21 @@
             <%= (pr.time_to_first_review / 1.hour).round(2) %> hrs
           <% end %>
         </td>
+        <% approved_at = pr.approved_at %>
+        <td>
+          <% if approved_at %>
+            <%= approved_at.in_time_zone('Central Time (US & Canada)').strftime('%m/%d/%y %I:%M%p') %>
+          <% end %>
+        </td>
+        <td>
+          <% if approved_at %>
+            <%= WeekdayHours.weekday_hours_between(pr.ready_for_review_at, approved_at).round(2) %> hrs
+          <% end %>
+        </td>
         <td><%= pr.gh_merged_at&.in_time_zone('Central Time (US & Canada)')&.strftime('%m/%d/%y %I:%M%p') %></td>
         <td>
           <% if pr.ready_for_review_at && pr.gh_merged_at %>
-            <%= ((pr.gh_merged_at - pr.ready_for_review_at) / 1.hour).round(2) %> hrs
+            <%= WeekdayHours.weekday_hours_between(pr.ready_for_review_at, pr.gh_merged_at).round(2) %> hrs
           <% end %>
         </td>
         <td>

@@ -33,7 +33,8 @@ class DashboardController < ApplicationController
     pull_requests_scope = pull_requests_scope.where(repository: @selected_repository) if @selected_repository
 
     @total_prs = pull_requests_scope.count
-    @avg_time_to_review = calculate_avg_time_to_review(pull_requests_scope)
+    @avg_time_to_feedback = calculate_avg_time_to_feedback(pull_requests_scope)
+    @avg_time_to_approval = calculate_avg_time_to_approval(pull_requests_scope)
     @avg_time_to_merge = calculate_avg_time_to_merge(pull_requests_scope)
   end
 
@@ -46,12 +47,14 @@ class DashboardController < ApplicationController
 
       # Calculate averages only from weeks that have data
       review_times = recent_weeks.map(&:avg_hrs_to_first_review).compact
+      approval_times = recent_weeks.map(&:avg_hrs_to_approval).compact
       merge_times = recent_weeks.map(&:avg_hrs_to_merge).compact
 
       {
         name: repo.name,
         total_prs: recent_weeks.sum { |w| w.num_prs_started || 0 },
         avg_review_time: review_times.empty? ? 0 : (review_times.sum / review_times.count).round(1),
+        avg_approval_time: approval_times.empty? ? 0 : (approval_times.sum / approval_times.count).round(1),
         avg_merge_time: merge_times.empty? ? 0 : (merge_times.sum / merge_times.count).round(1),
         merge_rate: calculate_merge_rate(recent_weeks)
       }
@@ -110,7 +113,14 @@ class DashboardController < ApplicationController
     (weighted_sum / total_weight).round(1)
   end
 
-  def calculate_avg_time_to_review(pull_requests)
+  def calculate_avg_time_to_approval(pull_requests)
+    cleared = PullRequest.cleared_times(pull_requests)
+    windows = pull_requests.where(id: cleared.keys).pluck(:id, :ready_for_review_at)
+                           .map { |id, ready_at| [ready_at, cleared[id]] }
+    average_weekday_hours(windows)
+  end
+
+  def calculate_avg_time_to_feedback(pull_requests)
     review_windows = pull_requests.where.not(ready_for_review_at: nil)
                                   .joins(:reviews)
                                   .group('pull_requests.id')

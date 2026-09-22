@@ -15,7 +15,7 @@ RSpec.describe 'Dashboard averages' do
     expect(summary_card_value('Avg Time to Merge')).to eq('4.0')
   end
 
-  it "averages time to first review from each pull request's earliest review" do
+  it "averages time to first feedback from each pull request's earliest review" do
     slow = create(:pull_request, repository: repository, ready_for_review_at: wednesday)
     create(:review, pull_request: slow, submitted_at: wednesday + 6.hours)
     create(:review, pull_request: slow, submitted_at: wednesday + 2.hours)
@@ -25,7 +25,46 @@ RSpec.describe 'Dashboard averages' do
 
     get dashboard_path
 
-    expect(summary_card_value('Avg Time to Review')).to eq('3.0')
+    expect(summary_card_value('Avg Time to Feedback')).to eq('3.0')
+  end
+
+  describe 'the approval card' do
+    let(:author) { create(:contributor) }
+
+    it "averages the wait to a person's approval and to an author's own merge" do
+      approved = create(:pull_request, repository: repository, author: author, ready_for_review_at: wednesday)
+      create(:review, pull_request: approved, state: 'APPROVED', submitted_at: wednesday + 2.hours)
+      create(:pull_request, repository: repository, author: author, ready_for_review_at: wednesday,
+                            merged_by: author, gh_merged_at: wednesday + 4.hours)
+
+      get dashboard_path
+
+      expect(summary_card_value('Avg Time to Approval')).to eq('3.0')
+    end
+
+    it 'leaves out a pull request only a bot approved, and one nobody cleared' do
+      bot_approved = create(:pull_request, repository: repository, ready_for_review_at: wednesday)
+      create(:review, pull_request: bot_approved, state: 'APPROVED', submitted_at: wednesday + 2.hours,
+                      author: create(:contributor, bot: true))
+      create(:pull_request, repository: repository, ready_for_review_at: wednesday)
+      cleared = create(:pull_request, repository: repository, author: author, ready_for_review_at: wednesday)
+      create(:review, pull_request: cleared, state: 'APPROVED', submitted_at: wednesday + 6.hours)
+
+      get dashboard_path
+
+      expect(summary_card_value('Avg Time to Approval')).to eq('6.0')
+    end
+
+    it 'shows both waits, feedback and approval' do
+      pull_request = create(:pull_request, repository: repository, ready_for_review_at: wednesday)
+      create(:review, pull_request: pull_request, state: 'COMMENTED', submitted_at: wednesday + 1.hour)
+      create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: wednesday + 5.hours)
+
+      get dashboard_path
+
+      expect([summary_card_value('Avg Time to Feedback'), summary_card_value('Avg Time to Approval')])
+        .to eq(%w[1.0 5.0])
+    end
   end
 
   describe 'with a promotion pull request' do
@@ -40,7 +79,8 @@ RSpec.describe 'Dashboard averages' do
       get dashboard_path
 
       expect([summary_card_value('Total Pull Requests'), summary_card_value('Avg Time to Merge'),
-              summary_card_value('Avg Time to Review')]).to eq(%w[1 4.0 0])
+              summary_card_value('Avg Time to Feedback'), summary_card_value('Avg Time to Approval')])
+        .to eq(%w[1 4.0 0 0])
     end
   end
 
@@ -51,6 +91,6 @@ RSpec.describe 'Dashboard averages' do
 
     get dashboard_path
 
-    expect(summary_card_value('Avg Time to Review')).to eq('3.0')
+    expect(summary_card_value('Avg Time to Feedback')).to eq('3.0')
   end
 end

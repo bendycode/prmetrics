@@ -97,6 +97,23 @@ class PullRequest < ApplicationRecord
     [first_approval_at, self_merged_at].compact.min
   end
 
+  # When each of these pull requests was cleared to merge, as {id => time}, in
+  # two queries rather than one per pull request. A pull request nobody cleared
+  # is absent. Same rule as #approved_at: a person's approval or the author's
+  # own merge, whichever came first, never before it was ready for review.
+  def self.cleared_times(pull_requests)
+    approvals = Review.approved.by_people.where(pull_request_id: pull_requests)
+                      .group(:pull_request_id).minimum(:submitted_at)
+    ready = pull_requests.where.not(ready_for_review_at: nil)
+                         .pluck(:id, :ready_for_review_at, :gh_merged_at, :merged_by_id, :author_id)
+
+    ready.filter_map do |id, ready_at, merged_at, merged_by_id, author_id|
+      self_merged_at = merged_at if merged_by_id && merged_by_id == author_id
+      cleared = [approvals[id]&.in_time_zone, self_merged_at].compact.min
+      [id, [cleared, ready_at].max] if cleared
+    end.to_h
+  end
+
   def valid_first_review_at
     valid_first_review&.submitted_at
   end
