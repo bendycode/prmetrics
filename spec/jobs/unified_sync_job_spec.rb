@@ -40,7 +40,7 @@ RSpec.describe UnifiedSyncJob do
       end
     end
 
-    it 'refreshes weeks and statistics across every repository once the sync finishes' do
+    it 'queues a statistics rebuild once the sync finishes' do
       expect do
         described_class.perform_now(repository)
       end.to have_enqueued_job(UpdateRepositoryStatsJob).with(repository.id)
