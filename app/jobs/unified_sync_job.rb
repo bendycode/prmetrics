@@ -3,8 +3,12 @@ class UnifiedSyncJob < ApplicationJob
 
   # A record that fails validation fails the same way on every attempt, and a
   # retry starts the sync over from its first page. UnifiedSyncService has
-  # already recorded the failure on the repository.
-  discard_on ActiveRecord::RecordInvalid
+  # already recorded the failure on the repository. A uniqueness failure is
+  # the exception: it means an overlapping sync stored the row first, so a
+  # retry finds that row and succeeds.
+  discard_on ActiveRecord::RecordInvalid do |_job, error|
+    raise error if error.record.errors.any? { |detail| detail.type == :taken }
+  end
 
   def perform(repository, fetch_all: false)
     logger.info "Starting unified sync for #{repository.name} (#{fetch_all ? 'full' : 'incremental'})"

@@ -60,6 +60,14 @@ RSpec.describe UnifiedSyncJob do
       expect { described_class.perform_now(repository) }.not_to raise_error
     end
 
+    it 'retries a sync that lost a uniqueness race with an overlapping sync' do
+      taken = build(:pull_request)
+      taken.errors.add(:number, :taken)
+      allow(service).to receive(:sync!).and_raise(ActiveRecord::RecordInvalid.new(taken))
+
+      expect { described_class.perform_now(repository) }.to raise_error(ActiveRecord::RecordInvalid)
+    end
+
     it 'logs progress messages' do
       # The job logs directly with logger.info
       job = described_class.new(repository)
