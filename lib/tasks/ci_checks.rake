@@ -46,7 +46,7 @@ namespace :ci do
 
     stats_inconsistent = 0
     recent_weeks.each do |week|
-      actual_merged = week.repository.pull_requests.where(merged_week_id: week.id).count
+      actual_merged = week.merged_prs.count
       stats_inconsistent += 1 if week.num_prs_merged != actual_merged
     end
 

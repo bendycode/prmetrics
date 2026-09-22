@@ -25,7 +25,7 @@ namespace :fix do
 
     Week.includes(:repository).find_each do |week|
       # Check merged PRs
-      actual_merged = week.repository.pull_requests.where(merged_week_id: week.id).count
+      actual_merged = week.merged_prs.count
       if week.num_prs_merged != actual_merged
         puts "\n⚠️  Week #{week.week_number} (#{week.repository.name}):"
         puts "  Stored merged count: #{week.num_prs_merged}"
@@ -34,10 +34,7 @@ namespace :fix do
       end
 
       # Check started PRs
-      actual_started = week.repository.pull_requests
-                           .where(draft: false)
-                           .where(ready_for_review_week_id: week.id)
-                           .count
+      actual_started = week.ready_for_review_prs.where(draft: false).count
       if week.num_prs_started != actual_started
         puts "\n⚠️  Week #{week.week_number} (#{week.repository.name}):"
         puts "  Stored started count: #{week.num_prs_started}"
