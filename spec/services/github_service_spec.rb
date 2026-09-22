@@ -267,6 +267,44 @@ RSpec.describe GithubService do
     end
   end
 
+  describe '#merged_pull_requests' do
+    # The shape Octokit returns for a GraphQL response
+    def graphql_page(nodes, has_next_page: false, end_cursor: nil)
+      Sawyer::Resource.new(Sawyer::Agent.new('https://api.github.com'),
+                           data: { repository: { pullRequests: {
+                             pageInfo: { hasNextPage: has_next_page, endCursor: end_cursor }, nodes: nodes
+                           } } })
+    end
+
+    it 'answers with each merged pull request and its merger' do
+      allow(octokit_client).to receive(:post).and_return(
+        graphql_page([{ number: 1, mergedBy: { login: 'one', databaseId: 11, __typename: 'User' } },
+                      { number: 2, mergedBy: { login: 'two[bot]', databaseId: 22, __typename: 'Bot' } }],
+                     has_next_page: true, end_cursor: 'cursor-1')
+      )
+
+      expect(service.merged_pull_requests('owner/app')).to eq(
+        nodes: [{ number: 1, merged_by: { login: 'one', id: 11, type: 'User' } },
+                { number: 2, merged_by: { login: 'two[bot]', id: 22, type: 'Bot' } }],
+        has_next_page: true, end_cursor: 'cursor-1'
+      )
+    end
+
+    it 'asks for the page after the cursor it is given' do
+      allow(octokit_client).to receive(:post).and_return(graphql_page([]))
+
+      service.merged_pull_requests('owner/app', after: 'cursor-1')
+
+      expect(octokit_client).to have_received(:post).with('/graphql', /cursor-1/)
+    end
+
+    it 'reports no merger for a pull request whose merger GitHub no longer knows' do
+      allow(octokit_client).to receive(:post).and_return(graphql_page([{ number: 3, mergedBy: nil }]))
+
+      expect(service.merged_pull_requests('owner/app')[:nodes]).to eq([{ number: 3, merged_by: nil }])
+    end
+  end
+
   describe '#each_pull_request' do
     it 'walks in the order pull requests were opened, so none shifts pages mid-walk' do
       allow(octokit_client).to receive(:pull_requests).and_return([])
@@ -375,7 +413,7 @@ RSpec.describe GithubService do
           raise error
         end
       end.to raise_error(/Max retries reached/)
-      expect(service).to have_received(:sleep).exactly(GithubService::MAX_RETRIES).times
+      expect(service).to have_received(:sleep).exactly(GithubRateLimiting::MAX_RETRIES).times
     end
   end
 

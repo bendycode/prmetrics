@@ -1,5 +1,5 @@
 class GithubService
-  MAX_RETRIES = 5
+  include GithubRateLimiting
 
   def initialize(access_token)
     @client = Octokit::Client.new(access_token: access_token)
@@ -20,6 +20,34 @@ class GithubService
 
   def default_branch(repo_name)
     with_rate_limit_handling { @client.repository(repo_name).default_branch }
+  end
+
+  MERGED_PULL_REQUESTS_QUERY = <<~GRAPHQL.freeze
+    query($owner: String!, $name: String!, $after: String) {
+      repository(owner: $owner, name: $name) {
+        pullRequests(states: MERGED, first: 100, after: $after) {
+          pageInfo { hasNextPage endCursor }
+          nodes { number mergedBy { login __typename ... on User { databaseId } ... on Bot { databaseId } } }
+        }
+      }
+    }
+  GRAPHQL
+
+  # One page of merged pull requests and their mergers, 100 at a time, as
+  # {nodes: [{number:, merged_by:}], has_next_page:, end_cursor:}. GitHub's
+  # REST endpoints answer with a merger one pull request at a time, which is
+  # thousands of calls on a repository of any age.
+  def merged_pull_requests(repo_name, after: nil)
+    owner, name = repo_name.split('/')
+    response = with_rate_limit_handling do
+      @client.post('/graphql', { query: MERGED_PULL_REQUESTS_QUERY,
+                                 variables: { owner: owner, name: name, after: after } }.to_json)
+    end
+    page = response.data.repository.pullRequests
+
+    { nodes: page.nodes.map { |node| merged_pull_request(node) },
+      has_next_page: page.pageInfo.hasNextPage,
+      end_cursor: page.pageInfo.endCursor }
   end
 
   # Yields every pull request GitHub lists for the repository, open or closed,
@@ -124,6 +152,12 @@ class GithubService
   end
 
   private
+
+  def merged_pull_request(node)
+    merger = node.mergedBy
+    merged_by = { login: merger.login, id: merger.databaseId, type: merger.__typename } if merger
+    { number: node.number, merged_by: merged_by }
+  end
 
   def fetch_pull_requests_page(repo_name, page, since: nil, order: { sort: 'updated', direction: 'desc' })
     options = { state: 'all', page: page, per_page: 100 }.merge(order)
@@ -253,51 +287,5 @@ class GithubService
   # place this ever looked for one, does not carry it.
   def store_author(pull_request, pr)
     store_user(pull_request, pr.user, 'author')
-  end
-
-  def with_rate_limit_handling
-    retries = 0
-    begin
-      yield
-    rescue Octokit::TooManyRequests => e
-      raise 'Max retries reached. Unable to complete the request due to rate limiting.' unless retries < MAX_RETRIES
-
-      wait_time = calculate_wait_time(e.response_headers, retries)
-      Rails.logger.warn "Rate limit exceeded. Waiting for #{wait_time} seconds before retrying..."
-      sleep(wait_time)
-      retries += 1
-      retry
-    rescue Faraday::ConnectionFailed, Net::OpenTimeout => e
-      Rails.logger.warn "ConnectionFailed or OpenTimeout error caught. retries: #{retries}"
-      raise 'Max retries reached. Unable to complete the request due to connection issues.' unless retries < MAX_RETRIES
-
-      wait_time = 5 * (2**retries) # exponential backoff
-      Rails.logger.warn "Connection error: #{e.message}. Retrying in #{wait_time} seconds..."
-      sleep(wait_time)
-      retries += 1
-      retry
-    end
-  end
-
-  def calculate_wait_time(headers, retry_count)
-    return exponential_backoff_starting_at_one_minute retry_count if headers.nil?
-
-    if headers['retry-after']
-      headers['retry-after'].to_i
-    elsif headers['x-ratelimit-remaining'].to_i == 0 && headers['x-ratelimit-reset']
-      wait_time = [headers['x-ratelimit-reset'].to_i - Time.current.to_i, 0].max
-
-      # If we're still hitting rate limits and wait time is 0,
-      # use exponential backoff instead
-      wait_time = exponential_backoff_starting_at_one_minute retry_count if wait_time == 0
-
-      wait_time
-    else
-      exponential_backoff_starting_at_one_minute retry_count
-    end
-  end
-
-  def exponential_backoff_starting_at_one_minute(retry_count)
-    60 * (2**retry_count)
   end
 end
