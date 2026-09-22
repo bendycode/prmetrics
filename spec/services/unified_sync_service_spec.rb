@@ -2,164 +2,118 @@ require 'rails_helper'
 
 RSpec.describe UnifiedSyncService do
   let(:repo_name) { 'rails/rails' }
-  let(:repository) { create(:repository, name: repo_name) }
+  let!(:repository) { create(:repository, name: repo_name) }
   let(:github_service) { instance_double(GithubService) }
+  let(:merged_at) { Time.zone.parse('2026-09-16 10:00') }
+  let(:pr_data) { double(number: 123) }
 
   before do
-    allow(Repository).to receive(:find_or_create_by).with(name: repo_name).and_return(repository)
     allow(GithubService).to receive(:new).and_return(github_service)
-    allow(ENV).to receive(:[]).and_call_original
-    allow(ENV).to receive(:[]).with('GITHUB_ACCESS_TOKEN').and_return('test_token')
+    allow(github_service).to receive_messages(get_pull_request_count: 10, fetch_recent_review_activity: 0)
+  end
+
+  # Stands in for GithubService: stores the pull request, then hands its
+  # GitHub data to the processor, as the real fetch does once per pull request.
+  def fetch_stores_one_pull_request
+    allow(github_service).to receive(:fetch_and_store_pull_requests) do |_name, processor:, **|
+      create(:pull_request, repository: repository, number: 123,
+                            gh_created_at: merged_at - 2.days, ready_for_review_at: merged_at - 2.days,
+                            gh_merged_at: merged_at, gh_closed_at: merged_at, state: 'closed')
+      processor.call(pr_data)
+    end
   end
 
   describe '#sync!' do
-    let(:service) { described_class.new(repo_name, progress_callback: ->(msg) {}) }
-    let(:pr_data) { double(number: 123, created_at: 1.week.ago, merged_at: 2.days.ago) }
-    let(:pull_request) do
-      create(:pull_request, repository: repository, number: 123,
-                            gh_created_at: 1.week.ago, gh_merged_at: 2.days.ago)
-    end
+    let(:service) { described_class.new(repo_name, progress_callback: ->(_msg) {}) }
 
-    before do
-      allow(github_service).to receive(:get_pull_request_count).and_return(10)
-      allow(github_service).to receive(:fetch_and_store_pull_requests)
-      allow(github_service).to receive(:fetch_recent_review_activity).and_return(0)
-      allow(repository).to receive(:pull_requests).and_return(PullRequest.where(repository: repository))
-    end
+    before { fetch_stores_one_pull_request }
 
-    it 'updates repository sync status during the process' do
-      expect(repository).to receive(:update).with(
-        sync_status: 'in_progress',
-        sync_started_at: anything,
-        sync_progress: 0
-      )
-
-      expect(repository).to receive(:update).with(
-        sync_status: 'completed',
-        sync_completed_at: anything,
-        last_sync_error: nil,
-        sync_progress: 100
-      )
-
-      service.sync!
-    end
-
-    it 'fetches PRs with a processor callback' do
-      expect(github_service).to receive(:fetch_and_store_pull_requests).with(
-        repo_name,
-        fetch_all: false,
-        processor: anything
-      )
-
-      service.sync!
-    end
-
-    it 'creates weeks for processed pull requests' do
-      # Set up the PR to be found when processor is called
-      allow(repository.pull_requests).to receive(:find_by).with(number: 123).and_return(pull_request)
-
-      # Capture the processor and call it
-      processor = nil
-      allow(github_service).to receive(:fetch_and_store_pull_requests) do |_name, opts|
-        processor = opts[:processor]
+    it 'marks the repository in progress while it fetches, then completed' do
+      statuses = []
+      allow(github_service).to receive(:fetch_and_store_pull_requests) do
+        statuses << repository.reload.sync_status
       end
 
-      expect do
-        service.sync!
-        processor.call(pr_data) if processor
-      end.to change { repository.weeks.count }.by_at_least(1)
-    end
-
-    it 'updates week statistics for affected weeks' do
-      create(:week, repository: repository)
-      allow(service).to receive(:update_week_statistics)
-
       service.sync!
 
-      expect(service).to have_received(:update_week_statistics)
+      expect(statuses).to eq(['in_progress'])
+      expect(repository.reload).to have_attributes(sync_status: 'completed', sync_progress: 100,
+                                                   last_sync_error: nil)
     end
 
-    context 'when sync fails' do
+    it 'fetches incrementally with a processor by default' do
+      service.sync!
+
+      expect(github_service).to have_received(:fetch_and_store_pull_requests)
+        .with(repo_name, fetch_all: false, processor: an_instance_of(Method))
+    end
+
+    it 'creates the weeks each pull request touches and refreshes their statistics' do
+      service.sync!
+
+      merged_week = repository.pull_requests.find_by(number: 123).merged_week
+      expect(merged_week).to have_attributes(num_prs_merged: 1)
+    end
+
+    context 'when the fetch fails' do
       before do
         allow(github_service).to receive(:fetch_and_store_pull_requests).and_raise(StandardError, 'API error')
       end
 
-      it 'updates repository with failed status' do
-        # Allow the initial in_progress update
-        allow(repository).to receive(:update).with(
-          sync_status: 'in_progress',
-          sync_started_at: anything,
-          sync_progress: 0
-        )
-
-        expect(repository).to receive(:update).with(
-          sync_status: 'failed',
-          sync_completed_at: anything,
-          last_sync_error: 'API error'
-        )
-
+      it 'records the failure on the repository and re-raises' do
         expect { service.sync! }.to raise_error(StandardError, 'API error')
+
+        expect(repository.reload).to have_attributes(sync_status: 'failed', last_sync_error: 'API error')
+      end
+    end
+
+    context 'when the repository row no longer validates' do
+      it 'fails the sync before fetching, and says so on the repository' do
+        repository.name = 'not a repository name'
+        repository.save(validate: false)
+        invalid_service = described_class.new(repository.name, progress_callback: ->(_msg) {})
+
+        expect { invalid_service.sync! }.to raise_error(ActiveRecord::RecordInvalid)
+        expect(github_service).not_to have_received(:fetch_and_store_pull_requests)
+        expect(repository.reload).to have_attributes(sync_status: 'failed')
       end
     end
 
     context 'with fetch_all option' do
-      let(:service) { described_class.new(repo_name, fetch_all: true, progress_callback: ->(msg) {}) }
+      let(:service) { described_class.new(repo_name, fetch_all: true, progress_callback: ->(_msg) {}) }
 
-      it 'passes fetch_all to github service' do
-        expect(github_service).to receive(:fetch_and_store_pull_requests).with(
-          repo_name,
-          fetch_all: true,
-          processor: anything
-        )
-
+      it 'fetches every pull request, sized by GitHub for progress tracking' do
         service.sync!
-      end
 
-      it 'gets total PR count from GitHub for progress tracking' do
-        expect(github_service).to receive(:get_pull_request_count).with(repo_name).and_return(50)
-
-        service.sync!
+        expect(github_service).to have_received(:fetch_and_store_pull_requests)
+          .with(repo_name, fetch_all: true, processor: an_instance_of(Method))
+        expect(github_service).to have_received(:get_pull_request_count).with(repo_name)
       end
     end
 
     context 'with custom progress callback' do
       let(:progress_messages) { [] }
-      let(:progress_callback) { ->(msg) { progress_messages << msg } }
-      let(:service) { described_class.new(repo_name, progress_callback: progress_callback) }
+      let(:service) { described_class.new(repo_name, progress_callback: ->(msg) { progress_messages << msg }) }
 
-      it 'calls the custom progress callback' do
+      it 'reports the start and the finish' do
         service.sync!
 
-        expect(progress_messages).to include("Starting unified sync for #{repo_name}")
-        expect(progress_messages).to include('Sync completed successfully!')
+        expect(progress_messages).to include("Starting unified sync for #{repo_name}", 'Sync completed successfully!')
       end
     end
   end
 
-  describe 'progress tracking' do
-    let(:service) { described_class.new(repo_name, progress_callback: ->(msg) {}) }
-    let(:pr_data) { double(number: 123) }
-    let(:pull_request) { create(:pull_request, repository: repository, number: 123) }
+  describe '.new' do
+    it 'refuses a name that is not a GitHub repository' do
+      expect do
+        described_class.new('not a repository name', progress_callback: ->(_msg) {})
+      end.to raise_error(ActiveRecord::RecordInvalid)
+    end
 
-    it 'updates sync_progress during PR processing' do
-      allow(github_service).to receive(:get_pull_request_count).and_return(100)
-      allow(github_service).to receive(:fetch_recent_review_activity).and_return(0)
-
-      # Capture the processor and simulate PR processing
-      processor = nil
-      allow(github_service).to receive(:fetch_and_store_pull_requests) do |_name, opts|
-        processor = opts[:processor]
-      end
-
-      allow(repository.pull_requests).to receive(:find_by).with(number: 123).and_return(pull_request)
-
-      # Expect progress updates
-      expect(repository).to receive(:update_column).with(:sync_progress, anything).at_least(:once)
-
-      service.sync!
-
-      # Simulate processing a PR to trigger progress update
-      processor.call(pr_data) if processor
+    it 'creates the repository on its first sync' do
+      expect do
+        described_class.new('rails/new-repo', progress_callback: ->(_msg) {})
+      end.to change(Repository, :count).by(1)
     end
   end
 end

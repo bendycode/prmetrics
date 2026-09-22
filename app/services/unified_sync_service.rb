@@ -5,7 +5,7 @@ class UnifiedSyncService
     @repo_name = repo_name
     @fetch_all = fetch_all
     @progress_callback = progress_callback || method(:default_progress_callback)
-    @repository = Repository.find_or_create_by(name: repo_name)
+    @repository = Repository.find_or_create_by!(name: repo_name)
     @processed_prs = 0
     @created_weeks = Set.new
     @updated_weeks = Set.new
@@ -14,22 +14,20 @@ class UnifiedSyncService
   def sync!
     log_progress("Starting unified sync for #{@repo_name}")
 
-    # Mark sync as in progress
-    @repository.update(
-      sync_status: 'in_progress',
-      sync_started_at: Time.current,
-      sync_progress: 0
-    )
-
     begin
+      @repository.update!(
+        sync_status: 'in_progress',
+        sync_started_at: Time.current,
+        sync_progress: 0
+      )
+
       # Fetch and process PRs with real-time updates
       fetch_and_process_pull_requests
 
       # Final stats update for all affected weeks
       update_week_statistics
 
-      # Mark sync as completed
-      @repository.update(
+      @repository.update!(
         sync_status: 'completed',
         sync_completed_at: Time.current,
         last_sync_error: nil,
@@ -42,7 +40,9 @@ class UnifiedSyncService
       Rails.logger.error "Unified sync failed: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
 
-      @repository.update(
+      # Skips validation so a repository row that no longer validates still
+      # reports the failure instead of raising over the original error.
+      @repository.update_columns(
         sync_status: 'failed',
         sync_completed_at: Time.current,
         last_sync_error: e.message
@@ -130,7 +130,7 @@ class UnifiedSyncService
 
       # Show progress for stats update
       progress = ((index + 1).to_f / @updated_weeks.size * 100).round
-      @repository.update_column(:sync_progress, 90 + (progress * 0.1)) # Last 10% for stats
+      @repository.update_column(:sync_progress, (90 + (progress * 0.1)).round) # Last 10% for stats
 
       log_progress("Updated statistics for #{index + 1}/#{@updated_weeks.size} weeks") if (index + 1) % 5 == 0 || index == @updated_weeks.size - 1
     end
