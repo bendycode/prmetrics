@@ -99,6 +99,14 @@ RSpec.describe UnifiedSyncJob do
 
       expect { perform_enqueued_jobs }.not_to change(Repository, :count)
     end
+
+    it 'keeps the sync, to retry, when the database cannot be reached to load the repository' do
+      repository = create(:repository, name: repo_name)
+      described_class.perform_later(repository)
+      allow(GlobalID::Locator).to receive(:locate).and_raise(ActiveRecord::ConnectionNotEstablished)
+
+      expect { perform_enqueued_jobs }.to raise_error(ActiveJob::DeserializationError)
+    end
   end
 
   describe 'job configuration' do
