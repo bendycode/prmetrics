@@ -166,20 +166,23 @@ class GithubService
     events
   end
 
-  def determine_ready_for_review_at(repo_name, pr_number, created_at)
-    ready_for_review_event = issue_events(repo_name, pr_number).find { |e| e.event == 'ready_for_review' }
+  # A pull request opened ready for review has no ready_for_review event
+  def ready_for_review_time(events, created_at)
+    events.find { |event| event.event == 'ready_for_review' }&.created_at || created_at
+  end
 
-    if ready_for_review_event
-      ready_for_review_event.created_at
-    else
-      created_at # If no 'ready_for_review' event, assume it was ready at creation
-    end
+  # GitHub's merge event names whoever pressed Merge, which is the actor that
+  # enabled auto-merge when the merge came from the queue.
+  def merger_of(events)
+    actor = events.find { |event| event.event == 'merged' }&.actor
+    find_or_create_contributor(actor) if actor
   end
 
   def process_pull_request(repository, repo_name, pr)
     pull_request = repository.pull_requests.find_or_initialize_by(number: pr.number)
     author = Contributor.find_or_create_from_github(pr.user)
-    ready_for_review_at = pr.draft ? nil : determine_ready_for_review_at(repo_name, pr.number, pr.created_at)
+    events = pr.draft && pr.merged_at.nil? ? [] : issue_events(repo_name, pr.number)
+    ready_for_review_at = pr.draft ? nil : ready_for_review_time(events, pr.created_at)
 
     pull_request.update!(
       title: pr.title,
@@ -193,7 +196,8 @@ class GithubService
       ready_for_review_at: ready_for_review_at,
       base_ref: pr.base.ref,
       head_ref: pr.head.ref,
-      head_repository: pr.head.repo&.full_name
+      head_repository: pr.head.repo&.full_name,
+      merged_by: (merger_of(events) if pr.merged_at)
     )
 
     fetch_and_store_reviews(pull_request, repo_name, pr.number)

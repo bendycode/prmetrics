@@ -20,12 +20,18 @@ class Contributor < ApplicationRecord
   def self.find_or_create_from_github(github_user)
     return nil unless github_user
 
-    find_or_create_by(github_id: github_user.id.to_s) do |contributor|
-      contributor.username = github_user.login
-      contributor.name = github_user.name
-      contributor.avatar_url = github_user.avatar_url
-      contributor.email = github_user.email
+    contributor = find_or_create_by(github_id: github_user.id.to_s) do |new_contributor|
+      new_contributor.username = github_user.login
+      new_contributor.name = github_user.name
+      new_contributor.avatar_url = github_user.avatar_url
+      new_contributor.email = github_user.email
     end
+
+    # GitHub reports 'Bot' for a GitHub App's account; the column starts from
+    # the [bot] login suffix, which an account like Copilot does not carry.
+    bot = github_user.respond_to?(:type) && github_user.type == 'Bot'
+    contributor.update!(bot: true) if bot && !contributor.bot?
+    contributor
   end
 
   # Find or create contributor with minimal data (for backward compatibility)

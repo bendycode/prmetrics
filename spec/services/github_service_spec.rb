@@ -66,7 +66,7 @@ RSpec.describe GithubService do
     end
 
     before do
-      allow(service).to receive(:determine_ready_for_review_at).and_return(2.days.ago)
+      allow(service).to receive(:issue_events).and_return([])
       allow(service).to receive(:fetch_and_store_reviews)
       allow(service).to receive(:fetch_and_store_users)
     end
@@ -107,6 +107,36 @@ RSpec.describe GithubService do
       service.send(:process_pull_request, repository, 'test/repo', pr_data)
 
       expect(existing.reload).to have_attributes(title: 'Test PR', author: have_attributes(username: 'author'))
+    end
+
+    context 'when GitHub says it was merged' do
+      let(:merger) { double(id: 9_000_777, login: 'the-merger', name: nil, avatar_url: nil, email: nil, type: 'User') }
+
+      before do
+        allow(pr_data).to receive_messages(merged_at: 1.day.ago, state: 'closed')
+        allow(service).to receive(:issue_events).and_return([double(event: 'labeled', actor: nil),
+                                                             double(event: 'merged', actor: merger)])
+      end
+
+      it 'records who merged it, from the merge event' do
+        service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+        expect(repository.pull_requests.find_by(number: 123).merged_by).to have_attributes(username: 'the-merger')
+      end
+
+      it 'records a merger GitHub calls a Bot as one' do
+        allow(merger).to receive(:type).and_return('Bot')
+
+        service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+        expect(repository.pull_requests.find_by(number: 123).merged_by).to be_bot
+      end
+    end
+
+    it 'leaves the merger empty while a pull request is open' do
+      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+      expect(repository.pull_requests.find_by(number: 123).merged_by).to be_nil
     end
 
     it 'records the branch it merges into and the branch it comes from' do
@@ -200,6 +230,22 @@ RSpec.describe GithubService do
     end
   end
 
+  describe '#find_or_create_contributor' do
+    it 'flags a contributor GitHub reports as a Bot' do
+      github_user = double(id: 9_000_888, login: 'helper[bot]', name: nil, avatar_url: nil, email: nil, type: 'Bot')
+
+      contributor = service.send(:find_or_create_contributor, github_user)
+
+      expect(contributor).to be_bot
+    end
+
+    it 'leaves a person unflagged' do
+      github_user = double(id: 9_000_889, login: 'a-person', name: nil, avatar_url: nil, email: nil, type: 'User')
+
+      expect(service.send(:find_or_create_contributor, github_user)).not_to be_bot
+    end
+  end
+
   describe '#fetch_and_store_users' do
     let(:pull_request) { create(:pull_request, repository: repository) }
     let(:author) { double(id: 9_000_501, login: 'the-author', name: nil, avatar_url: nil, email: nil) }
@@ -272,24 +318,19 @@ RSpec.describe GithubService do
     end
   end
 
-  describe '#determine_ready_for_review_at' do
-    it 'returns ready_for_review event time when available' do
+  describe '#ready_for_review_time' do
+    it 'reads the moment the pull request left draft' do
       ready_event = double(event: 'ready_for_review', created_at: 2.days.ago)
-      other_event = double(event: 'labeled', created_at: 1.day.ago)
-      allow(octokit_client).to receive(:issue_events).with('owner/repo', 123, anything)
-                                                     .and_return([other_event, ready_event])
+      events = [double(event: 'labeled', created_at: 1.day.ago), ready_event]
 
-      result = service.send(:determine_ready_for_review_at, 'owner/repo', 123, 3.days.ago)
-      expect(result).to eq(ready_event.created_at)
+      expect(service.send(:ready_for_review_time, events, 3.days.ago)).to eq(ready_event.created_at)
     end
 
-    it 'returns created_at when no ready_for_review event exists' do
+    it 'falls back to when it was opened, for one opened ready for review' do
       created_time = 3.days.ago
-      allow(octokit_client).to receive(:issue_events).with('owner/repo', 123, anything)
-                                                     .and_return([double(event: 'labeled', created_at: 1.day.ago)])
+      events = [double(event: 'labeled', created_at: 1.day.ago)]
 
-      result = service.send(:determine_ready_for_review_at, 'owner/repo', 123, created_time)
-      expect(result).to eq(created_time)
+      expect(service.send(:ready_for_review_time, events, created_time)).to eq(created_time)
     end
   end
 

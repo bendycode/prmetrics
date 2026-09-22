@@ -3,6 +3,7 @@ class PullRequest < ApplicationRecord
 
   belongs_to :repository
   belongs_to :author, class_name: 'Contributor'
+  belongs_to :merged_by, class_name: 'Contributor', optional: true
   belongs_to :ready_for_review_week, class_name: 'Week', optional: true
   belongs_to :first_review_week, class_name: 'Week', optional: true
   belongs_to :merged_week, class_name: 'Week', optional: true
