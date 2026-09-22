@@ -60,7 +60,9 @@ RSpec.describe GithubService do
              updated_at: 1.day.ago,
              merged_at: nil,
              closed_at: nil,
-             merged_by: nil)
+             merged_by: nil,
+             base: double(ref: 'main'),
+             head: double(ref: 'feature/login'))
     end
 
     before do
@@ -107,6 +109,12 @@ RSpec.describe GithubService do
       expect(existing.reload).to have_attributes(title: 'Test PR', author: have_attributes(username: 'author'))
     end
 
+    it 'records the branch it merges into and the branch it comes from' do
+      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+      expect(repository.pull_requests.find_by(number: 123)).to have_attributes(base_ref: 'main', head_ref: 'feature/login')
+    end
+
     it 'leaves weeks to the processor' do
       expect do
         service.send(:process_pull_request, repository, 'test/repo', pr_data)
@@ -122,7 +130,8 @@ RSpec.describe GithubService do
       double("pr_#{number}",
              number: number, title: "PR #{number}", state: 'open', draft: false,
              user: double(id: 9_000_900 + number, login: "author#{number}", name: nil, avatar_url: nil, email: nil),
-             created_at: updated_at - 1.day, updated_at: updated_at, merged_at: nil, closed_at: nil, merged_by: nil)
+             created_at: updated_at - 1.day, updated_at: updated_at, merged_at: nil, closed_at: nil, merged_by: nil,
+             base: double(ref: 'main'), head: double(ref: "feature/#{number}"))
     end
 
     def github_pages(*pages)

@@ -43,6 +43,70 @@ RSpec.describe Repository do
     expect(association.macro).to eq :has_many
   end
 
+  describe '#refresh_promotions!' do
+    let(:repository) { create(:repository, default_branch: 'main') }
+
+    def pull_request(head:, base:, promotion: false)
+      create(:pull_request, repository: repository, head_ref: head, base_ref: base, promotion: promotion)
+    end
+
+    it 'flags pull requests from the default branch into another branch' do
+      deploy = pull_request(head: 'main', base: 'production')
+
+      repository.refresh_promotions!
+
+      expect(deploy.reload).to be_promotion
+    end
+
+    it 'flags every pull request into a branch the default branch deploys to, whatever its head' do
+      pull_request(head: 'main', base: 'production')
+      before_rename = pull_request(head: 'master', base: 'production')
+
+      repository.refresh_promotions!
+
+      expect(before_rename.reload).to be_promotion
+    end
+
+    it 'leaves development work alone, including stacked and back-merged pull requests' do
+      pull_request(head: 'main', base: 'production')
+      development = [
+        pull_request(head: 'feature/login', base: 'main'),
+        pull_request(head: 'feature/login-part-2', base: 'feature/login'),
+        pull_request(head: 'production', base: 'main'),
+        pull_request(head: nil, base: nil)
+      ]
+
+      repository.refresh_promotions!
+
+      expect(development.map { |pr| pr.reload.promotion? }).to all(be(false))
+    end
+
+    it 'clears the flag once the branch no longer receives pull requests from the default branch' do
+      repository.update!(default_branch: 'trunk')
+      stale = pull_request(head: 'main', base: 'production', promotion: true)
+
+      repository.refresh_promotions!
+
+      expect(stale.reload).not_to be_promotion
+    end
+
+    it 'flags nothing before the default branch is known' do
+      repository.update!(default_branch: nil)
+      deploy = pull_request(head: 'main', base: 'production')
+
+      repository.refresh_promotions!
+
+      expect(deploy.reload).not_to be_promotion
+    end
+
+    it 'returns the pull requests whose flag it changed' do
+      deploy = pull_request(head: 'main', base: 'production')
+      pull_request(head: 'feature/login', base: 'main')
+
+      expect(repository.refresh_promotions!).to contain_exactly(deploy)
+    end
+  end
+
   describe '.visible_to' do
     let(:granted_repository) { create(:repository) }
     let!(:other_repository) { create(:repository) }
