@@ -28,6 +28,22 @@ RSpec.describe 'Dashboard averages' do
     expect(summary_card_value('Avg Time to Review')).to eq('3.0')
   end
 
+  describe 'with a promotion pull request' do
+    before do
+      create(:pull_request, repository: repository, ready_for_review_at: wednesday, gh_merged_at: wednesday + 4.hours)
+      promotion = create(:pull_request, :promotion, repository: repository, ready_for_review_at: wednesday,
+                                                    gh_merged_at: wednesday + 10.minutes)
+      create(:review, pull_request: promotion, submitted_at: wednesday + 5.minutes)
+    end
+
+    it 'leaves it out of the pull request total and both averages' do
+      get dashboard_path
+
+      expect([summary_card_value('Total Pull Requests'), summary_card_value('Avg Time to Merge'),
+              summary_card_value('Avg Time to Review')]).to eq(%w[1 4.0 0])
+    end
+  end
+
   it 'counts a Friday evening review in the configured time zone' do
     friday_afternoon = Time.zone.parse('2026-09-11 17:00')
     pull_request = create(:pull_request, repository: repository, ready_for_review_at: friday_afternoon)
