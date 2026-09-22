@@ -1,6 +1,27 @@
 require 'rails_helper'
 
 RSpec.describe Contributor do
+  describe 'a contributor who merged pull requests' do
+    let(:merger) { create(:contributor) }
+    let!(:merged) { create(:pull_request, merged_by: merger, gh_merged_at: 2.days.ago) }
+
+    it 'can be destroyed, leaving the pull request with no merger' do
+      expect { merger.destroy }.to change { merged.reload.merged_by }.from(merger).to(nil)
+    end
+
+    it 'counts as taking part, so it is not orphaned' do
+      expect(described_class.orphaned).to be_empty
+    end
+  end
+
+  describe '.orphaned' do
+    it 'finds a contributor with no pull requests, reviews or participation' do
+      unused = create(:contributor)
+
+      expect(described_class.orphaned).to contain_exactly(unused)
+    end
+  end
+
   describe 'validations' do
     it 'is valid with valid attributes' do
       contributor = Contributor.new(

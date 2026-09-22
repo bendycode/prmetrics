@@ -3,10 +3,7 @@ namespace :cleanup do
   task orphaned_contributors: :environment do
     puts '🔍 Finding orphaned contributors...'
 
-    orphaned = Contributor.left_joins(:authored_pull_requests, :reviews, :pull_request_users)
-                          .where(pull_requests: { id: nil })
-                          .where(reviews: { id: nil })
-                          .where(pull_request_users: { id: nil })
+    orphaned = Contributor.orphaned
 
     puts "📊 Found #{orphaned.count} orphaned contributors"
 

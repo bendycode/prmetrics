@@ -1,11 +1,18 @@
 class Contributor < ApplicationRecord
   # Pull request associations
   has_many :authored_pull_requests, class_name: 'PullRequest', foreign_key: 'author_id', dependent: :nullify
+  has_many :merged_pull_requests, class_name: 'PullRequest', foreign_key: 'merged_by_id',
+                                  inverse_of: :merged_by, dependent: :nullify
   has_many :pull_request_users, foreign_key: 'user_id', dependent: :destroy
   has_many :participated_pull_requests, through: :pull_request_users, source: :pull_request
 
   # Review associations
   has_many :reviews, foreign_key: 'author_id', dependent: :destroy
+
+  # Nobody's pull requests, reviews or participation rows point at them
+  scope :orphaned, lambda {
+    where.missing(:authored_pull_requests, :merged_pull_requests, :reviews, :pull_request_users)
+  }
 
   # Validations
   validates :username, presence: true, uniqueness: true
