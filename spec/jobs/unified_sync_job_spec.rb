@@ -54,6 +54,12 @@ RSpec.describe UnifiedSyncJob do
       end.not_to have_enqueued_job(UpdateRepositoryStatsJob)
     end
 
+    it 'gives up rather than retrying a sync that failed on a record that will not save' do
+      allow(service).to receive(:sync!).and_raise(ActiveRecord::RecordInvalid.new(repository))
+
+      expect { described_class.perform_now(repository) }.not_to raise_error
+    end
+
     it 'logs progress messages' do
       # The job logs directly with logger.info
       job = described_class.new(repository)

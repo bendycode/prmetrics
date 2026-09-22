@@ -1,6 +1,11 @@
 class UnifiedSyncJob < ApplicationJob
   queue_as :default
 
+  # A record that fails validation fails the same way on every attempt, and a
+  # retry starts the sync over from its first page. UnifiedSyncService has
+  # already recorded the failure on the repository.
+  discard_on ActiveRecord::RecordInvalid
+
   def perform(repository, fetch_all: false)
     logger.info "Starting unified sync for #{repository.name} (#{fetch_all ? 'full' : 'incremental'})"
 
