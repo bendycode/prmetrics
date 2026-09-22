@@ -119,7 +119,17 @@ class UnifiedSyncService
   def refresh_promotions
     changed = @repository.refresh_promotions!
     log_progress("Reclassified #{changed.size} pull requests as promotions or development work") if changed.any?
-    changed.each { |pull_request| track_created_weeks(pull_request) }
+    changed.each { |pull_request| @updated_weeks.merge(weeks_spanned_by(pull_request)) }
+  end
+
+  # Every week from the one a pull request opened in through the one it closed
+  # in, since the open, late and stale figures count it in each of them.
+  def weeks_spanned_by(pull_request)
+    opened = pull_request.gh_created_at
+    closed = pull_request.gh_closed_at || Time.current
+    return [] unless opened
+
+    @repository.weeks.where(begin_date: ..closed.to_date).where(end_date: opened.to_date..)
   end
 
   def track_created_weeks(pull_request)

@@ -65,12 +65,17 @@ RSpec.describe UnifiedSyncService do
     end
 
     context 'when an earlier pull request turns out to be a promotion' do
+      # Open across several weeks, so it counts toward each one's open figure
       let!(:earlier_deploy) do
-        create(:pull_request, repository: repository, number: 7, head_ref: 'master', base_ref: 'production',
-                              head_repository: repository.name,
-                              gh_created_at: merged_at - 20.days, gh_merged_at: merged_at - 19.days,
-                              gh_closed_at: merged_at - 19.days, state: 'closed')
+        create(:pull_request, repository: repository, number: 7, head_ref: 'hotfix', base_ref: 'production',
+                              head_repository: repository.name, gh_created_at: merged_at - 20.days,
+                              ready_for_review_at: merged_at - 20.days)
           .tap(&:ensure_weeks_exist_and_update_associations)
+      end
+
+      # The weeks after the one it opened in, where it still counts as open
+      let(:spanned_weeks) do
+        repository.weeks.where(begin_date: (merged_at - 13.days).to_date..merged_at.to_date)
       end
 
       before do
@@ -79,14 +84,18 @@ RSpec.describe UnifiedSyncService do
                                 head_repository: repository.name, gh_merged_at: merged_at)
           processor.call(pr_data)
         end
-        allow(WeekStatsService).to receive(:new).and_call_original
+        WeekStatsService.generate_weeks_for_repository(repository)
+        repository.weeks.each { |week| WeekStatsService.new(week).update_stats }
       end
 
-      it 'flags it and refreshes the statistics of the weeks it touched' do
+      it 'flags it and takes it back out of the figures of every week it spanned' do
+        expect(spanned_weeks.count).to be > 1
+        expect(spanned_weeks.map(&:num_open_prs)).to all(be(1))
+
         service.sync!
 
         expect(earlier_deploy.reload).to be_promotion
-        expect(WeekStatsService).to have_received(:new).with(earlier_deploy.merged_week)
+        expect(spanned_weeks.map { |week| week.reload.num_open_prs }).to all(be(0))
       end
     end
 

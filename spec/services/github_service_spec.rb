@@ -229,6 +229,15 @@ RSpec.describe GithubService do
   end
 
   describe '#each_pull_request' do
+    it 'walks in the order pull requests were opened, so none shifts pages mid-walk' do
+      allow(octokit_client).to receive(:pull_requests).and_return([])
+
+      service.each_pull_request('owner/repo') { |_pr| nil }
+
+      expect(octokit_client).to have_received(:pull_requests)
+        .with('owner/repo', hash_including(sort: 'created', direction: 'asc'))
+    end
+
     it 'yields every pull request on every page' do
       pages = [[double(number: 1), double(number: 2)], [double(number: 3)]]
       allow(octokit_client).to receive(:pull_requests) { |_repo, options| pages[options[:page] - 1] || [] }
