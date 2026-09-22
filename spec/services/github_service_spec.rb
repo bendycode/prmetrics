@@ -46,7 +46,7 @@ RSpec.describe GithubService do
 
   describe '#process_pull_request' do
     let(:github_user) do
-      double('github_user', login: 'author', name: 'Author', email: 'author@example.com', id: '456',
+      double('github_user', login: 'author', name: 'Author', email: 'author@example.com', id: '9000456',
                             avatar_url: 'https://example.com/avatar.png')
     end
     let(:pr_data) do
@@ -121,7 +121,7 @@ RSpec.describe GithubService do
     def github_pr(number, updated_at)
       double("pr_#{number}",
              number: number, title: "PR #{number}", state: 'open', draft: false,
-             user: double(id: 900 + number, login: "author#{number}", name: nil, avatar_url: nil, email: nil),
+             user: double(id: 9_000_900 + number, login: "author#{number}", name: nil, avatar_url: nil, email: nil),
              created_at: updated_at - 1.day, updated_at: updated_at, merged_at: nil, closed_at: nil, merged_by: nil)
     end
 
@@ -191,8 +191,8 @@ RSpec.describe GithubService do
 
   describe '#fetch_and_store_users' do
     let(:pull_request) { create(:pull_request, repository: repository) }
-    let(:author) { double(id: 501, login: 'the-author', name: nil, avatar_url: nil, email: nil) }
-    let(:merger) { double(id: 502, login: 'the-merger', name: nil, avatar_url: nil, email: nil) }
+    let(:author) { double(id: 9_000_501, login: 'the-author', name: nil, avatar_url: nil, email: nil) }
+    let(:merger) { double(id: 9_000_502, login: 'the-merger', name: nil, avatar_url: nil, email: nil) }
 
     it 'records the author and the merger' do
       service.send(:fetch_and_store_users, pull_request, double(user: author, merged_by: merger))
