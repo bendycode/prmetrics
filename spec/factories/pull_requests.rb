@@ -20,6 +20,7 @@ FactoryBot.define do
     trait :promotion do
       head_ref { 'main' }
       base_ref { 'production' }
+      head_repository { repository.name }
       promotion { true }
     end
 

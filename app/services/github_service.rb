@@ -182,7 +182,8 @@ class GithubService
       gh_closed_at: pr.closed_at,
       ready_for_review_at: ready_for_review_at,
       base_ref: pr.base.ref,
-      head_ref: pr.head.ref
+      head_ref: pr.head.ref,
+      head_repository: pr.head.repo&.full_name
     )
 
     fetch_and_store_reviews(pull_request, repo_name, pr.number)

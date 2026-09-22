@@ -16,24 +16,36 @@ class Repository < ApplicationRecord
     pull_requests.development
   end
 
-  # A promotion deploys work rather than developing it: it merges into a
-  # branch the default branch itself is merged into, such as main into
-  # production. Keying on the target branch rather than the head keeps
-  # promotions made before a rename of the default branch. Returns the pull
-  # requests whose flag changed.
+  # A promotion deploys work rather than developing it: it merges into one of
+  # the repository's deploy branches, such as main into production. Keying on
+  # the target branch rather than the head keeps promotions made before a
+  # rename of the default branch. Returns the pull requests whose flag
+  # changed, in one transaction so a failure leaves none of them flipped.
   def refresh_promotions!
-    targets = promotion_targets
-    changed = pull_requests.where(promotion: false, base_ref: targets).to_a +
-              pull_requests.where(promotion: true).where.not(base_ref: targets).to_a
-    changed.each { |pull_request| pull_request.update!(promotion: !pull_request.promotion) }
+    targets = deploy_branches
+    changed = pull_requests.development.into_branch(targets).to_a +
+              pull_requests.promotions.where.not(base_ref: targets).to_a
+
+    transaction { changed.each { |pull_request| pull_request.update!(promotion: !pull_request.promotion) } }
+    changed
   end
 
   private
 
-  def promotion_targets
+  # A deploy branch receives the default branch's own merged pull requests and
+  # never merges back into it. That second half is what tells a deploy branch
+  # from a long-lived feature branch someone merged the default branch into to
+  # catch it up: the feature branch merges back, a deploy branch does not.
+  def deploy_branches
     return [] if default_branch.blank?
 
-    pull_requests.where(head_ref: default_branch).where.not(base_ref: default_branch).distinct.pluck(:base_ref)
+    deploys = pull_requests.merged.from_branch(default_branch).where(head_repository: name)
+    candidates = deploys.where.not(base_ref: default_branch).distinct.pluck(:base_ref)
+    candidates - branches_merged_into_default
+  end
+
+  def branches_merged_into_default
+    pull_requests.merged.into_branch(default_branch).where.not(head_ref: nil).distinct.pluck(:head_ref)
   end
 
   def valid_github_repository_format

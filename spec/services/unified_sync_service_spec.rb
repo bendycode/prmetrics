@@ -67,6 +67,7 @@ RSpec.describe UnifiedSyncService do
     context 'when an earlier pull request turns out to be a promotion' do
       let!(:earlier_deploy) do
         create(:pull_request, repository: repository, number: 7, head_ref: 'master', base_ref: 'production',
+                              head_repository: repository.name,
                               gh_created_at: merged_at - 20.days, gh_merged_at: merged_at - 19.days,
                               gh_closed_at: merged_at - 19.days, state: 'closed')
           .tap(&:ensure_weeks_exist_and_update_associations)
@@ -74,7 +75,8 @@ RSpec.describe UnifiedSyncService do
 
       before do
         allow(github_service).to receive(:fetch_and_store_pull_requests) do |_name, processor:, **|
-          create(:pull_request, repository: repository, number: 123, head_ref: 'main', base_ref: 'production')
+          create(:pull_request, repository: repository, number: 123, head_ref: 'main', base_ref: 'production',
+                                head_repository: repository.name, gh_merged_at: merged_at)
           processor.call(pr_data)
         end
         allow(WeekStatsService).to receive(:new).and_call_original

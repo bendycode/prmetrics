@@ -56,8 +56,9 @@ RSpec.describe Repository do
   describe '#refresh_promotions!' do
     let(:repository) { create(:repository, default_branch: 'main') }
 
-    def pull_request(head:, base:, promotion: false)
-      create(:pull_request, repository: repository, head_ref: head, base_ref: base, promotion: promotion)
+    def pull_request(head:, base:, promotion: false, merged: true, head_repository: repository.name)
+      create(:pull_request, repository: repository, head_ref: head, base_ref: base, promotion: promotion,
+                            head_repository: head_repository, gh_merged_at: (Time.current if merged))
     end
 
     it 'flags pull requests from the default branch into another branch' do
@@ -78,17 +79,46 @@ RSpec.describe Repository do
     end
 
     it 'leaves development work alone, including stacked and back-merged pull requests' do
-      pull_request(head: 'main', base: 'production')
+      deploy = pull_request(head: 'main', base: 'production')
       development = [
         pull_request(head: 'feature/login', base: 'main'),
         pull_request(head: 'feature/login-part-2', base: 'feature/login'),
-        pull_request(head: 'production', base: 'main'),
+        pull_request(head: 'production', base: 'main', merged: false),
         pull_request(head: nil, base: nil)
       ]
 
       repository.refresh_promotions!
 
       expect(development.map { |pr| pr.reload.promotion? }).to all(be(false))
+      expect(deploy.reload).to be_promotion
+    end
+
+    it 'leaves a branch the default branch was merged into to catch it up alone' do
+      pull_request(head: 'main', base: 'feature/long-lived')
+      stacked = pull_request(head: 'feature/part-2', base: 'feature/long-lived')
+      pull_request(head: 'feature/long-lived', base: 'main')
+
+      repository.refresh_promotions!
+
+      expect(stacked.reload).not_to be_promotion
+    end
+
+    it "ignores a fork's branch that shares the default branch's name" do
+      pull_request(head: 'main', base: 'release-2', head_repository: 'someone-else/app')
+      into_release = pull_request(head: 'feature/login', base: 'release-2')
+
+      repository.refresh_promotions!
+
+      expect(into_release.reload).not_to be_promotion
+    end
+
+    it 'waits for the deploy to merge before treating its branch as a deploy target' do
+      pull_request(head: 'main', base: 'production', merged: false)
+      later = pull_request(head: 'hotfix', base: 'production')
+
+      repository.refresh_promotions!
+
+      expect(later.reload).not_to be_promotion
     end
 
     it 'clears the flag once the branch no longer receives pull requests from the default branch' do
@@ -107,6 +137,19 @@ RSpec.describe Repository do
       repository.refresh_promotions!
 
       expect(deploy.reload).not_to be_promotion
+    end
+
+    it 'returns the pull requests whose flag it cleared as well as those it flagged' do
+      repository.update!(default_branch: 'trunk')
+      stale = pull_request(head: 'main', base: 'production', promotion: true)
+
+      expect(repository.refresh_promotions!).to contain_exactly(stale)
+    end
+
+    it 'changes nothing in a repository with no deploys' do
+      pull_request(head: 'feature/login', base: 'main')
+
+      expect(repository.refresh_promotions!).to be_empty
     end
 
     it 'returns the pull requests whose flag it changed' do
