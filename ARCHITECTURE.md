@@ -15,17 +15,19 @@ Repository (1) ─── (N) PullRequest (1) ─── (N) Review
      │                      │
      │                      ├─── (N) PullRequestUser ─── (1) Contributor
      │                      │
-     │                      └─── (1) Contributor (author)
+     │                      ├─── (1) Contributor (author)
+     │                      │
+     │                      └─── (1) Contributor (merged_by)
      │
      └─── (N) Week
 ```
 
 - **Repository**: Parent entity containing GitHub repository information
-- **PullRequest**: Central model tracking PR lifecycle with GitHub timestamps
+- **PullRequest**: Central model tracking PR lifecycle with GitHub timestamps, its base and head branches, and who merged it
 - **Review**: Individual PR reviews with submission times and states
 - **Week**: Time-based aggregation of PR statistics
-- **Contributor**: Unified model for all PR participants (authors and reviewers) with GitHub data
-- **PullRequestUser**: Join table linking contributors to PRs with reviewer/assignee roles
+- **Contributor**: Unified model for all PR participants (authors, reviewers and mergers) with GitHub data, flagged as a bot when GitHub reports the account as one
+- **PullRequestUser**: Join table linking contributors to PRs; the sync writes only the author row
 
 ### Key Services
 
@@ -50,6 +52,7 @@ Promotions stay stored and readable on the pull request pages; they count toward
 Runs one repository's sync:
 - Fetches pull requests and reviews through GithubService, incrementally or in full
 - Records the repository's default branch and reclassifies its promotions
+- Reads each pull request's events once, for when it left draft and who merged it
 - Creates the weeks each pull request touches and refreshes their statistics
 - Records sync status, progress, and errors on the repository
 

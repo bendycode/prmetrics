@@ -24,7 +24,7 @@ class MergerBackfill
   private
 
   def record_mergers(repository)
-    unknown = repository.pull_requests.merged.where(merged_by_id: nil).index_by(&:number)
+    unknown = repository.pull_requests.missing_merger.index_by(&:number)
     return 0 if unknown.empty?
 
     recorded = 0

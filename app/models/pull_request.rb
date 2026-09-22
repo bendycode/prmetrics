@@ -27,6 +27,7 @@ class PullRequest < ApplicationRecord
   scope :development, -> { where(promotion: false) }
   scope :promotions, -> { where(promotion: true) }
   scope :merged, -> { where.not(gh_merged_at: nil) }
+  scope :missing_merger, -> { merged.where(merged_by_id: nil) }
   scope :from_branch, ->(ref) { where(head_ref: ref) }
   scope :into_branch, ->(refs) { where(base_ref: refs) }
   scope :approved, lambda {

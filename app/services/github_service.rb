@@ -1,5 +1,6 @@
 class GithubService
   include GithubRateLimiting
+  include GithubMergedPullRequests
 
   def initialize(access_token)
     @client = Octokit::Client.new(access_token: access_token)
@@ -20,34 +21,6 @@ class GithubService
 
   def default_branch(repo_name)
     with_rate_limit_handling { @client.repository(repo_name).default_branch }
-  end
-
-  MERGED_PULL_REQUESTS_QUERY = <<~GRAPHQL.freeze
-    query($owner: String!, $name: String!, $after: String) {
-      repository(owner: $owner, name: $name) {
-        pullRequests(states: MERGED, first: 100, after: $after) {
-          pageInfo { hasNextPage endCursor }
-          nodes { number mergedBy { login __typename ... on User { databaseId } ... on Bot { databaseId } } }
-        }
-      }
-    }
-  GRAPHQL
-
-  # One page of merged pull requests and their mergers, 100 at a time, as
-  # {nodes: [{number:, merged_by:}], has_next_page:, end_cursor:}. GitHub's
-  # REST endpoints answer with a merger one pull request at a time, which is
-  # thousands of calls on a repository of any age.
-  def merged_pull_requests(repo_name, after: nil)
-    owner, name = repo_name.split('/')
-    page = with_rate_limit_handling do
-      response = @client.post('/graphql', { query: MERGED_PULL_REQUESTS_QUERY,
-                                            variables: { owner: owner, name: name, after: after } }.to_json)
-      merged_pull_requests_from(response, repo_name)
-    end
-
-    { nodes: page.nodes.map { |node| merged_pull_request(node) },
-      has_next_page: page.pageInfo.hasNextPage,
-      end_cursor: page.pageInfo.endCursor }
   end
 
   # Yields every pull request GitHub lists for the repository, open or closed,
@@ -153,27 +126,6 @@ class GithubService
 
   private
 
-  # GitHub answers a GraphQL failure with a 200 and an errors array, so the
-  # response has to be read before its data is trusted. A rate-limited query
-  # arrives the same way, and is raised as the error the retry logic waits on.
-  def merged_pull_requests_from(response, repo_name)
-    errors = Array(response.errors)
-    raise GithubRateLimiting::RateLimited if errors.any? { |error| error.type == 'RATE_LIMITED' }
-
-    raise "GitHub rejected the query for #{repo_name}: #{errors.map(&:message).join('; ')}" if errors.any?
-
-    repository = response.data&.repository
-    raise "GitHub returned no repository named #{repo_name}; is it visible to this token?" unless repository
-
-    repository.pullRequests
-  end
-
-  def merged_pull_request(node)
-    merger = node.mergedBy
-    merged_by = { login: merger.login, id: merger.databaseId, type: merger.__typename } if merger
-    { number: node.number, merged_by: merged_by }
-  end
-
   def fetch_pull_requests_page(repo_name, page, since: nil, order: { sort: 'updated', direction: 'desc' })
     options = { state: 'all', page: page, per_page: 100 }.merge(order)
     options[:since] = since if since
@@ -215,6 +167,12 @@ class GithubService
     events
   end
 
+  # An open draft has neither event this reads: it has not left draft, and a
+  # draft cannot be merged without leaving it first.
+  def events_worth_reading?(pull_request)
+    !pull_request.draft || pull_request.merged_at
+  end
+
   # A pull request opened ready for review has no ready_for_review event
   def ready_for_review_time(events, created_at)
     events.find { |event| event.event == 'ready_for_review' }&.created_at || created_at
@@ -240,7 +198,7 @@ class GithubService
   def process_pull_request(repository, repo_name, pr)
     pull_request = repository.pull_requests.find_or_initialize_by(number: pr.number)
     author = Contributor.find_or_create_from_github(pr.user)
-    events = pr.draft && pr.merged_at.nil? ? [] : issue_events(repo_name, pr.number)
+    events = events_worth_reading?(pr) ? issue_events(repo_name, pr.number) : []
     ready_for_review_at = pr.draft ? nil : ready_for_review_time(events, pr.created_at)
 
     pull_request.update!(
