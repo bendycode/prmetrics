@@ -15,6 +15,10 @@ class UnifiedSyncJob < ApplicationJob
     # Perform the sync
     service.sync!
 
+    # The sync refreshes only the weeks its pull requests touched; a sync
+    # started from the app also rebuilds every week, as rake weeks:update_stats does.
+    UpdateRepositoryStatsJob.perform_later(service.repository.id)
+
     logger.info "Unified sync completed for #{repo_name}"
   end
 end

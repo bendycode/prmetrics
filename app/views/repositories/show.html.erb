@@ -27,7 +27,7 @@
           <div>
             <strong>Sync in progress...</strong>
             <% if @repository.sync_progress.present? %>
-              <span class="ml-2">(<%= number_with_delimiter(@repository.sync_progress) %> pull requests processed)</span>
+              <span class="ml-2">(<%= @repository.sync_progress %>% complete)</span>
             <% end %>
             <div class="small">Started <%= time_ago_in_words(@repository.sync_started_at) %> ago</div>
           </div>

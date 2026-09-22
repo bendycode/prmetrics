@@ -128,10 +128,20 @@ RSpec.describe 'Repository page' do
     end
   end
 
+  describe 'a sync in progress' do
+    before do
+      repository.update!(sync_status: 'in_progress', sync_started_at: 5.minutes.ago, sync_progress: 45)
+    end
+
+    it 'reports how far through the sync it is as a percentage' do
+      visit repository_path(repository)
+
+      expect(page).to have_content('Sync in progress... (45% complete)')
+    end
+  end
+
   describe 'the flash notice' do
     before do
-      allow(RepositorySyncService).to receive(:new).and_return(instance_double(RepositorySyncService, perform: true))
-
       visit repository_path(repository)
       click_button 'Sync Updates'
     end

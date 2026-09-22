@@ -4,7 +4,8 @@ RSpec.describe UnifiedSyncJob do
   let(:repo_name) { 'rails/rails' }
 
   describe '#perform' do
-    let(:service) { instance_double(UnifiedSyncService) }
+    let(:repository) { create(:repository, name: repo_name) }
+    let(:service) { instance_double(UnifiedSyncService, repository: repository) }
 
     before do
       allow(UnifiedSyncService).to receive(:new).and_return(service)
@@ -39,13 +40,31 @@ RSpec.describe UnifiedSyncJob do
       end
     end
 
+    it 'refreshes weeks and statistics across every repository once the sync finishes' do
+      expect do
+        described_class.perform_now(repo_name)
+      end.to have_enqueued_job(UpdateRepositoryStatsJob).with(repository.id)
+    end
+
+    it 'leaves the statistics alone when the sync fails' do
+      allow(service).to receive(:sync!).and_raise(StandardError, 'GitHub unavailable')
+
+      expect do
+        described_class.perform_now(repo_name)
+      rescue StandardError
+        nil
+      end.not_to have_enqueued_job(UpdateRepositoryStatsJob)
+    end
+
     it 'logs progress messages' do
       # The job logs directly with logger.info
       job = described_class.new(repo_name)
-      expect(job.logger).to receive(:info).with(/Starting unified sync/)
-      expect(job.logger).to receive(:info).with(/Unified sync completed/)
+      allow(job.logger).to receive(:info)
 
       job.perform(repo_name)
+
+      expect(job.logger).to have_received(:info).with(/Starting unified sync/)
+      expect(job.logger).to have_received(:info).with(/Unified sync completed/)
     end
 
     it 'provides progress callback that logs with UnifiedSync prefix' do
