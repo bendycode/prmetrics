@@ -31,6 +31,21 @@ RSpec.describe GithubService do
       end
     end
 
+    context 'when a pull request has more reviews than one page holds' do
+      it 'stores the reviews on every page' do
+        pages = [Array.new(100) { |n| double(state: 'COMMENTED', submitted_at: n.hours.ago, user: user) },
+                 [double(state: 'APPROVED', submitted_at: Time.current, user: user)]]
+        allow(octokit_client).to receive(:pull_request_reviews) do |_repo, _number, options|
+          pages[options[:page] - 1] || []
+        end
+        allow(service).to receive(:find_or_create_contributor).and_return(create(:contributor))
+
+        expect do
+          service.send(:fetch_and_store_reviews, pull_request, repo_name, pr_number)
+        end.to change(Review, :count).by(101)
+      end
+    end
+
     context 'when review timestamps are nil' do
       let(:invalid_review) { double('review', state: 'approved', submitted_at: nil, user: user) }
 
@@ -60,15 +75,14 @@ RSpec.describe GithubService do
              updated_at: 1.day.ago,
              merged_at: nil,
              closed_at: nil,
-             merged_by: nil,
              base: double(ref: 'main'),
              head: double(ref: 'feature/login', repo: double(full_name: 'test/repo')))
     end
 
     before do
-      allow(service).to receive(:determine_ready_for_review_at).and_return(2.days.ago)
+      allow(service).to receive(:issue_events).and_return([])
       allow(service).to receive(:fetch_and_store_reviews)
-      allow(service).to receive(:fetch_and_store_users)
+      allow(service).to receive(:store_author)
     end
 
     it 'creates a pull request and sets ready_for_review_at' do
@@ -107,6 +121,80 @@ RSpec.describe GithubService do
       service.send(:process_pull_request, repository, 'test/repo', pr_data)
 
       expect(existing.reload).to have_attributes(title: 'Test PR', author: have_attributes(username: 'author'))
+    end
+
+    context 'when GitHub says it was merged' do
+      let(:merger) { double(id: 9_000_777, login: 'the-merger', name: nil, avatar_url: nil, email: nil, type: 'User') }
+
+      before do
+        allow(pr_data).to receive_messages(merged_at: 1.day.ago, state: 'closed')
+        labeller = double(id: 9_000_778, login: 'the-labeller', name: nil, avatar_url: nil, email: nil, type: 'User')
+        allow(service).to receive(:issue_events).and_return([double(event: 'merged', actor: merger),
+                                                             double(event: 'labeled', actor: labeller)])
+      end
+
+      it 'records who merged it, from the merge event' do
+        service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+        expect(repository.pull_requests.find_by(number: 123).merged_by).to have_attributes(username: 'the-merger')
+      end
+
+      it 'records a merger GitHub calls a Bot as one, whatever its login looks like' do
+        allow(merger).to receive_messages(type: 'Bot', login: 'copilot-style-name')
+
+        service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+        expect(repository.pull_requests.find_by(number: 123).merged_by).to be_bot
+      end
+    end
+
+    it 'keeps a merger it already knows when GitHub reports no merge event' do
+      recorded = create(:contributor, username: 'recorded-earlier')
+      create(:pull_request, repository: repository, number: 123, gh_merged_at: 1.day.ago, merged_by: recorded)
+      allow(pr_data).to receive_messages(merged_at: 1.day.ago, state: 'closed')
+
+      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+      expect(repository.pull_requests.find_by(number: 123).merged_by).to eq(recorded)
+    end
+
+    it 'keeps a merger it already knows when the one GitHub names cannot be stored' do
+      recorded = create(:contributor, username: 'recorded-earlier')
+      create(:pull_request, repository: repository, number: 123, gh_merged_at: 1.day.ago, merged_by: recorded)
+      create(:contributor, username: 'the-merger', github_id: 'placeholder_earlier')
+      merger = double(id: 9_000_781, login: 'the-merger', name: nil, avatar_url: nil, email: nil, type: 'User')
+      allow(pr_data).to receive_messages(merged_at: 1.day.ago, state: 'closed')
+      allow(service).to receive(:issue_events).and_return([double(event: 'merged', actor: merger)])
+
+      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+      expect(repository.pull_requests.find_by(number: 123).merged_by).to eq(recorded)
+    end
+
+    it 'leaves the merger empty while a pull request is open, whatever its events say' do
+      merger = double(id: 9_000_779, login: 'too-early', name: nil, avatar_url: nil, email: nil, type: 'User')
+      allow(service).to receive(:issue_events).and_return([double(event: 'merged', actor: merger)])
+
+      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+      expect(repository.pull_requests.find_by(number: 123).merged_by).to be_nil
+    end
+
+    it 'reads the events of the pull request it is processing' do
+      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+      expect(service).to have_received(:issue_events).with('test/repo', 123)
+    end
+
+    it 'records the merger of a draft that was merged' do
+      merger = double(id: 9_000_780, login: 'draft-merger', name: nil, avatar_url: nil, email: nil, type: 'User')
+      allow(pr_data).to receive_messages(draft: true, merged_at: 1.day.ago, state: 'closed')
+      allow(service).to receive(:issue_events).and_return([double(event: 'merged', actor: merger)])
+
+      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+      expect(repository.pull_requests.find_by(number: 123))
+        .to have_attributes(ready_for_review_at: nil, merged_by: have_attributes(username: 'draft-merger'))
     end
 
     it 'records the branch it merges into and the branch it comes from' do
@@ -200,31 +288,90 @@ RSpec.describe GithubService do
     end
   end
 
-  describe '#fetch_and_store_users' do
+  describe '#store_author' do
     let(:pull_request) { create(:pull_request, repository: repository) }
     let(:author) { double(id: 9_000_501, login: 'the-author', name: nil, avatar_url: nil, email: nil) }
-    let(:merger) { double(id: 9_000_502, login: 'the-merger', name: nil, avatar_url: nil, email: nil) }
 
-    it 'records the author and the merger' do
-      service.send(:fetch_and_store_users, pull_request, double(user: author, merged_by: merger))
+    it "records the pull request's author as a participant" do
+      service.send(:store_author, pull_request, double(user: author))
 
       expect(pull_request.pull_request_users.map { |pru| [pru.role, pru.user.username] })
-        .to contain_exactly(%w[author the-author], %w[merger the-merger])
-    end
-
-    it 'records only the author of an unmerged pull request' do
-      service.send(:fetch_and_store_users, pull_request, double(user: author, merged_by: nil))
-
-      expect(pull_request.pull_request_users.pluck(:role)).to eq(['author'])
+        .to contain_exactly(%w[author the-author])
     end
 
     it 'finds a contributor by username when GitHub sends no id' do
       existing = create(:contributor, username: 'no-id-user')
       username_only = double(login: 'no-id-user', name: nil, email: nil)
 
-      service.send(:fetch_and_store_users, pull_request, double(user: username_only, merged_by: nil))
+      service.send(:store_author, pull_request, double(user: username_only))
 
       expect(pull_request.pull_request_users.sole.user).to eq(existing)
+    end
+  end
+
+  describe '#merged_pull_requests' do
+    # The shape Octokit returns for a GraphQL response
+    def graphql_page(nodes, has_next_page: false, end_cursor: nil)
+      Sawyer::Resource.new(Sawyer::Agent.new('https://api.github.com'),
+                           data: { repository: { pullRequests: {
+                             pageInfo: { hasNextPage: has_next_page, endCursor: end_cursor }, nodes: nodes
+                           } } })
+    end
+
+    it 'answers with each merged pull request and its merger' do
+      allow(octokit_client).to receive(:post).and_return(
+        graphql_page([{ number: 1, mergedBy: { login: 'one', databaseId: 11, __typename: 'User' } },
+                      { number: 2, mergedBy: { login: 'two[bot]', databaseId: 22, __typename: 'Bot' } }],
+                     has_next_page: true, end_cursor: 'cursor-1')
+      )
+
+      expect(service.merged_pull_requests('owner/app')).to eq(
+        nodes: [{ number: 1, merged_by: { login: 'one', id: 11, type: 'User' } },
+                { number: 2, merged_by: { login: 'two[bot]', id: 22, type: 'Bot' } }],
+        has_next_page: true, end_cursor: 'cursor-1'
+      )
+    end
+
+    it 'asks about that repository, from the cursor it is given' do
+      allow(octokit_client).to receive(:post).and_return(graphql_page([]))
+
+      service.merged_pull_requests('owner/app', after: 'cursor-1')
+
+      posted = nil
+      expect(octokit_client).to have_received(:post) { |_path, body| posted = JSON.parse(body) }
+      expect(posted['variables']).to eq('owner' => 'owner', 'name' => 'app', 'after' => 'cursor-1')
+    end
+
+    it 'says what GitHub complained about rather than dying on an empty answer' do
+      errors = Sawyer::Resource.new(Sawyer::Agent.new('https://api.github.com'),
+                                    data: nil, errors: [{ message: 'Bad credentials' }])
+      allow(octokit_client).to receive(:post).and_return(errors)
+
+      expect { service.merged_pull_requests('owner/app') }.to raise_error(/Bad credentials/)
+    end
+
+    it 'says so when the repository is not one the token can see' do
+      missing = Sawyer::Resource.new(Sawyer::Agent.new('https://api.github.com'), data: { repository: nil })
+      allow(octokit_client).to receive(:post).and_return(missing)
+
+      expect { service.merged_pull_requests('owner/app') }.to raise_error(%r{owner/app})
+    end
+
+    it 'waits and retries when GitHub answers that the query is rate limited' do
+      limited = Sawyer::Resource.new(Sawyer::Agent.new('https://api.github.com'),
+                                     data: nil, errors: [{ type: 'RATE_LIMITED', message: 'API rate limit exceeded' }])
+      allow(service).to receive(:sleep)
+      allow(octokit_client).to receive(:post).and_return(limited, graphql_page([]))
+
+      service.merged_pull_requests('owner/app')
+
+      expect(service).to have_received(:sleep).once
+    end
+
+    it 'reports no merger for a pull request whose merger GitHub no longer knows' do
+      allow(octokit_client).to receive(:post).and_return(graphql_page([{ number: 3, mergedBy: nil }]))
+
+      expect(service.merged_pull_requests('owner/app')[:nodes]).to eq([{ number: 3, merged_by: nil }])
     end
   end
 
@@ -255,23 +402,40 @@ RSpec.describe GithubService do
     end
   end
 
-  describe '#determine_ready_for_review_at' do
-    it 'returns ready_for_review event time when available' do
-      ready_event = double(event: 'ready_for_review', created_at: 2.days.ago)
-      other_event = double(event: 'labeled', created_at: 1.day.ago)
-      allow(octokit_client).to receive(:issue_events).with('owner/repo', 123).and_return([other_event, ready_event])
+  describe '#issue_events' do
+    it 'keeps the events of every page, not only the last' do
+      pages = [Array.new(99) { double(event: 'labeled') } + [double(event: 'merged')],
+               [double(event: 'ready_for_review')]]
+      allow(octokit_client).to receive(:issue_events) { |_repo, _number, options| pages[options[:page] - 1] || [] }
 
-      result = service.send(:determine_ready_for_review_at, 'owner/repo', 123, 3.days.ago)
-      expect(result).to eq(ready_event.created_at)
+      events = service.send(:issue_events, 'owner/repo', 123)
+
+      expect(events.size).to be(101)
+      expect(events.map(&:event)).to include('merged', 'ready_for_review')
     end
 
-    it 'returns created_at when no ready_for_review event exists' do
-      created_time = 3.days.ago
-      allow(octokit_client).to receive(:issue_events).with('owner/repo', 123)
-                                                     .and_return([double(event: 'labeled', created_at: 1.day.ago)])
+    it 'asks for the largest page GitHub serves' do
+      allow(octokit_client).to receive(:issue_events).and_return([])
 
-      result = service.send(:determine_ready_for_review_at, 'owner/repo', 123, created_time)
-      expect(result).to eq(created_time)
+      service.send(:issue_events, 'owner/repo', 123)
+
+      expect(octokit_client).to have_received(:issue_events).with('owner/repo', 123, hash_including(per_page: 100))
+    end
+  end
+
+  describe '#ready_for_review_time' do
+    it 'reads the moment the pull request left draft' do
+      ready_event = double(event: 'ready_for_review', created_at: 2.days.ago)
+      events = [double(event: 'labeled', created_at: 1.day.ago), ready_event]
+
+      expect(service.send(:ready_for_review_time, events, 3.days.ago)).to eq(ready_event.created_at)
+    end
+
+    it 'falls back to when it was opened, for one opened ready for review' do
+      created_time = 3.days.ago
+      events = [double(event: 'labeled', created_at: 1.day.ago)]
+
+      expect(service.send(:ready_for_review_time, events, created_time)).to eq(created_time)
     end
   end
 
@@ -323,7 +487,7 @@ RSpec.describe GithubService do
           raise error
         end
       end.to raise_error(/Max retries reached/)
-      expect(service).to have_received(:sleep).exactly(GithubService::MAX_RETRIES).times
+      expect(service).to have_received(:sleep).exactly(GithubRateLimiting::MAX_RETRIES).times
     end
   end
 

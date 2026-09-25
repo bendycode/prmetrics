@@ -135,6 +135,10 @@ rake sync:repository_async owner/repo
 ### Week Commands
 
 ```
+# Record who merged each pull request merged before the sync read the
+# merge event; safe to rerun, and no statistics run is needed afterward.
+rake backfill:mergers
+
 # Fill branch names for pull requests synced before they were recorded,
 # flagging the promotions among them; safe to rerun. Follow it with
 # weeks:update_stats so the cached weekly figures leave promotions out.

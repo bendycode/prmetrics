@@ -3,6 +3,7 @@ class PullRequest < ApplicationRecord
 
   belongs_to :repository
   belongs_to :author, class_name: 'Contributor'
+  belongs_to :merged_by, class_name: 'Contributor', optional: true, inverse_of: :merged_pull_requests
   belongs_to :ready_for_review_week, class_name: 'Week', optional: true
   belongs_to :first_review_week, class_name: 'Week', optional: true
   belongs_to :merged_week, class_name: 'Week', optional: true
@@ -26,6 +27,7 @@ class PullRequest < ApplicationRecord
   scope :development, -> { where(promotion: false) }
   scope :promotions, -> { where(promotion: true) }
   scope :merged, -> { where.not(gh_merged_at: nil) }
+  scope :missing_merger, -> { merged.where(merged_by_id: nil) }
   scope :from_branch, ->(ref) { where(head_ref: ref) }
   scope :into_branch, ->(refs) { where(base_ref: refs) }
   scope :approved, lambda {
@@ -163,10 +165,10 @@ class PullRequest < ApplicationRecord
   def cleanup_orphaned_contributor
     return unless author
 
-    # Only delete Contributor if they have no other authored pull requests
-    # Don't delete based on reviews or pull_request_users since those are
-    # participation records that shouldn't cause deletion
-    return unless author.authored_pull_requests.empty?
+    # Only delete Contributor if they have no other authored pull requests and
+    # merged none. Don't delete based on reviews or pull_request_users since
+    # those are participation records that shouldn't cause deletion
+    return unless author.authored_pull_requests.empty? && author.merged_pull_requests.empty?
 
     author.destroy
   end

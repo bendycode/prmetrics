@@ -123,7 +123,7 @@ rake weeks:update_stats
 - **Week**: Aggregates statistics by week for each repository
 - **User**: Generic user model for reviewers
 - **GithubUser**: GitHub-specific user data for PR authors
-- **PullRequestUser**: Join table linking users to PRs with specific roles
+- **PullRequestUser**: Join table linking users to PRs; the sync writes only the author row
 
 ### Key Services
 - **GithubService**: Handles GitHub API integration with Octokit, implements rate limiting and retry logic

@@ -1,11 +1,18 @@
 class Contributor < ApplicationRecord
   # Pull request associations
   has_many :authored_pull_requests, class_name: 'PullRequest', foreign_key: 'author_id', dependent: :nullify
+  has_many :merged_pull_requests, class_name: 'PullRequest', foreign_key: 'merged_by_id',
+                                  inverse_of: :merged_by, dependent: :nullify
   has_many :pull_request_users, foreign_key: 'user_id', dependent: :destroy
   has_many :participated_pull_requests, through: :pull_request_users, source: :pull_request
 
   # Review associations
   has_many :reviews, foreign_key: 'author_id', dependent: :destroy
+
+  # Nobody's pull requests, reviews or participation rows point at them
+  scope :orphaned, lambda {
+    where.missing(:authored_pull_requests, :merged_pull_requests, :reviews, :pull_request_users)
+  }
 
   # Validations
   validates :username, presence: true, uniqueness: true
@@ -20,12 +27,20 @@ class Contributor < ApplicationRecord
   def self.find_or_create_from_github(github_user)
     return nil unless github_user
 
-    find_or_create_by(github_id: github_user.id.to_s) do |contributor|
-      contributor.username = github_user.login
-      contributor.name = github_user.name
-      contributor.avatar_url = github_user.avatar_url
-      contributor.email = github_user.email
+    # GitHub reports 'Bot' for a GitHub App's account, which is more reliable
+    # than the [bot] login suffix an account like Copilot does not carry.
+    bot = github_user.respond_to?(:type) && github_user.type == 'Bot'
+
+    contributor = find_or_create_by(github_id: github_user.id.to_s) do |new_contributor|
+      new_contributor.username = github_user.login
+      new_contributor.name = github_user.name
+      new_contributor.avatar_url = github_user.avatar_url
+      new_contributor.email = github_user.email
+      new_contributor.bot = bot
     end
+
+    contributor.update!(bot: true) if bot && contributor.persisted? && !contributor.bot?
+    contributor
   end
 
   # Find or create contributor with minimal data (for backward compatibility)
