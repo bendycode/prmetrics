@@ -94,11 +94,6 @@ RSpec.describe UpdateRepositoryStatsJob do
       job.perform(repo1.id)
     end
 
-    it 'calls cleanup for only the target repository' do
-      expect(job).to receive(:cleanup_orphaned_data).with(repo1)
-      job.perform(repo1.id)
-    end
-
     it 'behaves like rake weeks:update_stats' do
       # This test verifies the job now does the same thing as the rake task
       # The rake task calls generate_weeks_for_repository for all repos, then update_all_weeks

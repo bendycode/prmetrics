@@ -4,7 +4,7 @@ Rough development plan for next steps.
 
 ## High level list:
 [] make cr weeks:update_stats correctly set prs_first_reviewed correctly
-  * so we don't have still follow it up with a full `cr github:fetch_pull_requests FETCH_ALL=true` run
+  * so we don't still have to follow it up with a full `rake sync:repository[owner/repo] FETCH_ALL=true` run
 [] overhaul both services and rake tasks to be more efficient
 [] get project running in Cursor or VS Code with LLM full context
 [] find and fix PRs with negative time to first review

@@ -18,12 +18,11 @@ class GithubService
     nil
   end
 
-  def fetch_and_store_pull_requests(repo_name, fetch_all: false, processor: nil)
-    repository = Repository.find_or_create_by(name: repo_name)
+  # The processor is called with each pull request's GitHub data once it is
+  # stored; it owns week associations and statistics.
+  def fetch_and_store_pull_requests(repo_name, processor:, fetch_all: false)
+    repository = Repository.find_by!(name: repo_name)
     last_fetched_at = fetch_all ? nil : repository.last_fetched_at&.iso8601
-
-    # Skip week associations if processor provided (unified sync handles it)
-    @skip_week_associations = processor.present?
 
     page = 1
     per_page = 100
@@ -44,18 +43,13 @@ class GithubService
         Rails.logger.debug { "Processed PR ##{pr.number}" }
         total_processed += 1
 
-        # Call the processor callback if provided
-        processor.call(pr) if processor
+        processor.call(pr)
       end
 
       page += 1
     end
 
-    # Only update week stats if no processor (legacy behavior)
-    # The unified sync will handle this separately
-    WeekStatsService.update_all_weeks unless processor
-
-    repository.update(last_fetched_at: most_recent_update) if most_recent_update
+    repository.update!(last_fetched_at: most_recent_update) if most_recent_update
 
     Rails.logger.info "Processed #{total_processed} pull requests for #{repo_name}"
     Rails.logger.info "Most recent update: #{most_recent_update}"
@@ -157,15 +151,11 @@ class GithubService
   end
 
   def process_pull_request(repository, repo_name, pr)
-    pull_request = repository.pull_requests.find_or_create_by(number: pr.number) do |new_pr|
-      # Set initial values for new PR to avoid race conditions
-      new_pr.state = pr.state
-      new_pr.title = pr.title
-    end
+    pull_request = repository.pull_requests.find_or_initialize_by(number: pr.number)
     author = Contributor.find_or_create_from_github(pr.user)
     ready_for_review_at = pr.draft ? nil : determine_ready_for_review_at(repo_name, pr.number, pr.created_at)
 
-    pull_request.update(
+    pull_request.update!(
       title: pr.title,
       state: pr.state,
       draft: pr.draft,
@@ -179,11 +169,6 @@ class GithubService
 
     fetch_and_store_reviews(pull_request, repo_name, pr.number)
     fetch_and_store_users(pull_request, pr)
-
-    # Skip week associations during unified sync - the processor will handle it
-    return if @skip_week_associations
-
-    pull_request.ensure_weeks_exist_and_update_associations
   end
 
   def fetch_and_store_reviews(pull_request, repo_name, pr_number)

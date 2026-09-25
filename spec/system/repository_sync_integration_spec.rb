@@ -25,7 +25,7 @@ RSpec.describe 'Repository Sync Integration' do
       # Click sync should queue the job
       expect do
         click_button 'Sync Updates'
-      end.to have_enqueued_job(SyncRepositoryBatchJob)
+      end.to have_enqueued_job(UnifiedSyncJob).with(repository, fetch_all: false)
 
       # Should redirect with success message
       expect(page).to have_content("Sync job queued for #{repository.name}")
@@ -49,8 +49,8 @@ RSpec.describe 'Repository Sync Integration' do
       # Full sync button should queue with fetch_all: true
       expect do
         click_button 'Full Sync'
-      end.to have_enqueued_job(SyncRepositoryBatchJob)
-        .with(repository.name, page: 1, fetch_all: true)
+      end.to have_enqueued_job(UnifiedSyncJob)
+        .with(repository, fetch_all: true)
     end
   end
 end

@@ -1,11 +1,14 @@
 class UnifiedSyncService
+  # Sizes the progress bar when GitHub's count is unavailable
+  FALLBACK_PR_ESTIMATE = 100
+
   attr_reader :repository, :progress_callback
 
   def initialize(repo_name, fetch_all: false, progress_callback: nil)
     @repo_name = repo_name
     @fetch_all = fetch_all
     @progress_callback = progress_callback || method(:default_progress_callback)
-    @repository = Repository.find_or_create_by(name: repo_name)
+    @repository = Repository.find_or_create_by!(name: repo_name)
     @processed_prs = 0
     @created_weeks = Set.new
     @updated_weeks = Set.new
@@ -14,22 +17,20 @@ class UnifiedSyncService
   def sync!
     log_progress("Starting unified sync for #{@repo_name}")
 
-    # Mark sync as in progress
-    @repository.update(
-      sync_status: 'in_progress',
-      sync_started_at: Time.current,
-      sync_progress: 0
-    )
-
     begin
+      @repository.update!(
+        sync_status: 'in_progress',
+        sync_started_at: Time.current,
+        sync_progress: 0
+      )
+
       # Fetch and process PRs with real-time updates
       fetch_and_process_pull_requests
 
       # Final stats update for all affected weeks
       update_week_statistics
 
-      # Mark sync as completed
-      @repository.update(
+      @repository.update!(
         sync_status: 'completed',
         sync_completed_at: Time.current,
         last_sync_error: nil,
@@ -42,7 +43,9 @@ class UnifiedSyncService
       Rails.logger.error "Unified sync failed: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
 
-      @repository.update(
+      # Skips validation so a repository row that no longer validates still
+      # reports the failure instead of raising over the original error.
+      @repository.update_columns(
         sync_status: 'failed',
         sync_completed_at: Time.current,
         last_sync_error: e.message
@@ -130,7 +133,7 @@ class UnifiedSyncService
 
       # Show progress for stats update
       progress = ((index + 1).to_f / @updated_weeks.size * 100).round
-      @repository.update_column(:sync_progress, 90 + (progress * 0.1)) # Last 10% for stats
+      @repository.update_column(:sync_progress, (90 + (progress * 0.1)).round) # Last 10% for stats
 
       log_progress("Updated statistics for #{index + 1}/#{@updated_weeks.size} weeks") if (index + 1) % 5 == 0 || index == @updated_weeks.size - 1
     end
@@ -140,8 +143,9 @@ class UnifiedSyncService
     # Get a rough count of PRs to sync
     # This is an estimate for progress tracking
     if @fetch_all
-      # For full sync, get total count from GitHub
-      github_service.get_pull_request_count(@repo_name)
+      # GithubService answers nil when GitHub's search API fails
+      count = github_service.get_pull_request_count(@repo_name).to_i
+      count.positive? ? count : FALLBACK_PR_ESTIMATE
     else
       # For incremental sync, estimate based on time since last sync
       days_since_sync = if @repository.last_fetched_at
@@ -155,7 +159,7 @@ class UnifiedSyncService
     end
   rescue StandardError => e
     Rails.logger.warn "Could not estimate PR count: #{e.message}"
-    100 # Default estimate
+    FALLBACK_PR_ESTIMATE
   end
 
   def update_progress

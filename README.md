@@ -100,7 +100,7 @@ The application uses [Pundit](https://github.com/varvet/pundit) for authorizatio
 
 ## Usage
 
-### Unified Sync (Recommended)
+### Sync
 
 The unified sync command combines PR fetching, week generation, and statistics updates into a single command with real-time progress:
 
@@ -132,14 +132,9 @@ rake sync:repository_async[owner/repo]
 rake sync:repository_async owner/repo
 ```
 
-### Legacy Commands
-
-Individual commands are still available but the unified sync is recommended:
+### Week Commands
 
 ```
-# Fetch pull requests only
-rake github:fetch_pull_requests REPO=owner/repo
-
 # Generate week records
 rake weeks:generate
 

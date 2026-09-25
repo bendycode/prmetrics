@@ -101,8 +101,7 @@ rake sync:status[owner/repo]
 # List all repositories and their sync status
 rake sync:list
 
-# Legacy commands (still available)
-rake github:fetch_pull_requests REPO=owner/repo
+# Rebuild weeks and statistics
 rake weeks:generate
 rake weeks:update_stats
 ```
@@ -129,7 +128,7 @@ rake weeks:update_stats
 ### Key Services
 - **GithubService**: Handles GitHub API integration with Octokit, implements rate limiting and retry logic
 - **WeekStatsService**: Calculates weekly statistics and metrics
-- **SyncRepositoryJob**: Background job for asynchronous GitHub data fetching
+- **UnifiedSyncService**: Fetches a repository's pull requests and reviews, then refreshes the weeks they touch; the nightly rake task runs it directly, and the app's Sync buttons run it through **UnifiedSyncJob**
 
 ### Important Patterns
 - **WeekdayHours concern**: Custom module that calculates business hours excluding weekends
