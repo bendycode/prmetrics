@@ -26,6 +26,9 @@ This ensures associations stay consistent when:
 - `gh_closed_at` changes  
 - `gh_created_at` changes
 
+### Promotions
+A promotion pull request gets its week ids like any other, but the `Week` associations (`merged_prs`, `closed_prs`, `first_review_prs`, `ready_for_review_prs`) and every cached statistic leave promotions out. Comparing a week's cached counts with raw `where(merged_week_id: week.id)` counts therefore disagrees on any repository that deploys through pull requests; compare through the associations instead. `Week.unreferenced` answers "no pull request of any kind points at this week", which is what the orphan checks need.
+
 ### Service Integration
 During a sync, `UnifiedSyncService`'s processor calls `ensure_weeks_exist_and_update_associations` for each pull request `GithubService.process_pull_request` stores, and the model's save callback covers later date changes.
 

@@ -18,6 +18,24 @@ class GithubService
     nil
   end
 
+  def default_branch(repo_name)
+    with_rate_limit_handling { @client.repository(repo_name).default_branch }
+  end
+
+  # Yields every pull request GitHub lists for the repository, open or closed,
+  # oldest first: in the sync's updated-first order a pull request updated
+  # during the walk moves to page one and pushes another off the page behind it.
+  def each_pull_request(repo_name, &)
+    page = 1
+    loop do
+      pull_requests = fetch_pull_requests_page(repo_name, page, order: { sort: 'created', direction: 'asc' })
+      break if pull_requests.empty?
+
+      pull_requests.each(&)
+      page += 1
+    end
+  end
+
   # The processor is called with each pull request's GitHub data once it is
   # stored; it owns week associations and statistics.
   def fetch_and_store_pull_requests(repo_name, processor:, fetch_all: false)
@@ -25,12 +43,11 @@ class GithubService
     last_fetched_at = fetch_all ? nil : repository.last_fetched_at&.iso8601
 
     page = 1
-    per_page = 100
     total_processed = 0
     most_recent_update = nil
 
     loop do
-      pull_requests = fetch_pull_requests_page(repo_name, page, per_page, last_fetched_at)
+      pull_requests = fetch_pull_requests_page(repo_name, page, since: last_fetched_at)
       break if pull_requests.empty?
 
       new_prs = pull_requests.reject { |pr| pr.updated_at <= repository.last_fetched_at } if last_fetched_at
@@ -108,14 +125,8 @@ class GithubService
 
   private
 
-  def fetch_pull_requests_page(repo_name, page, per_page, since = nil)
-    options = {
-      state: 'all',
-      page: page,
-      per_page: per_page,
-      sort: 'updated',
-      direction: 'desc'
-    }
+  def fetch_pull_requests_page(repo_name, page, since: nil, order: { sort: 'updated', direction: 'desc' })
+    options = { state: 'all', page: page, per_page: 100 }.merge(order)
     options[:since] = since if since
 
     with_rate_limit_handling do
@@ -164,7 +175,10 @@ class GithubService
       gh_updated_at: pr.updated_at,
       gh_merged_at: pr.merged_at,
       gh_closed_at: pr.closed_at,
-      ready_for_review_at: ready_for_review_at
+      ready_for_review_at: ready_for_review_at,
+      base_ref: pr.base.ref,
+      head_ref: pr.head.ref,
+      head_repository: pr.head.repo&.full_name
     )
 
     fetch_and_store_reviews(pull_request, repo_name, pr.number)

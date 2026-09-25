@@ -24,8 +24,14 @@ class UnifiedSyncService
         sync_progress: 0
       )
 
+      # A blank answer would empty the deploy branches and unflag every promotion
+      branch = github_service.default_branch(@repo_name)
+      @repository.update!(default_branch: branch) if branch.present?
+
       # Fetch and process PRs with real-time updates
       fetch_and_process_pull_requests
+
+      refresh_promotions
 
       # Final stats update for all affected weeks
       update_week_statistics
@@ -57,11 +63,13 @@ class UnifiedSyncService
 
   private
 
-  def fetch_and_process_pull_requests
-    github_service = GithubService.new(ENV.fetch('GITHUB_ACCESS_TOKEN', nil))
+  def github_service
+    @github_service ||= GithubService.new(ENV.fetch('GITHUB_ACCESS_TOKEN', nil))
+  end
 
+  def fetch_and_process_pull_requests
     # Get total count for progress tracking
-    @total_prs = estimate_total_prs(github_service)
+    @total_prs = estimate_total_prs
     log_progress("Estimated #{@total_prs} pull requests to process")
 
     # Step 1: Fetch PRs with our custom processor
@@ -107,6 +115,25 @@ class UnifiedSyncService
     log_progress("Processed #{@processed_prs} pull requests...")
   end
 
+  # A pull request this sync never touched can still change status, when the
+  # branch it merged into first receives a pull request from the default
+  # branch; its weeks need fresh statistics too.
+  def refresh_promotions
+    changed = @repository.refresh_promotions!
+    log_progress("Reclassified #{changed.size} pull requests as promotions or development work") if changed.any?
+    changed.each { |pull_request| @updated_weeks.merge(weeks_spanned_by(pull_request)) }
+  end
+
+  # Every week from the one a pull request opened in through the one it closed
+  # in, since the open, late and stale figures count it in each of them.
+  def weeks_spanned_by(pull_request)
+    opened = pull_request.gh_created_at
+    closed = pull_request.gh_closed_at || Time.current
+    return [] unless opened
+
+    @repository.weeks.where(begin_date: ..closed.to_date).where(end_date: opened.to_date..)
+  end
+
   def track_created_weeks(pull_request)
     # Track all weeks associated with this PR for stats update
     weeks = [
@@ -139,7 +166,7 @@ class UnifiedSyncService
     end
   end
 
-  def estimate_total_prs(github_service)
+  def estimate_total_prs
     # Get a rough count of PRs to sync
     # This is an estimate for progress tracking
     if @fetch_all

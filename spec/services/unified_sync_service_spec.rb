@@ -9,7 +9,8 @@ RSpec.describe UnifiedSyncService do
 
   before do
     allow(GithubService).to receive(:new).and_return(github_service)
-    allow(github_service).to receive_messages(get_pull_request_count: 10, fetch_recent_review_activity: 0)
+    allow(github_service).to receive_messages(get_pull_request_count: 10, fetch_recent_review_activity: 0,
+                                              default_branch: 'main')
   end
 
   # Stands in for GithubService: stores the pull request, then hands its
@@ -53,6 +54,49 @@ RSpec.describe UnifiedSyncService do
 
       merged_week = repository.pull_requests.find_by(number: 123).merged_week
       expect(merged_week).to have_attributes(num_prs_merged: 1)
+    end
+
+    it "records the repository's current default branch from GitHub" do
+      repository.update!(default_branch: 'master')
+
+      service.sync!
+
+      expect(repository.reload.default_branch).to eq('main')
+    end
+
+    context 'when an earlier pull request turns out to be a promotion' do
+      # Open across several weeks, so it counts toward each one's open figure
+      let!(:earlier_deploy) do
+        create(:pull_request, repository: repository, number: 7, head_ref: 'hotfix', base_ref: 'production',
+                              head_repository: repository.name, gh_created_at: merged_at - 20.days,
+                              ready_for_review_at: merged_at - 20.days)
+          .tap(&:ensure_weeks_exist_and_update_associations)
+      end
+
+      # The weeks after the one it opened in, where it still counts as open
+      let(:spanned_weeks) do
+        repository.weeks.where(begin_date: (merged_at - 13.days).to_date..merged_at.to_date)
+      end
+
+      before do
+        allow(github_service).to receive(:fetch_and_store_pull_requests) do |_name, processor:, **|
+          create(:pull_request, repository: repository, number: 123, head_ref: 'main', base_ref: 'production',
+                                head_repository: repository.name, gh_merged_at: merged_at)
+          processor.call(pr_data)
+        end
+        WeekStatsService.generate_weeks_for_repository(repository)
+        repository.weeks.each { |week| WeekStatsService.new(week).update_stats }
+      end
+
+      it 'flags it and takes it back out of the figures of every week it spanned' do
+        expect(spanned_weeks.count).to be > 1
+        expect(spanned_weeks.map(&:num_open_prs)).to all(be(1))
+
+        service.sync!
+
+        expect(earlier_deploy.reload).to be_promotion
+        expect(spanned_weeks.map { |week| week.reload.num_open_prs }).to all(be(0))
+      end
     end
 
     context 'when the fetch fails' do

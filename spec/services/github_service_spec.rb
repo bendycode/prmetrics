@@ -60,7 +60,9 @@ RSpec.describe GithubService do
              updated_at: 1.day.ago,
              merged_at: nil,
              closed_at: nil,
-             merged_by: nil)
+             merged_by: nil,
+             base: double(ref: 'main'),
+             head: double(ref: 'feature/login', repo: double(full_name: 'test/repo')))
     end
 
     before do
@@ -107,6 +109,13 @@ RSpec.describe GithubService do
       expect(existing.reload).to have_attributes(title: 'Test PR', author: have_attributes(username: 'author'))
     end
 
+    it 'records the branch it merges into and the branch it comes from' do
+      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+      expect(repository.pull_requests.find_by(number: 123))
+        .to have_attributes(base_ref: 'main', head_ref: 'feature/login', head_repository: 'test/repo')
+    end
+
     it 'leaves weeks to the processor' do
       expect do
         service.send(:process_pull_request, repository, 'test/repo', pr_data)
@@ -122,7 +131,9 @@ RSpec.describe GithubService do
       double("pr_#{number}",
              number: number, title: "PR #{number}", state: 'open', draft: false,
              user: double(id: 9_000_900 + number, login: "author#{number}", name: nil, avatar_url: nil, email: nil),
-             created_at: updated_at - 1.day, updated_at: updated_at, merged_at: nil, closed_at: nil, merged_by: nil)
+             created_at: updated_at - 1.day, updated_at: updated_at, merged_at: nil, closed_at: nil, merged_by: nil,
+             base: double(ref: 'main'),
+             head: double(ref: "feature/#{number}", repo: double(full_name: 'test/repo')))
     end
 
     def github_pages(*pages)
@@ -214,6 +225,33 @@ RSpec.describe GithubService do
       service.send(:fetch_and_store_users, pull_request, double(user: username_only, merged_by: nil))
 
       expect(pull_request.pull_request_users.sole.user).to eq(existing)
+    end
+  end
+
+  describe '#each_pull_request' do
+    it 'walks in the order pull requests were opened, so none shifts pages mid-walk' do
+      allow(octokit_client).to receive(:pull_requests).and_return([])
+
+      service.each_pull_request('owner/repo') { |_pr| nil }
+
+      expect(octokit_client).to have_received(:pull_requests)
+        .with('owner/repo', hash_including(sort: 'created', direction: 'asc'))
+    end
+
+    it 'yields every pull request on every page' do
+      pages = [[double(number: 1), double(number: 2)], [double(number: 3)]]
+      allow(octokit_client).to receive(:pull_requests) { |_repo, options| pages[options[:page] - 1] || [] }
+
+      expect { |block| service.each_pull_request('owner/repo', &block) }
+        .to yield_successive_args(*pages.flatten)
+    end
+  end
+
+  describe '#default_branch' do
+    it "reads the repository's default branch from GitHub" do
+      allow(octokit_client).to receive(:repository).with('owner/repo').and_return(double(default_branch: 'main'))
+
+      expect(service.default_branch('owner/repo')).to eq('main')
     end
   end
 

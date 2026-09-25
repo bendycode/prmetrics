@@ -108,12 +108,7 @@ namespace :timezone do
   end
 
   def cleanup_orphaned_weeks(repository)
-    # Find weeks with no PR associations
-    orphaned_weeks = repository.weeks.left_joins(
-      :ready_for_review_prs, :first_review_prs, :merged_prs, :closed_prs
-    ).where(
-      pull_requests: { id: nil }
-    ).distinct
+    orphaned_weeks = repository.weeks.unreferenced
 
     count = orphaned_weeks.count
     orphaned_weeks.destroy_all

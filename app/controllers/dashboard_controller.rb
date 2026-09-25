@@ -29,7 +29,7 @@ class DashboardController < ApplicationController
 
     @repository_stats = prepare_repository_stats
 
-    pull_requests_scope = policy_scope(PullRequest)
+    pull_requests_scope = policy_scope(PullRequest).development
     pull_requests_scope = pull_requests_scope.where(repository: @selected_repository) if @selected_repository
 
     @total_prs = pull_requests_scope.count

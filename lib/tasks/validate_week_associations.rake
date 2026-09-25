@@ -54,15 +54,7 @@ namespace :validate do
       end
     end
 
-    # Check for orphaned week records (weeks with no associated PRs)
-    Week.find_each do |week|
-      pr_count = week.repository.pull_requests.where(
-        'merged_week_id = ? OR ready_for_review_week_id = ? OR first_review_week_id = ? OR closed_week_id = ?',
-        week.id, week.id, week.id, week.id
-      ).count
-
-      orphaned_weeks << week if pr_count == 0
-    end
+    orphaned_weeks.concat(Week.unreferenced.to_a)
 
     puts "\n📊 Validation Results:"
     puts "  Total PRs checked: #{checked}"

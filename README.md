@@ -135,6 +135,11 @@ rake sync:repository_async owner/repo
 ### Week Commands
 
 ```
+# Fill branch names for pull requests synced before they were recorded,
+# flagging the promotions among them; safe to rerun. Follow it with
+# weeks:update_stats so the cached weekly figures leave promotions out.
+rake backfill:pull_request_refs
+
 # Generate week records
 rake weeks:generate
 

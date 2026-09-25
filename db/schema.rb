@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_09_17_104319) do
+ActiveRecord::Schema[7.2].define(version: 2026_09_22_165736) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -58,6 +58,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_17_104319) do
     t.bigint "merged_week_id"
     t.bigint "closed_week_id"
     t.bigint "author_id"
+    t.string "base_ref"
+    t.string "head_ref"
+    t.string "head_repository"
+    t.boolean "promotion", default: false, null: false
     t.index ["author_id"], name: "index_pull_requests_on_author_id"
     t.index ["closed_week_id"], name: "index_pull_requests_on_closed_week_id"
     t.index ["first_review_week_id"], name: "index_pull_requests_on_first_review_week_id"
@@ -70,6 +74,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_17_104319) do
     t.index ["repository_id", "number"], name: "index_pull_requests_on_repository_id_and_number_unique", unique: true
     t.index ["repository_id", "state", "draft"], name: "idx_pull_requests_repo_state_draft"
     t.index ["repository_id"], name: "index_pull_requests_on_repository_id"
+    t.index ["repository_id"], name: "index_pull_requests_promotions", where: "promotion"
   end
 
   create_table "repositories", force: :cascade do |t|
@@ -83,6 +88,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_17_104319) do
     t.datetime "sync_completed_at"
     t.text "last_sync_error"
     t.integer "sync_progress"
+    t.string "default_branch"
     t.index ["name"], name: "idx_repositories_name"
   end
 

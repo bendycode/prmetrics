@@ -22,6 +22,12 @@ class PullRequest < ApplicationRecord
   # scope with LIMIT/OFFSET, where tied rows may come back in a different order
   # per query.
   scope :newest_first, -> { order(gh_created_at: :desc, id: :desc) }
+  # Every development metric reads through this; see Repository#refresh_promotions!
+  scope :development, -> { where(promotion: false) }
+  scope :promotions, -> { where(promotion: true) }
+  scope :merged, -> { where.not(gh_merged_at: nil) }
+  scope :from_branch, ->(ref) { where(head_ref: ref) }
+  scope :into_branch, ->(refs) { where(base_ref: refs) }
   scope :approved, lambda {
     joins(:reviews).merge(Review.approved).distinct
   }

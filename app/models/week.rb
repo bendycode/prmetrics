@@ -3,10 +3,11 @@ class Week < ApplicationRecord
 
   belongs_to :repository
 
-  has_many :ready_for_review_prs, class_name: 'PullRequest', foreign_key: 'ready_for_review_week_id'
-  has_many :first_review_prs, class_name: 'PullRequest', foreign_key: 'first_review_week_id'
-  has_many :merged_prs, class_name: 'PullRequest', foreign_key: 'merged_week_id'
-  has_many :closed_prs, class_name: 'PullRequest', foreign_key: 'closed_week_id'
+  # Promotion pull requests deploy rather than develop, so no week counts them
+  has_many :ready_for_review_prs, -> { development }, class_name: 'PullRequest', foreign_key: 'ready_for_review_week_id'
+  has_many :first_review_prs, -> { development }, class_name: 'PullRequest', foreign_key: 'first_review_week_id'
+  has_many :merged_prs, -> { development }, class_name: 'PullRequest', foreign_key: 'merged_week_id'
+  has_many :closed_prs, -> { development }, class_name: 'PullRequest', foreign_key: 'closed_week_id'
 
   validates :week_number, presence: true, uniqueness: { scope: :repository_id }
   validates :begin_date, :end_date, presence: true
@@ -16,6 +17,17 @@ class Week < ApplicationRecord
   # to come back in a different order per query -- putting a tied week on two
   # pages or on neither.
   scope :ordered, -> { order(begin_date: :desc, id: :desc) }
+
+  # No pull request of any kind points at these weeks, promotions included:
+  # the week associations above leave promotions out, so they cannot answer
+  # this, and a week deleted while a promotion still references it would
+  # violate the foreign keys.
+  scope :unreferenced, lambda {
+    where.not(id: PullRequest.where.not(ready_for_review_week_id: nil).select(:ready_for_review_week_id))
+         .where.not(id: PullRequest.where.not(first_review_week_id: nil).select(:first_review_week_id))
+         .where.not(id: PullRequest.where.not(merged_week_id: nil).select(:merged_week_id))
+         .where.not(id: PullRequest.where.not(closed_week_id: nil).select(:closed_week_id))
+  }
 
   def self.find_by_date(date)
     return nil unless date
@@ -65,7 +77,7 @@ class Week < ApplicationRecord
 
   def open_prs
     end_time = Time.zone.local(end_date.year, end_date.month, end_date.day, 23, 59, 59)
-    repository.pull_requests
+    repository.development_pull_requests
               .where(draft: false)
               .where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)',
                      end_time,
@@ -74,7 +86,7 @@ class Week < ApplicationRecord
 
   def draft_prs
     end_time = Time.zone.local(end_date.year, end_date.month, end_date.day, 23, 59, 59)
-    repository.pull_requests
+    repository.development_pull_requests
               .where(draft: true)
               .where('gh_created_at <= ? AND (gh_closed_at > ? OR gh_closed_at IS NULL)',
                      end_time,
@@ -115,7 +127,7 @@ class Week < ApplicationRecord
   end
 
   def started_prs
-    repository.pull_requests.where(gh_created_at: begin_date.in_time_zone.beginning_of_day..end_date.in_time_zone.end_of_day)
+    repository.development_pull_requests.where(gh_created_at: begin_date.in_time_zone.beginning_of_day..end_date.in_time_zone.end_of_day)
   end
 
   def cancelled_prs
