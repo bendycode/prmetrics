@@ -356,6 +356,26 @@ heroku run bundle exec rake sync:list
 - Built-in error reporting
 - Use bin/deploy for deploying to production. Script remembers extra support work, such as pending migrations.
 
+## Dependency Updates
+Dependabot updates gems one gem per pull request here. Do not add a `groups:`
+block to the `bundler` ecosystem in `.github/dependabot.yml`, even to group
+only minor and patch updates.
+
+A grouped bundler update cascade-bumped Rails two minor versions at once, to
+satisfy a transitive `railties` requirement that a single grouped gem pulled
+in. Both documented ways to prevent that were tried and neither held: a
+top-level `ignore` for `rails` limited to `version-update:semver-major`, and a
+group-level `exclude-patterns` naming `rails`. Neither constrains the
+cascading bumps Dependabot applies to resolve a group, and the cascaded gem
+appears in neither the pull request body nor the commit message, so the
+framework bump is invisible until someone diffs the Gemfile. It took three
+configuration pull requests to establish that.
+
+Grouping stays fine for an ecosystem with no dominant framework gem, which is
+why `github-actions` keeps its group. Keep the top-level `ignore` rules for
+framework majors, but treat them as a second line rather than the mechanism
+that stops this.
+
 ## Issue Keys
 Work is tracked in this repository's GitHub issues, and an issue's key is
 `PRM-` plus its number: issue #83 is PRM-83. The prefix tells prmetrics work
