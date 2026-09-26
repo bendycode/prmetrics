@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_09_22_194627) do
+ActiveRecord::Schema[7.2].define(version: 2026_09_22_203042) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -64,8 +64,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_22_194627) do
     t.string "head_repository"
     t.boolean "promotion", default: false, null: false
     t.bigint "merged_by_id"
+    t.bigint "first_approval_week_id"
     t.index ["author_id"], name: "index_pull_requests_on_author_id"
     t.index ["closed_week_id"], name: "index_pull_requests_on_closed_week_id"
+    t.index ["first_approval_week_id"], name: "index_pull_requests_on_first_approval_week_id"
     t.index ["first_review_week_id"], name: "index_pull_requests_on_first_review_week_id"
     t.index ["gh_closed_at"], name: "idx_pull_requests_gh_closed"
     t.index ["gh_created_at"], name: "idx_pull_requests_gh_created"
@@ -164,6 +166,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_22_194627) do
     t.datetime "updated_at", null: false
     t.integer "num_prs_late", default: 0, null: false, comment: "Cached count of PRs approved > 1 week and < 4 weeks ago (8-27 days)"
     t.integer "num_prs_stale", default: 0, null: false, comment: "Cached count of PRs approved ≥ 4 weeks ago (28+ days)"
+    t.integer "num_prs_approved", default: 0, null: false, comment: "Cached count of PRs first approved during the week"
+    t.decimal "avg_hrs_to_approval", precision: 10, scale: 2
     t.index ["begin_date", "end_date"], name: "idx_weeks_dates"
     t.index ["repository_id", "begin_date", "end_date"], name: "idx_weeks_repo_dates"
     t.index ["repository_id", "week_number"], name: "index_weeks_on_repository_id_and_week_number", unique: true
@@ -176,6 +180,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_22_194627) do
   add_foreign_key "pull_requests", "contributors", column: "merged_by_id"
   add_foreign_key "pull_requests", "repositories"
   add_foreign_key "pull_requests", "weeks", column: "closed_week_id"
+  add_foreign_key "pull_requests", "weeks", column: "first_approval_week_id"
   add_foreign_key "pull_requests", "weeks", column: "first_review_week_id"
   add_foreign_key "pull_requests", "weeks", column: "merged_week_id"
   add_foreign_key "pull_requests", "weeks", column: "ready_for_review_week_id"

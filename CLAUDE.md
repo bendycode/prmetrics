@@ -133,7 +133,7 @@ rake weeks:update_stats
 ### Important Patterns
 - **WeekdayHours concern**: Custom module that calculates business hours excluding weekends
 - **Incremental fetching**: Uses `last_fetched_at` on repositories to minimize API calls
-- **Week associations**: PRs are associated with different weeks based on lifecycle events (started, merged, cancelled)
+- **Week associations**: PRs are associated with different weeks based on lifecycle events (started, first reviewed, approved, merged, cancelled)
 
 ### UI Framework
 - Uses SB Admin 2 Bootstrap theme

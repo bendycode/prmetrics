@@ -18,7 +18,7 @@ RSpec.describe Week do
   describe 'pull requests counted toward the week' do
     let(:week) { create(:week) }
 
-    %i[ready_for_review_prs first_review_prs merged_prs closed_prs].each do |association|
+    %i[ready_for_review_prs first_review_prs first_approval_prs merged_prs closed_prs].each do |association|
       it "leaves promotions out of #{association}" do
         foreign_key = described_class.reflect_on_association(association).foreign_key
         development = pull_request_in_week(foreign_key)
@@ -29,6 +29,47 @@ RSpec.describe Week do
     end
   end
 
+  describe 'late and stale pull requests' do
+    let(:week) do
+      create(:week, repository: create(:repository), week_number: 202_637,
+                    begin_date: Date.new(2026, 9, 14), end_date: Date.new(2026, 9, 20))
+    end
+    let(:approved_at) { Time.zone.parse('2026-08-31 09:00') }
+
+    def waiting_pull_request(approved_by:, approved: approved_at)
+      pull_request = create(:pull_request, repository: week.repository, gh_created_at: approved - 1.day,
+                                           ready_for_review_at: approved - 1.day)
+      create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: approved, author: approved_by)
+      pull_request
+    end
+
+    it 'counts a pull request a person approved and nobody merged' do
+      waiting = waiting_pull_request(approved_by: create(:contributor))
+
+      expect(week.late_prs).to contain_exactly(waiting)
+    end
+
+    it 'leaves out a pull request only a bot approved' do
+      waiting_pull_request(approved_by: create(:contributor, bot: true))
+
+      expect(week.late_prs).to be_empty
+    end
+
+    it 'counts a pull request approved long enough ago as stale rather than late' do
+      long_ago = Time.zone.parse('2026-08-01 09:00')
+      waiting = waiting_pull_request(approved_by: create(:contributor), approved: long_ago)
+
+      expect(week.stale_prs).to contain_exactly(waiting)
+    end
+
+    it 'leaves a bot-approved pull request out of the stale list too' do
+      long_ago = Time.zone.parse('2026-08-01 09:00')
+      waiting_pull_request(approved_by: create(:contributor, bot: true), approved: long_ago)
+
+      expect(week.stale_prs).to be_empty
+    end
+  end
+
   describe '.unreferenced' do
     let(:week) { create(:week) }
 
@@ -36,7 +77,7 @@ RSpec.describe Week do
       expect(week.repository.weeks.unreferenced).to contain_exactly(week)
     end
 
-    %i[ready_for_review_prs first_review_prs merged_prs closed_prs].each do |association|
+    %i[ready_for_review_prs first_review_prs first_approval_prs merged_prs closed_prs].each do |association|
       it "keeps a week a #{association.to_s.sub('_prs', '')} pull request points at, promotion or not" do
         foreign_key = described_class.reflect_on_association(association).foreign_key
         pull_request_in_week(foreign_key, :promotion)
@@ -155,9 +196,6 @@ RSpec.describe Week do
           # Average: (68 + 72) / 2 = 70 hours
 
           expect(current_week.avg_hours_to_first_review).to eq(70.0)
-
-          # Raw calculation would include weekend for PR1
-          expect(current_week.raw_avg_hours_to_first_review).to be > 22.0
         end
       end
 
@@ -241,9 +279,6 @@ RSpec.describe Week do
           # PR2: Monday 9 AM to Wednesday 5 PM = 56 hours weekday time
           # Average: (94 + 56) / 2 = 75 hours
           expect(current_week.avg_hours_to_merge).to eq(75.0)
-
-          # Raw calculation would include weekend for PR1
-          expect(current_week.raw_avg_hours_to_merge).to be > 39.0
         end
       end
 

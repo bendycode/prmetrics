@@ -11,11 +11,14 @@ class Review < ApplicationRecord
     message: 'review already exists for this pull request, author, and state combination'
   }
 
-  after_destroy :update_pull_request_first_review_week, unless: :skip_week_association_update
-  after_save :update_pull_request_first_review_week, unless: :skip_week_association_update
+  after_destroy :update_pull_request_review_weeks, unless: :skip_week_association_update
+  after_save :update_pull_request_review_weeks, unless: :skip_week_association_update
 
   scope :ordered, -> { order(submitted_at: :desc) }
   scope :approved, -> { where(state: 'APPROVED') }
+  # An unknown reviewer is not a bot: reviews.author_id is nullable, and rows
+  # stored before the sync recorded reviewers still count as approvals.
+  scope :by_people, -> { left_joins(:author).where(contributors: { bot: [false, nil] }) }
 
   def skip_week_association_update
     @skip_week_association_update || false
@@ -27,16 +30,17 @@ class Review < ApplicationRecord
 
   private
 
-  def update_pull_request_first_review_week
+  # A review changes both the week a pull request was first reviewed in and
+  # the week it was approved in, so one method keeps the pair in step.
+  def update_pull_request_review_weeks
     return unless pull_request&.ready_for_review_at
 
-    # Find the first valid review and update the week association
-    first_review = pull_request.valid_first_review
-    # Use repository-scoped week lookup to prevent cross-repository associations
-    new_week = first_review ? pull_request.repository.weeks.find_by_date(first_review.submitted_at) : nil
+    weeks = pull_request.repository.weeks
+    # Repository-scoped lookups prevent cross-repository associations
+    new_weeks = { first_review_week_id: weeks.find_by_date(pull_request.valid_first_review&.submitted_at)&.id,
+                  first_approval_week_id: weeks.find_by_date(pull_request.approved_at)&.id }
 
-    return unless pull_request.first_review_week != new_week
-
-    pull_request.update_column(:first_review_week_id, new_week&.id)
+    moved = new_weeks.reject { |column, week_id| pull_request[column] == week_id }
+    pull_request.update_columns(moved) if moved.any?
   end
 end

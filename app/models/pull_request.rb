@@ -1,11 +1,16 @@
 class PullRequest < ApplicationRecord
   include WeekdayHours
 
+  # Every week a pull request points at; Week.unreferenced reads them all
+  WEEK_COLUMNS = %i[ready_for_review_week_id first_review_week_id first_approval_week_id
+                    merged_week_id closed_week_id].freeze
+
   belongs_to :repository
   belongs_to :author, class_name: 'Contributor'
   belongs_to :merged_by, class_name: 'Contributor', optional: true, inverse_of: :merged_pull_requests
   belongs_to :ready_for_review_week, class_name: 'Week', optional: true
   belongs_to :first_review_week, class_name: 'Week', optional: true
+  belongs_to :first_approval_week, class_name: 'Week', optional: true
   belongs_to :merged_week, class_name: 'Week', optional: true
   belongs_to :closed_week, class_name: 'Week', optional: true
 
@@ -30,9 +35,10 @@ class PullRequest < ApplicationRecord
   scope :missing_merger, -> { merged.where(merged_by_id: nil) }
   scope :from_branch, ->(ref) { where(head_ref: ref) }
   scope :into_branch, ->(refs) { where(base_ref: refs) }
-  scope :approved, lambda {
-    joins(:reviews).merge(Review.approved).distinct
-  }
+  # Cleared to merge by a person; a bot's approval is feedback, not approval.
+  # A subquery rather than a join, so composing this with joins(:author) cannot
+  # silently move the bot filter onto the pull request's own author.
+  scope :approved, -> { where(id: Review.approved.by_people.select(:pull_request_id)) }
 
   scope :open_at, lambda { |timestamp|
     where('gh_created_at <= ?', timestamp)
@@ -53,17 +59,6 @@ class PullRequest < ApplicationRecord
   after_destroy :cleanup_orphaned_contributor
   after_save :update_week_associations_if_needed, unless: :skip_week_association_update
 
-  # Original method that doesn't exclude weekends
-  def raw_time_to_first_review
-    return nil unless ready_for_review_at
-
-    first_review = valid_first_review
-    return nil unless first_review
-
-    # Return in hours instead of seconds for consistency
-    (first_review.submitted_at - ready_for_review_at) / 1.hour
-  end
-
   # New method that excludes weekends
   def time_to_first_review
     return nil unless ready_for_review_at
@@ -83,6 +78,29 @@ class PullRequest < ApplicationRecord
     WeekdayHours.weekday_hours_between(ready_for_review_at, gh_merged_at) * 1.hour
   end
 
+  # When the pull request was cleared to merge: the first approval from a
+  # person, or the author's own merge, whichever came first. An author merging
+  # their own work is that pull request's approval, which is how a repository
+  # where authors merge their own work gets an approval time at all.
+  def approved_at
+    cleared = cleared_at
+    return nil unless ready_for_review_at && cleared
+
+    # An approval given while it was still a draft counts from the moment it
+    # became ready for review, so nothing is approved before it was askable
+    [cleared, ready_for_review_at].max
+  end
+
+  # When it was cleared to merge, whether or not it had been marked ready for
+  # review by then. Late and stale ask only how long it has waited since.
+  def cleared_at
+    [first_approval_at, self_merged_at].compact.min
+  end
+
+  def valid_first_review_at
+    valid_first_review&.submitted_at
+  end
+
   def valid_first_review
     return nil unless ready_for_review_at
 
@@ -97,16 +115,23 @@ class PullRequest < ApplicationRecord
   # @param reference_date [Time/Date] The date to calculate from (defaults to current time)
   # @return [Integer] Number of days since first approval, or 0 if no approved reviews
   def days_since_first_approval(reference_date = Time.current)
-    first_approved_review = reviews
-                            .where(state: 'APPROVED')
-                            .order(:submitted_at)
-                            .first
-
-    return 0 unless first_approved_review
+    cleared = cleared_at
+    return 0 unless cleared
 
     # Use end_of_day for reference_date to be consistent with week boundaries
     reference_timestamp = reference_date.in_time_zone.end_of_day
-    ((reference_timestamp - first_approved_review.submitted_at) / 1.day).to_i
+    ((reference_timestamp - cleared) / 1.day).to_i
+  end
+
+  def first_approval_at
+    reviews.approved.by_people.minimum(:submitted_at)&.in_time_zone
+  end
+
+  # An author merging their own work is that pull request's approval, a bot's
+  # own merge included: an update bot merging its own pull request has cleared
+  # it, where a bot reviewing someone else's work has only answered.
+  def self_merged_at
+    gh_merged_at if merged_by_id && merged_by_id == author_id
   end
 
   def update_week_associations
@@ -117,6 +142,7 @@ class PullRequest < ApplicationRecord
     first_valid_review = valid_first_review
 
     self.first_review_week = repository.weeks.find_by_date(first_valid_review&.submitted_at)
+    self.first_approval_week = repository.weeks.find_by_date(approved_at)
     self.merged_week = repository.weeks.find_by_date(gh_merged_at)
     self.closed_week = repository.weeks.find_by_date(gh_closed_at)
     save
@@ -124,7 +150,7 @@ class PullRequest < ApplicationRecord
 
   def ensure_weeks_exist_and_update_associations
     # First ensure all required weeks exist
-    dates = [ready_for_review_at, valid_first_review&.submitted_at, gh_merged_at, gh_closed_at].compact
+    dates = [ready_for_review_at, valid_first_review&.submitted_at, approved_at, gh_merged_at, gh_closed_at].compact
 
     dates.each do |date|
       ct_date = date.in_time_zone('America/Chicago')
@@ -154,10 +180,14 @@ class PullRequest < ApplicationRecord
 
   def update_week_associations_if_needed
     # Only update if lifecycle dates changed to avoid unnecessary work
+    # merged_by decides whether a merge was the author's own, which is what
+    # gives a self-merged pull request its approval week
     if saved_change_to_ready_for_review_at? ||
        saved_change_to_gh_merged_at? ||
        saved_change_to_gh_closed_at? ||
-       saved_change_to_gh_created_at?
+       saved_change_to_gh_created_at? ||
+       saved_change_to_merged_by_id? ||
+       saved_change_to_author_id?
       update_week_associations
     end
   end
@@ -177,6 +207,7 @@ class PullRequest < ApplicationRecord
     week_associations = {
       ready_for_review_week: ready_for_review_week,
       first_review_week: first_review_week,
+      first_approval_week: first_approval_week,
       merged_week: merged_week,
       closed_week: closed_week
     }

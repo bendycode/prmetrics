@@ -17,13 +17,14 @@ module DashboardHelper
     },
     late_prs: {
       title: 'Late Approved PRs',
-      body: 'Counted only for PRs that are open, non-draft, and have at least one approval. ' \
+      body: 'Counted only for PRs that are open, non-draft, and approved by a person. ' \
             'Within that population, this is the count whose first approval landed more than 7 ' \
-            'and fewer than 28 days before the end of the week (i.e., 8-27 days approved-but-unmerged).'
+            'and fewer than 28 days before the end of the week (i.e., 8-27 days approved-but-unmerged). ' \
+            'A bot review is feedback, not approval.'
     },
     stale_prs: {
       title: 'Stale Approved PRs',
-      body: 'Counted only for PRs that are open, non-draft, and have at least one approval. ' \
+      body: 'Counted only for PRs that are open, non-draft, and approved by a person. ' \
             'Within that population, this is the count whose first approval landed 28 or more days ' \
             'before the end of the week. PRs move from Late Approved into Stale Approved at the 28-day mark.'
     },

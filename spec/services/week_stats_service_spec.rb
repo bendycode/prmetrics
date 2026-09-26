@@ -147,6 +147,80 @@ RSpec.describe WeekStatsService do
       end
     end
 
+    context 'when counting and timing approvals' do
+      # Monday 09:00 through Friday, so a weekend-spanning window is visible.
+      # The week has to exist before a pull request, or saving one creates its own.
+      let!(:week) do
+        create(:week, repository: repository, week_number: 202_637,
+                      begin_date: Date.new(2026, 9, 14), end_date: Date.new(2026, 9, 20))
+      end
+      let(:monday) { Time.zone.parse('2026-09-14 09:00') }
+      let(:author) { create(:contributor) }
+
+      def approved_pull_request(ready:, approved: nil, merged_by: nil, merged_at: nil)
+        pull_request = create(:pull_request, repository: repository, author: author, gh_created_at: ready,
+                                             ready_for_review_at: ready, merged_by: merged_by, gh_merged_at: merged_at)
+        create(:review, pull_request: pull_request, state: 'APPROVED', submitted_at: approved) if approved
+        pull_request.ensure_weeks_exist_and_update_associations
+        pull_request
+      end
+
+      it 'counts the pull requests first approved during the week' do
+        approved_pull_request(ready: monday, approved: monday + 2.hours)
+        approved_pull_request(ready: monday, merged_by: author, merged_at: monday + 4.hours)
+        approved_pull_request(ready: monday)
+
+        service.update_stats
+
+        expect(week.reload.num_prs_approved).to be(2)
+      end
+
+      it 'averages the weekday hours from ready for review to approval, self-merges included' do
+        approved_pull_request(ready: monday, approved: monday + 2.hours)
+        approved_pull_request(ready: monday, merged_by: author, merged_at: monday + 4.hours)
+
+        service.update_stats
+
+        expect(week.reload.avg_hrs_to_approval).to eq(3.0)
+      end
+
+      it 'leaves the weekend out of the wait' do
+        friday_before = Time.zone.parse('2026-09-11 16:00')
+        approved_pull_request(ready: friday_before, approved: friday_before + 3.days)
+
+        service.update_stats
+
+        expect(week.reload.avg_hrs_to_approval).to eq(24.0)
+      end
+
+      it 'clears a stale approval figure when the week no longer has one' do
+        week.update!(num_prs_approved: 7, avg_hrs_to_approval: 9.99)
+
+        service.update_stats
+
+        expect(week.reload).to have_attributes(num_prs_approved: 0, avg_hrs_to_approval: nil)
+      end
+    end
+
+    context 'when timing first feedback across a weekend' do
+      let!(:week) do
+        create(:week, repository: repository, week_number: 202_637,
+                      begin_date: Date.new(2026, 9, 14), end_date: Date.new(2026, 9, 20))
+      end
+
+      it 'leaves the weekend out of the wait' do
+        friday_before = Time.zone.parse('2026-09-11 16:00')
+        pull_request = create(:pull_request, repository: repository, gh_created_at: friday_before,
+                                             ready_for_review_at: friday_before)
+        create(:review, pull_request: pull_request, state: 'COMMENTED', submitted_at: friday_before + 3.days)
+        pull_request.ensure_weeks_exist_and_update_associations
+
+        service.update_stats
+
+        expect(week.reload.avg_hrs_to_first_review).to eq(24.0)
+      end
+    end
+
     describe '#calculate_num_prs_late' do
       context 'with PRs at various approval ages' do
         before do
