@@ -143,7 +143,8 @@ RSpec.describe 'Pull Request Navigation' do
     it 'displays timing metrics when available' do
       visit pull_request_path(pull_request)
 
-      expect(page).to have_content('Time to first review:')
+      expect(page).to have_content('Time to first feedback:')
+      expect(page).to have_content('Time to approval:')
       expect(page).to have_content('Time to merge:')
     end
   end

@@ -90,9 +90,9 @@ RSpec.describe 'Promotion pull requests never count toward a week' do
     it 'counts only development work' do
       get repository_week_path(with_promotions, week)
 
-      expect(response.body).to include('Open PRs: 1', 'PRs Started: 3', 'PRs First Reviewed: 1',
-                                       'Late Approved PRs: 1', 'Stale Approved PRs: 0', 'PRs Merged: 1',
-                                       'PRs Cancelled: 1', 'Draft PRs: 1')
+      expect(response.body).to include('Open PRs: 1', 'PRs Started: 3', 'PRs With First Feedback: 1',
+                                       'PRs Approved: 1', 'Late Approved PRs: 1', 'Stale Approved PRs: 0',
+                                       'PRs Merged: 1', 'PRs Cancelled: 1', 'Draft PRs: 1')
     end
 
     WeeksController::PR_LISTS.each_key do |category|

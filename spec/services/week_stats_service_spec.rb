@@ -2,7 +2,13 @@ require 'rails_helper'
 
 RSpec.describe WeekStatsService do
   let(:repository) { create(:repository) }
-  let(:week) { create(:week, repository: repository, begin_date: 1.week.ago.to_date, end_date: Date.current) }
+  # A fixed Monday-to-Sunday week, so a figure measured in weekday hours is the
+  # same on every day the suite runs. Anchoring the week to the current date put
+  # its begin_date on whatever day of the week it happened to be, and the
+  # weekday-hour averages read zero whenever that was a Saturday or Sunday.
+  let(:week) do
+    create(:week, repository: repository, begin_date: Date.new(2026, 9, 14), end_date: Date.new(2026, 9, 20))
+  end
   let(:service) { described_class.new(week) }
 
   describe '#update_stats' do
@@ -222,40 +228,43 @@ RSpec.describe WeekStatsService do
     end
 
     describe '#calculate_num_prs_late' do
+      # Late and stale count days from the week's end_date, so these fixtures are
+      # placed relative to the week rather than to the current date. Measuring the
+      # fixture from today only agreed with the metric while the week ended today.
       context 'with PRs at various approval ages' do
         before do
-          create(:pull_request, :approved_days_ago, days_ago: 2, repository: repository,
-                                                    gh_created_at: 90.days.ago)
-          create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
-                                                    gh_created_at: 90.days.ago)
-          create(:pull_request, :approved_days_ago, days_ago: 15, repository: repository,
-                                                    gh_created_at: 90.days.ago)
-          create(:pull_request, :approved_days_ago, days_ago: 30, repository: repository,
-                                                    gh_created_at: 90.days.ago)
+          [2, 10, 15, 30].each do |days|
+            create(:pull_request, :approved_before_week_end,
+                   repository: repository, week: week, days_before_week_end: days)
+          end
         end
 
-        it 'counts only PRs approved 8-27 days ago' do
-          expect(service.send(:calculate_num_prs_late)).to eq(2)
+        it 'counts only PRs approved 8 to 27 days before the week ended' do
+          expect(service.send(:calculate_num_prs_late)).to be(2)
         end
       end
 
       context 'edge cases' do
-        it 'excludes merged PRs' do
-          create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
-                                                    gh_created_at: 90.days.ago, gh_merged_at: 1.day.ago)
-          expect(service.send(:calculate_num_prs_late)).to eq(0)
+        # Merged and closed are judged as of the week's end, not as of today, so a
+        # fixture that merges after the week ended is still late for that week.
+        it 'excludes PRs merged before the week ended' do
+          create(:pull_request, :approved_before_week_end, repository: repository, week: week,
+                                                           days_before_week_end: 10,
+                                                           gh_merged_at: week.end_date - 1.day)
+          expect(service.send(:calculate_num_prs_late)).to be(0)
         end
 
-        it 'excludes closed (unmerged) PRs' do
-          create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
-                                                    gh_created_at: 90.days.ago, gh_closed_at: 1.day.ago, gh_merged_at: nil)
-          expect(service.send(:calculate_num_prs_late)).to eq(0)
+        it 'excludes PRs closed unmerged before the week ended' do
+          create(:pull_request, :approved_before_week_end, repository: repository, week: week,
+                                                           days_before_week_end: 10,
+                                                           gh_closed_at: week.end_date - 1.day, gh_merged_at: nil)
+          expect(service.send(:calculate_num_prs_late)).to be(0)
         end
 
         it 'excludes draft PRs even if approved' do
-          create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
-                                                    gh_created_at: 90.days.ago, draft: true)
-          expect(service.send(:calculate_num_prs_late)).to eq(0)
+          create(:pull_request, :approved_before_week_end, repository: repository, week: week,
+                                                           days_before_week_end: 10, draft: true)
+          expect(service.send(:calculate_num_prs_late)).to be(0)
         end
       end
     end
@@ -275,10 +284,10 @@ RSpec.describe WeekStatsService do
 
     describe '#update_stats' do
       it 'populates num_prs_late and num_prs_stale columns' do
-        create(:pull_request, :approved_days_ago, days_ago: 10, repository: repository,
-                                                  gh_created_at: 90.days.ago)
-        create(:pull_request, :approved_days_ago, days_ago: 35, repository: repository,
-                                                  gh_created_at: 90.days.ago)
+        create(:pull_request, :approved_before_week_end,
+               repository: repository, week: week, days_before_week_end: 10)
+        create(:pull_request, :approved_before_week_end,
+               repository: repository, week: week, days_before_week_end: 35)
 
         service.update_stats
 

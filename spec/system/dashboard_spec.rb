@@ -19,7 +19,7 @@ RSpec.describe 'Dashboard' do
         expect(page).to have_content('Dashboard')
         expect(page).to have_content('Total Repositories')
         expect(page).to have_content('Total Pull Requests')
-        expect(page).to have_content('Avg Time to Review')
+        expect(page).to have_content('Avg Time to Feedback')
         expect(page).to have_content('Avg Time to Merge')
 
         # Should show zero values
@@ -131,7 +131,7 @@ RSpec.describe 'Dashboard' do
       expect(page).to have_css('.col-lg-6')
 
       # Check that cards are present
-      expect(page).to have_css('.card', count: 9) # 4 metric cards + 3 chart cards + 2 data cards
+      expect(page).to have_css('.card', count: 10) # 5 metric cards + 3 chart cards + 2 data cards
     end
   end
 
@@ -172,12 +172,12 @@ RSpec.describe 'Dashboard' do
       expect(page_source).to include('PRs Cancelled')
 
       # Should include review performance data
-      expect(page_source).to include('Hours to First Review')
+      expect(page_source).to include('Hours to First Feedback')
       expect(page_source).to include('Hours to Merge')
 
       # Should include repository comparison data
       expect(page_source).to include('Total PRs (4 weeks)')
-      expect(page_source).to include('Avg Review Time (hours)')
+      expect(page_source).to include('Avg Feedback Time (hours)')
       expect(page_source).to include('Merge Rate (%)')
     end
 
@@ -190,27 +190,31 @@ RSpec.describe 'Dashboard' do
       expect(page_source).to include('maintainAspectRatio: false')
     end
 
-    it 'uses consistent color scheme across charts and cards' do
+    it 'writes down the color each kind of figure is drawn in' do
       visit root_path
 
       page_source = page.html
 
-      # Check color consistency documentation
       expect(page_source).to include('Dashboard Color Scheme')
       expect(page_source).to include('Blue (#4e73df): PR Counts/Volume')
-      expect(page_source).to include('Yellow (#f6c23e): Review Time')
+      expect(page_source).to include('Yellow (#f6c23e): Time to Feedback')
+      expect(page_source).to include('Cyan (#36b9cc): Time to Approval, and repository counts')
       expect(page_source).to include('Green (#1cc88a): Merge Time/Success')
       expect(page_source).to include('Red (#e74a3b): Cancelled/Failed PRs')
-      expect(page_source).to include('Cyan (#36b9cc): Repositories/Infrastructure')
+    end
 
-      # Check cards use consistent colors
-      expect(page).to have_css('.border-left-info') # Repositories card (cyan)
+    it 'gives each summary card the color its chart series is drawn in' do
+      visit root_path
+
+      page_source = page.html
+
+      expect(page).to have_css('.border-left-info') # Repositories and approval cards (cyan)
       expect(page).to have_css('.border-left-primary') # PR count card (blue)
-      expect(page).to have_css('.border-left-warning') # Review time card (yellow)
+      expect(page).to have_css('.border-left-warning') # Feedback time card (yellow)
       expect(page).to have_css('.border-left-success') # Merge time card (green)
 
-      # Check charts use consistent colors
-      expect(page_source).to include("borderColor: '#f6c23e'") # Review time in chart
+      expect(page_source).to include("borderColor: '#f6c23e'") # Feedback time in chart
+      expect(page_source).to include("borderColor: '#36b9cc'") # Approval time in chart
       expect(page_source).to include("borderColor: '#1cc88a'") # Merge time in chart
       expect(page_source).to include("borderColor: '#e74a3b'") # Cancelled PRs
     end

@@ -4,10 +4,15 @@
     <li><strong>State:</strong> <%= @pull_request.state.titleize %></li>
     <li><strong>Created at:</strong> <%= l(@pull_request.gh_created_at, format: :long) if @pull_request.gh_created_at %></li>
     <li><strong>Ready for review at:</strong> <%= l(@pull_request.ready_for_review_at, format: :long) if @pull_request.ready_for_review_at %></li>
-    <li><strong>First review at:</strong> <%= l(@first_review_time, format: :long) if @first_review_time %></li>
+    <% first_feedback_at = @pull_request.valid_first_review_at %>
+    <% approved_at = @pull_request.approved_at %>
+    <li><strong>First feedback at:</strong> <%= l(first_feedback_at, format: :long) if first_feedback_at %></li>
+    <li><strong>Approved at:</strong>
+      <%= approved_at ? l(approved_at, format: :long) : 'Not yet approved' %></li>
     <li><strong>Merged at:</strong> <%= l(@pull_request.gh_merged_at, format: :long) if @pull_request.gh_merged_at %></li>
     <li><strong>Closed at:</strong> <%= l(@pull_request.gh_closed_at, format: :long) if @pull_request.gh_closed_at %></li>
-    <li><strong>Time to first review:</strong> <%= distance_of_time_in_words(@pull_request.ready_for_review_at, @first_review_time) if @pull_request.ready_for_review_at && @first_review_time %></li>
+    <li><strong>Time to first feedback:</strong> <%= distance_of_time_in_words(@pull_request.ready_for_review_at, first_feedback_at) if @pull_request.ready_for_review_at && first_feedback_at %></li>
+    <li><strong>Time to approval:</strong> <%= distance_of_time_in_words(@pull_request.ready_for_review_at, approved_at) if approved_at %></li>
     <li><strong>Time to merge:</strong> <%= distance_of_time_in_words(@pull_request.ready_for_review_at, @pull_request.gh_merged_at) if @pull_request.ready_for_review_at && @pull_request.gh_merged_at %></li>
   </ul>
 </div>

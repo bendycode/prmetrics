@@ -40,7 +40,7 @@ RSpec.describe 'Dashboard Chart Preferences', :js do
     page.evaluate_script('window.prVelocityChart.options.plugins.legend.onClick(null, {datasetIndex: 2});')
 
     # Verify localStorage was updated
-    prefs = page.evaluate_script('JSON.parse(localStorage.getItem("prmetrics_chart_preferences"))')
+    prefs = page.evaluate_script('JSON.parse(localStorage.getItem("prmetrics_chart_preferences_feedback_and_approval"))')
     expect(prefs).not_to be_nil
     expect(prefs['prVelocityChart']).not_to include('PRs Cancelled')
     expect(prefs['prVelocityChart']).to include('PRs Started', 'PRs Merged')
@@ -61,7 +61,7 @@ RSpec.describe 'Dashboard Chart Preferences', :js do
     page.evaluate_script('window.prVelocityChart.options.plugins.legend.onClick(null, {datasetIndex: 0});')
 
     # Verify localStorage contains only prVelocityChart preferences
-    prefs = page.evaluate_script('JSON.parse(localStorage.getItem("prmetrics_chart_preferences"))')
+    prefs = page.evaluate_script('JSON.parse(localStorage.getItem("prmetrics_chart_preferences_feedback_and_approval"))')
     expect(prefs.keys).to include('prVelocityChart')
     expect(prefs['reviewPerformanceChart']).to be_nil
     expect(prefs['repositoryComparisonChart']).to be_nil
@@ -87,7 +87,7 @@ RSpec.describe 'Dashboard Chart Preferences', :js do
 
   it 'restores default state when localStorage has invalid JSON' do
     # Corrupt localStorage before visiting page
-    page.execute_script('localStorage.setItem("prmetrics_chart_preferences", "invalid json")')
+    page.execute_script('localStorage.setItem("prmetrics_chart_preferences_feedback_and_approval", "invalid json")')
 
     # Visit page - should not crash
     visit dashboard_path

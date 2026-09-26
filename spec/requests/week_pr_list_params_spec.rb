@@ -47,6 +47,10 @@ RSpec.describe 'Week PR list category param' do
                                                      title: 'First reviewed this week',
                                                      gh_created_at: inside_week,
                                                      first_review_week: week)
+      create(:pull_request, :with_week_associations, repository: repository,
+                                                     title: 'Approved this week',
+                                                     gh_created_at: inside_week,
+                                                     first_approval_week: week)
       create(:pull_request, :approved_before_week_end, repository: repository,
                                                        title: 'Approved ten days before',
                                                        week: week, days_before_week_end: 10)
@@ -62,8 +66,10 @@ RSpec.describe 'Week PR list category param' do
       'open' => { shows: ['Still open this week', 'Merged this week', 'First reviewed this week',
                           'Approved ten days before', 'Approved forty days before'],
                   hides: ['Draft this week', 'Cancelled this week'] },
-      'first_reviewed' => { shows: ['First reviewed this week'],
-                            hides: ['Still open this week', 'Merged this week'] },
+      'first_feedback' => { shows: ['First reviewed this week'],
+                            hides: ['Still open this week', 'Merged this week', 'Approved this week'] },
+      'approved' => { shows: ['Approved this week'],
+                      hides: ['Still open this week', 'First reviewed this week'] },
       'late' => { shows: ['Approved ten days before'],
                   hides: ['Approved forty days before', 'Still open this week'] },
       'stale' => { shows: ['Approved forty days before'],
@@ -74,7 +80,8 @@ RSpec.describe 'Week PR list category param' do
                        hides: ['Merged this week', 'Still open this week'] },
       'draft' => { shows: ['Draft this week'],
                    hides: ['Still open this week', 'Merged this week'] }
-    }.each do |category, rows|
+    }.tap { |table| it('covers every category the week page offers') { expect(table.keys).to match_array(WeeksController::PR_LISTS.keys) } }
+     .each do |category, rows|
       it "loads the #{category} scope" do
         get path, params: { category: category }
 
