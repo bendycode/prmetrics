@@ -10,6 +10,11 @@ updates:
       # Handle them via a dedicated upgrade PR, not a routine dependabot bump.
       - dependency-name: "rails"
         update-types: ["version-update:semver-major"]
+      # web-console 4.3 requires railties >= 8.0, so Dependabot answers a
+      # web-console bump by also moving Rails to 8.x. Lift this with the
+      # Rails 8 upgrade.
+      - dependency-name: "web-console"
+        versions: [">= 4.3"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
