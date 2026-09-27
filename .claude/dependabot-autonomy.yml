@@ -24,3 +24,5 @@ separate_flake_fix_pr: auto
 # PRs missing a compatibility score are treated as below the floor.
 # Raise this to be more cautious; lower it to be more aggressive.
 compatibility_score_floor: 85
+
+deploy_command: bin/deploy
