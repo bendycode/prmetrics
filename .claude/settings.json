@@ -32,7 +32,11 @@
       "mcp__claude-in-chrome__get_page_text",
       "mcp__claude-in-chrome__read_page",
       "mcp__claude-in-chrome__find",
-      "mcp__claude-in-chrome__computer"
+      "mcp__claude-in-chrome__computer",
+      "mcp__claude-in-chrome__browser_batch",
+      "Bash(gh stack view)",
+      "Bash(gh stack view *)",
+      "Bash(gh stack --help)"
     ]
   }
 }
