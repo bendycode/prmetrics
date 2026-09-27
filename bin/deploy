@@ -9,7 +9,11 @@ if [ ! -f "Gemfile" ]; then
   exit 1
 fi
 
-# Check for uncommitted changes
+# Check for uncommitted changes. diff-index reads the index's cached file
+# stats, so refresh it first or a file rewritten with identical content
+# (bundle install and Gemfile.lock) reads as changed. The refresh exits
+# non-zero when real changes exist, which set -e must not treat as fatal.
+git update-index -q --refresh || true
 if ! git diff-index --quiet HEAD --; then
   echo "⚠️  Warning: You have uncommitted changes"
   echo "Do you want to continue? (y/N)"
