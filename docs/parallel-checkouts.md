@@ -76,9 +76,11 @@ export PRM_JOBS_REDIS_URL="redis://localhost:6379/$((0 + PRM_CHECKOUT_INDEX))"
    below the server's count and empty (`redis-cli -n <db> CONFIG GET databases`,
    16 by default, and `redis-cli -n <db> DBSIZE`, 0).
 5. `direnv exec . bundle install`, then check that
+   `config/initializers/00_parallel_checkout_guard.rb` exists and that
    `direnv exec . bin/rails runner 'puts ActiveRecord::Base.connection_db_config.database'`
-   prints `prmetrics_developmentN`, then
-   `direnv exec . bin/rails db:create db:schema:load` (development and test).
+   prints `prmetrics_developmentN` (and `prmetrics_testN` with `-e test`).
+   Only then `direnv exec . bin/rails db:create db:schema:load` (development
+   and test).
 6. Start the full suite (`bundle exec rake`) here and in another checkout at
    the same moment; both must pass with identical example counts.
 
@@ -86,6 +88,9 @@ export PRM_JOBS_REDIS_URL="redis://localhost:6379/$((0 + PRM_CHECKOUT_INDEX))"
 
 - **One branch, one session.** Give each checkout's session its own branch;
   both on `main` for verification is fine.
+- **A branch older than this setup uses the original checkout's data**, since
+  the suffix and the guard live in tracked files. Merge `main` into a branch
+  before checking it out in a second checkout.
 - **Worktrees share their checkout's identity**, so two full suites run from
   two worktrees of one checkout still collide.
 - **Machine-level singletons stay single:** a browser-automation session in
