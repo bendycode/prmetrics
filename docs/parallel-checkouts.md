@@ -33,11 +33,17 @@ The test suite pins no ports: Capybara picks a free port for its server and
 Selenium Manager starts chromedriver on one.
 
 `config/initializers/parallel_checkout_guard.rb` refuses to boot development
-or test when `PRM_CHECKOUT_ROOT` names a different directory than the code
-being run: a shell still carrying one checkout's identity would otherwise
-point another checkout's code at the first checkout's databases. From a
-shell outside a checkout, use `direnv exec <checkout> <command>`, which loads
-that checkout's environment without changing directory, with absolute paths.
+or test when the shell's identity does not belong to the code being run:
+when `PRM_CHECKOUT_ROOT` names a different directory (a shell still carrying
+one checkout's identity), or when the checkout's untracked `.parallel-checkout`
+file names a suffix the shell does not carry (a second checkout run with no
+identity loaded). Either would point one checkout's code at another
+checkout's databases. The original checkout has no `.parallel-checkout` file
+and sets nothing, so it always boots.
+
+From a shell outside a checkout, use `direnv exec <checkout> <command>`, which
+loads that checkout's environment without changing directory, with absolute
+paths.
 
 ## The `.envrc` identity block
 
@@ -54,19 +60,14 @@ export PORT=$PRM_APP_PORT
 export PRM_JOBS_REDIS_URL="redis://localhost:6379/$((0 + PRM_CHECKOUT_INDEX))"
 ```
 
-## Checkout registry
-
-| Checkout | Suffix | Index | Port offset |
-| --- | --- | --- | --- |
-| `~/dev/prmetrics` | (none) | 0 | 0 |
-
 ## Adding a checkout
 
 1. Clone into a sibling directory named `prmetricsN` from `origin`.
 2. Copy `config/master.key` from the original checkout, and the lines of its
    `.git/info/exclude`.
-3. Copy the original `.envrc`, add the identity block above, and
-   `direnv allow`.
+3. Copy the original `.envrc`, add the identity block above, write the
+   suffix to `.parallel-checkout` (`printf 'N\n' > .parallel-checkout`), add
+   `.parallel-checkout` to `.git/info/exclude`, and `direnv allow`.
 4. Check the block is free: no listener on its dev-server port
    (`lsof -nP -iTCP:<port> -sTCP:LISTEN`), and its Redis database number
    below the server's count (`redis-cli CONFIG GET databases`, 16 by default).
@@ -74,7 +75,6 @@ export PRM_JOBS_REDIS_URL="redis://localhost:6379/$((0 + PRM_CHECKOUT_INDEX))"
    development and test.
 6. Start the full suite (`bundle exec rake`) here and in another checkout at
    the same moment; both must pass with identical example counts.
-7. Add a row to the registry.
 
 ## Caveats
 
