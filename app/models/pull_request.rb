@@ -139,14 +139,15 @@ class PullRequest < ApplicationRecord
 
   # Calculate days since first approval relative to a reference date
   # @param reference_date [Time/Date] The date to calculate from (defaults to current time)
-  # @return [Integer] Number of days since first approval, or 0 if no approved reviews
+  # @return [Integer] Dates from the first approval, or the author's own merge, to the
+  #   reference date; 0 when the pull request has neither
   def days_since_first_approval(reference_date = Time.current)
     cleared = cleared_at
     return 0 unless cleared
 
-    # Use end_of_day for reference_date to be consistent with week boundaries
-    reference_timestamp = reference_date.in_time_zone.end_of_day
-    ((reference_timestamp - cleared) / 1.day).to_i
+    # Dates in the app's zone, not elapsed seconds: a day the clocks change is
+    # 23 or 25 hours long, and a week boundary is a date.
+    (reference_date.in_time_zone.to_date - cleared.in_time_zone.to_date).to_i
   end
 
   def first_approval_at
