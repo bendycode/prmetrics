@@ -357,6 +357,29 @@ RSpec.describe Week do
           end
         end
 
+        # 2026-11-01 is a 25-hour day in the app's zone.
+        context 'when the week ends on the day the clocks go back' do
+          let(:week) do
+            create(:week, repository: repository, begin_date: Date.new(2026, 10, 26), end_date: Date.new(2026, 11, 1))
+          end
+
+          it 'does not count a pull request approved 7 days before the week end as late', :aggregate_failures do
+            pr = create(:pull_request, :approved_before_week_end,
+                        repository: repository, week: week, days_before_week_end: 7)
+
+            expect(week.approved_prs).to include(pr)
+            expect(week.late_prs).not_to include(pr)
+          end
+
+          it 'counts a pull request approved 27 days before the week end as late, not stale' do
+            pr = create(:pull_request, :approved_before_week_end,
+                        repository: repository, week: week, days_before_week_end: 27)
+
+            expect(week.late_prs).to contain_exactly(pr)
+            expect(week.stale_prs).to be_empty
+          end
+        end
+
         context 'with merged PRs' do
           it 'excludes merged PRs from late_prs even if approved long ago' do
             merged_pr = create(:pull_request, :approved_before_week_end,
