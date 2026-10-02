@@ -55,6 +55,10 @@ bundle exec rspec spec/models/pull_request_spec.rb:42
 bundle exec rspec spec/models/
 ```
 
+The suite needs a running Redis server at `REDIS_URL` (default
+`redis://localhost:6379/0`): one `HealthController` example expects it to
+answer a ping.
+
 ### Code Quality (RuboCop)
 ```bash
 # Run RuboCop linter
