@@ -13,34 +13,60 @@ RSpec.describe WeekStatsService do
 
   describe '#update_stats' do
     context 'when calculating num_open_prs' do
-      let!(:closed_after_wk) do
-        create(:pull_request, repository: repository, state: 'open', draft: false, gh_created_at: 2.weeks.ago,
-                              gh_closed_at: 1.day.from_now)
+      # Every time is placed by the week's own dates. The count asks where a
+      # pull request stood when the week ended, so a time measured from the
+      # day the suite runs moves across that boundary as the calendar does.
+      # Two pull requests count, so that no expected figure matches the week
+      # factory's default of one.
+      let(:during_week) { week.begin_date.in_time_zone + 2.days }
+      let(:week_end) { week.end_date.in_time_zone.end_of_day }
+      let(:just_after_week) { week_end + 1.second }
+      let!(:_closed_after_week) do
+        create(:pull_request, repository: repository, gh_created_at: during_week, gh_closed_at: just_after_week)
       end
-      let!(:closed_before_wk) do
-        create(:pull_request, repository: repository, state: 'closed', draft: false, gh_created_at: 3.weeks.ago,
-                              gh_closed_at: 8.days.ago)
-      end
-      let!(:draft_pr) do
-        create(:pull_request, repository: repository, state: 'open', draft: true, gh_created_at: 2.weeks.ago)
-      end
-
-      let!(:draft_removed_after_wk) do
-        # PR created as draft during week, draft removed after week
-        draft_pr = create(:pull_request, repository: repository, state: 'open', draft: true, gh_created_at: 5.days.ago)
-        draft_pr.update(draft: false, ready_for_review_at: 1.day.from_now)
-        draft_pr
-      end
-      let!(:opened_during_wk) do
-        create(:pull_request, repository: repository, state: 'open', draft: false, gh_created_at: 7.days.ago)
+      let!(:_ready_as_week_ended) do
+        create(:pull_request, repository: repository, gh_created_at: week_end, ready_for_review_at: week_end)
       end
 
-      before do
+      def open_count_after_update
         service.update_stats
+        week.reload.num_open_prs
       end
 
-      it 'correctly calculates num_open_prs' do
-        expect(week.reload.num_open_prs).to eq(2)
+      it 'counts pull requests open and ready for review at the last moment of the week' do
+        expect(open_count_after_update).to be(2)
+      end
+
+      it 'leaves out a draft' do
+        create(:pull_request, :draft, repository: repository, gh_created_at: during_week)
+
+        expect(open_count_after_update).to be(2)
+      end
+
+      it 'leaves out a pull request created after the week ended' do
+        create(:pull_request, repository: repository, gh_created_at: just_after_week)
+
+        expect(open_count_after_update).to be(2)
+      end
+
+      it 'leaves out a pull request that became ready for review after the week ended' do
+        create(:pull_request, repository: repository, gh_created_at: during_week,
+                              ready_for_review_at: just_after_week)
+
+        expect(open_count_after_update).to be(2)
+      end
+
+      it 'leaves out a pull request with a close date inside the week' do
+        create(:pull_request, repository: repository, gh_created_at: during_week, gh_closed_at: week_end)
+
+        expect(open_count_after_update).to be(2)
+      end
+
+      it 'leaves out a pull request that closed after the week ended' do
+        create(:pull_request, repository: repository, state: 'closed', gh_created_at: during_week,
+                              gh_closed_at: just_after_week)
+
+        expect(open_count_after_update).to be(2)
       end
     end
 
