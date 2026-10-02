@@ -73,6 +73,10 @@ RSpec.describe WeekStatsService do
     context 'when calculating num_prs_started' do
       before do
         create(:pull_request, repository: repository, draft: false, ready_for_review_at: week.begin_date + 1.day)
+        create(:pull_request, repository: repository, draft: false, ready_for_review_at: week.begin_date + 2.days)
+        # Hand-built to reach the draft condition: the sync leaves
+        # ready_for_review_at empty on a draft.
+        create(:pull_request, :draft, repository: repository, ready_for_review_at: week.begin_date + 3.days)
         create(:pull_request, repository: repository, draft: false, ready_for_review_at: week.begin_date - 1.day)
         create(:pull_request, repository: repository, draft: false, ready_for_review_at: week.end_date + 1.day)
 
@@ -81,14 +85,15 @@ RSpec.describe WeekStatsService do
         service.update_stats
       end
 
-      it 'correctly calculates num_prs_started' do
-        expect(week.reload.num_prs_started).to eq(1)
+      it 'counts the non-draft pull requests that became ready for review during the week' do
+        expect(week.reload.num_prs_started).to be(2)
       end
     end
 
     context 'when calculating num_prs_merged' do
       before do
         create(:pull_request, repository: repository, gh_merged_at: week.begin_date + 1.day)
+        create(:pull_request, repository: repository, gh_merged_at: week.begin_date + 2.days)
         create(:pull_request, repository: repository, gh_merged_at: week.begin_date - 1.day)
         create(:pull_request, repository: repository, gh_merged_at: week.end_date + 1.day)
 
@@ -97,8 +102,8 @@ RSpec.describe WeekStatsService do
         service.update_stats
       end
 
-      it 'correctly calculates num_prs_merged' do
-        expect(week.reload.num_prs_merged).to eq(1)
+      it 'counts pull requests merged during the week' do
+        expect(week.reload.num_prs_merged).to be(2)
       end
     end
 
@@ -107,10 +112,15 @@ RSpec.describe WeekStatsService do
         pr1 = create(:pull_request, repository: repository, ready_for_review_at: week.begin_date - 2.days)
         pr2 = create(:pull_request, repository: repository, ready_for_review_at: week.begin_date - 2.days)
         pr3 = create(:pull_request, repository: repository, ready_for_review_at: week.begin_date - 2.days)
+        pr4 = create(:pull_request, repository: repository, ready_for_review_at: week.begin_date - 2.days)
 
         create(:review, pull_request: pr1, submitted_at: week.begin_date.in_time_zone + 1.day)
         create(:review, pull_request: pr1, submitted_at: week.begin_date.in_time_zone + 2.days)
+        create(:review, pull_request: pr4, submitted_at: week.begin_date.in_time_zone + 3.days)
+        # First reviewed before the week and again during it, so it belongs to
+        # the earlier week.
         create(:review, pull_request: pr2, submitted_at: week.begin_date.in_time_zone - 1.day)
+        create(:review, pull_request: pr2, submitted_at: week.begin_date.in_time_zone + 1.day)
         create(:review, pull_request: pr3, submitted_at: week.end_date.in_time_zone + 1.day)
 
         # Week associations are automatically updated by callbacks
@@ -118,8 +128,8 @@ RSpec.describe WeekStatsService do
         service.update_stats
       end
 
-      it 'correctly calculates num_prs_initially_reviewed' do
-        expect(week.reload.num_prs_initially_reviewed).to eq(1)
+      it 'counts pull requests first reviewed during the week' do
+        expect(week.reload.num_prs_initially_reviewed).to be(2)
       end
     end
 
@@ -128,19 +138,25 @@ RSpec.describe WeekStatsService do
         create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil,
                               gh_closed_at: week.begin_date + 1.day)
         create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil,
+                              gh_closed_at: week.begin_date + 2.days)
+        create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil,
                               gh_closed_at: week.begin_date - 1.day)
         create(:pull_request, repository: repository, state: 'closed', gh_merged_at: nil,
                               gh_closed_at: week.end_date + 1.day)
         create(:pull_request, repository: repository, state: 'closed', gh_merged_at: week.begin_date + 1.day,
                               gh_closed_at: week.begin_date + 1.day)
+        # Hand-built to reach the state condition: the sync stores GitHub's
+        # state and close date together, so a close date comes with state closed.
+        create(:pull_request, repository: repository, state: 'open', gh_merged_at: nil,
+                              gh_closed_at: week.begin_date + 3.days)
 
         # Week associations are automatically updated by callbacks
 
         service.update_stats
       end
 
-      it 'correctly calculates num_prs_cancelled' do
-        expect(week.reload.num_prs_cancelled).to eq(1)
+      it 'counts pull requests closed unmerged during the week' do
+        expect(week.reload.num_prs_cancelled).to be(2)
       end
     end
 
@@ -157,7 +173,7 @@ RSpec.describe WeekStatsService do
         service.update_stats
       end
 
-      it 'correctly calculates avg_hrs_to_first_review' do
+      it 'averages the weekday hours from ready for review to first review' do
         expect(week.reload.avg_hrs_to_first_review).to eq(3.0)
       end
     end
@@ -174,7 +190,7 @@ RSpec.describe WeekStatsService do
         service.update_stats
       end
 
-      it 'correctly calculates avg_hrs_to_merge' do
+      it 'averages the weekday hours from ready for review to merge' do
         expect(week.reload.avg_hrs_to_merge).to eq(6.0)
       end
     end
@@ -271,26 +287,35 @@ RSpec.describe WeekStatsService do
       end
 
       context 'edge cases' do
+        # One pull request is late in every example, so an expected figure of
+        # zero cannot pass when nothing is counted.
+        let!(:_late_pr) do
+          create(:pull_request, :approved_before_week_end, repository: repository, week: week,
+                                                           days_before_week_end: 10)
+        end
+
         # Merged and closed are judged as of the week's end, not as of today, so a
         # fixture that merges after the week ended is still late for that week.
+        # The merged fixture has no close date, so only its merge date can
+        # exclude it.
         it 'excludes PRs merged before the week ended' do
           create(:pull_request, :approved_before_week_end, repository: repository, week: week,
                                                            days_before_week_end: 10,
                                                            gh_merged_at: week.end_date - 1.day)
-          expect(service.send(:calculate_num_prs_late)).to be(0)
+          expect(service.send(:calculate_num_prs_late)).to be(1)
         end
 
         it 'excludes PRs closed unmerged before the week ended' do
           create(:pull_request, :approved_before_week_end, repository: repository, week: week,
                                                            days_before_week_end: 10,
                                                            gh_closed_at: week.end_date - 1.day, gh_merged_at: nil)
-          expect(service.send(:calculate_num_prs_late)).to be(0)
+          expect(service.send(:calculate_num_prs_late)).to be(1)
         end
 
         it 'excludes draft PRs even if approved' do
           create(:pull_request, :approved_before_week_end, repository: repository, week: week,
                                                            days_before_week_end: 10, draft: true)
-          expect(service.send(:calculate_num_prs_late)).to be(0)
+          expect(service.send(:calculate_num_prs_late)).to be(1)
         end
       end
     end
