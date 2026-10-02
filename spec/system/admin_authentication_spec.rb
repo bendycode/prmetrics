@@ -45,14 +45,15 @@ RSpec.describe 'Admin Authentication' do
   describe 'logout flow' do
     let(:admin) { create(:user, :admin) }
 
-    it 'allows admin to log out' do
+    it 'ends the session from the Logout link in the user menu', :js do
       sign_in admin
       visit repositories_path
 
-      # Use Devise test helper for logout
-      sign_out admin
+      find_by_id('userDropdown').click
+      within('[aria-labelledby="userDropdown"]') { click_link 'Logout' }
+      within('#logoutModal') { click_link 'Logout' }
+      expect(page).to have_current_path(new_user_session_path)
 
-      # Try to access protected page
       visit repositories_path
       expect(page).to have_current_path(new_user_session_path)
     end
@@ -61,7 +62,7 @@ RSpec.describe 'Admin Authentication' do
   describe 'password reset flow' do
     let(:admin) { create(:user, :admin, email: 'admin@example.com') }
 
-    it 'sends password reset instructions' do
+    it 'confirms that reset instructions were sent' do
       visit new_user_session_path
       click_link 'Forgot your password?'
 
@@ -70,8 +71,7 @@ RSpec.describe 'Admin Authentication' do
       fill_in 'Email', with: admin.email
       click_button 'Send me password reset instructions'
 
-      # Should redirect back to login page
-      expect(page).to have_content('Sign In')
+      expect(page).to have_content(I18n.t('devise.passwords.send_instructions'))
     end
   end
 end

@@ -375,6 +375,29 @@ RSpec.describe PullRequest do
 
         expect(pr.days_since_first_approval(reference_date)).to eq(7)
       end
+
+      it "counts to the reference time's date in the app's zone, not its UTC date" do
+        create(:review, pull_request: pr, submitted_at: Time.zone.local(2026, 9, 14, 12, 0))
+
+        # 03:00 UTC on the 22nd is 22:00 on the 21st in the app's zone.
+        expect(pr.days_since_first_approval(Time.utc(2026, 9, 22, 3, 0))).to be(7)
+      end
+    end
+
+    # The app's zone leaves daylight saving on 2026-11-01, a 25-hour day, and
+    # enters it on 2027-03-14, a 23-hour one.
+    context 'when the clocks change between the approval and the reference date' do
+      it 'counts seven dates back as 7 across the 25-hour day' do
+        create(:review, pull_request: pr, submitted_at: Time.zone.local(2026, 10, 25, 0, 30))
+
+        expect(pr.days_since_first_approval(Date.new(2026, 11, 1))).to be(7)
+      end
+
+      it 'counts seven dates back as 7 across the 23-hour day' do
+        create(:review, pull_request: pr, submitted_at: Time.zone.local(2027, 3, 7, 23, 30))
+
+        expect(pr.days_since_first_approval(Date.new(2027, 3, 14))).to be(7)
+      end
     end
   end
 
