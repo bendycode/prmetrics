@@ -15,6 +15,12 @@ updates:
       # Rails 8 upgrade.
       - dependency-name: "web-console"
         versions: [">= 4.3"]
+      # Action Cable 7.2's redis adapter accepts redis >= 4 and < 6, and
+      # config/cable.yml names that adapter for production. Rails 8.1.4 is
+      # the first release whose adapter accepts redis 6. Lift this once the
+      # app runs a Rails release that does.
+      - dependency-name: "redis"
+        versions: [">= 6"]
 
   - package-ecosystem: "github-actions"
     directory: "/"

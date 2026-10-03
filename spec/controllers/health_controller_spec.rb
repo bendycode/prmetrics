@@ -32,6 +32,17 @@ RSpec.describe HealthController do
       end
     end
 
+    # Every other example here that reaches the Redis check stands a double in
+    # for it, and the route-walking leak spec requests this page but accepts any
+    # status. This is the one example that expects the real server to answer.
+    context 'with the Redis server the environment points at' do
+      it 'reports redis as ok' do
+        get :show
+
+        expect(response.parsed_body.dig('services', 'redis')).to include('status' => 'ok')
+      end
+    end
+
     context 'when all services are healthy' do
       before do
         redis_mock = instance_double(Redis)
