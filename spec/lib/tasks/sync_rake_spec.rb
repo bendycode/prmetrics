@@ -47,17 +47,17 @@ RSpec.describe 'sync:repository rake task' do
         # Test that both syntaxes work:
         # rake sync:repository[owner/repo] AND rake sync:repository owner/repo
         original_argv = ARGV.dup
-        ARGV.replace(['sync:repository', 'PureOxygen/u-app'])
+        ARGV.replace(['sync:repository', 'owner/repo'])
 
         Rake::Task['sync:repository'].reenable
 
-        expect(UnifiedSyncService).to receive(:new).with('PureOxygen/u-app', fetch_all: false).and_return(service)
+        expect(UnifiedSyncService).to receive(:new).with('owner/repo', fetch_all: false).and_return(service)
         expect(service).to receive(:sync!)
 
         # Now this should work - repo name taken from ARGV[1]
         expect do
           Rake::Task['sync:repository'].invoke
-        end.to output(%r{Starting unified sync for PureOxygen/u-app}).to_stdout
+        end.to output(%r{Starting unified sync for owner/repo}).to_stdout
 
         ARGV.replace(original_argv)
       end

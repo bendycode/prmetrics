@@ -130,7 +130,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 - **Dashboard Data Issues**
-  - Fixed missing u-node repository data on dashboard charts
+  - Fixed missing repository data on dashboard charts
   - Corrected week statistics calculations for all repositories
   - Repository Performance Comparison now properly displays all repository data
   - Fixed cross-repository week associations preventing proper stats aggregation

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Quick script to check for duplicate week records
-repo_name = ARGV[0] || 'pureoxygen/u-app'
+repo_name = ARGV[0] || abort('Usage: rails runner check_duplicates.rb owner/repo')
 
 puts "Checking for duplicate week records in #{repo_name}..."
 
