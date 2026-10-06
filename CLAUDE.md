@@ -393,5 +393,13 @@ apart from other projects' issues at a glance.
 - Keep `#83` where GitHub reads it as a machine token: `Closes #83` and
   `Refs: #83` trailers.
 
+## Housekeeping Commits
+
+This project's default branch takes direct commits of housekeeping files.
+
+Stories still go through pull requests. The declaration covers the files a
+finished-issue-housekeeping pass writes: the permission allowlist in
+`.claude/settings.json`, and rule or skill files.
+
 ## Roadmap Maintenance
 Always remove finished projects and tasks from ROADMAP.md as part of keeping it as tight and succinct as possible, focusing on items still outstanding to do.
