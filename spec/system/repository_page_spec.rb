@@ -17,7 +17,7 @@ RSpec.describe 'Repository page' do
       visit repository_path(repository)
 
       expect(page).to have_link('All Pull Requests', href: repository_pull_requests_path(repository))
-      expect(page).to have_no_content(pull_request.title)
+      expect(page).to have_no_text(pull_request.title)
     end
   end
 
@@ -32,7 +32,7 @@ RSpec.describe 'Repository page' do
       visit repository_path(repository)
 
       expect(page.all('table thead th').map(&:text)).to eq(['Begin Date', 'End Date', 'Actions'])
-      expect(page).to have_no_content('Week Number')
+      expect(page).to have_no_text('Week Number')
     end
 
     it 'sizes itself to its three columns rather than the full page width' do
@@ -47,9 +47,9 @@ RSpec.describe 'Repository page' do
     it 'formats dates for reading rather than for sorting' do
       visit repository_path(repository)
 
-      expect(page).to have_content('08/31/2026')
-      expect(page).to have_content('09/06/2026')
-      expect(page).to have_no_content('2026-08-31')
+      expect(page).to have_text('08/31/2026')
+      expect(page).to have_text('09/06/2026')
+      expect(page).to have_no_text('2026-08-31')
     end
 
     it 'links each week to its own page' do
@@ -101,7 +101,7 @@ RSpec.describe 'Repository page' do
       visit repository_path(repository)
 
       # Kaminari separates the range with non-breaking spaces.
-      expect(page).to have_content('Displaying weeks 1 - 25 of 26 in total', normalize_ws: true)
+      expect(page).to have_text('Displaying weeks 1 - 25 of 26 in total', normalize_ws: true)
     end
   end
 
@@ -109,7 +109,7 @@ RSpec.describe 'Repository page' do
     it 'renders the page without a paginator' do
       visit repository_path(repository)
 
-      expect(page).to have_content('Weeks')
+      expect(page).to have_text('Weeks')
       expect(page).to have_no_css('ul.pagination')
     end
   end
@@ -123,8 +123,8 @@ RSpec.describe 'Repository page' do
     it 'reads as a local clock time rather than a database timestamp' do
       visit repository_path(repository)
 
-      expect(page).to have_content('Last sync: 09/01/2026 9:35 AM CDT')
-      expect(page).to have_no_content('2026-09-01 09:35:27')
+      expect(page).to have_text('Last sync: 09/01/2026 9:35 AM CDT')
+      expect(page).to have_no_text('2026-09-01 09:35:27')
     end
   end
 
@@ -136,7 +136,7 @@ RSpec.describe 'Repository page' do
     it 'reports how far through the sync it is as a percentage' do
       visit repository_path(repository)
 
-      expect(page).to have_content('Sync in progress... (45% complete)')
+      expect(page).to have_text('Sync in progress... (45% complete)')
     end
   end
 
@@ -147,7 +147,7 @@ RSpec.describe 'Repository page' do
     end
 
     it 'renders once' do
-      expect(page).to have_content('Sync job queued')
+      expect(page).to have_text('Sync job queued')
       expect(page).to have_css('.alert-success', count: 1)
     end
 

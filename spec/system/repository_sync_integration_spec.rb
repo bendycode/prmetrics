@@ -28,7 +28,7 @@ RSpec.describe 'Repository Sync Integration' do
       end.to have_enqueued_job(UnifiedSyncJob).with(repository, fetch_all: false)
 
       # Should redirect with success message
-      expect(page).to have_content("Sync job queued for #{repository.name}")
+      expect(page).to have_text("Sync job queued for #{repository.name}")
 
       # Most importantly: verify UpdateRepositoryStatsJob can be called without ArgumentError
       # This is what would have caught the bug

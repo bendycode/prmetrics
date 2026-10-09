@@ -25,7 +25,7 @@ RSpec.describe 'User Role Authorization', :js do
       visit repository_path(repository)
 
       # Admin should see sync controls section
-      expect(page).to have_content('Sync Status')
+      expect(page).to have_text('Sync Status')
       expect(page).to have_button('Sync Updates')
       expect(page).to have_button('Full Sync')
 
@@ -37,13 +37,13 @@ RSpec.describe 'User Role Authorization', :js do
       visit root_path
 
       # Sidebar CSS uppercases the heading, so match case-insensitively.
-      expect(page).to have_content(/administration/i)
+      expect(page).to have_text(/administration/i)
       expect(page).to have_link('Users')
 
       # Admin should be able to access admin management
       click_link 'Users'
       expect(page).to have_current_path(users_path)
-      expect(page).to have_content('User Management')
+      expect(page).to have_text('User Management')
     end
 
     it 'can invite new users' do
@@ -54,7 +54,7 @@ RSpec.describe 'User Role Authorization', :js do
 
       click_link 'Invite User'
       expect(page).to have_current_path(new_user_path)
-      expect(page).to have_content('Admin')
+      expect(page).to have_text('Admin')
       expect(page).to have_field('user_admin_role_admin', type: 'checkbox')
     end
 
@@ -77,7 +77,7 @@ RSpec.describe 'User Role Authorization', :js do
       grant_access(regular_user, create(:repository, name: 'test/repo'))
       visit repositories_path
 
-      expect(page).to have_content('test/repo')
+      expect(page).to have_text('test/repo')
 
       # Regular user should NOT see add repository button
       expect(page).to have_no_button('Add Repository')
@@ -92,10 +92,10 @@ RSpec.describe 'User Role Authorization', :js do
       grant_access(regular_user, repository)
       visit repository_path(repository)
 
-      expect(page).to have_content('test/repo')
+      expect(page).to have_text('test/repo')
 
       # Regular user should NOT see sync controls section
-      expect(page).to have_no_content('Sync Status')
+      expect(page).to have_no_text('Sync Status')
       expect(page).to have_no_button('Sync Updates')
       expect(page).to have_no_button('Full Sync')
 
@@ -107,7 +107,7 @@ RSpec.describe 'User Role Authorization', :js do
       visit root_path
 
       # Regular user should NOT see Administration section in sidebar
-      expect(page).to have_no_content(/administration/i)
+      expect(page).to have_no_text(/administration/i)
       expect(page).to have_no_link('Users')
     end
 
@@ -115,7 +115,7 @@ RSpec.describe 'User Role Authorization', :js do
       visit users_path
 
       expect(page).to have_current_path(root_path)
-      expect(page).to have_content('You are not authorized')
+      expect(page).to have_text('You are not authorized')
     end
 
     it 'does not see the Sidekiq dashboard link' do
@@ -129,7 +129,7 @@ RSpec.describe 'User Role Authorization', :js do
       visit root_path
 
       # Regular user should see dashboard
-      expect(page).to have_content('Dashboard')
+      expect(page).to have_text('Dashboard')
 
       # Regular user should see repositories (read-only)
       expect(page).to have_link('Repositories')
@@ -166,7 +166,7 @@ RSpec.describe 'User Role Authorization', :js do
       # reading the new document, or the content check can race the
       # navigation and Chrome reports the old page's nodes as detached.
       expect(page).to have_current_path(users_path)
-      expect(page).to have_content('Invitation sent to regular@example.com')
+      expect(page).to have_text('Invitation sent to regular@example.com')
     end
 
     it 'allows admin to invite admin users' do
@@ -183,7 +183,7 @@ RSpec.describe 'User Role Authorization', :js do
       click_button 'Send Invitation'
 
       expect(page).to have_current_path(users_path)
-      expect(page).to have_content('Invitation sent to newadmin@example.com')
+      expect(page).to have_text('Invitation sent to newadmin@example.com')
     end
   end
 
@@ -193,7 +193,7 @@ RSpec.describe 'User Role Authorization', :js do
       sign_in admin_user
 
       visit root_path
-      expect(page).to have_content('admin@test.com')
+      expect(page).to have_text('admin@test.com')
 
       sign_out admin_user
 
@@ -201,7 +201,7 @@ RSpec.describe 'User Role Authorization', :js do
       sign_in regular_user
 
       visit root_path
-      expect(page).to have_content('user@test.com')
+      expect(page).to have_text('user@test.com')
     end
   end
 
@@ -217,7 +217,7 @@ RSpec.describe 'User Role Authorization', :js do
         visit path
 
         expect(page).to have_current_path(root_path)
-        expect(page).to have_content('You are not authorized')
+        expect(page).to have_text('You are not authorized')
       end
     end
   end

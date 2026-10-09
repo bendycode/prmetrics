@@ -37,33 +37,33 @@ RSpec.describe 'Week Navigation', :js do
 
     it 'displays late PR count from cached column' do
       visit repository_week_path(repository, week)
-      expect(page).to have_content('Late Approved PRs: 1')
+      expect(page).to have_text('Late Approved PRs: 1')
     end
 
     it 'displays stale PR count from cached column' do
       visit repository_week_path(repository, week)
-      expect(page).to have_content('Stale Approved PRs: 1')
+      expect(page).to have_text('Stale Approved PRs: 1')
     end
 
     it 'allows viewing late PRs dynamically' do
       visit repository_week_path(repository, week)
       page.find('a[data-category="late"]').click
-      expect(page).to have_content('Late Feature')
-      expect(page).to have_no_content('Fresh Feature')
-      expect(page).to have_no_content('Stale Feature')
+      expect(page).to have_text('Late Feature')
+      expect(page).to have_no_text('Fresh Feature')
+      expect(page).to have_no_text('Stale Feature')
     end
 
     it 'allows viewing stale PRs dynamically' do
       visit repository_week_path(repository, week)
       page.find('a[data-category="stale"]').click
-      expect(page).to have_content('Stale Feature')
-      expect(page).to have_no_content('Fresh Feature')
-      expect(page).to have_no_content('Late Feature')
+      expect(page).to have_text('Stale Feature')
+      expect(page).to have_no_text('Fresh Feature')
+      expect(page).to have_no_text('Late Feature')
     end
 
     it 'does not show old "Approved but Unmerged PRs" line' do
       visit repository_week_path(repository, week)
-      expect(page).to have_no_content('Approved but Unmerged PRs')
+      expect(page).to have_no_text('Approved but Unmerged PRs')
     end
   end
 
@@ -73,7 +73,7 @@ RSpec.describe 'Week Navigation', :js do
              repository: repository, week: week, days_before_week_end: 7)
       WeekStatsService.new(week).update_stats
       visit repository_week_path(repository, week)
-      expect(page).to have_content('Late Approved PRs: 0')
+      expect(page).to have_text('Late Approved PRs: 0')
     end
 
     it 'PR approved exactly 8 days before week end IS late' do
@@ -81,7 +81,7 @@ RSpec.describe 'Week Navigation', :js do
              repository: repository, week: week, days_before_week_end: 8)
       WeekStatsService.new(week).update_stats
       visit repository_week_path(repository, week)
-      expect(page).to have_content('Late Approved PRs: 1')
+      expect(page).to have_text('Late Approved PRs: 1')
     end
 
     it 'PR approved exactly 28 days before week end IS stale (not late)' do
@@ -89,8 +89,8 @@ RSpec.describe 'Week Navigation', :js do
              repository: repository, week: week, days_before_week_end: 28)
       WeekStatsService.new(week).update_stats
       visit repository_week_path(repository, week)
-      expect(page).to have_content('Late Approved PRs: 0')
-      expect(page).to have_content('Stale Approved PRs: 1')
+      expect(page).to have_text('Late Approved PRs: 0')
+      expect(page).to have_text('Stale Approved PRs: 1')
     end
   end
 end

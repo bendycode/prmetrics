@@ -42,7 +42,7 @@ RSpec.describe 'Pull Request Navigation' do
     it 'displays all pull requests for a repository' do
       visit repository_pull_requests_path(repository)
 
-      expect(page).to have_content("Pull Requests for #{repository.name}")
+      expect(page).to have_text("Pull Requests for #{repository.name}")
       expect(page).to have_link('First PR')
       expect(page).to have_link('Second PR')
     end
@@ -53,7 +53,7 @@ RSpec.describe 'Pull Request Navigation' do
       click_link 'All Pull Requests'
 
       expect(page).to have_current_path(repository_pull_requests_path(repository))
-      expect(page).to have_content("Pull Requests for #{repository.name}")
+      expect(page).to have_text("Pull Requests for #{repository.name}")
     end
 
     it 'paginates pull requests when there are many' do
@@ -98,29 +98,29 @@ RSpec.describe 'Pull Request Navigation' do
     it 'displays pull request details correctly' do
       visit pull_request_path(pull_request)
 
-      expect(page).to have_content('Test PR')
-      expect(page).to have_content('Pull Request Details')
-      expect(page).to have_content('State: Merged')
-      expect(page).to have_content('Created at:')
-      expect(page).to have_content('Ready for review at:')
-      expect(page).to have_content('Merged at:')
+      expect(page).to have_text('Test PR')
+      expect(page).to have_text('Pull Request Details')
+      expect(page).to have_text('State: Merged')
+      expect(page).to have_text('Created at:')
+      expect(page).to have_text('Ready for review at:')
+      expect(page).to have_text('Merged at:')
     end
 
     it 'displays review information' do
       visit pull_request_path(pull_request)
 
-      expect(page).to have_content('Reviews')
-      expect(page).to have_content('Author: reviewer1')
-      expect(page).to have_content('State: Approved')
-      expect(page).to have_content('Submitted at:')
+      expect(page).to have_text('Reviews')
+      expect(page).to have_text('Author: reviewer1')
+      expect(page).to have_text('State: Approved')
+      expect(page).to have_text('Submitted at:')
     end
 
     it 'displays associated users and their roles' do
       visit pull_request_path(pull_request)
 
-      expect(page).to have_content('Users')
+      expect(page).to have_text('Users')
       expect(page).to have_link('reviewer1')
-      expect(page).to have_content('(reviewer)')
+      expect(page).to have_text('(reviewer)')
     end
 
     it 'allows navigation to user details' do
@@ -129,7 +129,7 @@ RSpec.describe 'Pull Request Navigation' do
       click_link 'reviewer1'
 
       expect(page).to have_current_path(contributor_path(user))
-      expect(page).to have_content(user.username)
+      expect(page).to have_text(user.username)
     end
 
     it 'allows navigation to all pull request users' do
@@ -143,9 +143,9 @@ RSpec.describe 'Pull Request Navigation' do
     it 'displays timing metrics when available' do
       visit pull_request_path(pull_request)
 
-      expect(page).to have_content('Time to first feedback:')
-      expect(page).to have_content('Time to approval:')
-      expect(page).to have_content('Time to merge:')
+      expect(page).to have_text('Time to first feedback:')
+      expect(page).to have_text('Time to approval:')
+      expect(page).to have_text('Time to merge:')
     end
   end
 
@@ -175,7 +175,7 @@ RSpec.describe 'Pull Request Navigation' do
     it 'handles non-existent pull request gracefully' do
       visit '/pull_requests/99999'
 
-      expect(page).to have_content('Record not found')
+      expect(page).to have_text('Record not found')
       # NOTE: This depends on Rails error handling - might need adjustment
     end
 
@@ -188,9 +188,9 @@ RSpec.describe 'Pull Request Navigation' do
 
       visit pull_request_path(pr)
 
-      expect(page).to have_content('Incomplete PR')
+      expect(page).to have_text('Incomplete PR')
       # Should not crash when timing data is missing
-      expect(page).to have_content('Pull Request Details')
+      expect(page).to have_text('Pull Request Details')
     end
   end
 

@@ -12,7 +12,7 @@ RSpec.describe 'Repository Sync' do
     it 'displays sync status and controls on repository page' do
       visit repository_path(repository)
 
-      expect(page).to have_content('Sync Status')
+      expect(page).to have_text('Sync Status')
       expect(page).to have_button('Sync Updates')
       expect(page).to have_button('Full Sync')
     end
@@ -22,7 +22,7 @@ RSpec.describe 'Repository Sync' do
 
       click_button 'Sync Updates'
 
-      expect(page).to have_content('Sync job queued')
+      expect(page).to have_text('Sync job queued')
       expect(page).to have_button('Sync Updates')
     end
 
@@ -45,8 +45,8 @@ RSpec.describe 'Repository Sync' do
 
       visit repository_path(repository)
 
-      expect(page).to have_content('Sync completed')
-      expect(page).to have_content('30 minutes ago')
+      expect(page).to have_text('Sync completed')
+      expect(page).to have_text('30 minutes ago')
     end
 
     it 'shows failed sync status with error message' do
@@ -58,8 +58,8 @@ RSpec.describe 'Repository Sync' do
 
       visit repository_path(repository)
 
-      expect(page).to have_content('Last sync failed')
-      expect(page).to have_content('API rate limit exceeded')
+      expect(page).to have_text('Last sync failed')
+      expect(page).to have_text('API rate limit exceeded')
     end
 
     it 'shows in-progress sync with Sidekiq link' do
@@ -70,7 +70,7 @@ RSpec.describe 'Repository Sync' do
 
       visit repository_path(repository)
 
-      expect(page).to have_content('Sync in progress')
+      expect(page).to have_text('Sync in progress')
       expect(page).to have_link('View Sidekiq', href: '/sidekiq')
       expect(page).to have_button('Sync Updates', disabled: true)
       expect(page).to have_button('Full Sync', disabled: true)
@@ -84,8 +84,8 @@ RSpec.describe 'Repository Sync' do
 
       visit repositories_path
 
-      expect(page).to have_content('org/repo1')
-      expect(page).to have_content('org/repo2')
+      expect(page).to have_text('org/repo1')
+      expect(page).to have_text('org/repo2')
     end
   end
 
