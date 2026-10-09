@@ -59,6 +59,19 @@ The suite needs a running Redis server at `REDIS_URL` (default
 `redis://localhost:6379/0`): one `HealthController` example expects it to
 answer a ping.
 
+A spec that pins its period to fixed dates takes every fixture time from that
+period: `week.begin_date.in_time_zone + 2.days`, or
+`week.end_date.in_time_zone.end_of_day + 1.second` for the boundary, never
+`2.weeks.ago` or `1.day.from_now`. A time measured from the day the suite runs
+drifts across the period's edge as the calendar moves, and the spec starts
+failing on every branch with no code change.
+
+Before merging a change to date or day-count logic, run the non-browser specs
+once with the clock set to a day the app's zone (America/Chicago) changes its
+clocks, the first Sunday of November or the second Sunday of March, for
+example with a temporary `travel_to` in `spec/rails_helper.rb` in a throwaway
+worktree. Day counts built from elapsed seconds come out a day off there.
+
 ### Code Quality (RuboCop)
 ```bash
 # Run RuboCop linter
