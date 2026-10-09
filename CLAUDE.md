@@ -243,6 +243,28 @@ Browser checks against production go through prmetrics.io. The session cookie is
 scoped to whichever host set it, so a browser signed in on prmetrics.io is sent
 to the sign-in page on the Heroku hostname.
 
+### Run a Sync After a Deploy That Changes the Worker
+After a deploy that changes Sidekiq, redis-client, or the sync code, start a
+sync the same day and watch it finish. Do not leave that check to the nightly
+sync: it runs at 2 AM Central, so a job that fails under the new versions
+fails overnight, a day after the deploy.
+
+`bin/deploy`'s health check does not cover this. It pings Redis from the web
+process, and the specs use the test queue adapter, so neither runs a job
+through the worker.
+
+1. Sign in to https://prmetrics.io as an admin. The Sync buttons on the
+   Repositories page render only where `RepositoryPolicy#sync?` allows, and a
+   regular user's Actions column is empty.
+2. Press Sync on one repository. The app answers "Sync job queued".
+3. Read the worker log for the job's `start` and `done` lines:
+   `heroku logs -a prmetrics-production --dyno worker -n 500 | grep "class="`.
+   A sync with nothing new finishes in a few seconds, and
+   `UpdateRepositoryStatsJob` follows it.
+
+The Last Sync column is not evidence on its own: it shows the newest pull
+request update the sync stored, so it does not move when nothing changed.
+
 ### GitHub Actions for Nightly Sync (Recommended - Free!)
 To enable automatic nightly syncing using GitHub Actions (saves $25/month vs Heroku Scheduler):
 
