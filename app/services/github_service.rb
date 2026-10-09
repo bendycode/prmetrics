@@ -41,21 +41,18 @@ class GithubService
   # stored; it owns week associations and statistics.
   def fetch_and_store_pull_requests(repo_name, processor:, fetch_all: false)
     repository = Repository.find_by!(name: repo_name)
-    last_fetched_at = fetch_all ? nil : repository.last_fetched_at&.iso8601
+    cutoff = fetch_all ? nil : repository.last_fetched_at
 
     page = 1
     total_processed = 0
     most_recent_update = nil
 
     loop do
-      pull_requests = fetch_pull_requests_page(repo_name, page, since: last_fetched_at)
+      pull_requests = fetch_pull_requests_page(repo_name, page, since: cutoff&.iso8601)
+      pull_requests = pull_requests.reject { |pr| pr.updated_at <= cutoff } if cutoff
       break if pull_requests.empty?
 
-      new_prs = pull_requests.reject { |pr| pr.updated_at <= repository.last_fetched_at } if last_fetched_at
-
-      break if new_prs&.empty?
-
-      (new_prs || pull_requests).each do |pr|
+      pull_requests.each do |pr|
         process_pull_request(repository, repo_name, pr)
         most_recent_update = [most_recent_update, pr.updated_at].compact.max
         Rails.logger.debug { "Processed PR ##{pr.number}" }
