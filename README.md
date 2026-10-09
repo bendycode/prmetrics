@@ -10,6 +10,7 @@ prmetrics is a Rails application designed to fetch and analyze pull request data
 - [ROADMAP.md](ROADMAP.md) - Future development plans and priorities
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture and design decisions
 - [CLAUDE.md](CLAUDE.md) - Development guide for Claude Code
+- [docs/parallel-checkouts.md](docs/parallel-checkouts.md) - Running several clones of this repository side by side
 
 ## Features
 

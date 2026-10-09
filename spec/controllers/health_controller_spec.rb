@@ -193,6 +193,10 @@ RSpec.describe HealthController do
       end
 
       it 'handles SSL configuration for Heroku Redis' do
+        # Production sets only REDIS_URL; a parallel checkout's own Redis
+        # variable would otherwise take precedence over the stub.
+        allow(ENV).to receive(:fetch).and_call_original
+        allow(ENV).to receive(:fetch).with('PRM_JOBS_REDIS_URL').and_yield
         allow(ENV).to receive(:[]).with('REDIS_URL').and_return('rediss://user:pass@host:port/0')
 
         expected_config = {
