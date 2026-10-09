@@ -36,7 +36,14 @@
       "mcp__claude-in-chrome__browser_batch",
       "Bash(gh stack view)",
       "Bash(gh stack view *)",
-      "Bash(gh stack --help)"
+      "Bash(gh stack --help)",
+      "mcp__claude-in-chrome__tabs_close_mcp",
+      "Bash(gh extension list)",
+      "Bash(heroku ps *)",
+      "Bash(heroku auth:whoami)",
+      "Bash(git merge-tree *)",
+      "Bash(gh search issues *)",
+      "Bash(bundle info *)"
     ]
   }
 }
