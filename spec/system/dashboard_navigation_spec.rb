@@ -15,7 +15,7 @@ RSpec.describe 'Dashboard navigation' do
 
     it 'displays the correct number of repositories' do
       within('.card', text: 'Total Repositories') do
-        expect(page).to have_content('3')
+        expect(page).to have_text('3')
       end
     end
 
@@ -28,7 +28,7 @@ RSpec.describe 'Dashboard navigation' do
 
       # Verify we're on the repositories page
       expect(page).to have_current_path(repositories_path)
-      expect(page).to have_content('Repositories')
+      expect(page).to have_text('Repositories')
       expect(page).to have_button('Add Repository')
     end
 

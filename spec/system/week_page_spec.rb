@@ -26,15 +26,15 @@ RSpec.describe 'Week page' do
     visit repository_week_path(repository, week)
 
     expect(page).to have_css('h1', text: "Week of 08/31/2026 for #{repository.name}")
-    expect(page).to have_content('09/06/2026')
-    expect(page).to have_no_content('202635')
+    expect(page).to have_text('09/06/2026')
+    expect(page).to have_no_text('202635')
   end
 
   it 'does not repeat the dates below the heading in database form' do
     visit repository_week_path(repository, week)
 
     expect(page).to have_css('p', text: 'Ends 09/06/2026')
-    expect(page).to have_no_content('2026-08-31')
+    expect(page).to have_no_text('2026-08-31')
   end
 
   describe 'the navigation links' do

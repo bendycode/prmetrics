@@ -9,7 +9,7 @@ RSpec.describe 'Admin Authentication' do
 
       # Should redirect to login page
       expect(page).to have_current_path(new_user_session_path)
-      expect(page).to have_content('Sign In')
+      expect(page).to have_text('Sign In')
 
       # Fill in login form
       fill_in 'Email', with: admin.email
@@ -18,7 +18,7 @@ RSpec.describe 'Admin Authentication' do
 
       # Should be logged in and redirected to root (repositories)
       expect(page).to have_current_path(root_path)
-      expect(page).to have_content('Repositories')
+      expect(page).to have_text('Repositories')
     end
 
     it 'rejects invalid credentials' do
@@ -29,7 +29,7 @@ RSpec.describe 'Admin Authentication' do
       click_button 'Sign in'
 
       # Should remain on login page with login form
-      expect(page).to have_content('Sign In')
+      expect(page).to have_text('Sign In')
       expect(page).to have_field('Email')
     end
 
@@ -66,12 +66,12 @@ RSpec.describe 'Admin Authentication' do
       visit new_user_session_path
       click_link 'Forgot your password?'
 
-      expect(page).to have_content('Forgot your password?')
+      expect(page).to have_text('Forgot your password?')
 
       fill_in 'Email', with: admin.email
       click_button 'Send me password reset instructions'
 
-      expect(page).to have_content(I18n.t('devise.passwords.send_instructions'))
+      expect(page).to have_text(I18n.t('devise.passwords.send_instructions'))
     end
   end
 end

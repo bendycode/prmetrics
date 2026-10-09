@@ -19,7 +19,7 @@ and fixed, so pattern-matching gets richer over time.
 
 ## Single Selenium system-spec timeout / missing content
 
-- **Error signature:** `have_content` / `page.html include(...)` fails on one spec with a diff showing partial markup, or expected text reported "found using case-insensitive search" / "found including non-visible text"
+- **Error signature:** `have_text` / `page.html include(...)` fails on one spec with a diff showing partial markup, or expected text reported "found using case-insensitive search" / "found including non-visible text"
 - **Typical trigger:** assertion fires too early after `visit`, or uses `page.html` which bypasses Capybara's wait loop, or mismatches CSS `text-transform` on the rendered text
-- **Fix pattern:** use Capybara's waiting matchers; for CSS-transformed text, use a case-insensitive regex (`have_content(/administration/i)`)
+- **Fix pattern:** use Capybara's waiting matchers; for CSS-transformed text, use a case-insensitive regex (`have_text(/administration/i)`)
 - **First observed:** 2026-04-17 -- `spec/system/user_role_authorization_spec.rb` admin-section spec

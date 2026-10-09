@@ -16,18 +16,18 @@ RSpec.describe 'Dashboard' do
       it 'displays empty dashboard correctly' do
         visit root_path
 
-        expect(page).to have_content('Dashboard')
-        expect(page).to have_content('Total Repositories')
-        expect(page).to have_content('Total Pull Requests')
-        expect(page).to have_content('Avg Time to Feedback')
-        expect(page).to have_content('Avg Time to Merge')
+        expect(page).to have_text('Dashboard')
+        expect(page).to have_text('Total Repositories')
+        expect(page).to have_text('Total Pull Requests')
+        expect(page).to have_text('Avg Time to Feedback')
+        expect(page).to have_text('Avg Time to Merge')
 
         # Should show zero values
-        expect(page).to have_content('0') # repositories count
+        expect(page).to have_text('0') # repositories count
 
         # Should show empty state messages
-        expect(page).to have_content('No repositories configured yet.')
-        expect(page).to have_content('No week data available yet.')
+        expect(page).to have_text('No repositories configured yet.')
+        expect(page).to have_text('No week data available yet.')
       end
 
       it 'displays charts even with no data' do
@@ -36,9 +36,9 @@ RSpec.describe 'Dashboard' do
         expect(page).to have_css('canvas#prVelocityChart')
         expect(page).to have_css('canvas#reviewPerformanceChart')
         expect(page).to have_css('canvas#repositoryComparisonChart')
-        expect(page).to have_content('PR Velocity Trends')
-        expect(page).to have_content('Review Performance')
-        expect(page).to have_content('Repository Performance Comparison')
+        expect(page).to have_text('PR Velocity Trends')
+        expect(page).to have_text('Review Performance')
+        expect(page).to have_text('Repository Performance Comparison')
       end
     end
 
@@ -58,17 +58,17 @@ RSpec.describe 'Dashboard' do
       it 'displays dashboard with data' do
         visit root_path
 
-        expect(page).to have_content('Dashboard')
+        expect(page).to have_text('Dashboard')
 
         # Should show actual counts
         expect(page).to have_css('.card', text: /Total Repositories.*1/m)
 
         # Should show repository in list
-        expect(page).to have_content('test/repo')
+        expect(page).to have_text('test/repo')
         expect(page).to have_link('test/repo')
 
         # Should show week data
-        expect(page).to have_content(week_label)
+        expect(page).to have_text(week_label)
         expect(page).to have_link(week_label)
       end
 
@@ -156,9 +156,9 @@ RSpec.describe 'Dashboard' do
       expect(page).to have_css('canvas#repositoryComparisonChart')
 
       # Chart titles should be updated
-      expect(page).to have_content('PR Velocity Trends')
-      expect(page).to have_content('Review Performance')
-      expect(page).to have_content('Repository Performance Comparison')
+      expect(page).to have_text('PR Velocity Trends')
+      expect(page).to have_text('Review Performance')
+      expect(page).to have_text('Repository Performance Comparison')
     end
 
     it 'includes velocity and performance data in charts' do
@@ -264,7 +264,7 @@ RSpec.describe 'Dashboard' do
       visit root_path
 
       # Should show user email in topbar
-      expect(page).to have_content(admin.email)
+      expect(page).to have_text(admin.email)
 
       # Should have user avatar (Font Awesome icon, not broken image)
       # Admin user should have shield icon
@@ -279,7 +279,7 @@ RSpec.describe 'Dashboard' do
 
       # Should show My Account and Logout options
       expect(page).to have_link('My Account', href: edit_account_path)
-      expect(page).to have_content('Logout')
+      expect(page).to have_text('Logout')
     end
 
     it 'allows navigation to account settings' do
@@ -293,7 +293,7 @@ RSpec.describe 'Dashboard' do
 
       # Should navigate to account edit page
       expect(page).to have_current_path(edit_account_path)
-      expect(page).to have_content('My Account')
+      expect(page).to have_text('My Account')
     end
 
     it 'opens dropdown when clicking on email address' do
@@ -321,7 +321,7 @@ RSpec.describe 'Dashboard' do
 
       # Should show logout modal
       expect(page).to have_css('#logoutModal', visible: :visible)
-      expect(page).to have_content('Ready to Leave?')
+      expect(page).to have_text('Ready to Leave?')
 
       # Click actual Logout button in modal
       within('#logoutModal') do
@@ -330,7 +330,7 @@ RSpec.describe 'Dashboard' do
 
       # Should be redirected to login page
       expect(page).to have_current_path(new_user_session_path)
-      expect(page).to have_content('Sign In')
+      expect(page).to have_text('Sign In')
     end
   end
 
@@ -340,9 +340,9 @@ RSpec.describe 'Dashboard' do
       visit root_path
 
       # Should load without errors
-      expect(page).to have_content('Dashboard')
-      expect(page).to have_no_content('ActiveRecord::StatementInvalid')
-      expect(page).to have_no_content('ERROR')
+      expect(page).to have_text('Dashboard')
+      expect(page).to have_no_text('ActiveRecord::StatementInvalid')
+      expect(page).to have_no_text('ERROR')
     end
   end
 end

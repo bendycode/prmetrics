@@ -27,13 +27,13 @@ RSpec.describe "Managing a user's repository access" do
     uncheck 'owner/first'
     check 'owner/second'
     click_button 'Save Access'
-    expect(page).to have_content("Repository access updated for #{member.email}.")
+    expect(page).to have_text("Repository access updated for #{member.email}.")
 
     sign_in member
     visit repositories_path
 
-    expect(page).to have_content('owner/second')
-    expect(page).to have_no_content('owner/first')
+    expect(page).to have_text('owner/second')
+    expect(page).to have_no_text('owner/first')
   end
 
   it 'shows a user the no-access message after an admin revokes every repository' do
@@ -44,12 +44,12 @@ RSpec.describe "Managing a user's repository access" do
     uncheck 'owner/first'
     uncheck 'owner/second'
     click_button 'Save Access'
-    expect(page).to have_content("Repository access updated for #{member.email}.")
+    expect(page).to have_text("Repository access updated for #{member.email}.")
 
     sign_in member
     visit repositories_path
 
-    expect(page).to have_content('No repositories have been shared with you yet')
+    expect(page).to have_text('No repositories have been shared with you yet')
   end
 
   it "offers the repository access link only on a regular user's row", :aggregate_failures do
@@ -72,7 +72,7 @@ RSpec.describe "Managing a user's repository access" do
     fill_in 'Email', with: 'invitee@example.com'
     check 'owner/second'
     click_button 'Send Invitation'
-    expect(page).to have_content('Invitation sent to invitee@example.com.')
+    expect(page).to have_text('Invitation sent to invitee@example.com.')
 
     within('tr', text: 'invitee@example.com') { click_link 'Repository Access' }
 

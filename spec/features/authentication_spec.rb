@@ -12,8 +12,8 @@ RSpec.describe 'Authentication' do
         fill_in 'Password', with: 'password123'
         click_button 'Sign in'
 
-        expect(page).to have_content('Signed in successfully')
-        expect(page).to have_content('Administration')
+        expect(page).to have_text('Signed in successfully')
+        expect(page).to have_text('Administration')
         expect(page).to have_link('Repositories')
         expect(page).to have_link('Users')
       end
@@ -33,7 +33,7 @@ RSpec.describe 'Authentication' do
         sign_in admin_user
         visit users_path
 
-        expect(page).to have_content('Users')
+        expect(page).to have_text('Users')
         expect(page).to have_link('Invite User')
       end
     end
@@ -45,15 +45,15 @@ RSpec.describe 'Authentication' do
         fill_in 'Password', with: 'password123'
         click_button 'Sign in'
 
-        expect(page).to have_content('Signed in successfully')
-        expect(page).to have_content('Dashboard')
+        expect(page).to have_text('Signed in successfully')
+        expect(page).to have_text('Dashboard')
       end
 
       it 'hides administration section from regular user' do
         sign_in regular_user
         visit root_path
 
-        expect(page).to have_no_content('Administration')
+        expect(page).to have_no_text('Administration')
         expect(page).to have_no_link('Users')
       end
 
@@ -62,7 +62,7 @@ RSpec.describe 'Authentication' do
         sign_in regular_user
         visit repositories_path
 
-        expect(page).to have_content('test/repo')
+        expect(page).to have_text('test/repo')
         expect(page).to have_no_button('Add Repository')
         expect(page).to have_no_button('Sync All')
         expect(page).to have_no_button('Delete')
@@ -72,7 +72,7 @@ RSpec.describe 'Authentication' do
         sign_in regular_user
         visit users_path
 
-        expect(page).to have_content('You are not authorized')
+        expect(page).to have_text('You are not authorized')
         expect(page).to have_current_path(root_path, ignore_query: true)
       end
 
@@ -80,7 +80,7 @@ RSpec.describe 'Authentication' do
         sign_in regular_user
         visit new_repository_path
 
-        expect(page).to have_content('You are not authorized')
+        expect(page).to have_text('You are not authorized')
         expect(page).to have_current_path(root_path, ignore_query: true)
       end
     end
@@ -95,8 +95,8 @@ RSpec.describe 'Authentication' do
         fill_in 'Password confirmation', with: 'newpassword123'
         click_button 'Set my password'
 
-        expect(page).to have_content('Your password was set successfully')
-        expect(page).to have_content('Administration')
+        expect(page).to have_text('Your password was set successfully')
+        expect(page).to have_text('Administration')
       end
 
       it 'allows invited regular user to set password and access regular features' do
@@ -105,8 +105,8 @@ RSpec.describe 'Authentication' do
         fill_in 'Password confirmation', with: 'newpassword123'
         click_button 'Set my password'
 
-        expect(page).to have_content('Your password was set successfully')
-        expect(page).to have_no_content('Administration')
+        expect(page).to have_text('Your password was set successfully')
+        expect(page).to have_no_text('Administration')
       end
     end
 
@@ -118,7 +118,7 @@ RSpec.describe 'Authentication' do
         visit root_path
         visit repositories_path
 
-        expect(page).to have_content('test/repo')
+        expect(page).to have_text('test/repo')
         expect(page).to have_no_button('Add Repository')
         expect(page).to have_no_button('Sync All')
       end
@@ -128,7 +128,7 @@ RSpec.describe 'Authentication' do
         visit root_path
 
         within('.navbar') do
-          expect(page).to have_content(admin_user.email)
+          expect(page).to have_text(admin_user.email)
         end
       end
 
@@ -137,7 +137,7 @@ RSpec.describe 'Authentication' do
         visit root_path
 
         within('.navbar') do
-          expect(page).to have_content('Admin')
+          expect(page).to have_text('Admin')
           expect(page).to have_css('.fa-user-shield')
           expect(page).to have_css('.bg-warning')
         end
@@ -148,7 +148,7 @@ RSpec.describe 'Authentication' do
         visit root_path
 
         within('.navbar') do
-          expect(page).to have_content('User')
+          expect(page).to have_text('User')
           expect(page).to have_css('.fa-user')
           expect(page).to have_css('.bg-primary')
         end
@@ -165,7 +165,7 @@ RSpec.describe 'Authentication' do
         # Click the actual logout button in the modal
         find_by_id('logoutModal').click_link('Logout')
 
-        expect(page).to have_content('You need to sign in')
+        expect(page).to have_text('You need to sign in')
         expect(page).to have_current_path(new_user_session_path, ignore_query: true)
       end
     end
@@ -175,14 +175,14 @@ RSpec.describe 'Authentication' do
         visit repositories_path
 
         expect(page).to have_current_path(new_user_session_path, ignore_query: true)
-        expect(page).to have_content('You need to sign in')
+        expect(page).to have_text('You need to sign in')
       end
 
       it 'blocks direct access to admin routes for regular users' do
         sign_in regular_user
         visit new_repository_path
 
-        expect(page).to have_content('You are not authorized')
+        expect(page).to have_text('You are not authorized')
         expect(page).to have_current_path(root_path, ignore_query: true)
       end
     end
@@ -194,7 +194,7 @@ RSpec.describe 'Authentication' do
         fill_in 'Email', with: admin_user.email
         click_button 'Send me password reset instructions'
 
-        expect(page).to have_content('You will receive an email')
+        expect(page).to have_text('You will receive an email')
       end
 
       it 'allows regular user to reset password' do
@@ -203,7 +203,7 @@ RSpec.describe 'Authentication' do
         fill_in 'Email', with: regular_user.email
         click_button 'Send me password reset instructions'
 
-        expect(page).to have_content('You will receive an email')
+        expect(page).to have_text('You will receive an email')
       end
 
       it 'allows invited but not yet accepted admin user to reset password' do
@@ -214,7 +214,7 @@ RSpec.describe 'Authentication' do
         fill_in 'Email', with: invited_admin.email
         click_button 'Send me password reset instructions'
 
-        expect(page).to have_content('You will receive an email')
+        expect(page).to have_text('You will receive an email')
       end
 
       it 'allows invited but not yet accepted regular user to reset password' do
@@ -225,7 +225,7 @@ RSpec.describe 'Authentication' do
         fill_in 'Email', with: invited_regular.email
         click_button 'Send me password reset instructions'
 
-        expect(page).to have_content('You will receive an email')
+        expect(page).to have_text('You will receive an email')
       end
     end
   end

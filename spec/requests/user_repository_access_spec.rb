@@ -136,7 +136,7 @@ RSpec.describe 'User repository access management' do
 
       expect(response).to have_http_status(:unprocessable_content)
       page = Capybara.string(response.body)
-      expect(page).to have_content('Email is invalid')
+      expect(page).to have_text('Email is invalid')
       expect(page).to have_checked_field('owner/first')
       expect(page).to have_unchecked_field('owner/second')
     end

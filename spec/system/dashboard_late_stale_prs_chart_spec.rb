@@ -38,7 +38,7 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', :js do
       it 'shows Late PRs dataset in chart on main dashboard' do
         visit root_path
 
-        expect(page).to have_content('PR Velocity Trends')
+        expect(page).to have_text('PR Velocity Trends')
         expect(page).to have_css('canvas#prVelocityChart')
         expect(page.html).to include('Late Approved PRs')
       end
@@ -46,7 +46,7 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', :js do
       it 'shows Stale PRs dataset in chart on main dashboard' do
         visit root_path
 
-        expect(page).to have_content('PR Velocity Trends')
+        expect(page).to have_text('PR Velocity Trends')
         expect(page).to have_css('canvas#prVelocityChart')
         expect(page.html).to include('Stale Approved PRs')
       end
@@ -54,18 +54,18 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', :js do
       it 'does not show old PRs Approved dataset' do
         visit root_path
 
-        expect(page).to have_content('PR Velocity Trends')
+        expect(page).to have_text('PR Velocity Trends')
         expect(page.html).not_to include('PRs Approved')
       end
 
       it 'shows late and stale PRs in chart on repository filtered dashboard' do
         visit dashboard_path(repository_id: repository.id)
 
-        expect(page).to have_content('PR Velocity Trends')
+        expect(page).to have_text('PR Velocity Trends')
         expect(page).to have_css('canvas#prVelocityChart')
         expect(page.html).to include('Late Approved PRs')
         expect(page.html).to include('Stale Approved PRs')
-        expect(page).to have_content("for #{repository.name}")
+        expect(page).to have_text("for #{repository.name}")
       end
     end
 
@@ -85,7 +85,7 @@ RSpec.describe 'Dashboard Late and Stale PRs Chart', :js do
       it 'still shows late and stale PRs datasets with zero values' do
         visit root_path
 
-        expect(page).to have_content('PR Velocity Trends')
+        expect(page).to have_text('PR Velocity Trends')
         expect(page).to have_css('canvas#prVelocityChart')
         expect(page.html).to include('Late Approved PRs')
         expect(page.html).to include('Stale Approved PRs')

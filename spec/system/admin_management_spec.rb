@@ -18,36 +18,36 @@ RSpec.describe 'User Management' do
     it 'displays all admins with their status' do
       visit users_path
 
-      expect(page).to have_content('User Management')
-      expect(page).to have_content('admin@example.com')
-      expect(page).to have_content('other@example.com')
-      expect(page).to have_content('pending@example.com')
+      expect(page).to have_text('User Management')
+      expect(page).to have_text('admin@example.com')
+      expect(page).to have_text('other@example.com')
+      expect(page).to have_text('pending@example.com')
 
       # Check status badges
-      expect(page).to have_content('Active')
-      expect(page).to have_content('Pending Invitation')
+      expect(page).to have_text('Active')
+      expect(page).to have_text('Pending Invitation')
     end
 
     it 'shows current admin with "You" badge' do
       visit users_path
 
       within('tr', text: admin.email) do
-        expect(page).to have_content('You')
+        expect(page).to have_text('You')
       end
     end
 
     it 'displays admin statistics' do
       visit users_path
 
-      expect(page).to have_content('Total: 3 users')
-      expect(page).to have_content('2 active, 1 pending')
+      expect(page).to have_text('Total: 3 users')
+      expect(page).to have_text('2 active, 1 pending')
     end
 
     it 'shows invitation details for pending admins' do
       visit users_path
 
       within('tr', text: pending_admin.email) do
-        expect(page).to have_content('Pending Invitation')
+        expect(page).to have_text('Pending Invitation')
       end
     end
 
@@ -68,7 +68,7 @@ RSpec.describe 'User Management' do
 
       # For now, just verify the remove button is present
       # Full functionality would require JavaScript confirmation
-      expect(page).to have_content(other_admin.email)
+      expect(page).to have_text(other_admin.email)
     end
   end
 
@@ -79,7 +79,7 @@ RSpec.describe 'User Management' do
       click_link 'Invite User'
 
       expect(page).to have_current_path(new_user_path)
-      expect(page).to have_content('Invite User')
+      expect(page).to have_text('Invite User')
     end
 
     it 'successfully invites a new admin' do
@@ -89,8 +89,8 @@ RSpec.describe 'User Management' do
       click_button 'Send Invitation'
 
       expect(page).to have_current_path(users_path)
-      expect(page).to have_content('newadmin@example.com')
-      expect(page).to have_content('Pending Invitation')
+      expect(page).to have_text('newadmin@example.com')
+      expect(page).to have_text('Pending Invitation')
     end
 
     it 'validates email presence' do
@@ -99,7 +99,7 @@ RSpec.describe 'User Management' do
       fill_in 'Email', with: ''
       click_button 'Send Invitation'
 
-      expect(page).to have_content("Email can't be blank")
+      expect(page).to have_text("Email can't be blank")
       expect(page).to have_current_path(users_path) # Form posts to create action
     end
 
@@ -109,7 +109,7 @@ RSpec.describe 'User Management' do
       fill_in 'Email', with: 'invalid-email'
       click_button 'Send Invitation'
 
-      expect(page).to have_content('Email is invalid')
+      expect(page).to have_text('Email is invalid')
     end
 
     it 'prevents duplicate email invitations' do
@@ -118,7 +118,7 @@ RSpec.describe 'User Management' do
       fill_in 'Email', with: admin.email
       click_button 'Send Invitation'
 
-      expect(page).to have_content('Email has already been taken')
+      expect(page).to have_text('Email has already been taken')
     end
 
     it 'allows canceling invitation form' do
@@ -153,7 +153,7 @@ RSpec.describe 'User Management' do
     it 'provides access to admin management' do
       visit users_path
 
-      expect(page).to have_content('User Management')
+      expect(page).to have_text('User Management')
     end
   end
 
@@ -162,9 +162,9 @@ RSpec.describe 'User Management' do
       visit users_path
 
       # Check that table headers are present
-      expect(page).to have_content('Email')
-      expect(page).to have_content('Status')
-      expect(page).to have_content('Actions')
+      expect(page).to have_text('Email')
+      expect(page).to have_text('Status')
+      expect(page).to have_text('Actions')
 
       # Check that the table is responsive (Bootstrap classes)
       expect(page).to have_css('.table')
@@ -178,7 +178,7 @@ RSpec.describe 'User Management' do
       fill_in 'Email', with: 'invalid-email'
       click_button 'Send Invitation'
 
-      expect(page).to have_content('Email is invalid')
+      expect(page).to have_text('Email is invalid')
     end
   end
 end
