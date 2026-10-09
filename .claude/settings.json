@@ -43,7 +43,13 @@
       "Bash(heroku auth:whoami)",
       "Bash(git merge-tree *)",
       "Bash(gh search issues *)",
-      "Bash(bundle info *)"
+      "Bash(bundle info *)",
+      "Bash(git grep *)",
+      "Bash(git symbolic-ref -q HEAD)",
+      "Bash(curl -sf https://prmetrics.io/health)",
+      "Bash(heroku logs *)",
+      "Bash(redis-cli ping)",
+      "Bash(bundle exec rails routes *)"
     ]
   }
 }
