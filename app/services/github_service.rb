@@ -146,6 +146,38 @@ class GithubService
     end
   end
 
+  def process_pull_request(repository, repo_name, pr)
+    pull_request = repository.pull_requests.find_or_initialize_by(number: pr.number)
+    author = Contributor.find_or_create_from_github(pr.user)
+    events = events_worth_reading?(pr) ? issue_events(repo_name, pr.number) : []
+    ready_for_review_at = pr.draft ? nil : ready_for_review_time(events, pr.created_at)
+
+    pull_request.update!(
+      title: pr.title,
+      state: pr.state,
+      draft: pr.draft,
+      author: author,
+      gh_created_at: pr.created_at,
+      gh_updated_at: pr.updated_at,
+      gh_merged_at: pr.merged_at,
+      gh_closed_at: pr.closed_at,
+      ready_for_review_at: ready_for_review_at,
+      base_ref: pr.base.ref,
+      head_ref: pr.head.ref,
+      head_repository: pr.head.repo&.full_name,
+      **merger_attribute(pr, events)
+    )
+
+    fetch_and_store_reviews(pull_request, repo_name, pr.number)
+    store_author(pull_request, pr)
+  end
+
+  # An open draft has neither event this reads: it has not left draft, and a
+  # draft cannot be merged without leaving it first.
+  def events_worth_reading?(pull_request)
+    !pull_request.draft || pull_request.merged_at
+  end
+
   # GitHub serves a pull request's events oldest first, 30 to a page by
   # default, so the events this sync reads -- ready_for_review, and the merge
   # -- are the ones a busy pull request pushes off the first page.
@@ -166,12 +198,6 @@ class GithubService
       page += 1
     end
     collected
-  end
-
-  # An open draft has neither event this reads: it has not left draft, and a
-  # draft cannot be merged without leaving it first.
-  def events_worth_reading?(pull_request)
-    !pull_request.draft || pull_request.merged_at
   end
 
   # A pull request opened ready for review has no ready_for_review event
@@ -199,32 +225,6 @@ class GithubService
     # belongs_to would write that as no merger at all
     contributor = find_or_create_contributor(actor)
     contributor if contributor&.persisted?
-  end
-
-  def process_pull_request(repository, repo_name, pr)
-    pull_request = repository.pull_requests.find_or_initialize_by(number: pr.number)
-    author = Contributor.find_or_create_from_github(pr.user)
-    events = events_worth_reading?(pr) ? issue_events(repo_name, pr.number) : []
-    ready_for_review_at = pr.draft ? nil : ready_for_review_time(events, pr.created_at)
-
-    pull_request.update!(
-      title: pr.title,
-      state: pr.state,
-      draft: pr.draft,
-      author: author,
-      gh_created_at: pr.created_at,
-      gh_updated_at: pr.updated_at,
-      gh_merged_at: pr.merged_at,
-      gh_closed_at: pr.closed_at,
-      ready_for_review_at: ready_for_review_at,
-      base_ref: pr.base.ref,
-      head_ref: pr.head.ref,
-      head_repository: pr.head.repo&.full_name,
-      **merger_attribute(pr, events)
-    )
-
-    fetch_and_store_reviews(pull_request, repo_name, pr.number)
-    store_author(pull_request, pr)
   end
 
   def fetch_and_store_reviews(pull_request, repo_name, pr_number)
@@ -257,6 +257,13 @@ class GithubService
     end
   end
 
+  # The author's participation row, which the contributor pages read. The
+  # merger lives on the pull request itself; GitHub's list payload, the only
+  # place this ever looked for one, does not carry it.
+  def store_author(pull_request, pr)
+    store_user(pull_request, pr.user, 'author')
+  end
+
   def store_user(pull_request, github_user, role)
     return unless github_user
 
@@ -267,12 +274,5 @@ class GithubService
       user: contributor,
       role: role
     )
-  end
-
-  # The author's participation row, which the contributor pages read. The
-  # merger lives on the pull request itself; GitHub's list payload, the only
-  # place this ever looked for one, does not carry it.
-  def store_author(pull_request, pr)
-    store_user(pull_request, pr.user, 'author')
   end
 end
