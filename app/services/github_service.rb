@@ -50,9 +50,11 @@ class GithubService
     most_recent_update = nil
 
     loop do
-      pull_requests = fetch_pull_requests_page(repo_name, page, since: cutoff&.iso8601)
-      # GitHub's timestamps are whole seconds, so a pull request updated in the
-      # second the last fetch stopped at can arrive after that fetch listed it
+      pull_requests = fetch_pull_requests_page(repo_name, page)
+      # GitHub's list endpoint takes no since parameter, so the cutoff applies
+      # here. Its timestamps are whole seconds, so a pull request updated in
+      # the second the last fetch stopped at can arrive after that fetch
+      # listed it.
       pull_requests = pull_requests.reject { |pr| pr.updated_at < cutoff } if cutoff
       break if pull_requests.empty?
 
@@ -126,9 +128,8 @@ class GithubService
 
   private
 
-  def fetch_pull_requests_page(repo_name, page, since: nil, order: { sort: 'updated', direction: 'desc' })
+  def fetch_pull_requests_page(repo_name, page, order: { sort: 'updated', direction: 'desc' })
     options = { state: 'all', page: page, per_page: 100 }.merge(order)
-    options[:since] = since if since
 
     with_rate_limit_handling do
       @client.pull_requests(repo_name, options)

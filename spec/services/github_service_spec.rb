@@ -291,6 +291,14 @@ RSpec.describe GithubService do
         expect(octokit_client).to have_received(:pull_requests).twice
       end
 
+      # GitHub's list endpoint has no since parameter; the cutoff is applied
+      # to each page here.
+      it 'sends GitHub no since parameter' do
+        service.fetch_and_store_pull_requests(repository.name, processor: processor)
+
+        expect(octokit_client).to have_received(:pull_requests).with(repository.name, hash_excluding(:since)).twice
+      end
+
       it 'fetches them all when asked for a full sync' do
         service.fetch_and_store_pull_requests(repository.name, processor: processor, fetch_all: true)
 
