@@ -506,6 +506,22 @@ RSpec.describe PullRequest do
         expect(PullRequest.unmerged_at(timestamp)).to contain_exactly(unmerged_pr)
       end
     end
+
+    describe '.listed_after_last_update' do
+      let(:updated) { Time.zone.local(2024, 1, 10, 12, 0, 0) }
+      let!(:listed_a_minute_later) do
+        create(:pull_request, repository: repository, gh_updated_at: updated, listed_at: updated + 1.minute)
+      end
+
+      before do
+        create(:pull_request, repository: repository, gh_updated_at: updated, listed_at: updated + 59.seconds)
+        create(:pull_request, repository: repository, gh_updated_at: updated, listed_at: nil)
+      end
+
+      it 'returns pull requests GitHub listed at least a minute after their last update' do
+        expect(PullRequest.listed_after_last_update).to contain_exactly(listed_a_minute_later)
+      end
+    end
   end
 
   it 'is valid with valid attributes' do

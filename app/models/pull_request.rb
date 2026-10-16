@@ -39,6 +39,11 @@ class PullRequest < ApplicationRecord
   # A subquery rather than a join, so composing this with joins(:author) cannot
   # silently move the bot filter onto the pull request's own author.
   scope :approved, -> { where(id: Review.approved.by_people.select(:pull_request_id)) }
+  # GitHub's timestamps are whole seconds, so a pull request listed within
+  # the second of its last update can change again in that second without
+  # its updated_at moving. The minute also covers drift between this app's
+  # clock and GitHub's.
+  scope :listed_after_last_update, -> { where("listed_at >= gh_updated_at + interval '1 minute'") }
 
   scope :open_at, lambda { |timestamp|
     where('gh_created_at <= ?', timestamp)

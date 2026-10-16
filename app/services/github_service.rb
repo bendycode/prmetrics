@@ -44,13 +44,12 @@ class GithubService
   def fetch_and_store_pull_requests(repo_name, processor:, fetch_all: false)
     repository = Repository.find_by!(name: repo_name)
     cutoff = fetch_all ? nil : repository.last_fetched_at
-
-    newest_stored = repository.pull_requests.maximum(:gh_updated_at) unless fetch_all
     page = 1
     total_processed = 0
     most_recent_update = nil
 
     loop do
+      listed_at = Time.current
       pull_requests = fetch_pull_requests_page(repo_name, page)
       # GitHub's list endpoint takes no since parameter, so the cutoff applies
       # here. Its timestamps are whole seconds, so a pull request updated in
@@ -59,9 +58,9 @@ class GithubService
       pull_requests = pull_requests.reject { |pr| pr.updated_at < cutoff } if cutoff
       break if pull_requests.empty?
 
-      stored = fetch_all ? {} : stored_updates(repository, pull_requests, before: newest_stored, last_fetch: cutoff)
+      stored = fetch_all ? {} : stored_updates(repository, pull_requests)
       pull_requests.each do |pr|
-        process_pull_request(repository, repo_name, pr) unless stored[pr.number] == pr.updated_at
+        process_pull_request(repository, repo_name, pr, listed_at:) unless stored[pr.number] == pr.updated_at
         most_recent_update = [most_recent_update, pr.updated_at].compact.max
         Rails.logger.debug { "Processed PR ##{pr.number}" }
         total_processed += 1
@@ -88,17 +87,13 @@ class GithubService
   end
 
   # The update each listed pull request is stored at, by number. One stored at
-  # the update GitHub lists has nothing new to fetch: an earlier sync stored
-  # it, or a failed one stored it before failing. Rows in the newest stored
-  # second, and in the second the last completed sync stopped at, are left
-  # out: GitHub's timestamps are whole seconds, so a pull request read in
-  # either can have changed again within it. So are rows stored without an
-  # author, which a contributor that could not be saved leaves behind.
-  def stored_updates(repository, pull_requests, before:, last_fetch:)
-    return {} unless before
-
-    repository.pull_requests.where(number: pull_requests.map(&:number), gh_updated_at: ...before)
-              .where.not(gh_updated_at: last_fetch)
+  # the update GitHub lists has nothing new to fetch, whether an earlier sync
+  # stored it or a failed one stored it before failing, once GitHub is known
+  # to have listed it after that update. Rows stored without an author, which
+  # a contributor that could not be saved leaves behind, are read again.
+  def stored_updates(repository, pull_requests)
+    repository.pull_requests.where(number: pull_requests.map(&:number))
+              .listed_after_last_update
               .where.not(author_id: nil)
               .pluck(:number, :gh_updated_at).to_h
   end
@@ -107,18 +102,18 @@ class GithubService
   # one transaction, since a pull request stored at its current update is not
   # read again. The reads stay outside the transaction because a rate limit
   # can hold one for an hour.
-  def process_pull_request(repository, repo_name, pr)
+  def process_pull_request(repository, repo_name, pr, listed_at:)
     events = events_worth_reading?(pr) ? issue_events(repo_name, pr.number) : []
     reviews = pull_request_reviews(repo_name, pr.number)
 
     ApplicationRecord.transaction do
-      pull_request = store_pull_request(repository, pr, events)
+      pull_request = store_pull_request(repository, pr, events, listed_at)
       store_reviews(pull_request, reviews)
       store_author(pull_request, pr)
     end
   end
 
-  def store_pull_request(repository, pr, events)
+  def store_pull_request(repository, pr, events, listed_at)
     pull_request = repository.pull_requests.find_or_initialize_by(number: pr.number)
     author = Contributor.find_or_create_from_github(pr.user)
     ready_for_review_at = pr.draft ? nil : ready_for_review_time(events, pr.created_at)
@@ -130,6 +125,7 @@ class GithubService
       author: author,
       gh_created_at: pr.created_at,
       gh_updated_at: pr.updated_at,
+      listed_at: listed_at,
       gh_merged_at: pr.merged_at,
       gh_closed_at: pr.closed_at,
       ready_for_review_at: ready_for_review_at,
