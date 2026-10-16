@@ -49,7 +49,9 @@ class GithubService
 
     loop do
       pull_requests = fetch_pull_requests_page(repo_name, page, since: cutoff&.iso8601)
-      pull_requests = pull_requests.reject { |pr| pr.updated_at <= cutoff } if cutoff
+      # GitHub's timestamps are whole seconds, so a pull request updated in the
+      # second the last fetch stopped at can arrive after that fetch listed it
+      pull_requests = pull_requests.reject { |pr| pr.updated_at < cutoff } if cutoff
       break if pull_requests.empty?
 
       pull_requests.each do |pr|

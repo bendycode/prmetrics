@@ -271,6 +271,23 @@ RSpec.describe GithubService do
       end
     end
 
+    context 'when a pull request was updated in the same second as the last fetch' do
+      let(:last_fetch) { 2.days.ago.change(usec: 0) }
+
+      before do
+        # The pull request whose update set the last fetch
+        create(:pull_request, repository: repository, number: 1, gh_updated_at: last_fetch)
+        repository.update!(last_fetched_at: last_fetch)
+        github_pages([github_pr(2, last_fetch), github_pr(1, last_fetch)], [github_pr(3, last_fetch - 1.day)])
+      end
+
+      it 'stores it' do
+        service.fetch_and_store_pull_requests(repository.name, processor: processor)
+
+        expect(repository.pull_requests).to exist(number: 2)
+      end
+    end
+
     it 'refuses a repository that is not already stored' do
       expect do
         service.fetch_and_store_pull_requests('someone/unknown', processor: processor)
