@@ -11,51 +11,41 @@ RSpec.describe GithubService do
     allow(octokit_client).to receive(:auto_paginate=)
   end
 
-  describe '#fetch_and_store_reviews' do
+  describe '#store_reviews' do
     let(:pull_request) { create(:pull_request, repository: repository, ready_for_review_at: 2.days.ago) }
-    let(:pr_number) { pull_request.number }
-    let(:repo_name) { repository.name }
-    let(:user) { double('github_user', login: 'reviewer', name: 'Reviewer', email: 'reviewer@example.com', id: '123') }
-
-    context 'when reviews exist' do
-      let(:valid_review) { double('review', state: 'approved', submitted_at: Time.current, user: user) }
-      let(:early_review) { double('review', state: 'commented', submitted_at: 3.days.ago, user: user) }
-
-      it 'stores all reviews regardless of timing' do
-        allow(octokit_client).to receive(:pull_request_reviews).and_return([valid_review, early_review])
-        allow(service).to receive(:find_or_create_contributor).and_return(create(:contributor))
-
-        expect do
-          service.send(:fetch_and_store_reviews, pull_request, repo_name, pr_number)
-        end.to change(Review, :count).by(2)
-      end
+    let(:user) do
+      double('github_user', login: 'reviewer', name: 'Reviewer', email: 'reviewer@example.com', id: '9000123',
+                            avatar_url: nil)
     end
 
-    context 'when a pull request has more reviews than one page holds' do
-      it 'stores the reviews on every page' do
-        pages = [Array.new(100) { |n| double(state: 'COMMENTED', submitted_at: n.hours.ago, user: user) },
-                 [double(state: 'APPROVED', submitted_at: Time.current, user: user)]]
-        allow(octokit_client).to receive(:pull_request_reviews) do |_repo, _number, options|
-          pages[options[:page] - 1] || []
-        end
-        allow(service).to receive(:find_or_create_contributor).and_return(create(:contributor))
+    it 'stores all reviews regardless of timing, each under its reviewer' do
+      reviews = [double('review', state: 'approved', submitted_at: Time.current, user: user),
+                 double('review', state: 'commented', submitted_at: 3.days.ago, user: user)]
 
-        expect do
-          service.send(:fetch_and_store_reviews, pull_request, repo_name, pr_number)
-        end.to change(Review, :count).by(101)
-      end
+      expect do
+        service.send(:store_reviews, pull_request, reviews)
+      end.to change(Review, :count).by(2)
+      expect(pull_request.reviews).to all(have_attributes(author: have_attributes(username: 'reviewer')))
     end
 
-    context 'when review timestamps are nil' do
-      let(:invalid_review) { double('review', state: 'approved', submitted_at: nil, user: user) }
+    it 'skips reviews with nil timestamps' do
+      reviews = [double('review', state: 'approved', submitted_at: nil, user: user)]
 
-      it 'skips reviews with nil timestamps' do
-        allow(octokit_client).to receive(:pull_request_reviews).and_return([invalid_review])
+      expect do
+        service.send(:store_reviews, pull_request, reviews)
+      end.not_to change(Review, :count)
+    end
+  end
 
-        expect do
-          service.send(:fetch_and_store_reviews, pull_request, repo_name, pr_number)
-        end.not_to change(Review, :count)
+  describe '#pull_request_reviews' do
+    it 'reads the reviews on every page' do
+      pages = [Array.new(100) { |n| double(state: 'COMMENTED', submitted_at: n.hours.ago) },
+               [double(state: 'APPROVED', submitted_at: Time.current)]]
+      allow(octokit_client).to receive(:pull_request_reviews) do |_repo, _number, options|
+        pages[options[:page] - 1] || []
       end
+
+      expect(service.send(:pull_request_reviews, repository.name, 123).size).to be(101)
     end
   end
 
@@ -81,13 +71,13 @@ RSpec.describe GithubService do
 
     before do
       allow(service).to receive(:issue_events).and_return([])
-      allow(service).to receive(:fetch_and_store_reviews)
+      allow(octokit_client).to receive(:pull_request_reviews).and_return([])
       allow(service).to receive(:store_author)
     end
 
     it 'creates a pull request and sets ready_for_review_at' do
       expect do
-        service.send(:process_pull_request, repository, 'test/repo', pr_data)
+        service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
       end.to change(PullRequest, :count).by(1)
 
       pr = PullRequest.last
@@ -98,11 +88,39 @@ RSpec.describe GithubService do
       allow(pr_data).to receive(:draft).and_return(true)
 
       expect do
-        service.send(:process_pull_request, repository, 'test/repo', pr_data)
+        service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
       end.to change(PullRequest, :count).by(1)
 
       pr = PullRequest.last
       expect(pr.ready_for_review_at).to be_nil
+    end
+
+    it 'stores the reviews GitHub lists for it' do
+      reviewer = double('reviewer', id: 9_000_457, login: 'reviewer', name: nil, avatar_url: nil, email: nil)
+      allow(octokit_client).to receive(:pull_request_reviews)
+        .and_return([double('review', state: 'APPROVED', submitted_at: 1.hour.ago, user: reviewer)])
+
+      service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
+
+      expect(repository.pull_requests.find_by(number: 123).reviews)
+        .to contain_exactly(have_attributes(state: 'APPROVED', author: have_attributes(username: 'reviewer')))
+    end
+
+    it 'reads GitHub before it opens the transaction that stores the pull request' do
+      outside = ApplicationRecord.connection.open_transactions
+      open_during_reads = []
+      allow(service).to receive(:issue_events) do
+        open_during_reads << ApplicationRecord.connection.open_transactions
+        []
+      end
+      allow(octokit_client).to receive(:pull_request_reviews) do
+        open_during_reads << ApplicationRecord.connection.open_transactions
+        []
+      end
+
+      service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
+
+      expect(open_during_reads).to eq([outside, outside])
     end
 
     it 'raises when GitHub data fails validation instead of skipping the pull request' do
@@ -110,15 +128,40 @@ RSpec.describe GithubService do
       allow(pr_data).to receive(:title).and_return('')
 
       expect do
-        service.send(:process_pull_request, repository, 'test/repo', pr_data)
+        service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
       end.to raise_error(ActiveRecord::RecordInvalid)
       expect(existing.reload.title).to eq('Before')
+    end
+
+    # A pull request stored at the update GitHub lists is skipped by the next
+    # incremental sync, so it has to be stored whole or not at all.
+    context 'when storing it fails partway' do
+      let(:stored_at) { 3.days.ago.change(usec: 0) }
+      let!(:existing) { create(:pull_request, repository: repository, number: 123, gh_updated_at: stored_at) }
+
+      it 'keeps the update it was stored at when GitHub fails to list its reviews' do
+        allow(octokit_client).to receive(:pull_request_reviews).and_raise(Octokit::ServerError)
+
+        expect do
+          service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
+        end.to raise_error(Octokit::ServerError)
+        expect(existing.reload.gh_updated_at).to eq(stored_at)
+      end
+
+      it 'keeps the update it was stored at when its author cannot be recorded' do
+        allow(service).to receive(:store_author).and_raise(ActiveRecord::RecordInvalid)
+
+        expect do
+          service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
+        end.to raise_error(ActiveRecord::RecordInvalid)
+        expect(existing.reload.gh_updated_at).to eq(stored_at)
+      end
     end
 
     it 'updates a pull request it has seen before and records its author' do
       existing = create(:pull_request, repository: repository, number: 123, title: 'Old title')
 
-      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+      service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
 
       expect(existing.reload).to have_attributes(title: 'Test PR', author: have_attributes(username: 'author'))
     end
@@ -134,7 +177,7 @@ RSpec.describe GithubService do
       end
 
       it 'records who merged it, from the merge event' do
-        service.send(:process_pull_request, repository, 'test/repo', pr_data)
+        service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
 
         expect(repository.pull_requests.find_by(number: 123).merged_by).to have_attributes(username: 'the-merger')
       end
@@ -142,7 +185,7 @@ RSpec.describe GithubService do
       it 'records a merger GitHub calls a Bot as one, whatever its login looks like' do
         allow(merger).to receive_messages(type: 'Bot', login: 'copilot-style-name')
 
-        service.send(:process_pull_request, repository, 'test/repo', pr_data)
+        service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
 
         expect(repository.pull_requests.find_by(number: 123).merged_by).to be_bot
       end
@@ -153,7 +196,7 @@ RSpec.describe GithubService do
       create(:pull_request, repository: repository, number: 123, gh_merged_at: 1.day.ago, merged_by: recorded)
       allow(pr_data).to receive_messages(merged_at: 1.day.ago, state: 'closed')
 
-      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+      service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
 
       expect(repository.pull_requests.find_by(number: 123).merged_by).to eq(recorded)
     end
@@ -166,7 +209,7 @@ RSpec.describe GithubService do
       allow(pr_data).to receive_messages(merged_at: 1.day.ago, state: 'closed')
       allow(service).to receive(:issue_events).and_return([double(event: 'merged', actor: merger)])
 
-      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+      service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
 
       expect(repository.pull_requests.find_by(number: 123).merged_by).to eq(recorded)
     end
@@ -175,13 +218,13 @@ RSpec.describe GithubService do
       merger = double(id: 9_000_779, login: 'too-early', name: nil, avatar_url: nil, email: nil, type: 'User')
       allow(service).to receive(:issue_events).and_return([double(event: 'merged', actor: merger)])
 
-      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+      service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
 
       expect(repository.pull_requests.find_by(number: 123).merged_by).to be_nil
     end
 
     it 'reads the events of the pull request it is processing' do
-      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+      service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
 
       expect(service).to have_received(:issue_events).with('test/repo', 123)
     end
@@ -191,14 +234,22 @@ RSpec.describe GithubService do
       allow(pr_data).to receive_messages(draft: true, merged_at: 1.day.ago, state: 'closed')
       allow(service).to receive(:issue_events).and_return([double(event: 'merged', actor: merger)])
 
-      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+      service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
 
       expect(repository.pull_requests.find_by(number: 123))
         .to have_attributes(ready_for_review_at: nil, merged_by: have_attributes(username: 'draft-merger'))
     end
 
+    it 'records when GitHub listed it' do
+      listed_at = 1.hour.ago.change(usec: 0)
+
+      service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: listed_at)
+
+      expect(repository.pull_requests.find_by(number: 123).listed_at).to eq(listed_at)
+    end
+
     it 'records the branch it merges into and the branch it comes from' do
-      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+      service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
 
       expect(repository.pull_requests.find_by(number: 123))
         .to have_attributes(base_ref: 'main', head_ref: 'feature/login', head_repository: 'test/repo')
@@ -206,7 +257,7 @@ RSpec.describe GithubService do
 
     it 'leaves weeks to the processor' do
       expect do
-        service.send(:process_pull_request, repository, 'test/repo', pr_data)
+        service.send(:process_pull_request, repository, 'test/repo', pr_data, listed_at: Time.current)
       end.not_to change(Week, :count)
     end
   end
@@ -242,13 +293,15 @@ RSpec.describe GithubService do
       expect(processed).to contain_exactly([1, true], [2, true], [3, true])
     end
 
-    it 'records the newest update it saw as the repository\'s last fetch' do
+    it 'returns the newest update it saw, leaving the last fetch for the caller to record' do
       newest = 1.day.ago.change(usec: 0)
       github_pages([github_pr(1, newest), github_pr(2, 3.days.ago)])
+      returned = nil
 
-      service.fetch_and_store_pull_requests(repository.name, processor: processor)
-
-      expect(repository.reload.last_fetched_at).to eq(newest)
+      expect do
+        returned = service.fetch_and_store_pull_requests(repository.name, processor: processor)
+      end.not_to(change { repository.reload.last_fetched_at })
+      expect(returned).to eq(newest)
     end
 
     context 'with an earlier sync' do
@@ -264,6 +317,14 @@ RSpec.describe GithubService do
         expect(octokit_client).to have_received(:pull_requests).twice
       end
 
+      # GitHub's list endpoint has no since parameter; the cutoff is applied
+      # to each page here.
+      it 'sends GitHub no since parameter' do
+        service.fetch_and_store_pull_requests(repository.name, processor: processor)
+
+        expect(octokit_client).to have_received(:pull_requests).with(repository.name, hash_excluding(:since)).twice
+      end
+
       it 'fetches them all when asked for a full sync' do
         service.fetch_and_store_pull_requests(repository.name, processor: processor, fetch_all: true)
 
@@ -271,20 +332,131 @@ RSpec.describe GithubService do
       end
     end
 
+    context 'when a pull request was updated in the same second as the last fetch' do
+      let(:last_fetch) { 2.days.ago.change(usec: 0) }
+
+      before do
+        # The pull request whose update set the last fetch
+        create(:pull_request, repository: repository, number: 1, gh_updated_at: last_fetch)
+        repository.update!(last_fetched_at: last_fetch)
+        github_pages([github_pr(2, last_fetch), github_pr(1, last_fetch)], [github_pr(3, last_fetch - 1.day)])
+      end
+
+      it 'stores it' do
+        service.fetch_and_store_pull_requests(repository.name, processor: processor)
+
+        expect(repository.pull_requests).to exist(number: 2)
+      end
+    end
+
+    # GitHub's timestamps are whole seconds, so a pull request listed in the
+    # second it last changed can change again in that second without its
+    # updated_at moving.
+    context 'when pull requests are stored at the update GitHub lists' do
+      let(:newest) { 2.days.ago.change(usec: 0) }
+      let(:details_fetched_for) { [] }
+
+      before do
+        create(:pull_request, repository: repository, number: 1, gh_updated_at: newest - 1.day,
+                              listed_at: newest - 1.day)
+        create(:pull_request, repository: repository, number: 2, gh_updated_at: newest, listed_at: newest + 1.hour)
+        # An author whose login another contributor holds is not saved, and
+        # the pull request is stored without one
+        taken = create(:contributor).username
+        create(:pull_request, repository: repository, number: 3, gh_updated_at: newest - 1.day,
+                              listed_at: newest, author: Contributor.new(username: taken, github_id: '9000999'))
+        create(:pull_request, repository: repository, number: 4, gh_updated_at: newest - 1.day, listed_at: nil)
+        create(:pull_request, repository: repository, number: 5, gh_updated_at: newest - 2.days, listed_at: newest)
+        repository.update!(last_fetched_at: newest - 2.days)
+        github_pages([github_pr(2, newest), github_pr(1, newest - 1.day), github_pr(3, newest - 1.day),
+                      github_pr(4, newest - 1.day), github_pr(5, newest - 1.day)])
+        allow(octokit_client).to receive(:pull_request_reviews) do |_repo, number, _options|
+          details_fetched_for << number
+          []
+        end
+      end
+
+      it 'reads again those changed since, those not known to be listed after their update, and the authorless one' do
+        service.fetch_and_store_pull_requests(repository.name, processor: processor)
+
+        expect(details_fetched_for).to contain_exactly(1, 3, 4, 5)
+      end
+    end
+
+    it 'records when GitHub listed each pull request as the moment it asked for the page' do
+      asked_at = nil
+      allow(octokit_client).to receive(:pull_requests) do |_repo, options|
+        next [] unless options[:page] == 1
+
+        asked_at = Time.current
+        travel 5.seconds
+        [github_pr(1, 1.day.ago)]
+      end
+
+      service.fetch_and_store_pull_requests(repository.name, processor: processor)
+
+      expect(repository.pull_requests.find_by(number: 1).listed_at).to be_within(0.001).of(asked_at)
+    end
+
+    context 'when a walk fails partway and the sync runs again' do
+      let(:last_fetch) { 5.days.ago.change(usec: 0) }
+      let(:first_page) { [github_pr(1, last_fetch + 3.days), github_pr(2, last_fetch + 2.days)] }
+      let(:second_page) { [github_pr(3, last_fetch + 1.day)] }
+      let(:details_fetched_for) { [] }
+
+      before do
+        repository.update!(last_fetched_at: last_fetch)
+        allow(octokit_client).to receive(:issue_events) do |_repo, number, _options|
+          details_fetched_for << number
+          []
+        end
+        allow(octokit_client).to receive(:pull_request_reviews) do |_repo, number, _options|
+          details_fetched_for << number
+          []
+        end
+        fail_the_walk_on_the_second_page
+        github_pages(first_page, second_page)
+        details_fetched_for.clear
+        processed.clear
+      end
+
+      def fail_the_walk_on_the_second_page
+        allow(octokit_client).to receive(:pull_requests) do |_repo, options|
+          raise Octokit::ServerError if options[:page] == 2
+
+          first_page
+        end
+        service.fetch_and_store_pull_requests(repository.name, processor: processor)
+        raise 'the first walk was meant to fail on its second page'
+      rescue Octokit::ServerError
+        nil
+      end
+
+      it 'fetches details again only for what the failed walk missed' do
+        service.fetch_and_store_pull_requests(repository.name, processor: processor)
+
+        expect(details_fetched_for.uniq).to contain_exactly(3)
+      end
+
+      # A pull request whose GitHub reads are skipped still has its weeks
+      # recalculated.
+      it 'still hands every pull request in the window to the processor' do
+        service.fetch_and_store_pull_requests(repository.name, processor: processor)
+
+        expect(processed.map(&:first)).to contain_exactly(1, 2, 3)
+      end
+
+      it 'fetches details for every pull request again on a full refresh' do
+        service.fetch_and_store_pull_requests(repository.name, processor: processor, fetch_all: true)
+
+        expect(details_fetched_for.uniq).to contain_exactly(1, 2, 3)
+      end
+    end
+
     it 'refuses a repository that is not already stored' do
       expect do
         service.fetch_and_store_pull_requests('someone/unknown', processor: processor)
       end.to raise_error(ActiveRecord::RecordNotFound)
-    end
-
-    it 'raises when the repository cannot record its last fetch' do
-      github_pages([github_pr(1, 1.day.ago)])
-      repository.name = 'not a repository name'
-      repository.save(validate: false)
-
-      expect do
-        service.fetch_and_store_pull_requests(repository.name, processor: processor)
-      end.to raise_error(ActiveRecord::RecordInvalid)
     end
   end
 

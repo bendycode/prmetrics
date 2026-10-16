@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_09_22_203042) do
+ActiveRecord::Schema[7.2].define(version: 2026_10_16_204312) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -65,6 +65,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_09_22_203042) do
     t.boolean "promotion", default: false, null: false
     t.bigint "merged_by_id"
     t.bigint "first_approval_week_id"
+    t.datetime "listed_at"
     t.index ["author_id"], name: "index_pull_requests_on_author_id"
     t.index ["closed_week_id"], name: "index_pull_requests_on_closed_week_id"
     t.index ["first_approval_week_id"], name: "index_pull_requests_on_first_approval_week_id"

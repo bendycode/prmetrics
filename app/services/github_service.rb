@@ -38,22 +38,29 @@ class GithubService
   end
 
   # The processor is called with each pull request's GitHub data once it is
-  # stored; it owns week associations and statistics.
+  # stored; it owns week associations and statistics. Returns the newest
+  # update stored, which the caller records as the last fetch only once
+  # everything that depends on the stored pull requests has finished.
   def fetch_and_store_pull_requests(repo_name, processor:, fetch_all: false)
     repository = Repository.find_by!(name: repo_name)
     cutoff = fetch_all ? nil : repository.last_fetched_at
-
     page = 1
     total_processed = 0
     most_recent_update = nil
 
     loop do
-      pull_requests = fetch_pull_requests_page(repo_name, page, since: cutoff&.iso8601)
-      pull_requests = pull_requests.reject { |pr| pr.updated_at <= cutoff } if cutoff
+      listed_at = Time.current
+      pull_requests = fetch_pull_requests_page(repo_name, page)
+      # GitHub's list endpoint takes no since parameter, so the cutoff applies
+      # here. Its timestamps are whole seconds, so a pull request updated in
+      # the second the last fetch stopped at can arrive after that fetch
+      # listed it.
+      pull_requests = pull_requests.reject { |pr| pr.updated_at < cutoff } if cutoff
       break if pull_requests.empty?
 
+      stored = fetch_all ? {} : stored_updates(repository, pull_requests)
       pull_requests.each do |pr|
-        process_pull_request(repository, repo_name, pr)
+        process_pull_request(repository, repo_name, pr, listed_at:) unless stored[pr.number] == pr.updated_at
         most_recent_update = [most_recent_update, pr.updated_at].compact.max
         Rails.logger.debug { "Processed PR ##{pr.number}" }
         total_processed += 1
@@ -64,92 +71,51 @@ class GithubService
       page += 1
     end
 
-    repository.update!(last_fetched_at: most_recent_update) if most_recent_update
-
     Rails.logger.info "Processed #{total_processed} pull requests for #{repo_name}"
     Rails.logger.info "Most recent update: #{most_recent_update}"
-  end
-
-  def fetch_recent_review_activity(repo_name, since_date = nil)
-    repository = Repository.find_by(name: repo_name)
-    return unless repository
-
-    # Use since_date or fall back to last_fetched_at or 7 days ago
-    since = since_date || repository.last_fetched_at || 7.days.ago
-
-    Rails.logger.info "Fetching recent review activity for #{repo_name} since #{since}"
-
-    # Fetch review comments across the repository using GitHub API
-    # GET /repos/{owner}/{repo}/pulls/comments?since=date&sort=created&direction=desc
-    page = 1
-    per_page = 100
-    total_processed = 0
-    affected_prs = Set.new
-
-    loop do
-      review_comments = fetch_review_comments_page(repo_name, page, per_page, since)
-      break if review_comments.empty?
-
-      review_comments.each do |comment|
-        # Each comment belongs to a PR - find and update that PR's reviews
-        pr_number = comment.pull_request_url.split('/').last.to_i
-        pull_request = repository.pull_requests.find_by(number: pr_number)
-
-        next unless pull_request
-
-        # Re-fetch reviews for this PR to get the latest review data
-        fetch_and_store_reviews(pull_request, repo_name, pr_number)
-        affected_prs << pull_request
-        total_processed += 1
-
-        Rails.logger.debug { "Updated reviews for PR ##{pr_number} due to comment activity" }
-      end
-
-      page += 1
-
-      # Safety break to avoid infinite loops
-      break if page > 50 # Max 5000 comments
-    end
-
-    Rails.logger.info "Processed #{total_processed} review comments affecting #{affected_prs.size} PRs"
-
-    # Update week associations for affected PRs
-    affected_prs.each do |pr|
-      pr.ensure_weeks_exist_and_update_associations
-    end
-
-    total_processed
+    most_recent_update
   end
 
   private
 
-  def fetch_pull_requests_page(repo_name, page, since: nil, order: { sort: 'updated', direction: 'desc' })
+  def fetch_pull_requests_page(repo_name, page, order: { sort: 'updated', direction: 'desc' })
     options = { state: 'all', page: page, per_page: 100 }.merge(order)
-    options[:since] = since if since
 
     with_rate_limit_handling do
       @client.pull_requests(repo_name, options)
     end
   end
 
-  def fetch_review_comments_page(repo_name, page, per_page, since = nil)
-    options = {
-      page: page,
-      per_page: per_page,
-      sort: 'created',
-      direction: 'desc'
-    }
-    options[:since] = since.iso8601 if since
+  # The update each listed pull request is stored at, by number. One stored at
+  # the update GitHub lists has nothing new to fetch, whether an earlier sync
+  # stored it or a failed one stored it before failing, once GitHub is known
+  # to have listed it after that update. Rows stored without an author, which
+  # a contributor that could not be saved leaves behind, are read again.
+  def stored_updates(repository, pull_requests)
+    repository.pull_requests.where(number: pull_requests.map(&:number))
+              .listed_after_last_update
+              .where.not(author_id: nil)
+              .pluck(:number, :gh_updated_at).to_h
+  end
 
-    with_rate_limit_handling do
-      @client.pull_requests_comments(repo_name, options)
+  # Everything is read from GitHub before anything is written, and written in
+  # one transaction, since a pull request stored at its current update is not
+  # read again. The reads stay outside the transaction because a rate limit
+  # can hold one for an hour.
+  def process_pull_request(repository, repo_name, pr, listed_at:)
+    events = events_worth_reading?(pr) ? issue_events(repo_name, pr.number) : []
+    reviews = pull_request_reviews(repo_name, pr.number)
+
+    ApplicationRecord.transaction do
+      pull_request = store_pull_request(repository, pr, events, listed_at)
+      store_reviews(pull_request, reviews)
+      store_author(pull_request, pr)
     end
   end
 
-  def process_pull_request(repository, repo_name, pr)
+  def store_pull_request(repository, pr, events, listed_at)
     pull_request = repository.pull_requests.find_or_initialize_by(number: pr.number)
     author = Contributor.find_or_create_from_github(pr.user)
-    events = events_worth_reading?(pr) ? issue_events(repo_name, pr.number) : []
     ready_for_review_at = pr.draft ? nil : ready_for_review_time(events, pr.created_at)
 
     pull_request.update!(
@@ -159,6 +125,7 @@ class GithubService
       author: author,
       gh_created_at: pr.created_at,
       gh_updated_at: pr.updated_at,
+      listed_at: listed_at,
       gh_merged_at: pr.merged_at,
       gh_closed_at: pr.closed_at,
       ready_for_review_at: ready_for_review_at,
@@ -167,9 +134,7 @@ class GithubService
       head_repository: pr.head.repo&.full_name,
       **merger_attribute(pr, events)
     )
-
-    fetch_and_store_reviews(pull_request, repo_name, pr.number)
-    store_author(pull_request, pr)
+    pull_request
   end
 
   # An open draft has neither event this reads: it has not left draft, and a
@@ -227,10 +192,12 @@ class GithubService
     contributor if contributor&.persisted?
   end
 
-  def fetch_and_store_reviews(pull_request, repo_name, pr_number)
-    reviews = each_page { |page| @client.pull_request_reviews(repo_name, pr_number, page: page, per_page: 100) }
+  def pull_request_reviews(repo_name, pr_number)
+    each_page { |page| @client.pull_request_reviews(repo_name, pr_number, page: page, per_page: 100) }
+  end
 
-    # Store all reviews regardless of timing - we'll filter when calculating metrics
+  # Every submitted review is stored; the metrics decide which ones count
+  def store_reviews(pull_request, reviews)
     reviews.each do |review|
       next if review.submitted_at.nil?
 

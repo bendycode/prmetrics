@@ -9,18 +9,19 @@ RSpec.describe UnifiedSyncService do
 
   before do
     allow(GithubService).to receive(:new).and_return(github_service)
-    allow(github_service).to receive_messages(get_pull_request_count: 10, fetch_recent_review_activity: 0,
-                                              default_branch: 'main')
+    allow(github_service).to receive_messages(get_pull_request_count: 10, default_branch: 'main')
   end
 
-  # Stands in for GithubService: stores the pull request, then hands its
-  # GitHub data to the processor, as the real fetch does once per pull request.
+  # Stands in for GithubService: stores the pull request, hands its GitHub
+  # data to the processor, and returns the newest update it stored, as the
+  # real fetch does.
   def fetch_stores_one_pull_request
     allow(github_service).to receive(:fetch_and_store_pull_requests) do |_name, processor:, **|
       create(:pull_request, repository: repository, number: 123,
                             gh_created_at: merged_at - 2.days, ready_for_review_at: merged_at - 2.days,
                             gh_merged_at: merged_at, gh_closed_at: merged_at, state: 'closed')
       processor.call(pr_data)
+      merged_at
     end
   end
 
@@ -33,6 +34,7 @@ RSpec.describe UnifiedSyncService do
       statuses = []
       allow(github_service).to receive(:fetch_and_store_pull_requests) do
         statuses << repository.reload.sync_status
+        merged_at
       end
 
       service.sync!
@@ -96,6 +98,41 @@ RSpec.describe UnifiedSyncService do
 
         expect(earlier_deploy.reload).to be_promotion
         expect(spanned_weeks.map { |week| week.reload.num_open_prs }).to all(be(0))
+      end
+    end
+
+    context 'with an earlier sync' do
+      let(:previous_fetch) { merged_at - 7.days }
+
+      before { repository.update!(last_fetched_at: previous_fetch) }
+
+      it 'records the newest update the fetch stored once the sync completes' do
+        allow(github_service).to receive(:fetch_and_store_pull_requests).and_return(merged_at)
+
+        service.sync!
+
+        expect(repository.reload.last_fetched_at).to eq(merged_at)
+      end
+
+      it 'keeps the earlier last fetch when the fetch stored nothing' do
+        allow(github_service).to receive(:fetch_and_store_pull_requests).and_return(nil)
+
+        service.sync!
+
+        expect(repository.reload.last_fetched_at).to eq(previous_fetch)
+      end
+
+      it 'keeps the earlier last fetch when a later step fails, so the retry reads the same pull requests' do
+        allow(github_service).to receive(:fetch_and_store_pull_requests) do |_name, processor:, **|
+          create(:pull_request, repository: repository, number: 123, gh_created_at: merged_at - 2.days,
+                                ready_for_review_at: merged_at - 2.days, gh_merged_at: merged_at)
+          processor.call(pr_data)
+          merged_at
+        end
+        allow(WeekStatsService).to receive(:new).and_raise(StandardError, 'statistics failed')
+
+        expect { service.sync! }.to raise_error(StandardError, 'statistics failed')
+        expect(repository.reload.last_fetched_at).to eq(previous_fetch)
       end
     end
 
