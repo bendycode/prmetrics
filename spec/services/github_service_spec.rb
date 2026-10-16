@@ -95,6 +95,17 @@ RSpec.describe GithubService do
       expect(pr.ready_for_review_at).to be_nil
     end
 
+    it 'stores the reviews GitHub lists for it' do
+      reviewer = double('reviewer', id: 9_000_457, login: 'reviewer', name: nil, avatar_url: nil, email: nil)
+      allow(octokit_client).to receive(:pull_request_reviews)
+        .and_return([double('review', state: 'APPROVED', submitted_at: 1.hour.ago, user: reviewer)])
+
+      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+      expect(repository.pull_requests.find_by(number: 123).reviews)
+        .to contain_exactly(have_attributes(state: 'APPROVED', author: have_attributes(username: 'reviewer')))
+    end
+
     it 'raises when GitHub data fails validation instead of skipping the pull request' do
       existing = create(:pull_request, repository: repository, number: 123, title: 'Before')
       allow(pr_data).to receive(:title).and_return('')
