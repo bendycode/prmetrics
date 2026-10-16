@@ -351,48 +351,39 @@ RSpec.describe GithubService do
           details_fetched_for << number
           []
         end
+        fail_the_walk_on_the_second_page
+        github_pages(first_page, second_page)
+        details_fetched_for.clear
+        processed.clear
       end
 
-      def walk_failing_on_the_second_page
+      def fail_the_walk_on_the_second_page
         allow(octokit_client).to receive(:pull_requests) do |_repo, options|
           raise Octokit::ServerError if options[:page] == 2
 
           first_page
         end
-        expect do
-          service.fetch_and_store_pull_requests(repository.name, processor: processor)
-        end.to raise_error(Octokit::ServerError)
+        service.fetch_and_store_pull_requests(repository.name, processor: processor)
+        raise 'the first walk was meant to fail on its second page'
+      rescue Octokit::ServerError
+        nil
       end
 
       it 'fetches details again only for what the failed walk missed and the newest it stored' do
-        walk_failing_on_the_second_page
-        github_pages(first_page, second_page)
-        details_fetched_for.clear
-
         service.fetch_and_store_pull_requests(repository.name, processor: processor)
 
         expect(details_fetched_for.uniq).to contain_exactly(1, 3)
       end
 
-      # Passed before the skip existed; it pins that a skipped pull request's
-      # weeks are still recalculated.
+      # A pull request whose GitHub reads are skipped still has its weeks
+      # recalculated.
       it 'still hands every pull request in the window to the processor' do
-        walk_failing_on_the_second_page
-        github_pages(first_page, second_page)
-        processed.clear
-
         service.fetch_and_store_pull_requests(repository.name, processor: processor)
 
         expect(processed.map(&:first)).to contain_exactly(1, 2, 3)
       end
 
-      # Passed before the skip existed; it pins that a full refresh skips
-      # nothing.
       it 'fetches details for every pull request again on a full refresh' do
-        walk_failing_on_the_second_page
-        github_pages(first_page, second_page)
-        details_fetched_for.clear
-
         service.fetch_and_store_pull_requests(repository.name, processor: processor, fetch_all: true)
 
         expect(details_fetched_for.uniq).to contain_exactly(1, 2, 3)
