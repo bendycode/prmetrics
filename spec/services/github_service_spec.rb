@@ -13,16 +13,19 @@ RSpec.describe GithubService do
 
   describe '#store_reviews' do
     let(:pull_request) { create(:pull_request, repository: repository, ready_for_review_at: 2.days.ago) }
-    let(:user) { double('github_user', login: 'reviewer', name: 'Reviewer', email: 'reviewer@example.com', id: '123') }
+    let(:user) do
+      double('github_user', login: 'reviewer', name: 'Reviewer', email: 'reviewer@example.com', id: '9000123',
+                            avatar_url: nil)
+    end
 
-    it 'stores all reviews regardless of timing' do
+    it 'stores all reviews regardless of timing, each under its reviewer' do
       reviews = [double('review', state: 'approved', submitted_at: Time.current, user: user),
                  double('review', state: 'commented', submitted_at: 3.days.ago, user: user)]
-      allow(service).to receive(:find_or_create_contributor).and_return(create(:contributor))
 
       expect do
         service.send(:store_reviews, pull_request, reviews)
       end.to change(Review, :count).by(2)
+      expect(pull_request.reviews).to all(have_attributes(author: have_attributes(username: 'reviewer')))
     end
 
     it 'skips reviews with nil timestamps' do
