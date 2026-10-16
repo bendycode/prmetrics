@@ -91,11 +91,14 @@ class GithubService
   # the update GitHub lists has nothing new to fetch: an earlier sync stored
   # it, or a failed one stored it before failing. Rows in the newest stored
   # second are left out: GitHub's timestamps are whole seconds, so a pull
-  # request read in that second can have changed again within it.
+  # request read in that second can have changed again within it. So are rows
+  # stored without an author, which a contributor that could not be saved
+  # leaves behind.
   def stored_updates(repository, pull_requests, before:)
     return {} unless before
 
     repository.pull_requests.where(number: pull_requests.map(&:number), gh_updated_at: ...before)
+              .where.not(author_id: nil)
               .pluck(:number, :gh_updated_at).to_h
   end
 

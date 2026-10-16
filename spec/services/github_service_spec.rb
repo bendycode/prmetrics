@@ -320,18 +320,24 @@ RSpec.describe GithubService do
       before do
         create(:pull_request, repository: repository, number: 1, gh_updated_at: newest_stored)
         create(:pull_request, repository: repository, number: 2, gh_updated_at: newest_stored - 1.day)
+        # An author whose login another contributor holds is not saved, and
+        # the pull request is stored without one
+        taken = create(:contributor).username
+        create(:pull_request, repository: repository, number: 3, gh_updated_at: newest_stored - 1.day,
+                              author: Contributor.new(username: taken, github_id: '9000999'))
         repository.update!(last_fetched_at: newest_stored - 2.days)
-        github_pages([github_pr(1, newest_stored), github_pr(2, newest_stored - 1.day)])
+        github_pages([github_pr(1, newest_stored), github_pr(2, newest_stored - 1.day),
+                      github_pr(3, newest_stored - 1.day)])
         allow(octokit_client).to receive(:pull_request_reviews) do |_repo, number, _options|
           details_fetched_for << number
           []
         end
       end
 
-      it 'reads again only the one stored in the newest second' do
+      it 'reads again only the one stored in the newest second and the one stored without its author' do
         service.fetch_and_store_pull_requests(repository.name, processor: processor)
 
-        expect(details_fetched_for).to eq([1])
+        expect(details_fetched_for).to contain_exactly(1, 3)
       end
     end
 
