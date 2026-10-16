@@ -366,19 +366,20 @@ RSpec.describe GithubService do
         create(:pull_request, repository: repository, number: 3, gh_updated_at: newest - 1.day,
                               listed_at: newest, author: Contributor.new(username: taken, github_id: '9000999'))
         create(:pull_request, repository: repository, number: 4, gh_updated_at: newest - 1.day, listed_at: nil)
+        create(:pull_request, repository: repository, number: 5, gh_updated_at: newest - 2.days, listed_at: newest)
         repository.update!(last_fetched_at: newest - 2.days)
         github_pages([github_pr(2, newest), github_pr(1, newest - 1.day), github_pr(3, newest - 1.day),
-                      github_pr(4, newest - 1.day)])
+                      github_pr(4, newest - 1.day), github_pr(5, newest - 1.day)])
         allow(octokit_client).to receive(:pull_request_reviews) do |_repo, number, _options|
           details_fetched_for << number
           []
         end
       end
 
-      it 'reads again those not known to be listed after their update, and the one stored without its author' do
+      it 'reads again those changed since, those not known to be listed after their update, and the authorless one' do
         service.fetch_and_store_pull_requests(repository.name, processor: processor)
 
-        expect(details_fetched_for).to contain_exactly(1, 3, 4)
+        expect(details_fetched_for).to contain_exactly(1, 3, 4, 5)
       end
     end
 
