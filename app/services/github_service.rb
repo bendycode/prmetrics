@@ -58,8 +58,9 @@ class GithubService
       pull_requests = pull_requests.reject { |pr| pr.updated_at < cutoff } if cutoff
       break if pull_requests.empty?
 
+      stored = fetch_all ? {} : stored_updates(repository, pull_requests)
       pull_requests.each do |pr|
-        process_pull_request(repository, repo_name, pr) if fetch_all || !stored_at_this_update?(repository, pr)
+        process_pull_request(repository, repo_name, pr) unless stored[pr.number] == pr.updated_at
         most_recent_update = [most_recent_update, pr.updated_at].compact.max
         Rails.logger.debug { "Processed PR ##{pr.number}" }
         total_processed += 1
@@ -85,10 +86,11 @@ class GithubService
     end
   end
 
-  # A pull request stored at the update GitHub lists has nothing new to fetch:
-  # an earlier sync stored it, or a failed one stored it before failing.
-  def stored_at_this_update?(repository, pr)
-    repository.pull_requests.exists?(number: pr.number, gh_updated_at: pr.updated_at)
+  # The update each listed pull request is stored at, by number. One stored at
+  # the update GitHub lists has nothing new to fetch: an earlier sync stored
+  # it, or a failed one stored it before failing.
+  def stored_updates(repository, pull_requests)
+    repository.pull_requests.where(number: pull_requests.map(&:number)).pluck(:number, :gh_updated_at).to_h
   end
 
   # Everything is read from GitHub before anything is written, and written in
