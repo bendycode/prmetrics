@@ -57,7 +57,7 @@ class GithubService
       break if pull_requests.empty?
 
       pull_requests.each do |pr|
-        process_pull_request(repository, repo_name, pr)
+        process_pull_request(repository, repo_name, pr) if fetch_all || !stored_at_this_update?(repository, pr)
         most_recent_update = [most_recent_update, pr.updated_at].compact.max
         Rails.logger.debug { "Processed PR ##{pr.number}" }
         total_processed += 1
@@ -147,6 +147,12 @@ class GithubService
     with_rate_limit_handling do
       @client.pull_requests_comments(repo_name, options)
     end
+  end
+
+  # A pull request stored at the update GitHub lists has nothing new to fetch:
+  # an earlier sync stored it, or a failed one stored it before failing.
+  def stored_at_this_update?(repository, pr)
+    repository.pull_requests.exists?(number: pr.number, gh_updated_at: pr.updated_at)
   end
 
   def process_pull_request(repository, repo_name, pr)

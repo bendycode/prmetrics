@@ -290,6 +290,70 @@ RSpec.describe GithubService do
       end
     end
 
+    context 'when a walk fails partway and the sync runs again' do
+      let(:last_fetch) { 5.days.ago.change(usec: 0) }
+      let(:first_page) { [github_pr(1, last_fetch + 3.days), github_pr(2, last_fetch + 2.days)] }
+      let(:second_page) { [github_pr(3, last_fetch + 1.day)] }
+      let(:details_fetched_for) { [] }
+
+      before do
+        repository.update!(last_fetched_at: last_fetch)
+        allow(octokit_client).to receive(:issue_events) do |_repo, number, _options|
+          details_fetched_for << number
+          []
+        end
+        allow(octokit_client).to receive(:pull_request_reviews) do |_repo, number, _options|
+          details_fetched_for << number
+          []
+        end
+      end
+
+      def walk_failing_on_the_second_page
+        allow(octokit_client).to receive(:pull_requests) do |_repo, options|
+          raise Octokit::ServerError if options[:page] == 2
+
+          first_page
+        end
+        expect do
+          service.fetch_and_store_pull_requests(repository.name, processor: processor)
+        end.to raise_error(Octokit::ServerError)
+      end
+
+      it 'fetches details only for the pull requests the failed walk did not reach' do
+        walk_failing_on_the_second_page
+        github_pages(first_page, second_page)
+        details_fetched_for.clear
+
+        service.fetch_and_store_pull_requests(repository.name, processor: processor)
+
+        expect(details_fetched_for.uniq).to eq([3])
+      end
+
+      # Passed before the skip existed; it pins that a skipped pull request's
+      # weeks are still recalculated.
+      it 'still hands every pull request in the window to the processor' do
+        walk_failing_on_the_second_page
+        github_pages(first_page, second_page)
+        processed.clear
+
+        service.fetch_and_store_pull_requests(repository.name, processor: processor)
+
+        expect(processed.map(&:first)).to contain_exactly(1, 2, 3)
+      end
+
+      # Passed before the skip existed; it pins that a full refresh skips
+      # nothing.
+      it 'fetches details for every pull request again on a full refresh' do
+        walk_failing_on_the_second_page
+        github_pages(first_page, second_page)
+        details_fetched_for.clear
+
+        service.fetch_and_store_pull_requests(repository.name, processor: processor, fetch_all: true)
+
+        expect(details_fetched_for.uniq).to contain_exactly(1, 2, 3)
+      end
+    end
+
     it 'refuses a repository that is not already stored' do
       expect do
         service.fetch_and_store_pull_requests('someone/unknown', processor: processor)
