@@ -155,10 +155,24 @@ class GithubService
     repository.pull_requests.exists?(number: pr.number, gh_updated_at: pr.updated_at)
   end
 
+  # Everything is read from GitHub before anything is written, and written in
+  # one transaction, since a pull request stored at its current update is not
+  # read again. The reads stay outside the transaction because a rate limit
+  # can hold one for an hour.
   def process_pull_request(repository, repo_name, pr)
+    events = events_worth_reading?(pr) ? issue_events(repo_name, pr.number) : []
+    reviews = pull_request_reviews(repo_name, pr.number)
+
+    PullRequest.transaction do
+      pull_request = store_pull_request(repository, pr, events)
+      store_reviews(pull_request, reviews)
+      store_author(pull_request, pr)
+    end
+  end
+
+  def store_pull_request(repository, pr, events)
     pull_request = repository.pull_requests.find_or_initialize_by(number: pr.number)
     author = Contributor.find_or_create_from_github(pr.user)
-    events = events_worth_reading?(pr) ? issue_events(repo_name, pr.number) : []
     ready_for_review_at = pr.draft ? nil : ready_for_review_time(events, pr.created_at)
 
     pull_request.update!(
@@ -176,9 +190,7 @@ class GithubService
       head_repository: pr.head.repo&.full_name,
       **merger_attribute(pr, events)
     )
-
-    fetch_and_store_reviews(pull_request, repo_name, pr.number)
-    store_author(pull_request, pr)
+    pull_request
   end
 
   # An open draft has neither event this reads: it has not left draft, and a
@@ -237,9 +249,15 @@ class GithubService
   end
 
   def fetch_and_store_reviews(pull_request, repo_name, pr_number)
-    reviews = each_page { |page| @client.pull_request_reviews(repo_name, pr_number, page: page, per_page: 100) }
+    store_reviews(pull_request, pull_request_reviews(repo_name, pr_number))
+  end
 
-    # Store all reviews regardless of timing - we'll filter when calculating metrics
+  def pull_request_reviews(repo_name, pr_number)
+    each_page { |page| @client.pull_request_reviews(repo_name, pr_number, page: page, per_page: 100) }
+  end
+
+  # Store all reviews regardless of timing - we'll filter when calculating metrics
+  def store_reviews(pull_request, reviews)
     reviews.each do |review|
       next if review.submitted_at.nil?
 

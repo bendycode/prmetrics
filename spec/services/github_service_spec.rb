@@ -81,7 +81,7 @@ RSpec.describe GithubService do
 
     before do
       allow(service).to receive(:issue_events).and_return([])
-      allow(service).to receive(:fetch_and_store_reviews)
+      allow(octokit_client).to receive(:pull_request_reviews).and_return([])
       allow(service).to receive(:store_author)
     end
 
@@ -113,6 +113,31 @@ RSpec.describe GithubService do
         service.send(:process_pull_request, repository, 'test/repo', pr_data)
       end.to raise_error(ActiveRecord::RecordInvalid)
       expect(existing.reload.title).to eq('Before')
+    end
+
+    # A pull request stored at the update GitHub lists is skipped by the next
+    # incremental sync, so it has to be stored whole or not at all.
+    context 'when storing it fails partway' do
+      let(:stored_at) { 3.days.ago.change(usec: 0) }
+      let!(:existing) { create(:pull_request, repository: repository, number: 123, gh_updated_at: stored_at) }
+
+      it 'keeps the update it was stored at when GitHub fails to list its reviews' do
+        allow(octokit_client).to receive(:pull_request_reviews).and_raise(Octokit::ServerError)
+
+        expect do
+          service.send(:process_pull_request, repository, 'test/repo', pr_data)
+        end.to raise_error(Octokit::ServerError)
+        expect(existing.reload.gh_updated_at).to eq(stored_at)
+      end
+
+      it 'keeps the update it was stored at when its author cannot be recorded' do
+        allow(service).to receive(:store_author).and_raise(ActiveRecord::RecordInvalid)
+
+        expect do
+          service.send(:process_pull_request, repository, 'test/repo', pr_data)
+        end.to raise_error(ActiveRecord::RecordInvalid)
+        expect(existing.reload.gh_updated_at).to eq(stored_at)
+      end
     end
 
     it 'updates a pull request it has seen before and records its author' do
