@@ -99,6 +99,43 @@ RSpec.describe UnifiedSyncService do
       end
     end
 
+    context 'with an earlier sync' do
+      let(:previous_fetch) { merged_at - 7.days }
+
+      before { repository.update!(last_fetched_at: previous_fetch) }
+
+      it 'records the newest update the fetch stored once the sync completes' do
+        allow(github_service).to receive(:fetch_and_store_pull_requests).and_return(merged_at)
+
+        service.sync!
+
+        expect(repository.reload.last_fetched_at).to eq(merged_at)
+      end
+
+      it 'keeps the earlier last fetch when the fetch stored nothing' do
+        allow(github_service).to receive(:fetch_and_store_pull_requests).and_return(nil)
+
+        service.sync!
+
+        expect(repository.reload.last_fetched_at).to eq(previous_fetch)
+      end
+
+      # Passed before the watermark moved into sync!, since the fetch is
+      # stubbed here; it pins where sync! records the last fetch.
+      it 'keeps the earlier last fetch when a later step fails, so the retry reads the same pull requests' do
+        allow(github_service).to receive(:fetch_and_store_pull_requests) do |_name, processor:, **|
+          create(:pull_request, repository: repository, number: 123, gh_created_at: merged_at - 2.days,
+                                ready_for_review_at: merged_at - 2.days, gh_merged_at: merged_at)
+          processor.call(pr_data)
+          merged_at
+        end
+        allow(WeekStatsService).to receive(:new).and_raise(StandardError, 'statistics failed')
+
+        expect { service.sync! }.to raise_error(StandardError, 'statistics failed')
+        expect(repository.reload.last_fetched_at).to eq(previous_fetch)
+      end
+    end
+
     context 'when the fetch fails' do
       before do
         allow(github_service).to receive(:fetch_and_store_pull_requests).and_raise(StandardError, 'API error')

@@ -242,13 +242,15 @@ RSpec.describe GithubService do
       expect(processed).to contain_exactly([1, true], [2, true], [3, true])
     end
 
-    it 'records the newest update it saw as the repository\'s last fetch' do
+    it 'returns the newest update it saw, leaving the last fetch for the caller to record' do
       newest = 1.day.ago.change(usec: 0)
       github_pages([github_pr(1, newest), github_pr(2, 3.days.ago)])
+      returned = nil
 
-      service.fetch_and_store_pull_requests(repository.name, processor: processor)
-
-      expect(repository.reload.last_fetched_at).to eq(newest)
+      expect do
+        returned = service.fetch_and_store_pull_requests(repository.name, processor: processor)
+      end.not_to(change { repository.reload.last_fetched_at })
+      expect(returned).to eq(newest)
     end
 
     context 'with an earlier sync' do
@@ -292,16 +294,6 @@ RSpec.describe GithubService do
       expect do
         service.fetch_and_store_pull_requests('someone/unknown', processor: processor)
       end.to raise_error(ActiveRecord::RecordNotFound)
-    end
-
-    it 'raises when the repository cannot record its last fetch' do
-      github_pages([github_pr(1, 1.day.ago)])
-      repository.name = 'not a repository name'
-      repository.save(validate: false)
-
-      expect do
-        service.fetch_and_store_pull_requests(repository.name, processor: processor)
-      end.to raise_error(ActiveRecord::RecordInvalid)
     end
   end
 

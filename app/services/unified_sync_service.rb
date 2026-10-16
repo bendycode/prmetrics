@@ -36,11 +36,15 @@ class UnifiedSyncService
       # Final stats update for all affected weeks
       update_week_statistics
 
+      # Recorded only here: a sync that fails before this point leaves the
+      # last fetch where it was, so the retry reads the same pull requests
+      # and recalculates the weeks they touch.
       @repository.update!(
         sync_status: 'completed',
         sync_completed_at: Time.current,
         last_sync_error: nil,
-        sync_progress: 100
+        sync_progress: 100,
+        last_fetched_at: @newest_update || @repository.last_fetched_at
       )
 
       log_progress('Sync completed successfully!')
@@ -73,7 +77,7 @@ class UnifiedSyncService
     log_progress("Estimated #{@total_prs} pull requests to process")
 
     # Step 1: Fetch PRs with our custom processor
-    github_service.fetch_and_store_pull_requests(
+    @newest_update = github_service.fetch_and_store_pull_requests(
       @repo_name,
       fetch_all: @fetch_all,
       processor: method(:process_pull_request)
