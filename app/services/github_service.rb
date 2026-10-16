@@ -107,7 +107,7 @@ class GithubService
     events = events_worth_reading?(pr) ? issue_events(repo_name, pr.number) : []
     reviews = pull_request_reviews(repo_name, pr.number)
 
-    PullRequest.transaction do
+    ApplicationRecord.transaction do
       pull_request = store_pull_request(repository, pr, events)
       store_reviews(pull_request, reviews)
       store_author(pull_request, pr)
@@ -196,7 +196,7 @@ class GithubService
     each_page { |page| @client.pull_request_reviews(repo_name, pr_number, page: page, per_page: 100) }
   end
 
-  # Store all reviews regardless of timing - we'll filter when calculating metrics
+  # Every submitted review is stored; the metrics decide which ones count
   def store_reviews(pull_request, reviews)
     reviews.each do |review|
       next if review.submitted_at.nil?
