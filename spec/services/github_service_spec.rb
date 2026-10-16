@@ -106,6 +106,23 @@ RSpec.describe GithubService do
         .to contain_exactly(have_attributes(state: 'APPROVED', author: have_attributes(username: 'reviewer')))
     end
 
+    it 'reads GitHub before it opens the transaction that stores the pull request' do
+      outside = ApplicationRecord.connection.open_transactions
+      open_during_reads = []
+      allow(service).to receive(:issue_events) do
+        open_during_reads << ApplicationRecord.connection.open_transactions
+        []
+      end
+      allow(octokit_client).to receive(:pull_request_reviews) do
+        open_during_reads << ApplicationRecord.connection.open_transactions
+        []
+      end
+
+      service.send(:process_pull_request, repository, 'test/repo', pr_data)
+
+      expect(open_during_reads).to eq([outside, outside])
+    end
+
     it 'raises when GitHub data fails validation instead of skipping the pull request' do
       existing = create(:pull_request, repository: repository, number: 123, title: 'Before')
       allow(pr_data).to receive(:title).and_return('')
