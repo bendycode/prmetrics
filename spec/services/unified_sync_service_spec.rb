@@ -9,8 +9,7 @@ RSpec.describe UnifiedSyncService do
 
   before do
     allow(GithubService).to receive(:new).and_return(github_service)
-    allow(github_service).to receive_messages(get_pull_request_count: 10, fetch_recent_review_activity: 0,
-                                              default_branch: 'main')
+    allow(github_service).to receive_messages(get_pull_request_count: 10, default_branch: 'main')
   end
 
   # Stands in for GithubService: stores the pull request, then hands its

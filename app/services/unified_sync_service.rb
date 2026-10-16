@@ -76,20 +76,13 @@ class UnifiedSyncService
     @total_prs = estimate_total_prs
     log_progress("Estimated #{@total_prs} pull requests to process")
 
-    # Step 1: Fetch PRs with our custom processor
+    # Submitting a review moves a pull request's updated_at, so this walk
+    # also reads every review left since the last fetch
     @newest_update = github_service.fetch_and_store_pull_requests(
       @repo_name,
       fetch_all: @fetch_all,
       processor: method(:process_pull_request)
     )
-
-    # Step 2: Fetch recent review activity (only for incremental sync)
-    # This catches PRs that got new reviews but weren't updated themselves
-    return if @fetch_all
-
-    log_progress('Fetching recent review activity...')
-    review_comments_processed = github_service.fetch_recent_review_activity(@repo_name)
-    log_progress("Processed #{review_comments_processed} recent review comments")
   end
 
   def process_pull_request(pr_data)

@@ -11,51 +11,38 @@ RSpec.describe GithubService do
     allow(octokit_client).to receive(:auto_paginate=)
   end
 
-  describe '#fetch_and_store_reviews' do
+  describe '#store_reviews' do
     let(:pull_request) { create(:pull_request, repository: repository, ready_for_review_at: 2.days.ago) }
-    let(:pr_number) { pull_request.number }
-    let(:repo_name) { repository.name }
     let(:user) { double('github_user', login: 'reviewer', name: 'Reviewer', email: 'reviewer@example.com', id: '123') }
 
-    context 'when reviews exist' do
-      let(:valid_review) { double('review', state: 'approved', submitted_at: Time.current, user: user) }
-      let(:early_review) { double('review', state: 'commented', submitted_at: 3.days.ago, user: user) }
+    it 'stores all reviews regardless of timing' do
+      reviews = [double('review', state: 'approved', submitted_at: Time.current, user: user),
+                 double('review', state: 'commented', submitted_at: 3.days.ago, user: user)]
+      allow(service).to receive(:find_or_create_contributor).and_return(create(:contributor))
 
-      it 'stores all reviews regardless of timing' do
-        allow(octokit_client).to receive(:pull_request_reviews).and_return([valid_review, early_review])
-        allow(service).to receive(:find_or_create_contributor).and_return(create(:contributor))
-
-        expect do
-          service.send(:fetch_and_store_reviews, pull_request, repo_name, pr_number)
-        end.to change(Review, :count).by(2)
-      end
+      expect do
+        service.send(:store_reviews, pull_request, reviews)
+      end.to change(Review, :count).by(2)
     end
 
-    context 'when a pull request has more reviews than one page holds' do
-      it 'stores the reviews on every page' do
-        pages = [Array.new(100) { |n| double(state: 'COMMENTED', submitted_at: n.hours.ago, user: user) },
-                 [double(state: 'APPROVED', submitted_at: Time.current, user: user)]]
-        allow(octokit_client).to receive(:pull_request_reviews) do |_repo, _number, options|
-          pages[options[:page] - 1] || []
-        end
-        allow(service).to receive(:find_or_create_contributor).and_return(create(:contributor))
+    it 'skips reviews with nil timestamps' do
+      reviews = [double('review', state: 'approved', submitted_at: nil, user: user)]
 
-        expect do
-          service.send(:fetch_and_store_reviews, pull_request, repo_name, pr_number)
-        end.to change(Review, :count).by(101)
-      end
+      expect do
+        service.send(:store_reviews, pull_request, reviews)
+      end.not_to change(Review, :count)
     end
+  end
 
-    context 'when review timestamps are nil' do
-      let(:invalid_review) { double('review', state: 'approved', submitted_at: nil, user: user) }
-
-      it 'skips reviews with nil timestamps' do
-        allow(octokit_client).to receive(:pull_request_reviews).and_return([invalid_review])
-
-        expect do
-          service.send(:fetch_and_store_reviews, pull_request, repo_name, pr_number)
-        end.not_to change(Review, :count)
+  describe '#pull_request_reviews' do
+    it 'reads the reviews on every page' do
+      pages = [Array.new(100) { |n| double(state: 'COMMENTED', submitted_at: n.hours.ago) },
+               [double(state: 'APPROVED', submitted_at: Time.current)]]
+      allow(octokit_client).to receive(:pull_request_reviews) do |_repo, _number, options|
+        pages[options[:page] - 1] || []
       end
+
+      expect(service.send(:pull_request_reviews, repository.name, 123).size).to be(101)
     end
   end
 
