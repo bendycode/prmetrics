@@ -3,7 +3,7 @@ require 'sidekiq'
 
 # Configure Redis connection to handle Heroku Redis SSL
 redis_config = {
-  url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0')
+  url: ENV.fetch('PRM_JOBS_REDIS_URL') { ENV.fetch('REDIS_URL', 'redis://localhost:6379/0') }
 }
 
 # If using Heroku Redis with SSL, disable SSL verification

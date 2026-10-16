@@ -46,7 +46,7 @@ class HealthController < ApplicationController
   end
 
   def check_redis
-    redis_url = ENV['REDIS_URL'] || 'redis://localhost:6379/0'
+    redis_url = ENV.fetch('PRM_JOBS_REDIS_URL') { ENV['REDIS_URL'] || 'redis://localhost:6379/0' }
     redis_config = { url: redis_url }
 
     # Handle Heroku Redis SSL
