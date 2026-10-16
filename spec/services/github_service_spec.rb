@@ -310,6 +310,31 @@ RSpec.describe GithubService do
       end
     end
 
+    # GitHub's timestamps are whole seconds, so a pull request read in the
+    # second it last changed can change again in that second without its
+    # updated_at moving.
+    context 'when pull requests are stored at the update GitHub lists' do
+      let(:newest_stored) { 2.days.ago.change(usec: 0) }
+      let(:details_fetched_for) { [] }
+
+      before do
+        create(:pull_request, repository: repository, number: 1, gh_updated_at: newest_stored)
+        create(:pull_request, repository: repository, number: 2, gh_updated_at: newest_stored - 1.day)
+        repository.update!(last_fetched_at: newest_stored - 2.days)
+        github_pages([github_pr(1, newest_stored), github_pr(2, newest_stored - 1.day)])
+        allow(octokit_client).to receive(:pull_request_reviews) do |_repo, number, _options|
+          details_fetched_for << number
+          []
+        end
+      end
+
+      it 'reads again only the one stored in the newest second' do
+        service.fetch_and_store_pull_requests(repository.name, processor: processor)
+
+        expect(details_fetched_for).to eq([1])
+      end
+    end
+
     context 'when a walk fails partway and the sync runs again' do
       let(:last_fetch) { 5.days.ago.change(usec: 0) }
       let(:first_page) { [github_pr(1, last_fetch + 3.days), github_pr(2, last_fetch + 2.days)] }
@@ -339,14 +364,14 @@ RSpec.describe GithubService do
         end.to raise_error(Octokit::ServerError)
       end
 
-      it 'fetches details only for the pull requests the failed walk did not reach' do
+      it 'fetches details again only for what the failed walk missed and the newest it stored' do
         walk_failing_on_the_second_page
         github_pages(first_page, second_page)
         details_fetched_for.clear
 
         service.fetch_and_store_pull_requests(repository.name, processor: processor)
 
-        expect(details_fetched_for.uniq).to eq([3])
+        expect(details_fetched_for.uniq).to contain_exactly(1, 3)
       end
 
       # Passed before the skip existed; it pins that a skipped pull request's

@@ -45,6 +45,7 @@ class GithubService
     repository = Repository.find_by!(name: repo_name)
     cutoff = fetch_all ? nil : repository.last_fetched_at
 
+    newest_stored = repository.pull_requests.maximum(:gh_updated_at) unless fetch_all
     page = 1
     total_processed = 0
     most_recent_update = nil
@@ -58,7 +59,7 @@ class GithubService
       pull_requests = pull_requests.reject { |pr| pr.updated_at < cutoff } if cutoff
       break if pull_requests.empty?
 
-      stored = fetch_all ? {} : stored_updates(repository, pull_requests)
+      stored = fetch_all ? {} : stored_updates(repository, pull_requests, before: newest_stored)
       pull_requests.each do |pr|
         process_pull_request(repository, repo_name, pr) unless stored[pr.number] == pr.updated_at
         most_recent_update = [most_recent_update, pr.updated_at].compact.max
@@ -88,9 +89,14 @@ class GithubService
 
   # The update each listed pull request is stored at, by number. One stored at
   # the update GitHub lists has nothing new to fetch: an earlier sync stored
-  # it, or a failed one stored it before failing.
-  def stored_updates(repository, pull_requests)
-    repository.pull_requests.where(number: pull_requests.map(&:number)).pluck(:number, :gh_updated_at).to_h
+  # it, or a failed one stored it before failing. Rows in the newest stored
+  # second are left out: GitHub's timestamps are whole seconds, so a pull
+  # request read in that second can have changed again within it.
+  def stored_updates(repository, pull_requests, before:)
+    return {} unless before
+
+    repository.pull_requests.where(number: pull_requests.map(&:number), gh_updated_at: ...before)
+              .pluck(:number, :gh_updated_at).to_h
   end
 
   # Everything is read from GitHub before anything is written, and written in
