@@ -59,7 +59,7 @@ class GithubService
       pull_requests = pull_requests.reject { |pr| pr.updated_at < cutoff } if cutoff
       break if pull_requests.empty?
 
-      stored = fetch_all ? {} : stored_updates(repository, pull_requests, before: newest_stored)
+      stored = fetch_all ? {} : stored_updates(repository, pull_requests, before: newest_stored, except: cutoff)
       pull_requests.each do |pr|
         process_pull_request(repository, repo_name, pr) unless stored[pr.number] == pr.updated_at
         most_recent_update = [most_recent_update, pr.updated_at].compact.max
@@ -90,14 +90,15 @@ class GithubService
   # The update each listed pull request is stored at, by number. One stored at
   # the update GitHub lists has nothing new to fetch: an earlier sync stored
   # it, or a failed one stored it before failing. Rows in the newest stored
-  # second are left out: GitHub's timestamps are whole seconds, so a pull
-  # request read in that second can have changed again within it. So are rows
-  # stored without an author, which a contributor that could not be saved
-  # leaves behind.
-  def stored_updates(repository, pull_requests, before:)
+  # second, and in the second the last completed sync stopped at, are left
+  # out: GitHub's timestamps are whole seconds, so a pull request read in
+  # either can have changed again within it. So are rows stored without an
+  # author, which a contributor that could not be saved leaves behind.
+  def stored_updates(repository, pull_requests, before:, except:)
     return {} unless before
 
     repository.pull_requests.where(number: pull_requests.map(&:number), gh_updated_at: ...before)
+              .where.not(gh_updated_at: except)
               .where.not(author_id: nil)
               .pluck(:number, :gh_updated_at).to_h
   end

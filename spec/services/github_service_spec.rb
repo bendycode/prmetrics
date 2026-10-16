@@ -341,6 +341,30 @@ RSpec.describe GithubService do
       end
     end
 
+    context 'when a failed walk stored a newer pull request than the last fetch' do
+      let(:last_fetch) { 5.days.ago.change(usec: 0) }
+      let(:details_fetched_for) { [] }
+
+      before do
+        # Stored by the last completed sync, in the second that sync stopped at
+        create(:pull_request, repository: repository, number: 1, gh_updated_at: last_fetch)
+        # Stored by a later walk that failed before reaching number 1
+        create(:pull_request, repository: repository, number: 2, gh_updated_at: last_fetch + 1.day)
+        repository.update!(last_fetched_at: last_fetch)
+        github_pages([github_pr(2, last_fetch + 1.day), github_pr(1, last_fetch)])
+        allow(octokit_client).to receive(:pull_request_reviews) do |_repo, number, _options|
+          details_fetched_for << number
+          []
+        end
+      end
+
+      it 'reads again the one stored in the second the last fetch stopped at' do
+        service.fetch_and_store_pull_requests(repository.name, processor: processor)
+
+        expect(details_fetched_for).to contain_exactly(1, 2)
+      end
+    end
+
     context 'when a walk fails partway and the sync runs again' do
       let(:last_fetch) { 5.days.ago.change(usec: 0) }
       let(:first_page) { [github_pr(1, last_fetch + 3.days), github_pr(2, last_fetch + 2.days)] }
