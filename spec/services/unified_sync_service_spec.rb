@@ -12,14 +12,16 @@ RSpec.describe UnifiedSyncService do
     allow(github_service).to receive_messages(get_pull_request_count: 10, default_branch: 'main')
   end
 
-  # Stands in for GithubService: stores the pull request, then hands its
-  # GitHub data to the processor, as the real fetch does once per pull request.
+  # Stands in for GithubService: stores the pull request, hands its GitHub
+  # data to the processor, and returns the newest update it stored, as the
+  # real fetch does.
   def fetch_stores_one_pull_request
     allow(github_service).to receive(:fetch_and_store_pull_requests) do |_name, processor:, **|
       create(:pull_request, repository: repository, number: 123,
                             gh_created_at: merged_at - 2.days, ready_for_review_at: merged_at - 2.days,
                             gh_merged_at: merged_at, gh_closed_at: merged_at, state: 'closed')
       processor.call(pr_data)
+      merged_at
     end
   end
 
@@ -32,6 +34,7 @@ RSpec.describe UnifiedSyncService do
       statuses = []
       allow(github_service).to receive(:fetch_and_store_pull_requests) do
         statuses << repository.reload.sync_status
+        merged_at
       end
 
       service.sync!
@@ -119,8 +122,6 @@ RSpec.describe UnifiedSyncService do
         expect(repository.reload.last_fetched_at).to eq(previous_fetch)
       end
 
-      # Passed before the watermark moved into sync!, since the fetch is
-      # stubbed here; it pins where sync! records the last fetch.
       it 'keeps the earlier last fetch when a later step fails, so the retry reads the same pull requests' do
         allow(github_service).to receive(:fetch_and_store_pull_requests) do |_name, processor:, **|
           create(:pull_request, repository: repository, number: 123, gh_created_at: merged_at - 2.days,
