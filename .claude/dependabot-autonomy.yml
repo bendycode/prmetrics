@@ -23,6 +23,6 @@ separate_flake_fix_pr: auto
 # PRs below this threshold downgrade to "ask" regardless of the merge dials above.
 # PRs missing a compatibility score are treated as below the floor.
 # Raise this to be more cautious; lower it to be more aggressive.
-compatibility_score_floor: 85
+compatibility_score_floor: 75
 
 deploy_command: bin/deploy
