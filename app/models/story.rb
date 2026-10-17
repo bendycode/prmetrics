@@ -7,7 +7,7 @@ class Story < ApplicationRecord
   enum :committed_source, StoryEvent::KINDS, prefix: :committed_by
   enum :started_source, StoryEvent::KINDS, prefix: :started_by
 
-  validates :key, :title, :url, :gh_created_at, :gh_updated_at, presence: true
+  validates :key, :title, :url, :gh_created_at, :gh_updated_at, :listed_at, presence: true
   validates :state, inclusion: { in: %w[open closed] }
   validates :external_id, uniqueness: { scope: :tracker_id }
 

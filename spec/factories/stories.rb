@@ -8,5 +8,6 @@ FactoryBot.define do
     state { 'open' }
     gh_created_at { 1.week.ago }
     gh_updated_at { gh_created_at }
+    listed_at { gh_updated_at }
   end
 end

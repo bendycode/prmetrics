@@ -133,7 +133,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_17_150003) do
     t.string "state_reason"
     t.datetime "gh_created_at", null: false
     t.datetime "gh_updated_at", null: false
-    t.datetime "listed_at"
+    t.datetime "listed_at", null: false
     t.boolean "gone", default: false, null: false
     t.datetime "committed_at"
     t.integer "committed_source"

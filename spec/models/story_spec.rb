@@ -7,7 +7,7 @@ RSpec.describe Story do
   end
 
   describe 'validations' do
-    %i[key title url gh_created_at gh_updated_at].each do |attribute|
+    %i[key title url gh_created_at gh_updated_at listed_at].each do |attribute|
       it { is_expected.to validate_presence_of(attribute) }
     end
 

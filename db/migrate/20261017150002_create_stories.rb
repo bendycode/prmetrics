@@ -10,7 +10,7 @@ class CreateStories < ActiveRecord::Migration[7.2]
       t.string :state_reason
       t.datetime :gh_created_at, null: false
       t.datetime :gh_updated_at, null: false
-      t.datetime :listed_at
+      t.datetime :listed_at, null: false
       t.boolean :gone, null: false, default: false
       t.datetime :committed_at
       t.integer :committed_source
