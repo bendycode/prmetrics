@@ -112,7 +112,8 @@ RSpec.describe StorySyncService do
       allow(Rails.logger).to receive(:error)
 
       expect { sync.sync! }.to raise_error(StorySyncService::IssuesFailed)
-      expect(Rails.logger).to have_received(:error).with(include('#79').and(exclude('bendycode/prmetrics')))
+      expect(Rails.logger).to have_received(:error).with(include('#79'))
+      expect(Rails.logger).not_to have_received(:error).with(include('bendycode/prmetrics'))
     end
 
     it 'still measures the issues it could read' do

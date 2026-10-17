@@ -45,7 +45,8 @@ RSpec.describe 'story rake tasks' do
       allow(first_sync).to receive(:sync!).and_raise(github_error("repos/#{first.source_repository.name}/issues"))
 
       expect { Rake::Task['sync:stories'].invoke }.to output.to_stdout.and raise_error(SystemExit)
-      expect(Rails.logger).to have_received(:error).with(exclude(first.source_repository.name))
+      expect(Rails.logger).to have_received(:error).with(include("tracker #{first.id}"))
+      expect(Rails.logger).not_to have_received(:error).with(include(first.source_repository.name))
     end
 
     it 'stops before syncing anything without a GitHub token' do
