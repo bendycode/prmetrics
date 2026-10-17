@@ -35,6 +35,16 @@ jobs:
           echo "Starting nightly repository sync on Heroku..."
           heroku run --app prmetrics-production bundle exec rake sync:all_repositories
 
+      # Stories come from trackers rather than pull requests, so a failed
+      # pull request sync is no reason to leave them a day behind.
+      - name: Sync stories on Heroku production
+        if: ${{ !cancelled() }}
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          echo "Starting nightly story sync on Heroku..."
+          heroku run --app prmetrics-production bundle exec rake sync:stories
+
       - name: Notify on failure
         if: failure()
         run: |

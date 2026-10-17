@@ -121,6 +121,12 @@ rake sync:list
 # Rebuild weeks and statistics
 rake weeks:generate
 rake weeks:update_stats
+
+# Measure cycle time from a repository's own GitHub issues, keyed PRM-NNN
+rake trackers:create_github_issues[owner/repo,PRM]
+
+# Sync every tracker's stories and recompute their cycle times
+rake sync:stories
 ```
 
 ### Environment Setup
@@ -141,10 +147,14 @@ rake weeks:update_stats
 - **User**: Generic user model for reviewers
 - **GithubUser**: GitHub-specific user data for PR authors
 - **PullRequestUser**: Join table linking users to PRs; the sync writes only the author row
+- **Tracker**: Where a project's stories live (GitHub issues for now); covers one or more repositories, and a GitHub issues tracker reads its source repository's issues
+- **Story**: One piece of work in a tracker, with its committed, started, and done times
+- **StoryEvent**: One event in a story's history, kept raw so the times can be derived again
 
 ### Key Services
 - **GithubService**: Handles GitHub API integration with Octokit, implements rate limiting and retry logic
 - **WeekStatsService**: Calculates weekly statistics and metrics
+- **StorySyncService**: Lists a tracker's GitHub issues, stores their timelines as story events, and recomputes every story's times with **StoryTimes**; `rake sync:stories` runs it nightly
 - **UnifiedSyncService**: Fetches a repository's pull requests and reviews, then refreshes the weeks they touch; the nightly rake task runs it directly, and the app's Sync buttons run it through **UnifiedSyncJob**
 
 ### Important Patterns
@@ -318,7 +328,7 @@ Revoking one of those signs the laptop out of Heroku; only the
 #### 2. Workflow Configuration
 The workflow is already configured in `.github/workflows/nightly-sync.yml`:
 - **Schedule**: Daily at 2 AM CT (7:00 UTC)
-- **Command**: `heroku run --app prmetrics-production bundle exec rake sync:all_repositories`
+- **Command**: `heroku run --app prmetrics-production bundle exec rake sync:all_repositories`, then `rake sync:stories` the same way, which runs even when the pull request sync fails
 - **Manual trigger**: Available from GitHub Actions UI
 
 #### 3. Manual Testing
