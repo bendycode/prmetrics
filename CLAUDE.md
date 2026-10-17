@@ -466,6 +466,12 @@ description at 100 characters.
       | select(($p | length) != 1 or $p[0] == "priority: untriaged") | .number'
   ```
 
+  A listed issue that carries one level and `priority: untriaged` has been
+  judged: offer to remove `priority: untriaged`, and keep the level. One that
+  carries two or more levels needs the maintainer to say which stands. Change
+  no label before the maintainer answers, then remove every other priority
+  label in one command, with one `--remove-label` for each.
+
 ## Housekeeping Commits
 
 This project's default branch takes direct commits of housekeeping files.
