@@ -43,13 +43,21 @@
           scales: {
             x: {
               type: 'linear',
-              ticks: { callback: function(value) { return new Date(value).toLocaleDateString('en-US', { timeZone: timeZone }); } }
+              ticks: {
+                callback: function(value) {
+                  return new Date(value).toLocaleDateString('en-US', { timeZone: timeZone, year: 'numeric', month: '2-digit', day: '2-digit' });
+                }
+              }
             },
             y: { beginAtZero: true, title: { display: true, text: 'Days' } }
           },
           plugins: {
             legend: { display: false },
-            tooltip: { callbacks: { label: function(context) { return context.raw.key + ': ' + context.raw.y + ' days'; } } }
+            tooltip: {
+              callbacks: {
+                label: function(context) { return context.raw.key + ': ' + context.raw.y + (context.raw.y === 1 ? ' day' : ' days'); }
+              }
+            }
           }
         }
       });
