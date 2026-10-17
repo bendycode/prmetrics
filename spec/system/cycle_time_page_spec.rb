@@ -6,13 +6,13 @@ RSpec.describe 'Cycle Time page' do
   let(:tracker) { create(:tracker, :covering_source, source_repository: repository, key_prefix: 'PRM') }
   let(:day0) { Time.zone.parse('2026-09-01 10:00') }
 
-  def finished(number, title, days, started_after: 0, started_source: :assigned, url: nil)
+  def finished(number, title, days, started_after: 0, **attributes)
     create(:story, tracker: tracker, external_id: number.to_s, key: "PRM-#{number}", title: title,
-                   url: url || "https://github.com/granted/visible/issues/#{number}", state: 'closed',
+                   url: "https://github.com/granted/visible/issues/#{number}", state: 'closed',
                    committed_at: day0, committed_source: :opened,
                    started_at: started_after && (day0 + (started_after * 24).hours),
-                   started_source: started_after && started_source,
-                   done_at: day0 + (days * 24).hours)
+                   started_source: started_after && :assigned,
+                   done_at: day0 + (days * 24).hours, **attributes)
   end
 
   before do
