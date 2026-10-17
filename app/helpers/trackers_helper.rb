@@ -33,6 +33,14 @@ module TrackersHelper
     source ? "#{text} (#{story_source_label(source)})" : text
   end
 
+  # One point per finished story: when it was done, in milliseconds as
+  # JavaScript counts them, and its cycle time in days.
+  def cycle_time_points(report)
+    report.stories.map do |story|
+      { x: (story.done_at.to_f * 1000).round, y: report.days(story).round(2), key: story.key }
+    end
+  end
+
   def coverage_sentence(report)
     coverage = report.coverage
     trigger = story_source_label(report.trigger)
