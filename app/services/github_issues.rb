@@ -16,7 +16,7 @@ module GithubIssues
   # redirecting to the issue in its new repository.
   def issue_gone?(repo_name, number)
     issue = with_rate_limit_handling { @client.issue(repo_name, number) }
-    !issue.repository_url.to_s.end_with?("/repos/#{repo_name}")
+    !issue.repository_url.to_s.downcase.end_with?("/repos/#{repo_name.downcase}")
   rescue Octokit::NotFound, Octokit::Deprecated
     true
   end

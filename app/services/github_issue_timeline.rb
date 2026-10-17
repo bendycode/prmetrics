@@ -10,6 +10,9 @@ class GithubIssueTimeline
     'reopened' => :reopened
   }.freeze
 
+  # GitHub's repository names ignore case, and its URLs carry its own case
+  # whatever case the repository's name was stored in, so names compare
+  # without it.
   def initialize(repo_name:, issue:, timeline:)
     @repo_name = repo_name
     @issue = issue.to_h.deep_stringify_keys
@@ -40,13 +43,13 @@ class GithubIssueTimeline
   # pull request in the issue's own repository is work on it.
   def same_repository_pull_request?(event)
     source = event.dig('source', 'issue') || {}
-    source['pull_request'].present? && source.dig('repository', 'full_name') == @repo_name
+    source['pull_request'].present? && source.dig('repository', 'full_name').to_s.casecmp?(@repo_name)
   end
 
   # A commit in a fork or another project can mention the issue too; only a
   # commit pushed to the issue's own repository is work on it.
   def same_repository_commit?(event)
-    event['commit_url'].to_s.start_with?("https://api.github.com/repos/#{@repo_name}/commits/")
+    event['commit_url'].to_s.downcase.start_with?("https://api.github.com/repos/#{@repo_name.downcase}/commits/")
   end
 
   # GitHub gives cross-references no ID, so one is built from what the event

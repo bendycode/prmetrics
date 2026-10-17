@@ -53,6 +53,14 @@ RSpec.describe GithubIssueTimeline do
     expect(events.pluck(:external_id)).to eq(%w[opened 5 6])
   end
 
+  # The app stores a repository's name as typed; GitHub's URLs carry its own case
+  it 'counts a commit and a pull request from the repository whatever the case of its stored name' do
+    fixture = github_issue_fixture('issue_79')
+    events = described_class.new(repo_name: 'BendyCode/PRMetrics', issue: fixture.issue, timeline: fixture.timeline).events
+
+    expect(events.pluck(:kind).tally).to include(commit_referenced: 5, pull_request_linked: 4)
+  end
+
   it 'gives an event without a GitHub ID the same ID on every read' do
     first_read = events_for('issue_79').pluck(:external_id)
     second_read = events_for('issue_79').pluck(:external_id)
