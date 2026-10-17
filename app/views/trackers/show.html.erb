@@ -1,3 +1,48 @@
 <h1>Cycle Time: <%= @tracker.source_repository.name %></h1>
 
-<p data-clock-chosen><%= @report.clock == 'started' ? 'Started to done' : 'Committed to done' %></p>
+<ul class="nav nav-pills mb-3">
+  <% TrackersHelper::CLOCK_LABELS.each do |clock, label| %>
+    <li class="nav-item">
+      <% if clock == @report.clock %>
+        <span class="nav-link active" aria-current="page" data-clock-chosen><%= label %></span>
+      <% else %>
+        <%= link_to label, tracker_path(@tracker, clock: clock), class: 'nav-link' %>
+      <% end %>
+    </li>
+  <% end %>
+</ul>
+
+<% if @report.stories.empty? %>
+  <p>No finished issues yet.</p>
+<% else %>
+  <div class="row mb-3">
+    <div class="col-md-3"><p>Median <strong><%= cycle_days(@report.median_days) %></strong></p></div>
+    <div class="col-md-3"><p>85th percentile <strong><%= cycle_days(@report.p85_days) %></strong></p></div>
+  </div>
+  <p class="text-muted"><%= coverage_sentence(@report) %></p>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Issue</th>
+        <th>Title</th>
+        <th>Committed</th>
+        <th>Started</th>
+        <th>Done</th>
+        <th>Cycle time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @report.stories.each do |story| %>
+        <tr>
+          <td><%= story.key %></td>
+          <td><%= story_title_link(story) %></td>
+          <td><%= story_time(story.committed_at, story.committed_source) %></td>
+          <td><%= story_time(story.started_at, story.started_source) %></td>
+          <td><%= story_time(story.done_at) %></td>
+          <td><%= cycle_days(@report.days(story)) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
