@@ -12,6 +12,11 @@ namespace :trackers do
       next
     end
 
+    if repository.tracker
+      puts "Error: #{repository.name} is already covered by tracker #{repository.tracker_id}"
+      exit 1
+    end
+
     config = args[:key_prefix].present? ? { 'key_prefix' => args[:key_prefix] } : {}
     ApplicationRecord.transaction do
       tracker = Tracker.create!(kind: :github_issues, source_repository: repository, config: config)

@@ -69,6 +69,21 @@ RSpec.describe 'story rake tasks' do
       expect([Tracker.sole, existing.reload.config]).to eq([existing, {}])
     end
 
+    it 'refuses a repository another tracker already covers' do
+      other = create(:tracker)
+      repository.update!(tracker: other)
+
+      expect { Rake::Task['trackers:create_github_issues'].invoke('bendycode/prmetrics') }
+        .to output(/already covered by tracker #{other.id}/).to_stdout.and raise_error(SystemExit)
+      expect(repository.reload.tracker).to eq(other)
+    end
+
+    it 'keys stories by GitHub number when no prefix is given' do
+      expect { Rake::Task['trackers:create_github_issues'].invoke('bendycode/prmetrics') }.to output.to_stdout
+
+      expect(repository.reload.tracker.config).to eq({})
+    end
+
     it 'fails with a clear message when the repository has not been added' do
       expect { Rake::Task['trackers:create_github_issues'].invoke('bendycode/elsewhere') }
         .to output(%r{Repository bendycode/elsewhere not found}).to_stdout.and raise_error(SystemExit)
