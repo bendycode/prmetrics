@@ -19,6 +19,7 @@ jobs:
           curl https://cli-assets.heroku.com/install.sh | sh
 
       - name: Authenticate with Heroku
+        id: auth
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
@@ -36,9 +37,10 @@ jobs:
           heroku run --app prmetrics-production bundle exec rake sync:all_repositories
 
       # Stories come from trackers rather than pull requests, so a failed
-      # pull request sync is no reason to leave them a day behind.
+      # pull request sync is no reason to leave them a day behind. A failed
+      # setup step is: the story sync would fail the same way.
       - name: Sync stories on Heroku production
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.auth.outcome == 'success' }}
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
