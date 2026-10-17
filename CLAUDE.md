@@ -449,11 +449,11 @@ what happens, and to whom, if the issue waits:
 The labels page carries a short form of each, since GitHub caps a label's
 description at 100 characters.
 
-- Whoever drafts an issue proposes one level with a one-line reason, and Steve
-  confirms or changes it before the issue is filed. Propose high, medium, or
-  low, never `priority: untriaged`.
-- `priority: untriaged` goes on an issue only when Steve chooses not to judge
-  it yet. An issue with no priority label counts as waiting for one.
+- Whoever drafts an issue proposes one level with a one-line reason, and the
+  maintainer confirms or changes it before the issue is filed. Propose high,
+  medium, or low, never `priority: untriaged`.
+- `priority: untriaged` goes on an issue only when the maintainer chooses not
+  to judge it yet. An issue with no priority label counts as waiting for one.
 - Changing a priority swaps the label in one command that names the label the
   issue carries now, so it is never left with two:
   `gh issue edit NNN --remove-label "priority: <current>" --add-label "priority: <new>"`.
