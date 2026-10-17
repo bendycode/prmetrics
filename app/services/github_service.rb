@@ -71,7 +71,7 @@ class GithubService
       page += 1
     end
 
-    Rails.logger.info "Processed #{total_processed} pull requests for #{repo_name}"
+    Rails.logger.info "Processed #{total_processed} pull requests for repository #{repository.id}"
     Rails.logger.info "Most recent update: #{most_recent_update}"
     most_recent_update
   end

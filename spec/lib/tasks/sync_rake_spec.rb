@@ -138,8 +138,8 @@ RSpec.describe 'sync:repository rake task' do
 
         expect(output).to include('Starting sync for all repositories')
         expect(output).to include('Repositories to sync: 2')
-        expect(output).to include('Syncing rails/rails')
-        expect(output).to include('Syncing ruby/ruby')
+        expect(output).to include("Syncing repository #{repo1.id}", "Syncing repository #{repo2.id}")
+        expect(output).not_to include('rails/rails', 'ruby/ruby')
         expect(output).to include('All repositories synced successfully!')
         expect(output).to include('Successful: 2')
         expect(output).to include('Failed: 0')
@@ -163,12 +163,27 @@ RSpec.describe 'sync:repository rake task' do
         expect(UnifiedSyncService).to receive(:new).with('ruby/ruby', fetch_all: false).and_return(service2)
         expect(service2).to receive(:sync!)
 
-        expect(Rails.logger).to receive(:error).with(%r{Sync failed for rails/rails: API error})
+        expect(Rails.logger).to receive(:error).with("Sync failed for repository #{repo1.id}: StandardError")
         expect(Rails.logger).to receive(:error).with(String)
 
         expect do
           capture_stdout { Rake::Task['sync:all_repositories'].invoke }
         end.to raise_error(SystemExit)
+      end
+
+      # The nightly workflow's log is public, and GitHub's error messages
+      # quote the request URL, which names the repository.
+      it 'reports a failure by the repository\'s ID and the error\'s class' do
+        allow(UnifiedSyncService).to receive(:new).with('rails/rails', fetch_all: false).and_return(service1)
+        allow(service1).to receive(:sync!).and_raise(StandardError.new('GET https://api.github.com/repos/rails/rails: 500'))
+        allow(UnifiedSyncService).to receive(:new).with('ruby/ruby', fetch_all: false).and_return(service2)
+        allow(service2).to receive(:sync!)
+        allow(Rails.logger).to receive(:error)
+
+        expect { Rake::Task['sync:all_repositories'].invoke }
+          .to output(include("Failed repository #{repo1.id}").and(exclude('rails/rails'))).to_stdout
+          .and raise_error(SystemExit)
+        expect(Rails.logger).not_to have_received(:error).with(include('rails/rails'))
       end
     end
 
