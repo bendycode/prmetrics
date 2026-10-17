@@ -8,7 +8,9 @@ class StoryTimes
   attr_reader :committed_at, :committed_source, :started_at, :started_source, :done_at
 
   def initialize(events:, triggers:, state_reason:)
-    @events = events.sort_by(&:occurred_at)
+    # GitHub's times are whole seconds, so events in the same second keep the
+    # order they were given in: Ruby's sort does not promise to.
+    @events = events.each_with_index.sort_by { |event, index| [event.occurred_at, index] }.map(&:first)
     @done_at = done_time(state_reason)
     @started_at, @started_source = earliest(triggers[:started], before: @done_at)
     @committed_at, @committed_source = earliest(triggers[:committed])

@@ -2,7 +2,7 @@
 # cycle is measured between. The times are derived from its events.
 class Story < ApplicationRecord
   belongs_to :tracker
-  has_many :events, class_name: 'StoryEvent', dependent: :delete_all
+  has_many :events, -> { order(:id) }, class_name: 'StoryEvent', dependent: :delete_all, inverse_of: :story
 
   enum :committed_source, StoryEvent::KINDS, prefix: :committed_by
   enum :started_source, StoryEvent::KINDS, prefix: :started_by
