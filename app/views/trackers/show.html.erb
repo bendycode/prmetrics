@@ -21,6 +21,40 @@
   </div>
   <p class="text-muted"><%= coverage_sentence(@report) %></p>
 
+  <div class="mb-4" style="height: 320px">
+    <canvas id="cycleTimeChart" data-points="<%= cycle_time_points(@report).to_json %>"
+            data-time-zone="<%= Time.zone.tzinfo.name %>"></canvas>
+  </div>
+
+  <script>
+    // Each finished issue's cycle time in days against the date it was done.
+    // The time axis is linear, in milliseconds, with ticks written as dates,
+    // since the layout's Chart.js has no date adapter.
+    document.addEventListener('DOMContentLoaded', function() {
+      var canvas = document.getElementById('cycleTimeChart');
+      var timeZone = canvas.dataset.timeZone;
+      new Chart(canvas, {
+        type: 'scatter',
+        data: { datasets: [{ label: 'Cycle time (days)', data: JSON.parse(canvas.dataset.points) }] },
+        options: {
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              type: 'linear',
+              ticks: { callback: function(value) { return new Date(value).toLocaleDateString('en-US', { timeZone: timeZone }); } }
+            },
+            y: { beginAtZero: true, title: { display: true, text: 'Days' } }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: function(context) { return context.raw.key + ': ' + context.raw.y + ' days'; } } }
+          }
+        }
+      });
+      canvas.dataset.drawn = 'true';
+    });
+  </script>
+
   <table class="table">
     <thead>
       <tr>
