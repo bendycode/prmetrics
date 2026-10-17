@@ -18,6 +18,13 @@ class Tracker < ApplicationRecord
   enum :kind, { github_issues: 0 }
   store_accessor :config, :key_prefix
 
+  # A user sees a tracker when they were granted any of the repositories it
+  # covers, so a tracker shared by several repositories shows every story in
+  # it to each of their users.
+  scope :visible_to, lambda { |user|
+    user.admin? ? all : where(id: Repository.visible_to(user).select(:tracker_id))
+  }
+
   validates :kind, presence: true
   validates :source_repository, presence: true, if: :github_issues?
   validates :key_prefix, format: { with: /\A[A-Z][A-Z0-9]*\z/ },
