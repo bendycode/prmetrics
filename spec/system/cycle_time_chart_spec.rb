@@ -47,7 +47,7 @@ RSpec.describe 'Cycle Time scatterplot', :js do
     label = page.evaluate_script(
       "Chart.getChart('cycleTimeChart').options.scales.x.ticks.callback(#{milliseconds(Time.zone.parse('2026-09-03 21:00'))})"
     )
-    expect(label).to eq('9/3/2026')
+    expect(label).to eq('09/03/2026')
   end
 
   it 'names the issue and its cycle time in a point\'s tooltip' do
@@ -58,6 +58,16 @@ RSpec.describe 'Cycle Time scatterplot', :js do
       Chart.getChart('cycleTimeChart').options.plugins.tooltip.callbacks.label({ raw: { key: 'PRM-1', y: 2 } })
     JS
     expect(label).to eq('PRM-1: 2 days')
+  end
+
+  it 'says day, not days, for a one-day cycle in a tooltip' do
+    visit tracker_path(tracker)
+    expect(page).to have_css('canvas#cycleTimeChart[data-drawn]')
+
+    label = page.evaluate_script(<<~JS)
+      Chart.getChart('cycleTimeChart').options.plugins.tooltip.callbacks.label({ raw: { key: 'PRM-1', y: 1 } })
+    JS
+    expect(label).to eq('PRM-1: 1 day')
   end
 
   it 'plots the started clock after switching to it' do
