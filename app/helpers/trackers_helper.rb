@@ -1,14 +1,12 @@
 module TrackersHelper
-  CLOCK_LABELS = { 'committed' => 'Committed to done', 'started' => 'Started to done' }.freeze
+  # Every event kind reads as its humanized name unless it has a shorter one
+  SHORTER_SOURCE_LABELS = { 'commit_referenced' => 'Commit', 'pull_request_linked' => 'Pull request' }.freeze
+  STORY_SOURCE_LABELS = StoryEvent::KINDS.keys.to_h { |kind| [kind.to_s, kind.to_s.humanize] }
+                                         .merge(SHORTER_SOURCE_LABELS).freeze
 
-  STORY_SOURCE_LABELS = {
-    'opened' => 'Opened',
-    'assigned' => 'Assigned',
-    'commit_referenced' => 'Commit',
-    'pull_request_linked' => 'Pull request',
-    'closed' => 'Closed',
-    'reopened' => 'Reopened'
-  }.freeze
+  def clock_label(clock)
+    "#{clock.to_s.humanize} to done"
+  end
 
   def story_source_label(source)
     STORY_SOURCE_LABELS.fetch(source.to_s)
