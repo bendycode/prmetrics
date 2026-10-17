@@ -11,6 +11,9 @@ class Story < ApplicationRecord
   validates :state, inclusion: { in: %w[open closed] }
   validates :external_id, uniqueness: { scope: :tracker_id }
 
+  # Done, and still on GitHub: the stories cycle time is measured over
+  scope :finished, -> { where(gone: false).where.not(done_at: nil) }
+
   # A story listed at least a minute after its stored update, which GitHub's
   # whole-second timestamps and clock drift between it and this app could
   # otherwise hide behind.

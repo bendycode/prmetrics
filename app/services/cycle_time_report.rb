@@ -1,8 +1,9 @@
 # A tracker's finished stories measured by one clock: committed to done, or
-# started to done, in calendar time. A story with no start for the clock is
-# left out of it and counted in the coverage.
+# started to done, in elapsed time, weekends included. A story with no start
+# for the clock is left out of it and counted in the coverage.
 class CycleTimeReport
   CLOCKS = %w[committed started].freeze
+  DEFAULT_CLOCK = CLOCKS.first
 
   attr_reader :clock
 
@@ -13,11 +14,11 @@ class CycleTimeReport
   end
 
   def stories
-    @stories ||= finished.where.not(start_column => nil).order(:done_at, :id).to_a
+    @stories ||= @tracker.stories.finished.where.not(start_column => nil).order(:done_at, :id).to_a
   end
 
   def days(story)
-    (story.done_at - story.public_send(start_column)) / 1.day
+    (story.done_at - story.public_send(start_column)).seconds.in_days
   end
 
   def median_days
@@ -37,20 +38,16 @@ class CycleTimeReport
   # How many of the clock's stories took their start from the tracker's
   # chosen trigger, how many from a fallback, and how many had no start.
   def coverage
-    trigger = self.trigger.to_s
+    chosen = trigger.to_s
     sources = stories.map { |story| story.public_send(source_column) }
     {
-      trigger: sources.count(trigger),
-      fallback: sources.count { |source| source != trigger },
-      missing: finished.where(start_column => nil).count
+      trigger: sources.count(chosen),
+      fallback: sources.count { |source| source != chosen },
+      missing: @tracker.stories.finished.where(start_column => nil).count
     }
   end
 
   private
-
-  def finished
-    @tracker.stories.where(gone: false).where.not(done_at: nil)
-  end
 
   def start_column
     :"#{@clock}_at"
@@ -63,9 +60,12 @@ class CycleTimeReport
   # The nearest-rank method: the smallest value at least p percent of the
   # values are no greater than.
   def percentile(percent)
-    sorted = stories.map { |story| days(story) }.sort
-    return if sorted.empty?
+    return if sorted_days.empty?
 
-    sorted[(percent / 100.0 * sorted.size).ceil - 1]
+    sorted_days[(percent / 100.0 * sorted_days.size).ceil - 1]
+  end
+
+  def sorted_days
+    @sorted_days ||= stories.map { |story| days(story) }.sort
   end
 end
