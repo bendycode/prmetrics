@@ -95,8 +95,8 @@ RSpec.describe 'Ungranted repository data never renders' do
                                  user: create(:contributor, username: "#{marker}-participant"))
       create(:pull_request_user, pull_request: hidden_pull_request, user: shared_contributor)
       hidden_tracker = create(:tracker, :covering_source, source_repository: hidden_repository)
-      create(:story, tracker: hidden_tracker, title: "#{marker} story", committed_at: week_start, started_at: week_start,
-                     done_at: week_start + 1.day)
+      create(:story, tracker: hidden_tracker, title: "#{marker} story", committed_at: Time.zone.parse('2026-09-01 10:00'),
+                     started_at: Time.zone.parse('2026-09-01 10:00'), done_at: Time.zone.parse('2026-09-02 10:00'))
     end
 
     def expect_no_ungranted_data(path, status)

@@ -30,9 +30,19 @@ RSpec.describe CycleTimeReport do
     end
 
     it 'takes the 10th and 17th of twenty stories' do
-      (1..20).to_a.reverse_each { |days| finished(days) }
+      (1..20).each { |days| finished(days) }
 
       expect(report).to have_attributes(median_days: 10.0, p85_days: 17.0)
+    end
+
+    # Stories are listed by when they were done, which is not the order of
+    # their cycle times when they started on different days
+    it 'ranks cycle times, not the order the stories were done in' do
+      finished(10)
+      finished(12, committed_at: day0 + (11 * 24).hours)
+      finished(14, committed_at: day0 + (12 * 24).hours)
+
+      expect(report).to have_attributes(median_days: 2.0, p85_days: 10.0)
     end
 
     it 'reports neither when no story is finished' do
@@ -46,7 +56,8 @@ RSpec.describe CycleTimeReport do
     it 'measures the chosen clock from its own start' do
       finished(4, started_at: day0 + 24.hours)
 
-      expect([report(:committed).median_days, report(:started).median_days]).to eq([4.0, 3.0])
+      expect(report(:committed).median_days).to eq(4.0)
+      expect(report(:started).median_days).to eq(3.0)
     end
 
     it 'leaves out a story GitHub no longer has' do
@@ -58,7 +69,8 @@ RSpec.describe CycleTimeReport do
     it 'leaves out a story with no start from the started clock only' do
       story = finished(4, started_at: nil, started_source: nil)
 
-      expect([report(:committed).stories, report(:started).stories]).to eq([[story], []])
+      expect(report(:committed).stories).to eq([story])
+      expect(report(:started).stories).to be_empty
     end
 
     it 'orders the stories by when they were done' do
@@ -76,8 +88,16 @@ RSpec.describe CycleTimeReport do
       finished(3, started_source: :pull_request_linked)
       finished(4, started_at: nil, started_source: nil)
 
-      expect([report(:committed).coverage, report(:started).coverage])
-        .to eq([{ trigger: 3, fallback: 1, missing: 0 }, { trigger: 1, fallback: 2, missing: 1 }])
+      expect(report(:committed).coverage).to eq(trigger: 3, fallback: 1, missing: 0)
+      expect(report(:started).coverage).to eq(trigger: 1, fallback: 2, missing: 1)
+    end
+
+    it 'counts as missing only finished stories still on GitHub' do
+      finished(4, started_at: nil, started_source: nil)
+      finished(5, started_at: nil, started_source: nil, gone: true)
+      create(:story, tracker: tracker, committed_at: day0, committed_source: :opened)
+
+      expect(report(:started).coverage).to eq(trigger: 0, fallback: 0, missing: 1)
     end
   end
 end

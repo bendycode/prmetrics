@@ -28,29 +28,39 @@ RSpec.describe 'Cycle Time page' do
       create(:story, tracker: tracker, external_id: '4', key: 'PRM-4', title: 'Still open')
     end
 
-    it 'shows the committed clock: its figures, its coverage, and every finished issue' do
+    def coverage_line
+      page.find('p.text-muted').text
+    end
+
+    def row(key)
+      page.find('tbody tr', text: key).all('td').map(&:text)
+    end
+
+    it 'shows the committed clock: its figures, its coverage, and every finished issue', :aggregate_failures do
       visit tracker_path(tracker)
 
       expect(page).to have_css('[data-clock-chosen]', text: 'Committed to done')
       expect(page).to have_text('Median 4 days').and have_text('85th percentile 6 days')
-      expect(page).to have_text('3 issues measured from Opened, 0 from a fallback.')
+      expect(coverage_line).to eq('3 issues measured from Opened, 0 from a fallback.')
       expect(page.all('tbody tr').map { |row| row.first('td').text })
         .to eq(%w[PRM-1 PRM-2 PRM-3])
     end
 
-    it 'names the event each time came from' do
+    it 'shows each issue\'s dates, the event each came from, and its cycle time' do
       visit tracker_path(tracker)
 
-      expect(page.find('tbody tr', text: 'PRM-2')).to have_text('Opened').and have_text('Commit')
+      expect(row('PRM-2')).to eq(['PRM-2', 'Retry webhook deliveries', '09/01/2026 (Opened)', '09/02/2026 (Commit)',
+                                  '09/05/2026', '4 days'])
+      expect(row('PRM-3')).to eq(['PRM-3', 'Keep blank rows', '09/01/2026 (Opened)', 'None', '09/07/2026', '6 days'])
     end
 
-    it 'switches to the started clock, leaving out the issue that never started' do
+    it 'switches to the started clock, leaving out the issue that never started', :aggregate_failures do
       visit tracker_path(tracker)
       click_link 'Started to done'
 
       expect(page).to have_css('[data-clock-chosen]', text: 'Started to done')
       expect(page).to have_text('Median 2 days').and have_text('85th percentile 3 days')
-      expect(page).to have_text('1 issue measured from Assigned, 1 from a fallback. 1 had no start and is left out.')
+      expect(coverage_line).to eq('1 issue measured from Assigned, 1 from a fallback. 1 had no start and is left out.')
       expect(page.all('tbody tr').map { |row| row.first('td').text }).to eq(%w[PRM-1 PRM-2])
     end
 
@@ -59,6 +69,17 @@ RSpec.describe 'Cycle Time page' do
 
       expect(page).to have_link('Expire stale sessions', href: 'https://github.com/granted/visible/issues/1')
     end
+  end
+
+  it 'says how many issues had no start when several did' do
+    finished(6, 'Started', 1)
+    finished(7, 'Never started', 2, started_after: nil)
+    finished(8, 'Also never started', 3, started_after: nil)
+
+    visit tracker_path(tracker, clock: 'started')
+
+    expect(page.find('p.text-muted').text)
+      .to eq('1 issue measured from Assigned, 0 from a fallback. 2 had no start and are left out.')
   end
 
   # A stored URL could hold anything; only one on GitHub becomes a link
