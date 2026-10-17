@@ -27,6 +27,8 @@ Rails.application.routes.draw do
     resource :repository_access, only: %i[edit update]
   end
 
+  resources :trackers, only: :show
+
   resources :repositories, only: %i[index show new create destroy] do
     member do
       post :sync
