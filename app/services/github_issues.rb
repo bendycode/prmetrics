@@ -10,4 +10,14 @@ module GithubIssues
   def issue_timeline(repo_name, number)
     each_page { |page| @client.issue_timeline(repo_name, number, page: page, per_page: 100) }
   end
+
+  # Whether an issue missing from a listing has left the repository: deleted,
+  # converted to a discussion, or transferred, which GitHub answers by
+  # redirecting to the issue in its new repository.
+  def issue_gone?(repo_name, number)
+    issue = with_rate_limit_handling { @client.issue(repo_name, number) }
+    !issue.repository_url.to_s.end_with?("/repos/#{repo_name}")
+  rescue Octokit::NotFound, Octokit::Deprecated
+    true
+  end
 end

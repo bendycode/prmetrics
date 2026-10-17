@@ -115,10 +115,21 @@ RSpec.describe StorySyncService do
   describe 'an issue GitHub no longer lists' do
     it 'is marked gone, as a transferred or deleted issue is' do
       transferred = create(:story, tracker: tracker, external_id: '12')
+      allow(github).to receive(:issue_gone?).with('bendycode/prmetrics', 12).and_return(true)
 
       sync.sync!
 
       expect([transferred.reload.gone, tracker.stories.find_by!(external_id: '79').gone]).to eq([true, false])
+    end
+
+    # A deletion during a long listing shifts later issues back a page.
+    it 'is kept when GitHub still serves it though the listing missed it' do
+      missed = create(:story, tracker: tracker, external_id: '12')
+      allow(github).to receive(:issue_gone?).with('bendycode/prmetrics', 12).and_return(false)
+
+      sync.sync!
+
+      expect(missed.reload.gone).to be(false)
     end
 
     it 'is no longer gone once GitHub lists it again' do

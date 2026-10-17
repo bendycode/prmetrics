@@ -23,8 +23,8 @@ class StorySyncService
       Rails.logger.error "Story sync could not store issue ##{issue.number}: #{e.class}: #{e.message}"
       "##{issue.number} (#{e.class})"
     end
-    mark_gone(issues)
     measure_stories
+    mark_gone(issues)
     raise IssuesFailed, "Could not store issues #{failures.join(', ')}" if failures.any?
   end
 
@@ -77,10 +77,12 @@ class StorySyncService
 
   # An issue GitHub no longer lists was transferred, deleted, or converted
   # to a discussion. Listing every issue on each sync is what tells it apart
-  # from one that hasn't changed.
+  # from one that hasn't changed. The listing pages by number over a set
+  # that can change while it runs, so a missing issue is read on its own
+  # before it is marked gone.
   def mark_gone(issues)
     @tracker.stories.where(gone: false).where.not(external_id: listed_ids(issues)).find_each do |story|
-      story.update!(gone: true)
+      story.update!(gone: true) if @github.issue_gone?(@repo_name, story.external_id.to_i)
     end
   end
 

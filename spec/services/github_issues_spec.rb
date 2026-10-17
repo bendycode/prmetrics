@@ -36,4 +36,32 @@ RSpec.describe GithubIssues do
       expect(service.issue_timeline('o/r', 79).size).to be(101)
     end
   end
+
+  describe '#issue_gone?' do
+    it 'is false for an issue GitHub still serves from the repository' do
+      allow(octokit_client).to receive(:issue).with('o/r', 12)
+                                              .and_return(github_resource(repository_url: 'https://api.github.com/repos/o/r'))
+
+      expect(service.issue_gone?('o/r', 12)).to be(false)
+    end
+
+    it 'is true for an issue transferred to another repository' do
+      allow(octokit_client).to receive(:issue).with('o/r', 12)
+                                              .and_return(github_resource(repository_url: 'https://api.github.com/repos/o/other'))
+
+      expect(service.issue_gone?('o/r', 12)).to be(true)
+    end
+
+    it 'is true for an issue GitHub no longer has' do
+      allow(octokit_client).to receive(:issue).with('o/r', 12).and_raise(Octokit::NotFound)
+
+      expect(service.issue_gone?('o/r', 12)).to be(true)
+    end
+
+    it 'is true for a deleted issue' do
+      allow(octokit_client).to receive(:issue).with('o/r', 12).and_raise(Octokit::Deprecated)
+
+      expect(service.issue_gone?('o/r', 12)).to be(true)
+    end
+  end
 end
