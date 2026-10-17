@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe StorySyncService do
   let(:repository) { create(:repository, name: 'bendycode/prmetrics') }
-  let(:tracker) { create(:tracker, source_repository: repository, config: { 'key_prefix' => 'PRM' }) }
+  let(:tracker) { create(:tracker, source_repository: repository, key_prefix: 'PRM') }
   let(:github) { instance_double(GithubService) }
   let(:fixture) { github_issue_fixture('issue_79') }
   let(:sync) { described_class.new(tracker, github: github) }

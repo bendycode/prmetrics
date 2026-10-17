@@ -84,6 +84,12 @@ RSpec.describe 'story rake tasks' do
       expect(repository.reload.tracker.config).to eq({})
     end
 
+    it 'refuses a key prefix that is not capital letters and digits' do
+      expect { Rake::Task['trackers:create_github_issues'].invoke('bendycode/prmetrics', 'prm-') }
+        .to output(/Key prefix is invalid/).to_stdout.and raise_error(SystemExit)
+      expect(Tracker.count).to be(0)
+    end
+
     it 'fails with a clear message when the repository has not been added' do
       expect { Rake::Task['trackers:create_github_issues'].invoke('bendycode/elsewhere') }
         .to output(%r{Repository bendycode/elsewhere not found}).to_stdout.and raise_error(SystemExit)

@@ -16,8 +16,12 @@ class Tracker < ApplicationRecord
   has_many :stories, dependent: :destroy
 
   enum :kind, { github_issues: 0 }
+  store_accessor :config, :key_prefix
 
+  validates :kind, presence: true
   validates :source_repository, presence: true, if: :github_issues?
+  validates :key_prefix, format: { with: /\A[A-Z][A-Z0-9]*\z/ },
+                         allow_blank: true
   validates :source_repository_id, uniqueness: true, allow_nil: true
 
   def triggers
@@ -27,7 +31,6 @@ class Tracker < ApplicationRecord
   # The project's own name for a story, PRJ-NNN where it declares a key
   # prefix, and GitHub's #NNN otherwise.
   def story_key(number)
-    prefix = config['key_prefix']
-    prefix.present? ? "#{prefix}-#{number}" : "##{number}"
+    key_prefix.present? ? "#{key_prefix}-#{number}" : "##{number}"
   end
 end

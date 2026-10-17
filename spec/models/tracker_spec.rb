@@ -7,12 +7,22 @@ RSpec.describe Tracker do
     it { is_expected.to have_many(:stories).dependent(:destroy) }
   end
 
-  describe 'a GitHub issues tracker' do
-    subject(:tracker) { build(:tracker, source_repository: nil) }
+  describe 'validations' do
+    subject { build(:tracker) }
 
-    it 'needs the repository whose issues it reads' do
-      expect(tracker).not_to be_valid
-      expect(tracker.errors[:source_repository]).to include("can't be blank")
+    it { is_expected.to validate_presence_of(:source_repository) }
+    it { is_expected.to validate_presence_of(:kind) }
+    it { is_expected.to allow_value('PRM', 'A1').for(:key_prefix) }
+    it { is_expected.not_to allow_value('prm', 'PRM-', 'P M').for(:key_prefix) }
+  end
+
+  describe '#story_key' do
+    it 'uses the project\'s key prefix' do
+      expect(build(:tracker, key_prefix: 'PRM').story_key(79)).to eq('PRM-79')
+    end
+
+    it 'falls back to GitHub\'s number without one' do
+      expect(build(:tracker).story_key(79)).to eq('#79')
     end
   end
 

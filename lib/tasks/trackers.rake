@@ -17,9 +17,15 @@ namespace :trackers do
       exit 1
     end
 
-    config = args[:key_prefix].present? ? { 'key_prefix' => args[:key_prefix] } : {}
+    tracker = Tracker.new(kind: :github_issues, source_repository: repository)
+    tracker.key_prefix = args[:key_prefix] if args[:key_prefix].present?
+    unless tracker.valid?
+      puts "Error: #{tracker.errors.full_messages.to_sentence}"
+      exit 1
+    end
+
     ApplicationRecord.transaction do
-      tracker = Tracker.create!(kind: :github_issues, source_repository: repository, config: config)
+      tracker.save!
       repository.update!(tracker: tracker)
     end
     puts "Created a GitHub issues tracker for #{repository.name}. Run rake sync:stories to read its issues."
