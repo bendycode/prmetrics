@@ -26,6 +26,17 @@ RSpec.describe Story do
     end
   end
 
+  describe '.listed_after_last_update' do
+    let(:updated) { Time.zone.parse('2026-09-20 17:26:04') }
+
+    it 'takes a story listed at least a minute after its update' do
+      create(:story, external_id: '1', gh_updated_at: updated, listed_at: updated + 59.seconds)
+      listed_a_minute_later = create(:story, external_id: '2', gh_updated_at: updated, listed_at: updated + 1.minute)
+
+      expect(described_class.listed_after_last_update).to contain_exactly(listed_a_minute_later)
+    end
+  end
+
   describe '#record_events' do
     let(:story) { create(:story) }
     let(:attributes) do
