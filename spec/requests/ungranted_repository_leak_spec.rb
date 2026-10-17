@@ -38,7 +38,9 @@ RSpec.describe 'Ungranted repository data never renders' do
       'pull_request_users#index' => [:success, -> { pull_request_pull_request_users_path(pull_request) }],
       'reviews#show' => [:success, -> { review_path(review) }],
       'pull_request_users#show' => [:success, -> { pull_request_user_path(pull_request_user) }],
-      'contributors#show' => [:success, -> { contributor_path(shared_contributor) }]
+      'contributors#show' => [:success, -> { contributor_path(shared_contributor) }],
+      'trackers#show' => [:success, -> { tracker_path(tracker) }],
+      'trackers#show for the started clock' => [:success, -> { tracker_path(tracker, clock: 'started') }]
     }
   end
 
@@ -75,6 +77,7 @@ RSpec.describe 'Ungranted repository data never renders' do
     end
     let(:review) { create(:review, pull_request: pull_request) }
     let(:pull_request_user) { create(:pull_request_user, pull_request: pull_request, user: shared_contributor) }
+    let(:tracker) { create(:tracker, :covering_source, source_repository: granted_repository) }
 
     before do
       # Created up front: the pull request and contributor pages list them
@@ -91,6 +94,9 @@ RSpec.describe 'Ungranted repository data never renders' do
       create(:pull_request_user, pull_request: hidden_pull_request,
                                  user: create(:contributor, username: "#{marker}-participant"))
       create(:pull_request_user, pull_request: hidden_pull_request, user: shared_contributor)
+      hidden_tracker = create(:tracker, :covering_source, source_repository: hidden_repository)
+      create(:story, tracker: hidden_tracker, title: "#{marker} story", committed_at: Time.zone.parse('2026-09-01 10:00'),
+                     started_at: Time.zone.parse('2026-09-01 10:00'), done_at: Time.zone.parse('2026-09-02 10:00'))
     end
 
     def expect_no_ungranted_data(path, status)
