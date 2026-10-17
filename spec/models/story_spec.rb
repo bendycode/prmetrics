@@ -6,6 +6,14 @@ RSpec.describe Story do
     it { is_expected.to have_many(:events).class_name('StoryEvent').dependent(:delete_all) }
   end
 
+  describe 'validations' do
+    %i[key title url gh_created_at gh_updated_at].each do |attribute|
+      it { is_expected.to validate_presence_of(attribute) }
+    end
+
+    it { is_expected.to validate_inclusion_of(:state).in_array(%w[open closed]) }
+  end
+
   describe 'uniqueness of a story within its tracker' do
     subject(:story) { create(:story, external_id: 'a1b2c3') }
 
