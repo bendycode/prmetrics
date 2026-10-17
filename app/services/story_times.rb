@@ -31,8 +31,8 @@ class StoryTimes
   def done_time(state_reason)
     return if ABANDONED.include?(state_reason)
 
-    last = @events.reverse.find { |event| %w[closed reopened].include?(event.kind.to_s) }
-    last.occurred_at if last&.kind.to_s == 'closed'
+    last = @events.reverse.find { |event| event.closed? || event.reopened? }
+    last.occurred_at if last&.closed?
   end
 
   def earliest(kinds, before: nil)
