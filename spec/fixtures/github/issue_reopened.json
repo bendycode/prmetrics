@@ -1,0 +1,78 @@
+{
+  "issue": {
+    "id": 900009001,
+    "number": 9001,
+    "title": "Crafted: closed, reopened, closed again",
+    "state": "closed",
+    "state_reason": "completed",
+    "html_url": "https://github.com/bendycode/prmetrics/issues/9001",
+    "created_at": "2026-09-01T15:00:00Z",
+    "updated_at": "2026-09-08T15:00:00Z",
+    "closed_at": "2026-09-08T15:00:00Z",
+    "user": {
+      "login": "bendycode",
+      "id": 8303,
+      "type": "User"
+    },
+    "assignees": [
+      {
+        "login": "bendycode",
+        "id": 8303,
+        "type": "User"
+      }
+    ]
+  },
+  "timeline": [
+    {
+      "id": 1,
+      "event": "assigned",
+      "created_at": "2026-09-02T15:00:00Z",
+      "commit_id": null,
+      "actor": {
+        "login": "bendycode",
+        "id": 8303,
+        "type": "User"
+      },
+      "assignee": {
+        "login": "bendycode",
+        "id": 8303,
+        "type": "User"
+      }
+    },
+    {
+      "id": 2,
+      "event": "closed",
+      "created_at": "2026-09-04T15:00:00Z",
+      "commit_id": null,
+      "actor": {
+        "login": "bendycode",
+        "id": 8303,
+        "type": "User"
+      },
+      "state_reason": null
+    },
+    {
+      "id": 3,
+      "event": "reopened",
+      "created_at": "2026-09-05T15:00:00Z",
+      "commit_id": null,
+      "actor": {
+        "login": "bendycode",
+        "id": 8303,
+        "type": "User"
+      }
+    },
+    {
+      "id": 4,
+      "event": "closed",
+      "created_at": "2026-09-08T15:00:00Z",
+      "commit_id": null,
+      "actor": {
+        "login": "bendycode",
+        "id": 8303,
+        "type": "User"
+      },
+      "state_reason": null
+    }
+  ]
+}

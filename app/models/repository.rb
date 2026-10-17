@@ -2,6 +2,9 @@ class Repository < ApplicationRecord
   has_many :pull_requests, dependent: :destroy
   has_many :weeks, dependent: :destroy
   has_many :repository_grants, dependent: :delete_all
+  belongs_to :tracker, optional: true
+  has_one :issue_tracker, class_name: 'Tracker', foreign_key: :source_repository_id,
+                          dependent: :destroy, inverse_of: :source_repository
 
   scope :visible_to, ->(user) { user.admin? ? all : where(id: user.repository_grants.select(:repository_id)) }
 
