@@ -454,8 +454,9 @@ description at 100 characters.
   low, never `priority: untriaged`.
 - `priority: untriaged` goes on an issue only when Steve chooses not to judge
   it yet. An issue with no priority label counts as waiting for one.
-- Changing a priority swaps the label in one command:
-  `gh issue edit NNN --remove-label "priority: untriaged" --add-label "priority: medium"`.
+- Changing a priority swaps the label in one command that names the label the
+  issue carries now, so it is never left with two:
+  `gh issue edit NNN --remove-label "priority: <current>" --add-label "priority: <new>"`.
 - To list the open issues waiting for a priority (untriaged, no priority
   label, or more than one):
 
