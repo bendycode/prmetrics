@@ -31,4 +31,28 @@ RSpec.describe Tracker do
 
     it { is_expected.to validate_uniqueness_of(:source_repository_id).allow_nil }
   end
+
+  describe '.visible_to' do
+    let(:granted_repository) { create(:repository) }
+    let!(:granted) { create(:tracker, :covering_source, source_repository: granted_repository) }
+    let!(:other) { create(:tracker, :covering_source) }
+
+    it 'returns every tracker for an admin' do
+      expect(described_class.visible_to(create(:user, :admin))).to contain_exactly(granted, other)
+    end
+
+    it 'returns the trackers covering a regular user\'s granted repositories' do
+      user = create(:user)
+      grant_access(user, granted_repository)
+
+      expect(described_class.visible_to(user)).to contain_exactly(granted)
+    end
+
+    it 'returns a tracker once though the user was granted several of its repositories' do
+      user = create(:user)
+      grant_access(user, granted_repository, create(:repository, tracker: granted))
+
+      expect(described_class.visible_to(user).to_a).to eq([granted])
+    end
+  end
 end

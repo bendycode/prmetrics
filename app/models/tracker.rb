@@ -16,6 +16,13 @@ class Tracker < ApplicationRecord
   has_many :stories, dependent: :destroy
 
   enum :kind, { github_issues: 0 }
+
+  # A user sees a tracker when they were granted any of the repositories it
+  # covers, so a tracker shared by several repositories shows every story in
+  # it to each of their users.
+  scope :visible_to, lambda { |user|
+    user.admin? ? all : where(id: Repository.visible_to(user).select(:tracker_id))
+  }
   store_accessor :config, :key_prefix
 
   validates :kind, presence: true
