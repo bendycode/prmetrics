@@ -119,7 +119,7 @@ RSpec.describe StorySyncService do
 
       sync.sync!
 
-      expect([transferred.reload.gone, tracker.stories.find_by!(external_id: '79').gone]).to eq([true, false])
+      expect(tracker.stories.where(gone: true)).to contain_exactly(transferred)
     end
 
     # A deletion during a long listing shifts later issues back a page.

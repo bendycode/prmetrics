@@ -66,7 +66,7 @@ RSpec.describe 'story rake tasks' do
 
       expect { Rake::Task['trackers:create_github_issues'].invoke('bendycode/prmetrics') }
         .to output(/already has a GitHub issues tracker/).to_stdout
-      expect([Tracker.sole, existing.reload.config]).to eq([existing, {}])
+      expect(Tracker.sole).to have_attributes(id: existing.id, config: {})
     end
 
     it 'refuses a repository another tracker already covers' do

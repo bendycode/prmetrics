@@ -16,19 +16,19 @@ RSpec.describe StoryTimes do
     it 'takes the earliest matching event, whichever kind it is' do
       result = times([event(:opened, 0), event(:assigned, 5), event(:commit_referenced, 2), event(:closed, 9)])
 
-      expect([result.started_at, result.started_source]).to eq([day0 + 2.days, :commit_referenced])
+      expect(result).to have_attributes(started_at: day0 + 2.days, started_source: :commit_referenced)
     end
 
     it 'falls back to a pull request link when nothing else started the work' do
       result = times([event(:opened, 0), event(:pull_request_linked, 3), event(:closed, 6)])
 
-      expect([result.started_at, result.started_source]).to eq([day0 + 3.days, :pull_request_linked])
+      expect(result).to have_attributes(started_at: day0 + 3.days, started_source: :pull_request_linked)
     end
 
     it 'is unknown when no event started the work' do
       result = times([event(:opened, 0), event(:closed, 4)])
 
-      expect([result.started_at, result.started_source]).to eq([nil, nil])
+      expect(result).to have_attributes(started_at: nil, started_source: nil)
     end
 
     it 'ignores events after the work was done' do
@@ -42,13 +42,13 @@ RSpec.describe StoryTimes do
     it 'is when the story was opened' do
       result = times([event(:opened, 1), event(:assigned, 3), event(:closed, 4)])
 
-      expect([result.committed_at, result.committed_source]).to eq([day0 + 1.day, :opened])
+      expect(result).to have_attributes(committed_at: day0 + 1.day, committed_source: :opened)
     end
 
     it 'moves back to the started time when the work started before it was committed to' do
       result = times([event(:commit_referenced, 1), event(:opened, 2), event(:closed, 4)])
 
-      expect([result.committed_at, result.committed_source]).to eq([day0 + 1.day, :commit_referenced])
+      expect(result).to have_attributes(committed_at: day0 + 1.day, committed_source: :commit_referenced)
     end
   end
 

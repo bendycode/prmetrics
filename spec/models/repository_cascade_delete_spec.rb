@@ -80,10 +80,8 @@ RSpec.describe 'Repository cascade delete' do
       story = create(:story, tracker: tracker)
       create(:story_event, story: story)
 
-      repository.destroy
-
-      expect([Tracker.exists?(tracker.id), Story.exists?(story.id), StoryEvent.exists?(story_id: story.id)])
-        .to eq([false, false, false])
+      expect { repository.destroy }
+        .to change(Tracker, :count).by(-1).and change(Story, :count).by(-1).and change(StoryEvent, :count).by(-1)
     end
 
     it 'leaves a tracker it shares with other repositories, without the deleted one' do
