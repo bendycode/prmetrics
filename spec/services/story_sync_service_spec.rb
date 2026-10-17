@@ -61,6 +61,19 @@ RSpec.describe StorySyncService do
     end
   end
 
+  # A commit or pull request that mentions an issue adds to its timeline
+  # without moving its updated_at; closing the issue does move it.
+  it 'reads an open issue\'s timeline on every sync' do
+    open_issue = github_resource(fixture.issue.to_h.merge(state: 'open', state_reason: nil, closed_at: nil))
+    allow(github).to receive(:issues).with('bendycode/prmetrics').and_return([open_issue])
+    create(:story, tracker: tracker, external_id: '79', gh_updated_at: open_issue.updated_at,
+                   listed_at: open_issue.updated_at + 1.hour)
+
+    sync.sync!
+
+    expect(github).to have_received(:issue_timeline).with('bendycode/prmetrics', 79)
+  end
+
   it 'reads an issue again once it has changed since it was stored' do
     create(:story, tracker: tracker, external_id: '79', gh_updated_at: fixture.issue.updated_at - 1.day,
                    listed_at: fixture.issue.updated_at - 1.hour)

@@ -13,7 +13,7 @@ class StorySyncService
     stored = stored_updates(issues)
 
     issues.each do |issue|
-      store_issue(issue, listed_at) unless stored[issue.number.to_s] == issue.updated_at
+      store_issue(issue, listed_at) unless unchanged?(issue, stored)
     end
     mark_gone(issues)
     measure_stories
@@ -21,11 +21,16 @@ class StorySyncService
 
   private
 
-  # The update each listed issue is stored at. One stored at the update
-  # GitHub lists has nothing new to read, once GitHub is known to have listed
-  # it after that update. Every issue is listed on each sync, so this is what
-  # keeps a sync from reading every timeline again. A gone story listed again
-  # is read again, which brings it back.
+  # A closed issue stored at the update GitHub lists has nothing new to read,
+  # once GitHub is known to have listed it after that update. An open issue
+  # is always read: a commit or pull request that mentions it adds to its
+  # timeline without moving its updated_at, and closing it does move it.
+  def unchanged?(issue, stored)
+    issue.state == 'closed' && stored[issue.number.to_s] == issue.updated_at
+  end
+
+  # The update each listed issue is stored at. A gone story listed again is
+  # read again, which brings it back.
   def stored_updates(issues)
     @tracker.stories.where(external_id: listed_ids(issues), gone: false)
             .listed_after_last_update
