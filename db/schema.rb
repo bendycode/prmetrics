@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_10_16_204312) do
+ActiveRecord::Schema[7.2].define(version: 2026_10_17_150003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -95,7 +95,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_16_204312) do
     t.text "last_sync_error"
     t.integer "sync_progress"
     t.string "default_branch"
+    t.bigint "tracker_id"
     t.index ["name"], name: "idx_repositories_name"
+    t.index ["tracker_id"], name: "index_repositories_on_tracker_id"
   end
 
   create_table "repository_grants", force: :cascade do |t|
@@ -119,6 +121,48 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_16_204312) do
     t.index ["pull_request_id", "submitted_at"], name: "idx_reviews_pr_submitted"
     t.index ["pull_request_id"], name: "index_reviews_on_pull_request_id"
     t.index ["submitted_at"], name: "idx_reviews_submitted_at"
+  end
+
+  create_table "stories", force: :cascade do |t|
+    t.bigint "tracker_id", null: false
+    t.string "external_id", null: false
+    t.string "key", null: false
+    t.string "title", null: false
+    t.string "url", null: false
+    t.string "state", null: false
+    t.string "state_reason"
+    t.datetime "gh_created_at", null: false
+    t.datetime "gh_updated_at", null: false
+    t.datetime "listed_at"
+    t.boolean "gone", default: false, null: false
+    t.datetime "committed_at"
+    t.integer "committed_source"
+    t.datetime "started_at"
+    t.integer "started_source"
+    t.datetime "done_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tracker_id", "external_id"], name: "index_stories_on_tracker_id_and_external_id", unique: true
+  end
+
+  create_table "story_events", force: :cascade do |t|
+    t.bigint "story_id", null: false
+    t.string "external_id", null: false
+    t.integer "kind", null: false
+    t.datetime "occurred_at", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["story_id", "external_id"], name: "index_story_events_on_story_id_and_external_id", unique: true
+  end
+
+  create_table "trackers", force: :cascade do |t|
+    t.integer "kind", null: false
+    t.bigint "source_repository_id"
+    t.jsonb "config", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["source_repository_id"], name: "index_trackers_on_source_repository_id", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -185,9 +229,13 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_16_204312) do
   add_foreign_key "pull_requests", "weeks", column: "first_review_week_id"
   add_foreign_key "pull_requests", "weeks", column: "merged_week_id"
   add_foreign_key "pull_requests", "weeks", column: "ready_for_review_week_id"
+  add_foreign_key "repositories", "trackers"
   add_foreign_key "repository_grants", "repositories"
   add_foreign_key "repository_grants", "users"
   add_foreign_key "reviews", "contributors", column: "author_id"
   add_foreign_key "reviews", "pull_requests"
+  add_foreign_key "stories", "trackers"
+  add_foreign_key "story_events", "stories"
+  add_foreign_key "trackers", "repositories", column: "source_repository_id"
   add_foreign_key "weeks", "repositories"
 end
