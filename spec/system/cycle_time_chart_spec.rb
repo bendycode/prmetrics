@@ -35,18 +35,29 @@ RSpec.describe 'Cycle Time scatterplot', :js do
   it 'plots each finished issue\'s cycle time in days by the date it was done' do
     visit tracker_path(tracker)
 
-    expect(page).to have_css('canvas#cycleTimeChart')
     expect(plotted).to eq([[milliseconds(first.done_at), 2, 'PRM-1'], [milliseconds(second.done_at), 6, 'PRM-2']])
   end
 
-  it 'labels the time axis with dates in the app\'s zone' do
+  # 9 PM in Chicago is 2 AM the next day in UTC, the browser's zone here
+  it 'labels the time axis with dates in the app\'s zone, whatever the browser\'s' do
+    page.driver.browser.execute_cdp('Emulation.setTimezoneOverride', timezoneId: 'UTC')
     visit tracker_path(tracker)
     expect(page).to have_css('canvas#cycleTimeChart[data-drawn]')
 
     label = page.evaluate_script(
-      "Chart.getChart('cycleTimeChart').options.scales.x.ticks.callback(#{milliseconds(first.done_at)})"
+      "Chart.getChart('cycleTimeChart').options.scales.x.ticks.callback(#{milliseconds(Time.zone.parse('2026-09-03 21:00'))})"
     )
     expect(label).to eq('9/3/2026')
+  end
+
+  it 'names the issue and its cycle time in a point\'s tooltip' do
+    visit tracker_path(tracker)
+    expect(page).to have_css('canvas#cycleTimeChart[data-drawn]')
+
+    label = page.evaluate_script(<<~JS)
+      Chart.getChart('cycleTimeChart').options.plugins.tooltip.callbacks.label({ raw: { key: 'PRM-1', y: 2 } })
+    JS
+    expect(label).to eq('PRM-1: 2 days')
   end
 
   it 'plots the started clock after switching to it' do
