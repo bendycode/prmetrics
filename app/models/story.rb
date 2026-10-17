@@ -28,7 +28,8 @@ class Story < ApplicationRecord
   # Stores the events not stored already. Each read of a timeline returns
   # every event it has seen before, keyed by the same IDs.
   def record_events(attributes)
-    stored = events.where(external_id: attributes.pluck(:external_id)).pluck(:external_id)
-    attributes.reject { |event| stored.include?(event[:external_id]) }.each { |event| events.create!(event) }
+    unique = attributes.uniq { |event| event[:external_id] }
+    stored = events.where(external_id: unique.pluck(:external_id)).pluck(:external_id).to_set
+    unique.reject { |event| stored.include?(event[:external_id]) }.each { |event| events.create!(event) }
   end
 end

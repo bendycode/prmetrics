@@ -37,6 +37,10 @@ RSpec.describe Story do
       expect(story.events.order(:external_id).pluck(:kind)).to eq(%w[assigned opened])
     end
 
+    it 'stores an event once when one read holds it twice' do
+      expect { story.record_events([attributes.first, attributes.first]) }.to change { story.events.count }.by(1)
+    end
+
     it 'adds the events a later read finds' do
       story.record_events(attributes.first(1))
 
