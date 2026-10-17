@@ -23,4 +23,30 @@ RSpec.describe Story do
 
     expect(story.reload).to have_attributes(committed_source: 'opened', started_source: 'commit_referenced')
   end
+
+  describe '#record_events' do
+    let(:story) { create(:story) }
+    let(:attributes) do
+      [{ external_id: '1', kind: :assigned, occurred_at: story.gh_created_at, payload: { 'id' => 1 } },
+       { external_id: 'opened', kind: :opened, occurred_at: story.gh_created_at, payload: {} }]
+    end
+
+    it 'stores each event once however many reads have seen it' do
+      story.record_events(attributes)
+
+      expect { story.record_events(attributes) }.not_to(change { story.events.count })
+    end
+
+    it 'keeps each event\'s kind' do
+      story.record_events(attributes)
+
+      expect(story.events.order(:external_id).pluck(:kind)).to eq(%w[assigned opened])
+    end
+
+    it 'adds the events a later read finds' do
+      story.record_events(attributes.first(1))
+
+      expect { story.record_events(attributes) }.to change { story.events.count }.from(1).to(2)
+    end
+  end
 end

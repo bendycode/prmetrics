@@ -1,0 +1,50 @@
+require 'rails_helper'
+
+RSpec.describe GithubIssueTimeline do
+  def events_for(name)
+    fixture = github_issue_fixture(name)
+    described_class.new(repo_name: 'bendycode/prmetrics', issue: fixture[:issue], timeline: fixture[:timeline]).events
+  end
+
+  describe 'a finished issue with assignments, commits, and pull requests' do
+    subject(:events) { events_for('issue_79') }
+
+    it 'keeps the events cycle time is measured from, in kinds that mean the same across trackers' do
+      expect(events.pluck(:kind).tally)
+        .to eq(opened: 1, assigned: 1, commit_referenced: 5, pull_request_linked: 4, closed: 1)
+    end
+
+    it 'records the opening, which GitHub keeps on the issue rather than its timeline' do
+      opened = events.find { |event| event[:kind] == :opened }
+
+      expect(opened).to include(occurred_at: Time.zone.parse('2026-09-17T09:57:04Z'))
+    end
+
+    it 'links only pull requests, leaving out issues that mention this one' do
+      linked = events.select { |event| event[:kind] == :pull_request_linked }
+
+      expect(linked.map { |event| event[:payload]['source']['issue']['number'] }).to eq([86, 87, 88, 89])
+    end
+
+    it 'keeps GitHub\'s own ID where the event has one' do
+      assigned = events.find { |event| event[:kind] == :assigned }
+
+      expect(assigned[:external_id]).to eq('31312719938')
+    end
+
+    it 'gives every event an ID of its own' do
+      expect(events.pluck(:external_id).uniq.size).to eq(events.size)
+    end
+  end
+
+  it 'leaves out a pull request from another repository' do
+    expect(events_for('issue_mention_only').pluck(:kind)).to eq(%i[opened closed])
+  end
+
+  it 'gives an event without a GitHub ID the same ID on every read' do
+    first_read = events_for('issue_79').pluck(:external_id)
+    second_read = events_for('issue_79').pluck(:external_id)
+
+    expect(second_read).to eq(first_read)
+  end
+end
