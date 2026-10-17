@@ -14,8 +14,8 @@ class Story < ApplicationRecord
   # otherwise hide behind.
   scope :listed_after_last_update, -> { where("listed_at >= gh_updated_at + interval '1 minute'") }
 
-  # Stores the events not stored already. Each read of a timeline returns
-  # every event it has seen before, keyed by the same IDs.
+  # Derives the committed, started, and done times from the story's events
+  # and saves them, with the kind of event each time came from.
   def measure(triggers)
     times = StoryTimes.new(events: events, triggers: triggers, state_reason: state_reason)
     update!(
@@ -25,6 +25,8 @@ class Story < ApplicationRecord
     )
   end
 
+  # Stores the events not stored already. Each read of a timeline returns
+  # every event it has seen before, keyed by the same IDs.
   def record_events(attributes)
     stored = events.where(external_id: attributes.pluck(:external_id)).pluck(:external_id)
     attributes.reject { |event| stored.include?(event[:external_id]) }.each { |event| events.create!(event) }
