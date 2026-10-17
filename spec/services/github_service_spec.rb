@@ -293,6 +293,16 @@ RSpec.describe GithubService do
       expect(processed).to contain_exactly([1, true], [2, true], [3, true])
     end
 
+    it 'logs the repository by its ID' do
+      github_pages([github_pr(1, 3.days.ago)])
+      allow(Rails.logger).to receive(:info)
+
+      service.fetch_and_store_pull_requests(repository.name, processor: processor)
+
+      expect(Rails.logger).to have_received(:info).with("Processed 1 pull requests for repository #{repository.id}")
+      expect(Rails.logger).not_to have_received(:info).with(include(repository.name))
+    end
+
     it 'returns the newest update it saw, leaving the last fetch for the caller to record' do
       newest = 1.day.ago.change(usec: 0)
       github_pages([github_pr(1, newest), github_pr(2, 3.days.ago)])
