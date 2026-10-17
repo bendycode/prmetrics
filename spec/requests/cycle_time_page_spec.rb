@@ -33,6 +33,18 @@ RSpec.describe 'Cycle Time page' do
     end
   end
 
+  # A tracker whose issues are never assigned, committed to, or linked
+  it 'shows the coverage line, not an empty state, when issues finished but none started' do
+    day0 = Time.zone.parse('2026-09-01 10:00')
+    create(:story, tracker: tracker, state: 'closed', committed_at: day0, committed_source: :opened,
+                   done_at: day0 + 48.hours)
+
+    get tracker_path(tracker, clock: 'started')
+
+    expect(response.body).not_to include('No finished issues yet.')
+    expect(response.body).to include('1 had no start and is left out.')
+  end
+
   it 'is not found for a tracker covering only repositories the user was not granted' do
     get tracker_path(create(:tracker, :covering_source))
 

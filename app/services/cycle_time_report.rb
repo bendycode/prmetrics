@@ -17,6 +17,12 @@ class CycleTimeReport
     @stories ||= @tracker.stories.finished.where.not(start_column => nil).order(:done_at, :id).to_a
   end
 
+  # Whether any story is finished at all, whether or not it has a start for
+  # this clock
+  def any_finished?
+    @tracker.stories.finished.exists?
+  end
+
   def days(story)
     (story.done_at - story.public_send(start_column)).seconds.in_days
   end
