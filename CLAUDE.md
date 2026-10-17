@@ -428,6 +428,51 @@ apart from other projects' issues at a glance.
 - Keep `#83` where GitHub reads it as a machine token: `Closes #83` and
   `Refs: #83` trailers.
 
+## Issue Priorities
+An open issue carries exactly one priority label. The levels are
+`priority: high`, `priority: medium`, and `priority: low`, and
+`priority: untriaged` means nobody has judged the issue yet. The levels rank
+how soon an issue is worth taking on:
+
+- `priority: high`: waiting costs somebody now. A production page fails or
+  shows wrong figures in normal use, someone can see data they should not, the
+  nightly sync fails, `main` is red, or work in flight is blocked.
+- `priority: medium`: worth doing in the normal course of work. A new
+  capability, a platform or framework upgrade, a security layer the app lacks,
+  dead or duplicated code that misleads whoever reads it next, a figure that
+  misleads in an edge case, a slow page, or a manual step every deploy or story
+  repeats.
+- `priority: low`: a small irritant whose cost stays small. Cosmetic or layout
+  polish, a minor extra query, test hygiene, or a gap nothing can reach yet.
+- `priority: untriaged`: nobody has weighed the issue yet. It says nothing
+  about how much the issue matters.
+
+The labels page carries a short form of each, since GitHub caps a label's
+description at 100 characters.
+
+- Whoever drafts an issue proposes one level with a one-line reason, and the
+  maintainer confirms or changes it before the issue is filed. Propose high,
+  medium, or low, never `priority: untriaged`.
+- `priority: untriaged` goes on an issue only when the maintainer chooses not
+  to judge it yet. An issue with no priority label counts as waiting for one.
+- Changing a priority swaps the label in one command that names the label the
+  issue carries now, so it is never left with two:
+  `gh issue edit NNN --remove-label "priority: <current>" --add-label "priority: <new>"`.
+- To list the open issues waiting for a priority (untriaged, no priority
+  label, or more than one):
+
+  ```bash
+  gh issue list --state open --limit 500 --json number,labels \
+    --jq '.[] | [.labels[].name | select(startswith("priority: "))] as $p
+      | select(($p | length) != 1 or $p[0] == "priority: untriaged") | .number'
+  ```
+
+  A listed issue that carries one level and `priority: untriaged` has been
+  judged: offer to remove `priority: untriaged`, and keep the level. One that
+  carries two or more levels needs the maintainer to say which stands. Change
+  no label before the maintainer answers, then remove every other priority
+  label in one command, with one `--remove-label` for each.
+
 ## Housekeeping Commits
 
 This project's default branch takes direct commits of housekeeping files.
