@@ -29,7 +29,7 @@ class GithubIssueTimeline
 
   def story_event(event)
     kind = KINDS[event['event']]
-    return if kind.nil?
+    return if kind.nil? || event['created_at'].blank?
     return if kind == :pull_request_linked && !same_repository_pull_request?(event)
     return if kind == :commit_referenced && !same_repository_commit?(event)
 

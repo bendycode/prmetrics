@@ -5,6 +5,8 @@ RSpec.describe StoryEvent do
     it { is_expected.to belong_to(:story) }
   end
 
+  it { is_expected.to validate_presence_of(:occurred_at) }
+
   describe 'an event is stored once per story' do
     subject(:event) { create(:story_event, external_id: 'a1b2c3') }
 

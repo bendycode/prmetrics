@@ -15,5 +15,6 @@ class StoryEvent < ApplicationRecord
 
   enum :kind, KINDS
 
+  validates :occurred_at, presence: true
   validates :external_id, uniqueness: { scope: :story_id }
 end

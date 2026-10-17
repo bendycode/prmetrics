@@ -45,6 +45,14 @@ RSpec.describe GithubIssueTimeline do
     expect(events_for('issue_mention_only').pluck(:kind)).to eq(%i[opened closed])
   end
 
+  it 'leaves out an event GitHub sent without a time' do
+    fixture = github_issue_fixture('issue_not_planned')
+    timeline = [github_resource(event: 'assigned', id: 1), *fixture.timeline]
+    events = described_class.new(repo_name: 'bendycode/prmetrics', issue: fixture.issue, timeline: timeline).events
+
+    expect(events.pluck(:external_id)).to eq(%w[opened 5 6])
+  end
+
   it 'gives an event without a GitHub ID the same ID on every read' do
     first_read = events_for('issue_79').pluck(:external_id)
     second_read = events_for('issue_79').pluck(:external_id)
