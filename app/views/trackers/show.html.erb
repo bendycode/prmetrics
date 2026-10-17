@@ -12,10 +12,12 @@
   <% end %>
 </ul>
 
-<% if !@report.any_finished? %>
-  <p>No finished issues yet.</p>
-<% elsif @report.stories.empty? %>
-  <p class="text-muted"><%= coverage_sentence(@report) %></p>
+<% if @report.stories.empty? %>
+  <% if @report.any_finished? %>
+    <p class="text-muted"><%= left_out_sentence(@report) %></p>
+  <% else %>
+    <p>No finished issues yet.</p>
+  <% end %>
 <% else %>
   <div class="row mb-3">
     <div class="col-md-3"><p>Median <strong><%= cycle_days(@report.median_days) %></strong></p></div>
