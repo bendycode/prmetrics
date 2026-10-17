@@ -20,7 +20,9 @@ class StorySyncService
       store_issue(issue, listed_at) unless unchanged?(issue, stored)
       nil
     rescue StandardError => e
-      Rails.logger.error "Story sync could not store issue ##{issue.number}: #{e.class}: #{e.message}"
+      # The class alone: production logs reach the nightly workflow's public
+      # log, and a GitHub error's message quotes the repository's URL.
+      Rails.logger.error "Story sync could not store issue ##{issue.number}: #{e.class}"
       "##{issue.number} (#{e.class})"
     end
     measure_stories

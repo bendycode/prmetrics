@@ -40,6 +40,14 @@ RSpec.describe 'story rake tasks' do
       expect(second_sync).to have_received(:sync!)
     end
 
+    it 'logs a failure without the message, which can quote the repository\'s URL' do
+      allow(Rails.logger).to receive(:error)
+      allow(first_sync).to receive(:sync!).and_raise(github_error("repos/#{first.source_repository.name}/issues"))
+
+      expect { Rake::Task['sync:stories'].invoke }.to output.to_stdout.and raise_error(SystemExit)
+      expect(Rails.logger).to have_received(:error).with(exclude(first.source_repository.name))
+    end
+
     it 'stops before syncing anything without a GitHub token' do
       allow(ENV).to receive(:[]).with('GITHUB_ACCESS_TOKEN').and_return(nil)
 

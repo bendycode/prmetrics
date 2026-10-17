@@ -6,6 +6,12 @@ module GithubFixtureHelpers
     github_resource(Rails.root.join("spec/fixtures/github/#{name}.json").read)
   end
 
+  # A server error as Octokit raises it, whose message quotes the request URL
+  def github_error(path)
+    Octokit::ServerError.new(method: :get, url: "https://api.github.com/#{path}", status: 500, body: '',
+                             response_headers: {})
+  end
+
   def github_resource(json)
     attributes = Sawyer::Serializer.any_json.decode(json.is_a?(String) ? json : JSON.generate(json))
     Sawyer::Resource.new(Sawyer::Agent.new('https://api.github.com'), attributes)

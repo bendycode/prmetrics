@@ -97,13 +97,22 @@ RSpec.describe StorySyncService do
 
     before do
       allow(github).to receive(:issues).with('bendycode/prmetrics').and_return([fixture.issue, other.issue])
-      allow(github).to receive(:issue_timeline).with('bendycode/prmetrics', 79).and_raise(Octokit::ServerError)
+      allow(github).to receive(:issue_timeline).with('bendycode/prmetrics', 79)
+                                               .and_raise(github_error('repos/bendycode/prmetrics/issues/79/timeline'))
       allow(github).to receive(:issue_timeline).with('bendycode/prmetrics', 9002).and_return(other.timeline)
     end
 
     it 'stores nothing for that issue, and names it once the others are synced' do
       expect { sync.sync! }.to raise_error(StorySyncService::IssuesFailed, /#79/)
       expect(tracker.stories.pluck(:external_id)).to eq(['9002'])
+    end
+
+    # Production logs to stdout, which the nightly workflow's public log carries
+    it 'logs the failure without the repository\'s name' do
+      allow(Rails.logger).to receive(:error)
+
+      expect { sync.sync! }.to raise_error(StorySyncService::IssuesFailed)
+      expect(Rails.logger).to have_received(:error).with(include('#79').and(exclude('bendycode/prmetrics')))
     end
 
     it 'still measures the issues it could read' do
