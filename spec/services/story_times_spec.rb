@@ -74,6 +74,15 @@ RSpec.describe StoryTimes do
       expect(times([event(:opened, 0), event(:closed, 4)], state_reason: 'not_planned').done_at).to be_nil
     end
 
+    it 'is never reached by a story closed as a duplicate' do
+      expect(times([event(:opened, 0), event(:closed, 4)], state_reason: 'duplicate').done_at).to be_nil
+    end
+
+    # GitHub records no reason on issues closed before it began recording them
+    it 'is reached by a close GitHub recorded no reason for' do
+      expect(times([event(:opened, 0), event(:closed, 4)], state_reason: nil).done_at).to eq(day0 + 4.days)
+    end
+
     it 'counts events that arrive in any order' do
       result = times([event(:closed, 6), event(:reopened, 3), event(:closed, 2), event(:opened, 0)])
 

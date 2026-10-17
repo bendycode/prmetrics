@@ -3,6 +3,8 @@
 # preference; the earliest matching event wins whichever kind it is, and its
 # kind is recorded as the source of the time.
 class StoryTimes
+  ABANDONED = %w[not_planned duplicate].freeze
+
   attr_reader :committed_at, :committed_source, :started_at, :started_source, :done_at
 
   def initialize(events:, triggers:, state_reason:)
@@ -22,9 +24,10 @@ class StoryTimes
 
   # Done is the last close with no reopen after it. GitHub records why an
   # issue was closed on the issue rather than on the close event, so only the
-  # issue's current reason can say whether the close finished the work.
+  # issue's current reason can say the close abandoned the work. Issues closed
+  # before GitHub recorded reasons have none, and count as done.
   def done_time(state_reason)
-    return unless state_reason == 'completed'
+    return if ABANDONED.include?(state_reason)
 
     last = @events.reverse.find { |event| %w[closed reopened].include?(event.kind.to_s) }
     last.occurred_at if last&.kind.to_s == 'closed'
