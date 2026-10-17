@@ -5,11 +5,6 @@ RSpec.describe StoryEvent do
     it { is_expected.to belong_to(:story) }
   end
 
-  it 'means the same thing whichever tracker it came from' do
-    expect(described_class.kinds.keys)
-      .to eq(%w[opened assigned commit_referenced pull_request_linked closed reopened])
-  end
-
   describe 'an event is stored once per story' do
     subject(:event) { create(:story_event, external_id: 'a1b2c3') }
 

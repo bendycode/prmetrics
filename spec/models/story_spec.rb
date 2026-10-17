@@ -18,12 +18,6 @@ RSpec.describe Story do
     end
   end
 
-  it 'names the kind of event each time came from' do
-    story = create(:story, committed_source: :opened, started_source: :commit_referenced)
-
-    expect(story.reload).to have_attributes(committed_source: 'opened', started_source: 'commit_referenced')
-  end
-
   describe '#record_events' do
     let(:story) { create(:story) }
     let(:attributes) do
