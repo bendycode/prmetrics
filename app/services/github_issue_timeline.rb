@@ -31,6 +31,7 @@ class GithubIssueTimeline
     kind = KINDS[event['event']]
     return if kind.nil?
     return if kind == :pull_request_linked && !same_repository_pull_request?(event)
+    return if kind == :commit_referenced && !same_repository_commit?(event)
 
     { external_id: external_id(event, kind), kind: kind, occurred_at: time(event['created_at']), payload: event }
   end
@@ -40,6 +41,12 @@ class GithubIssueTimeline
   def same_repository_pull_request?(event)
     source = event.dig('source', 'issue') || {}
     source['pull_request'].present? && source.dig('repository', 'full_name') == @repo_name
+  end
+
+  # A commit in a fork or another project can mention the issue too; only a
+  # commit pushed to the issue's own repository is work on it.
+  def same_repository_commit?(event)
+    event['commit_url'].to_s.start_with?("https://api.github.com/repos/#{@repo_name}/commits/")
   end
 
   # GitHub gives cross-references no ID, so one is built from what the event

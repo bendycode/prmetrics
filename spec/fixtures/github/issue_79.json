@@ -58,6 +58,7 @@
       "event": "referenced",
       "created_at": "2026-09-17T11:05:18Z",
       "commit_id": "a6f63f00ddffa36fad39e5a80d83dc8ba347e67c",
+      "commit_url": "https://api.github.com/repos/bendycode/prmetrics/commits/a6f63f00ddffa36fad39e5a80d83dc8ba347e67c",
       "actor": {
         "login": "bendycode",
         "id": 8303,
@@ -69,6 +70,7 @@
       "event": "referenced",
       "created_at": "2026-09-17T11:05:18Z",
       "commit_id": "3abffe7a3445d868169054d1ce5aa57d498b461c",
+      "commit_url": "https://api.github.com/repos/bendycode/prmetrics/commits/3abffe7a3445d868169054d1ce5aa57d498b461c",
       "actor": {
         "login": "bendycode",
         "id": 8303,
@@ -80,6 +82,7 @@
       "event": "referenced",
       "created_at": "2026-09-17T11:05:18Z",
       "commit_id": "60cb5df162e52a3b27a3d268123f0c5e36841e47",
+      "commit_url": "https://api.github.com/repos/bendycode/prmetrics/commits/60cb5df162e52a3b27a3d268123f0c5e36841e47",
       "actor": {
         "login": "bendycode",
         "id": 8303,
@@ -220,6 +223,7 @@
       "event": "referenced",
       "created_at": "2026-09-20T17:31:05Z",
       "commit_id": "c1cf2758e81555c55b02d9205c026ea573ae29b7",
+      "commit_url": "https://api.github.com/repos/bendycode/prmetrics/commits/c1cf2758e81555c55b02d9205c026ea573ae29b7",
       "actor": {
         "login": "bendycode",
         "id": 8303,
@@ -231,6 +235,7 @@
       "event": "referenced",
       "created_at": "2026-09-20T17:36:54Z",
       "commit_id": "eff6613ec4480c6b83e22eb64983b39c928f98a0",
+      "commit_url": "https://api.github.com/repos/bendycode/prmetrics/commits/eff6613ec4480c6b83e22eb64983b39c928f98a0",
       "actor": {
         "login": "bendycode",
         "id": 8303,
