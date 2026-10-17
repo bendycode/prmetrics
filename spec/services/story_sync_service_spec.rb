@@ -92,11 +92,24 @@ RSpec.describe StorySyncService do
     expect(github).to have_received(:issue_timeline)
   end
 
-  it 'stores nothing for an issue whose timeline could not be read' do
-    allow(github).to receive(:issue_timeline).and_raise(Octokit::ServerError)
+  context 'when an issue cannot be read' do
+    let(:other) { github_issue_fixture('issue_not_planned') }
 
-    expect { sync.sync! }.to raise_error(Octokit::ServerError)
-    expect(tracker.stories).to be_empty
+    before do
+      allow(github).to receive(:issues).with('bendycode/prmetrics').and_return([fixture.issue, other.issue])
+      allow(github).to receive(:issue_timeline).with('bendycode/prmetrics', 79).and_raise(Octokit::ServerError)
+      allow(github).to receive(:issue_timeline).with('bendycode/prmetrics', 9002).and_return(other.timeline)
+    end
+
+    it 'stores nothing for that issue, and names it once the others are synced' do
+      expect { sync.sync! }.to raise_error(StorySyncService::IssuesFailed, /#79/)
+      expect(tracker.stories.pluck(:external_id)).to eq(['9002'])
+    end
+
+    it 'still measures the issues it could read' do
+      expect { sync.sync! }.to raise_error(StorySyncService::IssuesFailed)
+      expect(tracker.stories.sole).to have_attributes(committed_source: 'opened', started_source: 'assigned', done_at: nil)
+    end
   end
 
   describe 'an issue GitHub no longer lists' do

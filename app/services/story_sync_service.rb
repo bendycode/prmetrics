@@ -1,6 +1,10 @@
 # Reads a GitHub issues tracker's issues and their timelines into stories,
 # then measures every story in the tracker again from its events.
 class StorySyncService
+  # Raised once a sync has stored and measured every issue it could, naming
+  # the ones it could not.
+  class IssuesFailed < StandardError; end
+
   def initialize(tracker, github: GithubService.new(ENV.fetch('GITHUB_ACCESS_TOKEN', nil)))
     @tracker = tracker
     @github = github
@@ -12,11 +16,16 @@ class StorySyncService
     issues = @github.issues(@repo_name)
     stored = stored_updates(issues)
 
-    issues.each do |issue|
+    failures = issues.filter_map do |issue|
       store_issue(issue, listed_at) unless unchanged?(issue, stored)
+      nil
+    rescue StandardError => e
+      Rails.logger.error "Story sync could not store issue ##{issue.number}: #{e.class}: #{e.message}"
+      "##{issue.number} (#{e.class})"
     end
     mark_gone(issues)
     measure_stories
+    raise IssuesFailed, "Could not store issues #{failures.join(', ')}" if failures.any?
   end
 
   private
