@@ -32,9 +32,9 @@ RSpec.describe StoryTimes do
     end
 
     it 'ignores events after the work was done' do
-      result = times([event(:opened, 0), event(:assigned, 3), event(:closed, 4), event(:commit_referenced, 5)])
+      result = times([event(:opened, 0), event(:closed, 4), event(:commit_referenced, 5)])
 
-      expect(result.started_at).to eq(day0 + 3.days)
+      expect(result).to have_attributes(started_at: nil, started_source: nil)
     end
   end
 

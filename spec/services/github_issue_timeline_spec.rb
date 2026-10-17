@@ -37,6 +37,10 @@ RSpec.describe GithubIssueTimeline do
     end
   end
 
+  it 'keeps a reopening between two closes' do
+    expect(events_for('issue_reopened').pluck(:kind)).to eq(%i[opened assigned closed reopened closed])
+  end
+
   it 'leaves out a pull request from another repository' do
     expect(events_for('issue_mention_only').pluck(:kind)).to eq(%i[opened closed])
   end

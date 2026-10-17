@@ -31,10 +31,13 @@ RSpec.describe StorySyncService do
     )
   end
 
-  it 'stores each event once across syncs' do
+  it 'stores each event once when a later sync reads the timeline again' do
     sync.sync!
+    updated = github_resource(fixture.issue.to_h.merge(updated_at: fixture.issue.updated_at + 1.day))
+    allow(github).to receive(:issues).with('bendycode/prmetrics').and_return([updated])
 
     expect { described_class.new(tracker, github: github).sync! }.not_to(change(StoryEvent, :count))
+    expect(github).to have_received(:issue_timeline).twice
   end
 
   context 'when an issue is stored at the update GitHub lists' do
