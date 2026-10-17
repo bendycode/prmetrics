@@ -17,7 +17,8 @@ class Story < ApplicationRecord
   scope :listed_after_last_update, -> { where("listed_at >= gh_updated_at + interval '1 minute'") }
 
   # Derives the committed, started, and done times from the story's events
-  # and saves them, with the kind of event each time came from.
+  # and saves them, with the kind of event the committed and started times
+  # came from.
   def measure(triggers)
     times = StoryTimes.new(events: events, triggers: triggers, state_reason: state_reason)
     update!(
