@@ -431,18 +431,19 @@ apart from other projects' issues at a glance.
 ## Issue Priorities
 An open issue carries exactly one priority label. The levels are
 `priority: high`, `priority: medium`, and `priority: low`, and
-`priority: untriaged` means nobody has judged the issue yet. Each level says
-what happens, and to whom, if the issue waits:
+`priority: untriaged` means nobody has judged the issue yet. The levels rank
+how soon an issue is worth taking on:
 
 - `priority: high`: waiting costs somebody now. A production page fails or
   shows wrong figures in normal use, someone can see data they should not, the
   nightly sync fails, `main` is red, or work in flight is blocked.
-- `priority: medium`: nothing breaks, but a cost recurs or a deadline
-  approaches. A figure misleads in an edge case, a page is slow, every deploy
-  or story repeats a manual step, a platform retirement date nears, or
-  dependency updates are held back until the work is done.
-- `priority: low`: waiting costs nothing that grows: a cleanup, a refactor, an
-  idea to explore.
+- `priority: medium`: worth doing in the normal course of work. A new
+  capability, a platform or framework upgrade, a security layer the app lacks,
+  dead or duplicated code that misleads whoever reads it next, a figure that
+  misleads in an edge case, a slow page, or a manual step every deploy or story
+  repeats.
+- `priority: low`: a small irritant whose cost stays small. Cosmetic or layout
+  polish, a minor extra query, test hygiene, or a gap nothing can reach yet.
 - `priority: untriaged`: nobody has weighed the issue yet. It says nothing
   about how much the issue matters.
 
