@@ -1,12 +1,12 @@
 <h1>Cycle Time: <%= @tracker.source_repository.name %></h1>
 
 <ul class="nav nav-pills mb-3">
-  <% TrackersHelper::CLOCK_LABELS.each do |clock, label| %>
+  <% CycleTimeReport::CLOCKS.each do |clock| %>
     <li class="nav-item">
       <% if clock == @report.clock %>
-        <span class="nav-link active" aria-current="page" data-clock-chosen><%= label %></span>
+        <span class="nav-link active" aria-current="page" data-clock-chosen><%= clock_label(clock) %></span>
       <% else %>
-        <%= link_to label, tracker_path(@tracker, clock: clock), class: 'nav-link' %>
+        <%= link_to clock_label(clock), tracker_path(@tracker, clock: clock), class: 'nav-link' %>
       <% end %>
     </li>
   <% end %>
@@ -21,7 +21,7 @@
   </div>
   <p class="text-muted"><%= coverage_sentence(@report) %></p>
 
-  <div class="mb-4" style="height: 320px">
+  <div class="chart-area mb-4">
     <canvas id="cycleTimeChart" data-points="<%= cycle_time_points(@report).to_json %>"
             data-time-zone="<%= Time.zone.tzinfo.name %>"></canvas>
   </div>
@@ -51,6 +51,7 @@
           }
         }
       });
+      // The system specs wait on this before reading the chart
       canvas.dataset.drawn = 'true';
     });
   </script>

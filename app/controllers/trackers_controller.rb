@@ -10,6 +10,6 @@ class TrackersController < ApplicationController
   # Only the two clocks' names choose one; anything else, an Array or a Hash
   # included, shows the committed clock.
   def clock_param
-    CycleTimeReport::CLOCKS.include?(params[:clock]) ? params[:clock] : 'committed'
+    CycleTimeReport::CLOCKS.include?(params[:clock]) ? params[:clock] : CycleTimeReport::DEFAULT_CLOCK
   end
 end
