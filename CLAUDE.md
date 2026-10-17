@@ -428,6 +428,43 @@ apart from other projects' issues at a glance.
 - Keep `#83` where GitHub reads it as a machine token: `Closes #83` and
   `Refs: #83` trailers.
 
+## Issue Priorities
+An open issue carries exactly one priority label. The levels are
+`priority: high`, `priority: medium`, and `priority: low`, and
+`priority: untriaged` means nobody has judged the issue yet. Each level says
+what happens, and to whom, if the issue waits:
+
+- `priority: high`: waiting costs somebody now. A production page fails or
+  shows wrong figures in normal use, someone can see data they should not, the
+  nightly sync fails, `main` is red, or work in flight is blocked.
+- `priority: medium`: nothing breaks, but a cost recurs or a deadline
+  approaches. A figure misleads in an edge case, a page is slow, every deploy
+  or story repeats a manual step, a platform retirement date nears, or
+  dependency updates are held back until the work is done.
+- `priority: low`: waiting costs nothing that grows: a cleanup, a refactor, an
+  idea to explore.
+- `priority: untriaged`: nobody has weighed the issue yet. It says nothing
+  about how much the issue matters.
+
+The labels page carries a short form of each, since GitHub caps a label's
+description at 100 characters.
+
+- Whoever drafts an issue proposes one level with a one-line reason, and Steve
+  confirms or changes it before the issue is filed. Propose high, medium, or
+  low, never `priority: untriaged`.
+- `priority: untriaged` goes on an issue only when Steve chooses not to judge
+  it yet. An issue with no priority label counts as waiting for one.
+- Changing a priority swaps the label in one command:
+  `gh issue edit NNN --remove-label "priority: untriaged" --add-label "priority: medium"`.
+- To list the open issues waiting for a priority (untriaged, no priority
+  label, or more than one):
+
+  ```bash
+  gh issue list --state open --limit 500 --json number,labels \
+    --jq '.[] | [.labels[].name | select(startswith("priority: "))] as $p
+      | select(($p | length) != 1 or $p[0] == "priority: untriaged") | .number'
+  ```
+
 ## Housekeeping Commits
 
 This project's default branch takes direct commits of housekeeping files.
