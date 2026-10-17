@@ -14,8 +14,10 @@ module TrackersHelper
     STORY_SOURCE_LABELS.fetch(source.to_s)
   end
 
+  # Rounded to the minute first: DurationFormatter rounds only the minutes,
+  # so a cycle seconds short of an hour would read "23 hours, 60 minutes".
   def cycle_days(days)
-    DurationFormatter.format_hours(days && (days * 24))
+    DurationFormatter.format_hours(days && ((days * 1440).round / 60.0))
   end
 
   # A story's URL is stored from GitHub's payload; only a GitHub URL becomes
