@@ -61,11 +61,16 @@ RSpec.describe 'Cycle Time scatterplot', :js do
   end
 
   it 'says day, not days, for a one-day cycle in a tooltip' do
-    visit tracker_path(tracker)
+    # PRM-1 started a day before it was done, so the started clock plots it at
+    # one day, sent from Ruby as 1.0
+    visit tracker_path(tracker, clock: 'started')
     expect(page).to have_css('canvas#cycleTimeChart[data-drawn]')
 
     label = page.evaluate_script(<<~JS)
-      Chart.getChart('cycleTimeChart').options.plugins.tooltip.callbacks.label({ raw: { key: 'PRM-1', y: 1 } })
+      (function() {
+        var chart = Chart.getChart('cycleTimeChart');
+        return chart.options.plugins.tooltip.callbacks.label({ raw: chart.data.datasets[0].data[0] });
+      })()
     JS
     expect(label).to eq('PRM-1: 1 day')
   end
