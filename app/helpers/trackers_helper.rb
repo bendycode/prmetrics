@@ -41,6 +41,12 @@ module TrackersHelper
     end
   end
 
+  # For a clock none of whose finished stories has a start
+  def left_out_sentence(report)
+    missing = report.coverage[:missing]
+    "#{pluralize(missing, 'finished issue')} had no start and #{missing == 1 ? 'is' : 'are'} left out."
+  end
+
   def coverage_sentence(report)
     coverage = report.coverage
     trigger = story_source_label(report.trigger)

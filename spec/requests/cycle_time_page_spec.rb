@@ -41,8 +41,8 @@ RSpec.describe 'Cycle Time page' do
 
     get tracker_path(tracker, clock: 'started')
 
-    expect(response.body).not_to include('No finished issues yet.')
-    expect(response.body).to include('1 had no start and is left out.')
+    expect(Capybara.string(response.body).find('p.text-muted').text.strip)
+      .to eq('1 finished issue had no start and is left out.')
   end
 
   it 'is not found for a tracker covering only repositories the user was not granted' do
