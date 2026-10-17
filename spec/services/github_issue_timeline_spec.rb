@@ -61,6 +61,12 @@ RSpec.describe GithubIssueTimeline do
     expect(events.pluck(:kind).tally).to include(commit_referenced: 5, pull_request_linked: 4)
   end
 
+  it 'builds an ID for an event without one from its time in UTC, whatever the app\'s zone' do
+    linked = events_for('issue_79').find { |event| event[:kind] == :pull_request_linked }
+
+    expect(linked[:external_id]).to eq('pull_request_linked:86:2026-09-17T11:06:49Z')
+  end
+
   it 'gives an event without a GitHub ID the same ID on every read' do
     first_read = events_for('issue_79').pluck(:external_id)
     second_read = events_for('issue_79').pluck(:external_id)

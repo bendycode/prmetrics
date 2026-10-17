@@ -57,7 +57,7 @@ class GithubIssueTimeline
   def external_id(event, kind)
     return event['id'].to_s if event['id']
 
-    [kind, event.dig('source', 'issue', 'number'), time(event['created_at']).iso8601].join(':')
+    [kind, event.dig('source', 'issue', 'number'), time(event['created_at']).utc.iso8601].join(':')
   end
 
   def time(value)
