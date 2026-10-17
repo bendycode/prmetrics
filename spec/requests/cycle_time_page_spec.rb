@@ -34,7 +34,7 @@ RSpec.describe 'Cycle Time page' do
   end
 
   # A tracker whose issues are never assigned, committed to, or linked
-  it 'shows the coverage line, not an empty state, when issues finished but none started' do
+  it 'says how many finished issues were left out, not that none finished, when none started' do
     day0 = Time.zone.parse('2026-09-01 10:00')
     create(:story, tracker: tracker, state: 'closed', committed_at: day0, committed_source: :opened,
                    done_at: day0 + 48.hours)
