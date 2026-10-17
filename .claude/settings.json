@@ -49,7 +49,8 @@
       "Bash(curl -sf https://prmetrics.io/health)",
       "Bash(heroku logs *)",
       "Bash(redis-cli ping)",
-      "Bash(bundle exec rails routes *)"
+      "Bash(bundle exec rails routes *)",
+      "Bash(git hash-object --stdin)"
     ]
   }
 }
