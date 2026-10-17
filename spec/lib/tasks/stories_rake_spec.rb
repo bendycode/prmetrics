@@ -23,8 +23,11 @@ RSpec.describe 'story rake tasks' do
       allow(StorySyncService).to receive(:new).with(second).and_return(second_sync)
     end
 
-    it 'syncs every tracker' do
-      expect { Rake::Task['sync:stories'].invoke }.to output(/Synced 2 of 2 trackers/).to_stdout
+    # The nightly workflow's log is public, and a tracker's repository may not be
+    it 'syncs every tracker, naming each by its ID alone' do
+      expect { Rake::Task['sync:stories'].invoke }
+        .to output(/Synced stories for tracker #{first.id}.*Synced 2 of 2 trackers/m).to_stdout
+        .and(output(exclude(first.source_repository.name)).to_stdout)
 
       expect([first_sync, second_sync]).to all(have_received(:sync!))
     end

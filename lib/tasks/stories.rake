@@ -6,13 +6,16 @@ namespace :sync do
       exit 1
     end
 
+    # This output reaches the nightly workflow's log, which is public, so it
+    # names trackers by ID: a tracker's repository, and an error message
+    # quoting its URL, may be private. The app's own log gets the message.
     trackers = Tracker.includes(:source_repository).order(:id).to_a
     synced = trackers.count do |tracker|
       StorySyncService.new(tracker).sync!
-      puts "  ✓ Synced stories for #{tracker.source_repository.name}"
+      puts "  ✓ Synced stories for tracker #{tracker.id}"
       true
     rescue StandardError => e
-      puts "  ✗ Failed to sync stories for #{tracker.source_repository.name}: #{e.message}"
+      puts "  ✗ Failed to sync stories for tracker #{tracker.id}: #{e.class}"
       Rails.logger.error "Story sync failed for tracker #{tracker.id}: #{e.message}"
       false
     end
