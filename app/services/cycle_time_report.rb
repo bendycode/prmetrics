@@ -28,10 +28,16 @@ class CycleTimeReport
     percentile(85)
   end
 
+  # The event kind the tracker measures this clock from by choice; the rest
+  # of its triggers are fallbacks.
+  def trigger
+    @tracker.triggers.fetch(@clock.to_sym).first
+  end
+
   # How many of the clock's stories took their start from the tracker's
   # chosen trigger, how many from a fallback, and how many had no start.
   def coverage
-    trigger = @tracker.triggers.fetch(@clock.to_sym).first.to_s
+    trigger = self.trigger.to_s
     sources = stories.map { |story| story.public_send(source_column) }
     {
       trigger: sources.count(trigger),
