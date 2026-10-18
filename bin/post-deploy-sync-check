@@ -8,39 +8,64 @@ set -e
 APP="${HEROKU_APP:-prmetrics-production}"
 REPOSITORY="${SYNC_CHECK_REPOSITORY:-bendycode/prmetrics}"
 TIMEOUT="${SYNC_CHECK_TIMEOUT:-300}"
+ATTEMPTS=2
 INTERVAL=10
 
-echo "📥 Queueing a sync of $REPOSITORY on $APP..."
-QUEUED=$(heroku run -x --no-tty -a "$APP" -- rails runner \
-  "puts \"post-deploy-sync-check jid=#{UnifiedSyncJob.perform_later(Repository.find_by!(name: '$REPOSITORY')).provider_job_id}\"" 2>&1 || true)
-JID=$(echo "$QUEUED" | grep -oE 'post-deploy-sync-check jid=[0-9a-f]+' | tail -1 | cut -d= -f2)
-if [ -z "$JID" ]; then
-  echo "❌ SYNC CHECK FAILED: queueing the job printed no job ID"
-  echo "$QUEUED" | tail -20
-  exit 1
-fi
-echo "   Job ID: $JID"
-
-# The worker logs each job as "class=... jid=...: start", then ": done" or
-# ": fail". Matching the job ID keeps an earlier sync's lines from counting.
-waited=0
-while [ "$waited" -lt "$TIMEOUT" ]; do
-  JOB_LINES=$(heroku logs -a "$APP" --dyno worker -n 1500 2>/dev/null | grep "jid=$JID" || true)
-  if echo "$JOB_LINES" | grep -q ': fail$'; then
-    echo "$JOB_LINES"
-    echo "❌ SYNC CHECK FAILED: the worker logged the job failing"
-    exit 1
+# Queues one sync and waits for its result. Returns 0 when the worker logs the
+# job's done line, 1 on its fail line, a timeout, or no job ID.
+check_once() {
+  echo "📥 Queueing a sync of $REPOSITORY on $APP..."
+  # The repository name reaches the dyno as an environment variable, never as
+  # part of the Ruby source the runner evaluates.
+  if ! QUEUED=$(heroku run -x --no-tty -a "$APP" --env "SYNC_CHECK_REPOSITORY=$REPOSITORY" -- rails runner \
+    "puts \"post-deploy-sync-check jid=#{UnifiedSyncJob.perform_later(Repository.find_by!(name: ENV.fetch('SYNC_CHECK_REPOSITORY'))).provider_job_id}\"" 2>&1); then
+    echo "$QUEUED" | tail -20
+    echo "❌ Queueing the job failed on the dyno"
+    return 1
   fi
-  if echo "$JOB_LINES" | grep -q ': done$'; then
-    echo "$JOB_LINES"
+  JID=$(echo "$QUEUED" | grep -oE 'post-deploy-sync-check jid=[0-9a-f]+' | tail -1 | cut -d= -f2)
+  if [ -z "$JID" ]; then
+    echo "$QUEUED" | tail -20
+    echo "❌ Queueing the job printed no job ID"
+    return 1
+  fi
+  echo "   Job ID: $JID"
+
+  # The worker logs each job as "jid=... class=...: start", then ": done" or
+  # ": fail". Matching the job ID and the space after it keeps another job's
+  # lines from counting.
+  waited=0
+  while [ "$waited" -lt "$TIMEOUT" ]; do
+    JOB_LINES=$(heroku logs -a "$APP" --dyno worker -n 1500 2>/dev/null | grep "jid=$JID " || true)
+    if echo "$JOB_LINES" | grep -q ': fail$'; then
+      echo "$JOB_LINES"
+      echo "❌ The worker logged job $JID failing"
+      return 1
+    fi
+    if echo "$JOB_LINES" | grep -q ': done$'; then
+      echo "$JOB_LINES"
+      return 0
+    fi
+    sleep "$INTERVAL"
+    waited=$((waited + INTERVAL))
+  done
+  echo "$JOB_LINES"
+  echo "❌ No done line for job $JID within ${TIMEOUT}s"
+  return 1
+}
+
+# A second attempt rides out a failure on GitHub's side (an outage, a rate
+# limit) that says nothing about the worker.
+for attempt in $(seq 1 "$ATTEMPTS"); do
+  if check_once; then
     echo "✅ Sync check passed: the worker ran the job to completion"
     exit 0
   fi
-  sleep "$INTERVAL"
-  waited=$((waited + INTERVAL))
+  if [ "$attempt" -lt "$ATTEMPTS" ]; then
+    echo "🔁 Trying once more, in case the failure was GitHub's"
+  fi
 done
 
-echo "$JOB_LINES"
-echo "❌ SYNC CHECK FAILED: no done line for job $JID within ${TIMEOUT}s"
+echo "❌ SYNC CHECK FAILED after $ATTEMPTS attempts"
 echo "   Read the worker log: heroku logs -a $APP --dyno worker -n 500"
 exit 1
