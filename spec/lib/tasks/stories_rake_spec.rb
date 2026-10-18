@@ -215,6 +215,17 @@ RSpec.describe 'story rake tasks' do
       expect(tracker.reload.api_token).to eq('new-secret')
     end
 
+    it 'replaces a token stored under encryption keys the app no longer has' do
+      old_keys = ActiveRecord::Encryption::DerivedSecretKeyProvider.new('a-primary-key-since-replaced')
+      unreadable = ActiveRecord::Encryption.with_encryption_context(key_provider: old_keys) do
+        create(:tracker, :shortcut, workflow_id: '600', api_token: 'old-secret')
+      end
+
+      expect { Rake::Task['trackers:set_token'].invoke(unreadable.id.to_s) }
+        .to output(/Replaced the token for tracker #{unreadable.id}/).to_stdout
+      expect(Tracker.find(unreadable.id).api_token).to eq('new-secret')
+    end
+
     it 'refuses before asking for a token when the encryption keys are not set' do
       allow(ActiveRecord::Encryption.config).to receive(:primary_key)
         .and_raise(ActiveRecord::Encryption::Errors::Configuration, 'Missing Active Record encryption credential')

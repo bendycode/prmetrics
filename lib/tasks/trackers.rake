@@ -110,8 +110,16 @@ namespace :trackers do
       exit 1
     end
 
-    tracker.api_token = TokenPrompt.read('SHORTCUT_API_TOKEN')
-    unless tracker.save
+    # The new token is encrypted here and saved with encryption off, so the
+    # save never decrypts the stored one to compare: after the keys change
+    # that raises, and replacing every token after a key change is what this
+    # task is for. Validations still run.
+    ciphertext = Tracker.type_for_attribute(:api_token).serialize(TokenPrompt.read('SHORTCUT_API_TOKEN'))
+    saved = ActiveRecord::Encryption.without_encryption do
+      tracker.api_token = ciphertext
+      tracker.save
+    end
+    unless saved
       puts "Error: #{tracker.errors.full_messages.to_sentence}"
       exit 1
     end
