@@ -111,6 +111,18 @@ RSpec.describe ShortcutStoryHistory do
     expect(ids.uniq.size).to be(1)
   end
 
+  # A link is stored at its first appearance, so that has to be its earliest
+  it 'reads entries in time order, whatever order they arrive in' do
+    later = { 'id' => 'p-9', 'changed_at' => '2026-09-20T15:00:00Z',
+              'actions' => [{ 'id' => 8101, 'entity_type' => 'pull-request', 'action' => 'update' }] }
+    newest_first = (shortcut_fixture('history_7001') + [later]).reverse
+
+    linked = described_class.new(story_id: 7001, workflow: workflow, history: newest_first).events
+                            .find { |event| event[:kind] == :pull_request_linked }
+
+    expect(linked[:occurred_at]).to eq(Time.zone.parse('2026-09-08T15:00:00Z'))
+  end
+
   it 'reads an entry without actions as no events' do
     history = [{ 'id' => 'n-1', 'changed_at' => '2026-09-10T15:00:00Z', 'references' => [] }]
 

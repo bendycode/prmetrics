@@ -19,8 +19,10 @@ class ShortcutStoryHistory
     @history = history
   end
 
+  # In time order, so a link's first appearance is its earliest
   def events
-    @history.flat_map do |entry|
+    @history.each_with_index.sort_by { |entry, index| [Time.zone.parse(entry['changed_at']), index] }
+            .flat_map do |entry, _index|
       Array(entry['actions']).filter_map { |action| story_event(entry, action) }
     end
   end
