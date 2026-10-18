@@ -125,6 +125,13 @@ rake weeks:update_stats
 # Measure cycle time from a repository's own GitHub issues, keyed PRM-NNN
 rake trackers:create_github_issues[owner/repo,PRM]
 
+# Measure cycle time from a Shortcut workflow, covering the named repositories;
+# the token comes from SHORTCUT_API_TOKEN or a hidden prompt, never an argument
+rake trackers:create_shortcut[workflow_id,owner/repo,owner/other]
+
+# Replace a Shortcut tracker's token, the same way
+rake trackers:set_token[tracker_id]
+
 # Sync every tracker's stories and recompute their cycle times
 rake sync:stories
 ```
@@ -147,7 +154,7 @@ rake sync:stories
 - **User**: Generic user model for reviewers
 - **GithubUser**: GitHub-specific user data for PR authors
 - **PullRequestUser**: Join table linking users to PRs; the sync writes only the author row
-- **Tracker**: Where a project's stories live (GitHub issues for now); covers one or more repositories, and a GitHub issues tracker reads its source repository's issues
+- **Tracker**: Where a project's stories live, a repository's GitHub issues or a Shortcut workflow; covers one or more repositories. A GitHub issues tracker reads its source repository's issues with `GITHUB_ACCESS_TOKEN`; a Shortcut tracker keeps its own API token, encrypted
 - **Story**: One piece of work in a tracker, with its committed, started, and done times
 - **StoryEvent**: One event in a story's history, kept raw so the times can be derived again
 
@@ -252,6 +259,23 @@ requests.
 Browser checks against production go through prmetrics.io. The session cookie is
 scoped to whichever host set it, so a browser signed in on prmetrics.io is sent
 to the sign-in page on the Heroku hostname.
+
+### Encryption Keys for Tracker Tokens
+A Shortcut tracker's API token is stored with Active Record encryption.
+Production reads its keys from `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` and
+`ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT`; without them, creating a
+Shortcut tracker or syncing one raises, and nothing else is affected. Generate
+them with `bin/rails db:encryption:init` in a terminal outside Claude Code and
+set them with `heroku config:set`, so they never enter a session transcript.
+Changing or losing them makes every stored token unreadable: keep a copy, and
+replace each tracker's token with `trackers:set_token` after a change.
+
+A Shortcut token carries the full access of the member who created it, and
+Shortcut offers no read-only token. Create it from the member with the least
+access that can read the workflow; the sync only reads.
+
+Development uses fixed keys, which are public, unless the variables are set;
+test always does. A Heroku dyno never takes them.
 
 ### Run a Sync After a Deploy That Changes the Worker
 After a deploy that changes Sidekiq, redis-client, or the sync code, start a
