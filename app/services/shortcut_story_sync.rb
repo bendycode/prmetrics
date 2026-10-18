@@ -22,11 +22,11 @@ class ShortcutStorySync
     listed_at = Time.current
     workflow = @shortcut.workflow(@tracker.workflow_id)
     done_states = workflow['states'].select { |state| state['type'] == 'done' }.pluck('id')
-    stories = workflow['states'].flat_map { |state| @shortcut.stories_in_state(state['id']) }
-                                .select { |story| @tracker.reads_team?(story['group_id']) }
+    listed = workflow['states'].flat_map { |state| @shortcut.stories_in_state(state['id']) }
+    stories, other_teams = listed.partition { |story| @tracker.reads_team?(story['group_id']) }
 
     failures, stopped = store_changed(stories, workflow, done_states, listed_at)
-    mark_gone(stories) unless stopped
+    failures += mark_gone(stories, other_teams) unless stopped
     measure_stories
     report(failures, stopped)
   end
@@ -46,11 +46,7 @@ class ShortcutStorySync
       store_story(story, workflow, done_states, listed_at)
       in_a_row = 0
     rescue StandardError => e
-      # The class alone: production logs reach the nightly workflow's log,
-      # which is public
-      key = @tracker.story_key(story['id'])
-      Rails.logger.error "Story sync could not store story #{key}: #{e.class}"
-      failures << "#{key} (#{e.class})"
+      failures << failure(story['id'], e)
       in_a_row += 1
       return [failures, true] if in_a_row >= FAILURES_IN_A_ROW_LIMIT
     end
@@ -92,15 +88,22 @@ class ShortcutStorySync
             .pluck(:external_id, :source_updated_at).to_h
   end
 
-  # A story the workflow no longer lists was deleted, or moved to another
-  # workflow or to a team the tracker does not read. The listing reads one
-  # state at a time, and a story moving between states can miss it, so a
-  # missing story is read on its own before it is marked gone.
-  def mark_gone(stories)
-    listed = stories.map { |story| story['id'].to_s }
-    @tracker.stories.where(gone: false).where.not(external_id: listed).find_each do |story|
+  # A story the listing shows in a team the tracker does not read is gone at
+  # once. One the workflow no longer lists was deleted, or moved to another
+  # workflow or team; the listing reads one state at a time, and a story
+  # moving between states can miss it, so it is read on its own before it is
+  # marked gone. The failures to read it are returned.
+  def mark_gone(stories, other_teams)
+    @tracker.stories.where(gone: false, external_id: other_teams.map { |story| story['id'].to_s })
+            .find_each { |story| story.update!(gone: true) }
+
+    listed = (stories + other_teams).map { |story| story['id'].to_s }
+    @tracker.stories.where(gone: false).where.not(external_id: listed).filter_map do |story|
       found = @shortcut.story(story.external_id.to_i)
       story.update!(gone: true) unless found && read?(found)
+      nil
+    rescue StandardError => e
+      failure(story.external_id, e)
     end
   end
 
@@ -112,6 +115,14 @@ class ShortcutStorySync
     @tracker.stories.includes(:events).find_each do |story|
       story.measure(@tracker.triggers)
     end
+  end
+
+  # Logged by tracker and error class alone: production logs reach the
+  # nightly workflow's public log, and a story's number is the workspace's
+  # own. The failure named for the report keeps the story's key.
+  def failure(story_id, error)
+    Rails.logger.error "Story sync could not store a story of tracker #{@tracker.id}: #{error.class}"
+    "#{@tracker.story_key(story_id)} (#{error.class})"
   end
 
   def report(failures, stopped)

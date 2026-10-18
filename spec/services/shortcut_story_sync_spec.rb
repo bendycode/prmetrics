@@ -99,12 +99,14 @@ RSpec.describe ShortcutStorySync do
     expect(shortcut).to have_received(:history).exactly(3).times
   end
 
-  it 'logs a failure by story key and error class, never the message' do
+  # The production log reaches the nightly workflow's public log, and a story's number is the workspace's own
+  it 'logs a failure by tracker and error class, never the story or the message' do
     allow(Rails.logger).to receive(:error)
     allow(shortcut).to receive(:history).with(7002).and_raise(ShortcutService::Error, 'Shortcut answered 500 to GET x')
 
     expect { sync.sync! }.to raise_error(described_class::StoriesFailed)
-    expect(Rails.logger).to have_received(:error).with('Story sync could not store story sc-7002: ShortcutService::Error')
+    expect(Rails.logger).to have_received(:error)
+      .with("Story sync could not store a story of tracker #{tracker.id}: ShortcutService::Error")
   end
 
   describe 'for a tracker limited to some teams' do
@@ -121,7 +123,18 @@ RSpec.describe ShortcutStorySync do
       expect(tracker.stories.pluck(:external_id)).to contain_exactly('7001', '7002', '7003')
     end
 
-    it 'marks a stored story gone once it belongs to another team' do
+    it 'marks a stored story gone once the listing shows it belongs to another team, without reading it again' do
+      stored = create(:story, tracker: tracker, external_id: '7008', key: 'sc-7008')
+      allow(shortcut).to receive(:story)
+
+      sync.sync!
+
+      expect(stored.reload).to be_gone
+      expect(shortcut).not_to have_received(:story)
+    end
+
+    it 'marks a stored story gone once a direct read finds it belongs to another team' do
+      allow(shortcut).to receive(:stories_in_state).with(105).and_return(shortcut_fixture('search_state_105'))
       stored = create(:story, tracker: tracker, external_id: '7008', key: 'sc-7008')
       allow(shortcut).to receive(:story).with(7008).and_return(other_team)
 
@@ -156,6 +169,14 @@ RSpec.describe ShortcutStorySync do
 
       sync.sync!
 
+      expect(unlisted.reload).not_to be_gone
+    end
+
+    it 'is reported when it cannot be read, after every story is measured' do
+      allow(shortcut).to receive(:story).with(7004).and_raise(ShortcutService::Error, 'Shortcut answered 500')
+
+      expect { sync.sync! }.to raise_error(described_class::StoriesFailed, /sc-7004/)
+      expect(tracker.stories.find_by(external_id: '7001').done_at).to eq(Time.zone.parse('2026-09-12T16:00:00Z'))
       expect(unlisted.reload).not_to be_gone
     end
 
