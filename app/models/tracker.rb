@@ -32,6 +32,8 @@ class Tracker < ApplicationRecord
   store_accessor :config, :key_prefix, :workflow_id
   encrypts :api_token
 
+  scope :reading_workflow, ->(workflow_id) { shortcut.where("config->>'workflow_id' = ?", workflow_id.to_s) }
+
   # A user sees a tracker when they were granted any of the repositories it
   # covers, so a tracker shared by several repositories shows every story in
   # it to each of their users.
@@ -43,6 +45,8 @@ class Tracker < ApplicationRecord
   validates :source_repository, presence: true, if: :github_issues?
   validates :source_repository, absence: true, if: :shortcut?
   validates :api_token, :workflow_id, presence: true, if: :shortcut?
+  validates :workflow_id, format: { with: /\A\d+\z/, allow_blank: true }, if: :shortcut?
+  validate :workflow_read_once, if: :shortcut?
   validates :key_prefix, format: { with: /\A[A-Z][A-Z0-9]*\z/ },
                          allow_blank: true
   validates :source_repository_id, uniqueness: true, allow_nil: true
@@ -72,6 +76,13 @@ class Tracker < ApplicationRecord
   end
 
   private
+
+  # Two trackers reading one workflow would each store, and count, every story
+  def workflow_read_once
+    return if workflow_id.blank? || !Tracker.reading_workflow(workflow_id).where.not(id: id).exists?
+
+    errors.add(:workflow_id, 'is already read by another Shortcut tracker')
+  end
 
   def kind_details
     KINDS.fetch(kind)

@@ -21,11 +21,16 @@ RSpec.describe Tracker do
 
     it { is_expected.to validate_presence_of(:api_token) }
     it { is_expected.to validate_presence_of(:workflow_id) }
+    it { is_expected.to validate_absence_of(:source_repository) }
+    it { is_expected.to allow_value('500', '1').for(:workflow_id) }
+    it { is_expected.not_to allow_value('owner/repo', '12x', '-1').for(:workflow_id) }
 
-    it 'reads no source repository' do
-      tracker.source_repository = build(:repository)
+    it 'refuses a workflow another Shortcut tracker reads, which would count its stories twice' do
+      create(:tracker, :shortcut, workflow_id: '500')
+      tracker.workflow_id = '500'
 
       expect(tracker).not_to be_valid
+      expect(tracker.errors[:workflow_id]).to include('is already read by another Shortcut tracker')
     end
 
     it 'is valid with a token and a workflow alone' do
@@ -42,6 +47,7 @@ RSpec.describe Tracker do
       expect(tracker.reload.api_token).to eq('shortcut-token-1234')
     end
 
+    # The filter_parameters entry for token does this, encrypts or not
     it 'leaves its token out of inspect' do
       tracker.api_token = 'shortcut-token-1234'
 
