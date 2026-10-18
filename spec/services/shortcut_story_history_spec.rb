@@ -23,7 +23,7 @@ RSpec.describe ShortcutStoryHistory do
   it 'records a status move\'s states, with the workflow\'s first state marked' do
     move = events('history_7001').find { |event| event[:kind] == :status_changed }
 
-    expect(move[:payload]).to eq(
+    expect(move[:payload]).to include(
       'from' => state(101, 'Inbox', 'backlog', 0, first: true), 'to' => state(102, 'Ready', 'unstarted', 1)
     )
   end
@@ -31,7 +31,8 @@ RSpec.describe ShortcutStoryHistory do
   it 'records the state a story was created in' do
     created = events('history_created_ready', story_id: 7006).first
 
-    expect(created).to include(kind: :opened, payload: { 'state' => state(102, 'Ready', 'unstarted', 1) })
+    expect(created).to include(kind: :opened)
+    expect(created[:payload]).to include('state' => state(102, 'Ready', 'unstarted', 1))
   end
 
   it 'reads a commit as a commit reference' do
@@ -55,6 +56,65 @@ RSpec.describe ShortcutStoryHistory do
     to = described_class.new(story_id: 7001, workflow: workflow, history: history).events.sole[:payload]['to']
 
     expect(to).to eq(state(301, 'Elsewhere', 'started', nil))
+  end
+
+  # Positions are a workflow's own; a state in another workflow is never this one's first
+  it 'marks no state outside the workflow as its first, whatever position its reference gives' do
+    history = [{ 'id' => 'x-2', 'changed_at' => '2026-09-10T15:00:00Z',
+                 'actions' => [{ 'id' => 7001, 'entity_type' => 'story', 'action' => 'update',
+                                 'changes' => { 'workflow_state_id' => { 'old' => 301, 'new' => 101 } } }],
+                 'references' => [{ 'id' => 301, 'entity_type' => 'epic', 'name' => 'Not a state' },
+                                  { 'id' => 301, 'entity_type' => 'workflow-state', 'name' => 'Elsewhere',
+                                    'type' => 'backlog', 'position' => 0 }] }]
+
+    from = described_class.new(story_id: 7001, workflow: workflow, history: history).events.sole[:payload]['from']
+
+    expect(from).to include('name' => 'Elsewhere', 'first' => false)
+  end
+
+  it 'keeps the action a status move came from, as Shortcut recorded it' do
+    move = events('history_7001').find { |event| event[:kind] == :status_changed }
+
+    expect(move[:payload]['action']).to include('entity_type' => 'story', 'action' => 'update')
+  end
+
+  it 'keeps the action a link came from, as Shortcut recorded it' do
+    branch = events('history_7001').find { |event| event[:kind] == :branch_linked }
+
+    expect(branch).to include(occurred_at: Time.zone.parse('2026-09-05T17:00:00Z'))
+    expect(branch[:payload]).to eq('action' => { 'id' => 8001, 'entity_type' => 'branch', 'action' => 'push' })
+  end
+
+  it 'reads the story\'s own actions whether its ID comes as a number or a string' do
+    expect(events('history_7001', story_id: '7001').pluck(:kind)).to include(:opened, :status_changed)
+  end
+
+  it 'gives two links in one entry an event each' do
+    history = [{ 'id' => 'z-1', 'changed_at' => '2026-09-10T15:00:00Z',
+                 'actions' => [{ 'id' => 8001, 'entity_type' => 'commit', 'action' => 'create' },
+                               { 'id' => 8002, 'entity_type' => 'commit', 'action' => 'create' }] }]
+
+    ids = described_class.new(story_id: 7001, workflow: workflow, history: history).events.pluck(:external_id)
+
+    expect(ids.uniq.size).to be(2)
+  end
+
+  # A pull request is linked once, however often it changes afterward
+  it 'gives a linked pull request one ID, whichever entry mentions it' do
+    later = { 'id' => 'p-9', 'changed_at' => '2026-09-20T15:00:00Z',
+              'actions' => [{ 'id' => 8101, 'entity_type' => 'pull-request', 'action' => 'update' }] }
+    history = shortcut_fixture('history_7001') + [later]
+
+    ids = described_class.new(story_id: 7001, workflow: workflow, history: history).events
+                         .select { |event| event[:kind] == :pull_request_linked }.pluck(:external_id)
+
+    expect(ids.uniq.size).to be(1)
+  end
+
+  it 'reads an entry without actions as no events' do
+    history = [{ 'id' => 'n-1', 'changed_at' => '2026-09-10T15:00:00Z', 'references' => [] }]
+
+    expect(described_class.new(story_id: 7001, workflow: workflow, history: history).events).to be_empty
   end
 
   it 'ignores what an entry records about other stories' do

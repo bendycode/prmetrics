@@ -13,7 +13,7 @@ class ShortcutStoryHistory
   }.freeze
 
   def initialize(story_id:, workflow:, history:)
-    @story_id = story_id
+    @story_id = Integer(story_id)
     @states = workflow.fetch('states').index_by { |state| state['id'] }
     @first_position = @states.values.pluck('position').min
     @history = history
@@ -21,38 +21,46 @@ class ShortcutStoryHistory
 
   def events
     @history.flat_map do |entry|
-      entry['actions'].filter_map { |action| story_event(entry, action) }
+      Array(entry['actions']).filter_map { |action| story_event(entry, action) }
     end
   end
 
   private
 
   def story_event(entry, action)
-    kind, payload = kind_and_payload(entry, action)
+    kind, payload, external_id = event_parts(entry, action)
     return unless kind
 
-    { external_id: "#{entry['id']}:#{kind}", kind: kind, occurred_at: Time.zone.parse(entry['changed_at']),
-      payload: payload }
+    { external_id: external_id, kind: kind, occurred_at: Time.zone.parse(entry['changed_at']), payload: payload }
   end
 
-  def kind_and_payload(entry, action)
-    return [LINK_KINDS[action['entity_type']], { 'action' => action }] if LINK_KINDS.key?(action['entity_type'])
+  # A link is keyed on what was linked, so every later action on the same
+  # pull request or branch is the event already stored: it was linked once,
+  # at its first appearance.
+  def event_parts(entry, action)
+    if (kind = LINK_KINDS[action['entity_type']])
+      return [kind, { 'action' => action }, "#{kind}:#{action['id']}"]
+    end
     return unless action['entity_type'] == 'story' && action['id'] == @story_id
 
     if action['action'] == 'create'
-      [:opened, { 'state' => state(action['workflow_state_id'], entry) }]
+      [:opened, { 'state' => state(action['workflow_state_id'], entry), 'action' => action },
+       "#{entry['id']}:opened"]
     elsif (move = action.dig('changes', 'workflow_state_id'))
-      [:status_changed, { 'from' => state(move['old'], entry), 'to' => state(move['new'], entry) }]
+      [:status_changed, { 'from' => state(move['old'], entry), 'to' => state(move['new'], entry), 'action' => action },
+       "#{entry['id']}:status_changed"]
     end
   end
 
   # A state another workflow holds, as when the story was moved there, is
-  # known only from the entry's own reference to it.
+  # known only from the entry's own reference to it, and is never this
+  # workflow's first, whatever position its own workflow gives it.
   def state(id, entry)
-    known = @states[id] || (entry['references'] || []).find do |reference|
+    known = @states[id]
+    described = known || Array(entry['references']).find do |reference|
       reference['entity_type'] == 'workflow-state' && reference['id'] == id
     end || {}
-    { 'id' => id, 'name' => known['name'], 'type' => known['type'], 'position' => known['position'],
-      'first' => known.key?('position') && known['position'] == @first_position }
+    { 'id' => id, 'name' => described['name'], 'type' => described['type'], 'position' => known&.dig('position'),
+      'first' => known.present? && known['position'] == @first_position }
   end
 end
