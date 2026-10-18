@@ -5,7 +5,9 @@ class CycleTimeReport
   CLOCKS = %w[committed started].freeze
   DEFAULT_CLOCK = CLOCKS.first
 
-  attr_reader :tracker, :clock
+  attr_reader :clock
+
+  delegate :story_noun, to: :@tracker
 
   def initialize(tracker, clock:)
     @tracker = tracker
