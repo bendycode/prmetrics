@@ -3,8 +3,7 @@ class TrackersController < ApplicationController
     @tracker = policy_scope(Tracker).find(params[:id])
     authorize @tracker
     @report = CycleTimeReport.new(@tracker, clock: clock_param)
-    # A tracker can cover repositories the viewer was not granted
-    @repository_names = @tracker.repositories.visible_to(current_user).order(:name).pluck(:name)
+    @repository_names = policy_scope(@tracker.repositories).order(:name).pluck(:name)
   end
 
   private
