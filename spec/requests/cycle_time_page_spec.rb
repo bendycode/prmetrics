@@ -51,6 +51,15 @@ RSpec.describe 'Cycle Time page' do
     expect(response).to have_http_status(:not_found)
   end
 
+  it 'is not found for a Shortcut tracker covering only repositories the user was not granted' do
+    shortcut_tracker = create(:tracker, :shortcut)
+    create(:repository, tracker: shortcut_tracker)
+
+    get tracker_path(shortcut_tracker)
+
+    expect(response).to have_http_status(:not_found)
+  end
+
   it 'sends a signed-out visitor to sign in' do
     sign_out user
 

@@ -93,6 +93,14 @@ RSpec.describe 'Repository cascade delete' do
       expect(tracker.reload.repositories).to be_empty
     end
 
+    it 'leaves a Shortcut tracker, which reads no repository, when its last covered repository goes' do
+      tracker = create(:tracker, :shortcut)
+      repository.update!(tracker: tracker)
+
+      expect { repository.destroy }.not_to change(Tracker, :count)
+      expect(tracker.reload.repositories).to be_empty
+    end
+
     it 'handles repositories with no associations gracefully' do
       empty_repo = create(:repository)
       expect { empty_repo.destroy }.not_to raise_error
