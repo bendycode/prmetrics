@@ -45,7 +45,7 @@ class Tracker < ApplicationRecord
   validates :source_repository, presence: true, if: :github_issues?
   validates :source_repository, absence: true, if: :shortcut?
   validates :api_token, :workflow_id, presence: true, if: :shortcut?
-  validates :workflow_id, format: { with: /\A\d+\z/, allow_blank: true }, if: :shortcut?
+  validates :workflow_id, format: { with: /\A[1-9]\d*\z/, allow_blank: true }, if: :shortcut?
   validate :workflow_read_once, if: :shortcut?
   validates :key_prefix, format: { with: /\A[A-Z][A-Z0-9]*\z/ },
                          allow_blank: true

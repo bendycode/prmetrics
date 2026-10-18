@@ -15,5 +15,7 @@ module TrackerCoverage
         repository.update!(tracker: tracker)
       end
     end
+  rescue ActiveRecord::RecordNotUnique
+    raise AlreadyCovered, 'Another tracker for the same source was created at the same time'
   end
 end

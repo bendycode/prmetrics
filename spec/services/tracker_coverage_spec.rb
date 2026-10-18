@@ -11,6 +11,15 @@ RSpec.describe TrackerCoverage do
     expect([first.reload.tracker, second.reload.tracker]).to all(eq(tracker))
   end
 
+  it 'reports a tracker the database refuses as a duplicate as already covered' do
+    create(:tracker, :shortcut, workflow_id: '500')
+    duplicate = build(:tracker, :shortcut, workflow_id: '500')
+    allow(duplicate).to receive(:valid?).and_return(true)
+
+    expect { described_class.cover!(duplicate, [first]) }
+      .to raise_error(described_class::AlreadyCovered, /created at the same time/)
+  end
+
   # As when another run covered a repository while this one waited for its token
   it 'refuses, writing nothing, when a repository was covered after it was read' do
     stale = Repository.find(second.id)

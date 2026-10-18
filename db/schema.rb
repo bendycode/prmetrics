@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_10_18_130001) do
+ActiveRecord::Schema[7.2].define(version: 2026_10_18_140001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -163,6 +163,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_18_130001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "api_token"
+    t.index "((config ->> 'workflow_id'::text))", name: "index_trackers_on_shortcut_workflow", unique: true, where: "(kind = 1)"
     t.index ["source_repository_id"], name: "index_trackers_on_source_repository_id", unique: true
   end
 

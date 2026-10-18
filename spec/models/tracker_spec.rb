@@ -23,7 +23,14 @@ RSpec.describe Tracker do
     it { is_expected.to validate_presence_of(:workflow_id) }
     it { is_expected.to validate_absence_of(:source_repository) }
     it { is_expected.to allow_value('500', '1').for(:workflow_id) }
-    it { is_expected.not_to allow_value('owner/repo', '12x', '-1').for(:workflow_id) }
+    it { is_expected.not_to allow_value('owner/repo', '12x', '-1', '0500', '0').for(:workflow_id) }
+
+    it 'refuses a second tracker for a workflow even when the first was saved past its checks' do
+      create(:tracker, :shortcut, workflow_id: '500')
+      duplicate = build(:tracker, :shortcut, workflow_id: '500')
+
+      expect { duplicate.save!(validate: false) }.to raise_error(ActiveRecord::RecordNotUnique)
+    end
 
     it 'refuses a workflow another Shortcut tracker reads, which would count its stories twice' do
       create(:tracker, :shortcut, workflow_id: '500')
