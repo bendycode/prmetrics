@@ -8,9 +8,11 @@ class ShortcutService
   # Doubling from the interval, the waits add up to over two minutes, past
   # the minute a rate limit counts over
   RETRIES = 7
-  # A response asking for a longer wait than this, as a reset given as a
-  # timestamp would, is answered as it came instead of slept on
+  # A response asking for a longer wait than this is answered as it came
+  # instead of slept on
   LONGEST_WAIT = 120
+  # A wait header holding a number past this is a Unix timestamp, not seconds
+  TIMESTAMP_FLOOR = 1_000_000_000
   # Every request only reads, so a server's passing failure is retried too
   RETRY_STATUSES = [429, 500, 502, 503, 504].freeze
 
@@ -51,6 +53,21 @@ class ShortcutService
     "#<#{self.class.name}>"
   end
 
+  # Seconds to wait for a Retry-After or RateLimit-Reset value, which can be
+  # a count of seconds, an HTTP date, or the Unix timestamp of the reset;
+  # nil without one, so the backoff applies.
+  def self.wait_for(value)
+    return if value.blank?
+
+    number = Float(value, exception: false)
+    return [number - Time.now.to_f, 0].max if number && number > TIMESTAMP_FLOOR
+    return number if number
+
+    Time.httpdate(value) - Time.current
+  rescue ArgumentError
+    nil
+  end
+
   private
 
   def connection(token, adapter, retry_interval)
@@ -62,7 +79,7 @@ class ShortcutService
       faraday.request :retry, max: RETRIES, interval: retry_interval, backoff_factor: 2,
                               max_interval: LONGEST_WAIT, retry_statuses: RETRY_STATUSES, methods: %i[get post],
                               exceptions: Faraday::Retry::Middleware::DEFAULT_EXCEPTIONS + [Faraday::ConnectionFailed],
-                              retry_block: method(:log_retry)
+                              header_parser_block: self.class.method(:wait_for), retry_block: method(:log_retry)
       faraday.response :json
       faraday.adapter(*Array(adapter))
     end
