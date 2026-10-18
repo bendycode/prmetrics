@@ -23,6 +23,7 @@ class Tracker < ApplicationRecord
     # with code linked to it as the fallbacks; done on a move into a done
     # state, and undone by a move back out of one.
     'shortcut' => {
+      sync: ShortcutStorySync,
       story_noun: 'story',
       story_url_prefix: 'https://app.shortcut.com/',
       triggers: {
@@ -92,9 +93,12 @@ class Tracker < ApplicationRecord
     url.to_s.start_with?(kind_details[:story_url_prefix])
   end
 
-  # The project's own name for a story, PRJ-NNN where it declares a key
-  # prefix, and GitHub's #NNN otherwise.
+  # The project's own name for a story: Shortcut's sc-NNN for a Shortcut
+  # story, PRJ-NNN where a GitHub tracker declares a key prefix, and GitHub's
+  # #NNN otherwise.
   def story_key(number)
+    return "sc-#{number}" if shortcut?
+
     key_prefix.present? ? "#{key_prefix}-#{number}" : "##{number}"
   end
 
