@@ -36,6 +36,15 @@ RSpec.describe 'Cycle Time page' do
 
       expect(page).to have_css('h1', exact_text: 'Cycle Time: granted/visible')
     end
+
+    # An admin still reaches a tracker that covers no repository
+    it 'is the page\'s name alone when the tracker covers no repository' do
+      sign_in create(:user, :admin)
+
+      visit tracker_path(create(:tracker))
+
+      expect(page).to have_css('h1', exact_text: 'Cycle Time')
+    end
   end
 
   context 'with finished issues' do

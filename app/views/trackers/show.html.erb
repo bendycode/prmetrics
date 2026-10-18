@@ -1,4 +1,4 @@
-<h1>Cycle Time: <%= @repository_names.to_sentence %></h1>
+<h1>Cycle Time<%= ": #{@repository_names.to_sentence}" if @repository_names.any? %></h1>
 
 <ul class="nav nav-pills mb-3">
   <% CycleTimeReport::CLOCKS.each do |clock| %>
