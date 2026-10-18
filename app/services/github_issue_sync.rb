@@ -1,13 +1,20 @@
 # Reads a GitHub issues tracker's issues and their timelines into stories,
 # then measures every story in the tracker again from its events.
-class StorySyncService
+class GithubIssueSync
   # Raised once a sync has stored and measured every issue it could, naming
   # the ones it could not.
   class IssuesFailed < StandardError; end
 
-  def initialize(tracker, github: GithubService.new(ENV.fetch('GITHUB_ACCESS_TOKEN', nil)))
+  # Raised before any GitHub call when the token the sync reads with is unset.
+  class MissingToken < StandardError
+    def initialize(msg = 'GITHUB_ACCESS_TOKEN environment variable is not set')
+      super
+    end
+  end
+
+  def initialize(tracker, github: nil)
     @tracker = tracker
-    @github = github
+    @github = github || GithubService.new(ENV.fetch('GITHUB_ACCESS_TOKEN', nil).presence || raise(MissingToken))
     @repo_name = tracker.source_repository.name
   end
 

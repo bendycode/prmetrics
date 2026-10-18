@@ -11,6 +11,9 @@ class Tracker < ApplicationRecord
     }
   }.freeze
 
+  # The service that reads each kind of tracker's stories into prmetrics.
+  SYNCS = { 'github_issues' => 'GithubIssueSync' }.freeze
+
   belongs_to :source_repository, class_name: 'Repository', optional: true, inverse_of: :issue_tracker
   has_many :repositories, dependent: :nullify
   has_many :stories, dependent: :destroy
@@ -33,6 +36,10 @@ class Tracker < ApplicationRecord
 
   def triggers
     TRIGGERS.fetch(kind)
+  end
+
+  def sync!
+    SYNCS.fetch(kind).constantize.new(self).sync!
   end
 
   # The project's own name for a story, PRJ-NNN where it declares a key

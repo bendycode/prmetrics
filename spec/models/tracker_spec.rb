@@ -26,6 +26,18 @@ RSpec.describe Tracker do
     end
   end
 
+  describe '#sync!' do
+    it 'syncs a GitHub issues tracker through the GitHub issue sync' do
+      tracker = build(:tracker)
+      sync = instance_double(GithubIssueSync, sync!: nil)
+      allow(GithubIssueSync).to receive(:new).with(tracker).and_return(sync)
+
+      tracker.sync!
+
+      expect(sync).to have_received(:sync!)
+    end
+  end
+
   describe 'one tracker per source repository' do
     subject(:tracker) { create(:tracker) }
 
