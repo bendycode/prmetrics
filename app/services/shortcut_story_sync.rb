@@ -21,6 +21,9 @@ class ShortcutStorySync
   def sync!
     listed_at = Time.current
     workflow = @shortcut.workflow(@tracker.workflow_id)
+    # Moving or adding a state changes what stored moves mean, and touches no
+    # story, so a changed workflow has every story read again
+    @read_all = @full || workflow['updated_at'] != @tracker.workflow_updated_at
     done_states = workflow['states'].select { |state| state['type'] == 'done' }.pluck('id')
     listed = workflow['states'].flat_map { |state| @shortcut.stories_in_state(state['id']) }
     stories, other_teams = listed.partition { |story| @tracker.reads_team?(story['group_id']) }
@@ -28,6 +31,9 @@ class ShortcutStorySync
     failures, stopped = store_changed(stories, workflow, done_states, listed_at)
     failures += mark_gone(stories, other_teams) unless stopped
     measure_stories
+    # Only once every story was read: one that failed keeps the payload of
+    # the workflow before
+    @tracker.update!(workflow_updated_at: workflow['updated_at']) if failures.empty?
     report(failures, stopped)
   end
 
@@ -41,7 +47,7 @@ class ShortcutStorySync
     failures = []
     in_a_row = 0
     stories.each do |story|
-      next if !@full && stored[story['id'].to_s] == Time.zone.parse(story['updated_at'])
+      next if !@read_all && stored[story['id'].to_s] == Time.zone.parse(story['updated_at'])
 
       store_story(story, workflow, done_states, listed_at)
       in_a_row = 0
