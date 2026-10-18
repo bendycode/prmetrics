@@ -39,6 +39,12 @@ module PrAnalyze
     # Use Sidekiq for Active Job
     config.active_job.queue_adapter = :sidekiq
 
+    # Keys for Active Record encryption, which keeps each tracker's API token
+    # unreadable in the database. Without them, reading or writing a token
+    # raises; nothing else in the app needs them.
+    config.active_record.encryption.primary_key = ENV.fetch('ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY', nil)
+    config.active_record.encryption.key_derivation_salt = ENV.fetch('ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT', nil)
+
     # Don't generate system test files.
     config.generators.system_tests = nil
 
