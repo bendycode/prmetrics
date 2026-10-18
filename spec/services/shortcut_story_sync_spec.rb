@@ -133,6 +133,15 @@ RSpec.describe ShortcutStorySync do
     expect(tracker.stories.pluck(:external_id)).to contain_exactly('7001', '7003')
   end
 
+  it 'stores the other stories when one is listed with no update time, then reports it' do
+    broken = shortcut_fixture('story_7001').merge('id' => 7009, 'workflow_state_id' => 103, 'updated_at' => nil)
+    allow(shortcut).to receive(:stories_in_state).with(103).and_return([broken])
+    allow(shortcut).to receive(:history).with(7009).and_return(history_for(7009))
+
+    expect { sync.sync! }.to raise_error(described_class::StoriesFailed, /sc-7009/)
+    expect(tracker.stories.pluck(:external_id)).to include('7001', '7002')
+  end
+
   # Each request already retried for two minutes; an outage would otherwise cost that per story
   it 'stops after three stories in a row cannot be read' do
     many = (1..6).map { |n| shortcut_fixture('story_7001').merge('id' => 7100 + n) }

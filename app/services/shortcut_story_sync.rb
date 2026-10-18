@@ -43,11 +43,13 @@ class ShortcutStorySync
   end
 
   # A story moving while the listing runs can appear in two states; its
-  # newest update is the one stored
+  # newest update is the one stored. Shortcut's times are UTC in one format,
+  # so they compare as text, and a missing one fails with its story when the
+  # story is stored rather than here.
   def listed
     @workflow['states'].flat_map { |state| @shortcut.stories_in_state(state['id']) }
                        .group_by { |story| story['id'] }
-                       .map { |_id, copies| copies.max_by { |story| Time.zone.parse(story['updated_at']) } }
+                       .map { |_id, copies| copies.max_by { |story| story['updated_at'].to_s } }
   end
 
   # Only once every story was read: one that failed keeps the payload of the
