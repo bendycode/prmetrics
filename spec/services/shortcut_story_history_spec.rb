@@ -123,6 +123,15 @@ RSpec.describe ShortcutStoryHistory do
     expect(linked[:occurred_at]).to eq(Time.zone.parse('2026-09-08T15:00:00Z'))
   end
 
+  # An entry without a time cannot be placed among the others
+  it 'skips an entry that gives no time' do
+    history = shortcut_fixture('history_7001') + [{ 'id' => 'q-1', 'actions' => [
+      { 'id' => 8301, 'entity_type' => 'commit', 'action' => 'create' }
+    ] }]
+
+    expect(described_class.new(story_id: 7001, workflow: workflow, history: history).events.size).to be(7)
+  end
+
   it 'reads an entry without actions as no events' do
     history = [{ 'id' => 'n-1', 'changed_at' => '2026-09-10T15:00:00Z', 'references' => [] }]
 

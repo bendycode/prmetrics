@@ -19,21 +19,24 @@ class ShortcutStoryHistory
     @history = history
   end
 
-  # In time order, so a link's first appearance is its earliest
+  # In time order, so a link's first appearance is its earliest. An entry
+  # with no time cannot be placed, and is skipped.
   def events
-    @history.each_with_index.sort_by { |entry, index| [Time.zone.parse(entry['changed_at']), index] }
-            .flat_map do |entry, _index|
-      Array(entry['actions']).filter_map { |action| story_event(entry, action) }
+    timed = @history.each_with_index.filter_map do |entry, index|
+      [Time.zone.parse(entry['changed_at']), index, entry] if entry['changed_at'].present?
+    end
+    timed.sort_by { |time, index, _entry| [time, index] }.flat_map do |time, _index, entry|
+      Array(entry['actions']).filter_map { |action| story_event(entry, action, time) }
     end
   end
 
   private
 
-  def story_event(entry, action)
+  def story_event(entry, action, time)
     kind, payload, external_id = event_parts(entry, action)
     return unless kind
 
-    { external_id: external_id, kind: kind, occurred_at: Time.zone.parse(entry['changed_at']), payload: payload }
+    { external_id: external_id, kind: kind, occurred_at: time, payload: payload }
   end
 
   # A link is keyed on what was linked, so every later action on the same
