@@ -8,6 +8,11 @@ class ShortcutService
   # Doubling from the interval, the waits add up to over two minutes, past
   # the minute a rate limit counts over
   RETRIES = 7
+  # A response asking for a longer wait than this, as a reset given as a
+  # timestamp would, is answered as it came instead of slept on
+  LONGEST_WAIT = 120
+  # Every request only reads, so a server's passing failure is retried too
+  RETRY_STATUSES = [429, 500, 502, 503, 504].freeze
 
   # Raised for any response the service cannot use. It names the request and
   # its status, never the token, and carries no cause: Faraday's errors can
@@ -55,7 +60,7 @@ class ShortcutService
       faraday.request :json
       # Story search is a POST that only reads, so it is retried like a GET
       faraday.request :retry, max: RETRIES, interval: retry_interval, backoff_factor: 2,
-                              retry_statuses: [429], methods: %i[get post],
+                              max_interval: LONGEST_WAIT, retry_statuses: RETRY_STATUSES, methods: %i[get post],
                               exceptions: Faraday::Retry::Middleware::DEFAULT_EXCEPTIONS + [Faraday::ConnectionFailed],
                               retry_block: method(:log_retry)
       faraday.response :json

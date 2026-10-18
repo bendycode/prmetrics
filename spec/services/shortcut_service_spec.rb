@@ -72,6 +72,23 @@ RSpec.describe ShortcutService do
   end
 
   # An error is inspected in consoles and error reports, and a cause comes along
+  it 'tries again after a server error' do
+    calls = 0
+    stubs.get('/api/v3/workflows/100') do
+      calls += 1
+      calls == 1 ? [503, {}, ''] : json_response('workflow')
+    end
+
+    expect(service.workflow(100)).to include('id' => 100)
+  end
+
+  # A reset given as a timestamp would otherwise read as a wait of decades
+  it 'gives up on a rate limit that asks for a wait longer than two minutes' do
+    stubs.get('/api/v3/workflows/100') { [429, { 'Retry-After' => '1800000000' }, ''] }
+
+    expect { service.workflow(100) }.to raise_error(described_class::Error, /429/)
+  end
+
   it 'raises for a response it cannot use, naming the request, with the token nowhere in the error' do
     stubs.get('/api/v3/workflows/100') { [500, {}, 'Internal Server Error'] }
 
