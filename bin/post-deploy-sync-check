@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -e
+
+# Runs one real sync through the production worker and waits for the worker
+# log to show it finish. The specs use the test queue adapter and the deploy's
+# health check pings Redis from the web process, so neither runs a job through
+# Sidekiq. Queueing from a one-off dyno needs no browser and no admin session.
+APP="${HEROKU_APP:-prmetrics-production}"
+REPOSITORY="${SYNC_CHECK_REPOSITORY:-bendycode/prmetrics}"
+TIMEOUT="${SYNC_CHECK_TIMEOUT:-300}"
+INTERVAL=10
+
+echo "📥 Queueing a sync of $REPOSITORY on $APP..."
+QUEUED=$(heroku run -x --no-tty -a "$APP" -- rails runner \
+  "puts \"post-deploy-sync-check jid=#{UnifiedSyncJob.perform_later(Repository.find_by!(name: '$REPOSITORY')).provider_job_id}\"" 2>&1 || true)
+JID=$(echo "$QUEUED" | grep -oE 'post-deploy-sync-check jid=[0-9a-f]+' | tail -1 | cut -d= -f2)
+if [ -z "$JID" ]; then
+  echo "❌ SYNC CHECK FAILED: queueing the job printed no job ID"
+  echo "$QUEUED" | tail -20
+  exit 1
+fi
+echo "   Job ID: $JID"
+
+# The worker logs each job as "class=... jid=...: start", then ": done" or
+# ": fail". Matching the job ID keeps an earlier sync's lines from counting.
+waited=0
+while [ "$waited" -lt "$TIMEOUT" ]; do
+  JOB_LINES=$(heroku logs -a "$APP" --dyno worker -n 1500 2>/dev/null | grep "jid=$JID" || true)
+  if echo "$JOB_LINES" | grep -q ': fail$'; then
+    echo "$JOB_LINES"
+    echo "❌ SYNC CHECK FAILED: the worker logged the job failing"
+    exit 1
+  fi
+  if echo "$JOB_LINES" | grep -q ': done$'; then
+    echo "$JOB_LINES"
+    echo "✅ Sync check passed: the worker ran the job to completion"
+    exit 0
+  fi
+  sleep "$INTERVAL"
+  waited=$((waited + INTERVAL))
+done
+
+echo "$JOB_LINES"
+echo "❌ SYNC CHECK FAILED: no done line for job $JID within ${TIMEOUT}s"
+echo "   Read the worker log: heroku logs -a $APP --dyno worker -n 500"
+exit 1
