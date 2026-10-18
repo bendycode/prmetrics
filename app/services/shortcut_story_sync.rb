@@ -135,8 +135,8 @@ class ShortcutStorySync
   # once. One the workflow no longer lists was deleted, or moved to another
   # workflow or team; the listing reads one state at a time, and a story
   # moving between states can miss it, so it is read on its own before it is
-  # marked gone, and its history read again when every story is. The failures
-  # to read it are returned.
+  # marked gone, and its history read again as a listed story's would be. The
+  # failures to read it are returned.
   def mark_gone(stories, other_teams)
     @tracker.stories.where(gone: false, external_id: other_teams.map { |story| story['id'].to_s })
             .find_each { |story| story.update!(gone: true) }
@@ -145,7 +145,7 @@ class ShortcutStorySync
     @tracker.stories.where(gone: false).where.not(external_id: listed).filter_map do |story|
       found = @shortcut.story(story.external_id.to_i)
       if found && read?(found)
-        store_story(found) if @read_all
+        store_story(found) unless unchanged?(found, @tracker.stored_updates([story.external_id]))
       else
         story.update!(gone: true)
       end

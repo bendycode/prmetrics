@@ -276,6 +276,18 @@ RSpec.describe ShortcutStorySync do
       expect(unlisted.reload).to have_attributes(gone: false, title: 'Story 7001')
     end
 
+    it 'has its history read again once Shortcut shows it changed' do
+      found = shortcut_fixture('story_7001').merge('id' => 7004)
+      allow(shortcut).to receive(:story).with(7004).and_return(found)
+      allow(shortcut).to receive(:history).with(7004).and_return(history_for(7004))
+      sync.sync!
+      allow(shortcut).to receive(:story).with(7004).and_return(found.merge('updated_at' => '2026-10-02T16:00:00Z'))
+
+      described_class.new(tracker, shortcut: shortcut).sync!
+
+      expect(shortcut).to have_received(:history).with(7004).twice
+    end
+
     it 'is reported when it cannot be read, after every story is measured' do
       allow(shortcut).to receive(:story).with(7004).and_raise(ShortcutService::Error, 'Shortcut answered 500')
 
