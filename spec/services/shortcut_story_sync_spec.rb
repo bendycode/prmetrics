@@ -65,9 +65,10 @@ RSpec.describe ShortcutStorySync do
   end
 
   # Moving or adding a state changes what a story's moves mean without touching the story
-  it 'reads every story again once the workflow itself has changed' do
+  it "reads every story again once the workflow's states have changed" do
     sync.sync!
-    changed = shortcut_fixture('workflow').merge('updated_at' => '2026-10-01T12:00:00Z')
+    changed = shortcut_fixture('workflow')
+    changed['states'] += [changed['states'].last.merge('id' => 107, 'position' => 99)]
     allow(shortcut).to receive(:workflow).with('100').and_return(changed)
 
     described_class.new(tracker, shortcut: shortcut).sync!

@@ -22,22 +22,32 @@ class ShortcutStorySync
     @listed_at = Time.current
     @workflow = @shortcut.workflow(@tracker.workflow_id)
     @done_states = @workflow['states'].select { |state| state['type'] == 'done' }.pluck('id')
-    # Moving or adding a state changes what stored moves mean, and touches no
-    # story, so a changed workflow has every story read again
-    @read_all = @full || @workflow['updated_at'] != @tracker.workflow_updated_at
+    # Moving, adding, or retyping a state changes what stored moves mean, and
+    # touches no story, so a changed set of states has every story read again
+    @read_all = @full || states_digest != @tracker.workflow_digest
     listed = @workflow['states'].flat_map { |state| @shortcut.stories_in_state(state['id']) }
     stories, other_teams = listed.partition { |story| @tracker.reads_team?(story['group_id']) }
 
     failures, stopped = store_changed(stories)
     failures += mark_gone(stories, other_teams) unless stopped
     @tracker.measure_stories
-    # Only once every story was read: one that failed keeps the payload of
-    # the workflow before
-    @tracker.update!(workflow_updated_at: @workflow['updated_at']) if failures.empty?
+    record_workflow if failures.empty?
     report(failures, stopped)
   end
 
   private
+
+  # The states each move's committed flag is read from
+  def states_digest
+    Digest::SHA256.hexdigest(@workflow['states'].map { |state| state.values_at('id', 'type', 'position') }
+                                                .sort_by(&:first).to_json)
+  end
+
+  # Only once every story was read: one that failed keeps the payload of the
+  # workflow before
+  def record_workflow
+    @tracker.update!(workflow_digest: states_digest)
+  end
 
   # Everything about a story is read from Shortcut before it is written, and
   # written in one transaction, since a story stored at its current update

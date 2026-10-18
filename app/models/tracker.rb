@@ -48,7 +48,7 @@ class Tracker < ApplicationRecord
   has_many :stories, dependent: :destroy
 
   enum :kind, { github_issues: 0, shortcut: 1 }
-  store_accessor :config, :key_prefix, :workflow_id, :team_ids, :workflow_updated_at
+  store_accessor :config, :key_prefix, :workflow_id, :team_ids, :workflow_digest
   encrypts :api_token
 
   scope :reading_workflow, ->(workflow_id) { shortcut.where("config->>'workflow_id' = ?", workflow_id.to_s) }
