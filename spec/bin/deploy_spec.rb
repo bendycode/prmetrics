@@ -3,9 +3,13 @@ require 'open3'
 
 # bin/deploy runs in a subprocess against stub git, heroku, curl, and sleep
 # commands placed first on PATH. Each stub appends its arguments to a calls
-# file and answers from STUB_* variables, so no example reaches Heroku.
+# file and answers from STUB_* variables, so no example reaches Heroku. The
+# git stub's push writes a marker, after which heroku releases answers with
+# STUB_RELEASES_AFTER; the deploy's own post-deploy sync check runs for real
+# against the same stubs.
 RSpec.describe 'bin/deploy' do
   let(:sha) { '0123456789abcdef0123456789abcdef01234567' }
+  let(:live_sha) { 'aaaaaaaa00000000000000000000000000000000' }
   let(:stub_dir) { Dir.mktmpdir('deploy-stubs') }
   let(:calls_file) { File.join(stub_dir, 'calls.log') }
 
@@ -19,29 +23,47 @@ RSpec.describe 'bin/deploy' do
 
   def install_stubs
     write_stub('git', <<~BASH)
-      case "$1" in
-        rev-parse) echo "#{sha}" ;;
-        branch) echo "${STUB_BRANCH:-main}" ;;
-        diff-index) exit "${STUB_DIRTY:-0}" ;;
+      case "$*" in
+        "rev-parse HEAD") echo "#{sha}" ;;
+        "rev-parse origin/main") echo "${STUB_ORIGIN_SHA:-#{sha}}" ;;
+        "rev-parse --verify"*) [ -n "$STUB_LIVE_FULL" ] || exit 1; echo "$STUB_LIVE_FULL" ;;
+        branch*) echo "${STUB_BRANCH:-main}" ;;
+        diff-index*) exit "${STUB_DIRTY:-0}" ;;
+        "diff --name-only"*) echo "$STUB_ADDED_FILES" ;;
+        push*) touch "$STUB_DIR/pushed" ;;
       esac
     BASH
     write_stub('heroku', <<~BASH)
-      passthrough() { if [[ " $* " == *" -x "* ]]; then exit "$1"; fi; exit 0; }
+      remote_exit() { if [[ " $* " == *" -x "* ]]; then exit "$1"; fi; exit 0; }
       case "$*" in
-        releases*) echo "${STUB_RELEASES}" ;;
-        *db:migrate:status:with_data*) echo "${STUB_MIGRATE_STATUS}" ;;
-        *ci:data_integrity*) code="${STUB_INTEGRITY_EXIT:-0}"; [[ " $* " == *" -x "* ]] && exit "$code"; exit 0 ;;
-        ps*) echo "${STUB_PS:-web.1: up}" ;;
-        info*) echo '{"app":{"web_url":"https://prmetrics.example/"}}' ;;
+        releases*) if [ -e "$STUB_DIR/pushed" ]; then echo "$STUB_RELEASES_AFTER"; else echo "$STUB_RELEASES_BEFORE"; fi ;;
+        *db:migrate:status:with_data*) echo "$STUB_MIGRATE_STATUS"; remote_exit "${STUB_MIGRATE_EXIT:-0}" "$@" ;;
+        *ci:data_integrity*) remote_exit "${STUB_INTEGRITY_EXIT:-0}" "$@" ;;
+        *"rails runner"*) echo "post-deploy-sync-check jid=5c137ee5303ac4448f2532b7" ;;
+        *"--dyno worker"*) echo "pid=2 tid=a2a jid=5c137ee5303ac4448f2532b7 class=UnifiedSyncJob elapsed=1.8: ${STUB_SYNC_RESULT:-done}" ;;
+        ps*)
+          n=$(( $(cat "$STUB_DIR/ps" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$STUB_DIR/ps"
+          echo "${STUB_PS:-web.1: up}" | cut -d'|' -f"$n" ;;
+        info*) if [ -z "${STUB_INFO+set}" ]; then echo '{"app":{"web_url":"https://prmetrics.example/"}}'; else echo "$STUB_INFO"; fi ;;
       esac
     BASH
     write_stub('curl', 'echo "${STUB_HEALTH:-{\"status\":\"ok\"}}"')
     write_stub('sleep', '')
   end
 
-  def releases_json(status: 'succeeded', deployed_sha: sha)
-    [{ version: 41, status: 'succeeded', description: 'Deploy aaaaaaaa' },
-     { version: 42, status: status, description: "Deploy #{deployed_sha[0, 8]}" }].to_json
+  def release(version, description, status: 'succeeded', current: false)
+    { version: version, status: status, description: description, current: current }
+  end
+
+  # v40 deployed the live commit, and v41 changed a config var, so the code
+  # serving before the deploy is v40's.
+  def releases_before
+    [release(40, "Deploy #{live_sha[0, 8]}"), release(41, 'Set FEATURE config vars', current: true)]
+  end
+
+  def releases_after(*newer)
+    newer = [release(42, "Deploy #{sha[0, 8]}", current: true)] if newer.empty?
+    releases_before.map { |r| r.merge(current: false) } + newer
   end
 
   def migrate_status(*states)
@@ -54,12 +76,16 @@ RSpec.describe 'bin/deploy' do
     defaults = {
       'PATH' => "#{stub_dir}:#{ENV.fetch('PATH')}",
       'STUB_CALLS' => calls_file,
-      'STUB_RELEASES' => releases_json,
-      'STUB_MIGRATE_STATUS' => migrate_status('up', 'up')
+      'STUB_DIR' => stub_dir,
+      'STUB_RELEASES_BEFORE' => releases_before.to_json,
+      'STUB_RELEASES_AFTER' => releases_after.to_json,
+      'STUB_LIVE_FULL' => live_sha,
+      'STUB_MIGRATE_STATUS' => migrate_status('up', 'up'),
+      'SYNC_CHECK_TIMEOUT' => '30',
+      'HEROKU_APP' => nil,
+      'SYNC_CHECK_REPOSITORY' => nil
     }
-    output, status = Open3.capture2e(defaults.merge(env), Rails.root.join('bin/deploy').to_s,
-                                     chdir: Rails.root, stdin_data: '')
-    [output, status]
+    Open3.capture2e(defaults.merge(env), Rails.root.join('bin/deploy').to_s, chdir: Rails.root, stdin_data: '')
   end
 
   def calls
@@ -70,81 +96,192 @@ RSpec.describe 'bin/deploy' do
     calls.select { |line| line.start_with?('heroku ') }
   end
 
-  it 'succeeds when every check passes' do
-    output, status = run_deploy
-
-    expect(status).to be_success, output
+  def pushed?
+    calls.any? { |line| line.start_with?('git push') }
   end
 
-  it 'fails when the health check does not answer ok' do
-    output, status = run_deploy('STUB_HEALTH' => '{"status":"error"}')
-
-    expect(status).not_to be_success, output
+  def rolled_back?
+    heroku_calls.any? { |line| line.start_with?('heroku rollback') }
   end
 
-  it 'pushes to the app by URL, so the clone needs no heroku remote' do
-    run_deploy
+  describe 'a deploy that passes every check' do
+    it 'succeeds without rolling back' do
+      output, status = run_deploy
 
-    expect(calls).to include('git push https://git.heroku.com/prmetrics-production.git HEAD:main')
+      expect(status).to be_success, output
+      expect(output).to include('Deployment complete')
+      expect(rolled_back?).to be(false)
+    end
+
+    it 'pushes to the app by URL, so the clone needs no heroku remote' do
+      run_deploy
+
+      expect(calls).to include('git push https://git.heroku.com/prmetrics-production.git HEAD:main')
+    end
+
+    it 'names the app on every heroku call' do
+      run_deploy
+
+      expect(heroku_calls).not_to be_empty
+      expect(heroku_calls).to all(include('-a prmetrics-production'))
+    end
+
+    it 'runs a sync through the worker after the health check' do
+      output, = run_deploy
+
+      expect(output).to include('Sync check passed')
+      expect(heroku_calls.index { |c| c.include?('rails runner') }).to be > heroku_calls.index { |c| c.start_with?('heroku info') }
+    end
+
+    it 'lists the commits it ships, from the commit that was serving' do
+      run_deploy
+
+      expect(calls).to include("git log --oneline --no-merges #{live_sha}..HEAD")
+    end
+
+    it 'leaves running migrations to the release phase' do
+      run_deploy
+
+      expect(heroku_calls.grep(/db:migrate(?!:status)/)).to be_empty
+    end
+
+    it 'accepts a config change released after the pushed commit' do
+      after = releases_after(release(42, "Deploy #{sha[0, 8]}"), release(43, 'Update DATABASE by heroku-postgresql', current: true))
+      output, status = run_deploy('STUB_RELEASES_AFTER' => after.to_json)
+
+      expect(status).to be_success, output
+    end
+
+    it 'waits again for dynos still starting' do
+      output, status = run_deploy('STUB_PS' => 'web.1: starting|web.1: up')
+
+      expect(status).to be_success, output
+      expect(heroku_calls.grep(/^heroku ps/).size).to be(2)
+    end
+
+    it 'reports a failed data integrity check without failing the deploy' do
+      output, status = run_deploy('STUB_INTEGRITY_EXIT' => '1')
+
+      expect(status).to be_success, output
+      expect(output).to include('data integrity issues detected')
+    end
   end
 
-  it 'names the app on every heroku call' do
-    run_deploy
+  describe 'refusing before the push' do
+    it 'stops when the tree has changes and no terminal can answer' do
+      output, status = run_deploy('STUB_DIRTY' => '1')
 
-    expect(heroku_calls).to all(include('-a prmetrics-production'))
+      expect(status).not_to be_success, output
+      expect(output).to include('uncommitted changes', 'not a terminal')
+      expect(pushed?).to be(false)
+    end
+
+    it 'stops when the branch is not main and no terminal can answer' do
+      output, status = run_deploy('STUB_BRANCH' => 'feature')
+
+      expect(status).not_to be_success, output
+      expect(output).to include("instead of 'main'", 'not a terminal')
+      expect(pushed?).to be(false)
+    end
+
+    it 'stops when HEAD is not origin/main and no terminal can answer' do
+      output, status = run_deploy('STUB_ORIGIN_SHA' => 'b' * 40)
+
+      expect(status).not_to be_success, output
+      expect(output).to include('is not origin/main', 'not a terminal')
+      expect(pushed?).to be(false)
+    end
   end
 
-  it 'stops without pushing when the tree has changes and no terminal can answer' do
-    output, status = run_deploy('STUB_DIRTY' => '1')
+  describe 'a push that leaves the pushed commit not serving' do
+    it 'fails without rolling back when the release command failed' do
+      after = releases_after(release(42, "Deploy #{sha[0, 8]}", status: 'failed'))
+      after.find { |r| r[:version] == 41 }[:current] = true
+      output, status = run_deploy('STUB_RELEASES_AFTER' => after.to_json)
 
-    expect(status).not_to be_success, output
-    expect(output).to include('not a terminal')
-    expect(calls).not_to include(a_string_starting_with('git push'))
+      expect(status).not_to be_success, output
+      expect(output).to include('release command failed')
+      expect(rolled_back?).to be(false)
+    end
+
+    it 'fails without rolling back when another commit is serving' do
+      output, status = run_deploy('STUB_RELEASES_AFTER' => releases_after(release(42, 'Deploy ffffffff', current: true)).to_json)
+
+      expect(status).not_to be_success, output
+      expect(output).to include('runs ffffffff, not 01234567')
+      expect(rolled_back?).to be(false)
+    end
+
+    it 'names the release to roll back to when an earlier rollback took the commit off' do
+      history = [release(39, "Deploy #{live_sha[0, 8]}"), release(40, "Deploy #{sha[0, 8]}"),
+                 release(41, 'Rollback to v39', current: true)]
+      output, status = run_deploy('STUB_RELEASES_BEFORE' => history.to_json, 'STUB_RELEASES_AFTER' => history.to_json)
+
+      expect(status).not_to be_success, output
+      expect(output).to include('made no new release', 'heroku rollback v40 -a prmetrics-production')
+      expect(rolled_back?).to be(false)
+    end
   end
 
-  it 'stops without pushing when the branch is not main and no terminal can answer' do
-    output, status = run_deploy('STUB_BRANCH' => 'feature')
+  describe 'a check failing after the release goes live' do
+    {
+      'a migration is still down' => -> { { 'STUB_MIGRATE_STATUS' => migrate_status('up', 'down') } },
+      'the migration status command fails on the dyno' => -> { { 'STUB_MIGRATE_EXIT' => '1' } },
+      'a dyno crashed' => -> { { 'STUB_PS' => 'web.1: crashed' } },
+      'a dyno crashed while starting' => -> { { 'STUB_PS' => 'web.1: starting|web.1: crashed' } },
+      'the app URL is unknown' => -> { { 'STUB_INFO' => '' } },
+      'the health check does not answer ok' => -> { { 'STUB_HEALTH' => '{"status":"error"}' } },
+      'the sync check fails' => -> { { 'STUB_SYNC_RESULT' => 'fail' } }
+    }.each do |failure, env|
+      it "rolls back to the release that was live before when #{failure}" do
+        output, status = run_deploy(instance_exec(&env))
 
-    expect(status).not_to be_success, output
-    expect(output).to include('not a terminal')
-    expect(calls).not_to include(a_string_starting_with('git push'))
-  end
+        expect(status).not_to be_success, output
+        expect(output).to include('DEPLOYMENT FAILED', 'Rolled back to v41')
+        expect(heroku_calls).to include('heroku rollback v41 -a prmetrics-production')
+      end
+    end
 
-  it 'fails when the newest release is not the pushed commit' do
-    output, status = run_deploy('STUB_RELEASES' => releases_json(deployed_sha: 'f' * 40))
+    it 'prints the migration status output when the command fails on the dyno' do
+      output, = run_deploy('STUB_MIGRATE_STATUS' => 'PG::ConnectionBad', 'STUB_MIGRATE_EXIT' => '1')
 
-    expect(status).not_to be_success, output
-  end
+      expect(output).to include('PG::ConnectionBad', 'migration status could not be read')
+    end
 
-  it 'accepts a config change released after the pushed commit' do
-    releases = JSON.parse(releases_json) << { version: 43, status: 'succeeded',
-                                              description: 'Update DATABASE by heroku-postgresql' }
-    output, status = run_deploy('STUB_RELEASES' => releases.to_json)
+    it 'prints the recent logs when a dyno crashed' do
+      run_deploy('STUB_PS' => 'web.1: crashed')
 
-    expect(status).to be_success, output
-  end
+      expect(heroku_calls).to include('heroku logs -n 100 -a prmetrics-production')
+    end
 
-  it 'fails when the newest release did not succeed' do
-    output, status = run_deploy('STUB_RELEASES' => releases_json(status: 'failed'))
+    it 'skips the health check when the app URL is unknown' do
+      run_deploy('STUB_INFO' => '')
 
-    expect(status).not_to be_success, output
-  end
+      expect(calls.grep(/^curl/)).to be_empty
+    end
 
-  it 'fails when the data integrity check fails on the dyno' do
-    output, status = run_deploy('STUB_INTEGRITY_EXIT' => '1')
+    it 'does not roll back over a release that adds a migration' do
+      output, status = run_deploy('STUB_HEALTH' => '{"status":"error"}',
+                                  'STUB_ADDED_FILES' => 'db/data/20261018000000_backfill.rb')
 
-    expect(status).not_to be_success, output
-  end
+      expect(status).not_to be_success, output
+      expect(output).to include('Not rolling back', 'db/data/20261018000000_backfill.rb',
+                                'heroku rollback v41 -a prmetrics-production')
+      expect(rolled_back?).to be(false)
+    end
 
-  it 'fails when a migration is still down after the release' do
-    output, status = run_deploy('STUB_MIGRATE_STATUS' => migrate_status('up', 'down'))
+    it 'does not roll back when the live commit is not in the clone' do
+      output, status = run_deploy('STUB_HEALTH' => '{"status":"error"}', 'STUB_LIVE_FULL' => '')
 
-    expect(status).not_to be_success, output
-  end
+      expect(status).not_to be_success, output
+      expect(output).to include('Not rolling back', 'aaaaaaaa is not in this clone')
+      expect(rolled_back?).to be(false)
+    end
 
-  it 'leaves running migrations to the release phase' do
-    run_deploy
+    it 'checks the migrations added since the commit that was serving' do
+      run_deploy
 
-    expect(heroku_calls.grep(/db:migrate(?!:status)/)).to be_empty
+      expect(calls).to include("git diff --name-only --diff-filter=A #{live_sha} HEAD -- db/migrate db/data")
+    end
   end
 end

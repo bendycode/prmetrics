@@ -4,6 +4,7 @@ set -e
 # The app is named on every heroku call and pushed to by URL, so any clone can
 # deploy without a heroku git remote or a heroku.remote setting.
 APP="${HEROKU_APP:-prmetrics-production}"
+BIN_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "🚀 Starting deployment of $APP to Heroku..."
 
@@ -28,6 +29,70 @@ confirm() {
   fi
 }
 
+# Prints four fields from the app's releases: the current release's version,
+# the 8-character commit it serves, the status of the newest "Deploy <sha8>"
+# release for the commit given as $1 (or "none"), and the newest succeeded
+# such release's version (or "none"). A config change serves the code of the
+# succeeded release before it, and "Rollback to vN" serves vN's code.
+release_info() {
+  heroku releases -a "$APP" -n 50 --json | python3 -c '
+import json, sys
+
+sha8 = sys.argv[1]
+releases = sorted(json.load(sys.stdin), key=lambda r: r["version"], reverse=True)
+by_version = {r["version"]: r for r in releases}
+
+def serving(release, depth=0):
+    if release is None or depth > 50:
+        return "unknown"
+    description = release["description"]
+    if description.startswith("Deploy "):
+        return description.split()[1][:8]
+    if description.startswith("Rollback to v"):
+        return serving(by_version.get(int(description.split("v")[1].split()[0])), depth + 1)
+    older = [r for r in releases if r["version"] < release["version"] and r["status"] == "succeeded"]
+    return serving(older[0] if older else None, depth + 1)
+
+current = next((r for r in releases if r.get("current")), None)
+mine = [r for r in releases if r["description"].startswith("Deploy " + sha8)]
+print(current["version"] if current else "unknown", serving(current),
+      mine[0]["status"] if mine else "none",
+      next((r["version"] for r in mine if r["status"] == "succeeded"), "none"))
+' "$1"
+}
+
+# Sets HEALTH_RESPONSE and returns 0 when the health endpoint answers ok.
+health_ok() {
+  HEALTH_RESPONSE=$(curl -sf "${APP_URL}/health" 2>&1 || true)
+  echo "$HEALTH_RESPONSE" | grep -q '"status":"ok"'
+}
+
+# A check failed after the new release went live. Roll back to the release
+# that was live before, unless the release added schema or data migrations,
+# which a rollback does not reverse.
+fail_after_release() {
+  echo ""
+  echo "❌ DEPLOYMENT FAILED: $1"
+  if [ -n "$ROLLBACK_BLOCKER" ]; then
+    echo "⚠️  Not rolling back: $ROLLBACK_BLOCKER"
+    echo "   To roll back by hand: heroku rollback v$PREVIOUS_VERSION -a $APP"
+    exit 1
+  fi
+  echo "⏪ Rolling back to v$PREVIOUS_VERSION..."
+  heroku rollback "v$PREVIOUS_VERSION" -a "$APP"
+  sleep 15
+  heroku ps -a "$APP" 2>&1 || true
+  if [ -n "$APP_URL" ]; then
+    if health_ok; then
+      echo "✅ Health check after the rollback passed: $HEALTH_RESPONSE"
+    else
+      echo "❌ Health check after the rollback did not return ok: $HEALTH_RESPONSE"
+    fi
+  fi
+  echo "⏪ Rolled back to v$PREVIOUS_VERSION"
+  exit 1
+}
+
 # Check for uncommitted changes. diff-index reads the index's cached file
 # stats, so refresh it first or a file rewritten with identical content
 # (bundle install and Gemfile.lock) reads as changed. The refresh exits
@@ -50,6 +115,33 @@ if [ "$CURRENT_BRANCH" != "main" ]; then
 fi
 
 SHA=$(git rev-parse HEAD)
+SHA8=${SHA:0:8}
+
+# Deploy what the default branch holds, read fresh from GitHub
+git fetch -q origin main || echo "⚠️  Warning: could not fetch origin main"
+if [ "$(git rev-parse origin/main)" != "$SHA" ]; then
+  echo "⚠️  Warning: HEAD $SHA8 is not origin/main"
+  confirm
+fi
+
+# Note what is live before the push: the release to roll back to, and the
+# commit it serves, against which this deploy's added migrations are found.
+if ! RELEASES_BEFORE=$(release_info "$SHA8"); then
+  echo "❌ Error: could not read the releases of $APP"
+  exit 1
+fi
+read -r PREVIOUS_VERSION LIVE8 _ _ <<< "$RELEASES_BEFORE"
+echo "📌 Live before the deploy: v$PREVIOUS_VERSION, serving $LIVE8"
+if LIVE=$(git rev-parse --verify -q "$LIVE8^{commit}"); then
+  ADDED_MIGRATIONS=$(git diff --name-only --diff-filter=A "$LIVE" HEAD -- db/migrate db/data)
+  if [ -n "$ADDED_MIGRATIONS" ]; then
+    ROLLBACK_BLOCKER="this release adds migrations, which a rollback does not reverse: $(echo $ADDED_MIGRATIONS)"
+  fi
+  echo "📦 Commits this deploy ships:"
+  git log --oneline --no-merges "$LIVE..HEAD"
+else
+  ROLLBACK_BLOCKER="the live commit $LIVE8 is not in this clone, so added migrations cannot be ruled out"
+fi
 
 # Push to Heroku. The Procfile's release command runs schema and data
 # migrations before the new release goes live.
@@ -57,38 +149,46 @@ echo "📤 Pushing $SHA to Heroku..."
 git push "https://git.heroku.com/$APP.git" HEAD:main
 
 # A release command that fails leaves the old release serving, so confirm the
-# newest code release is this commit and that it succeeded. Config changes
-# (an add-on rotating its credentials) also create releases and are skipped.
+# current release serves this commit. Until it does, nothing of this deploy is
+# live and there is nothing to roll back.
 echo "🏷️  Checking the release..."
-RELEASE=$(heroku releases -a "$APP" --json | python3 -c "
-import sys, json
-releases = sorted(json.load(sys.stdin), key=lambda r: r['version'], reverse=True)
-code = [r for r in releases if r['description'].startswith(('Deploy ', 'Rollback'))]
-print('%(status)s %(description)s v%(version)s' % code[0] if code else 'no code release found')
-")
-echo "   $RELEASE"
-if [[ "$RELEASE" != "succeeded Deploy ${SHA:0:8} "* ]]; then
-  echo "❌ DEPLOYMENT FAILED: the newest release is not a succeeded deploy of ${SHA:0:8}"
-  echo "   Read the release command's output: heroku releases:output -a $APP"
+if ! RELEASES_AFTER=$(release_info "$SHA8"); then
+  echo "❌ DEPLOYMENT FAILED: could not read the releases of $APP"
   exit 1
 fi
+read -r CURRENT_VERSION SERVING8 MINE_STATUS MINE_SUCCEEDED <<< "$RELEASES_AFTER"
+if [ "$SERVING8" != "$SHA8" ]; then
+  if [ "$MINE_STATUS" = "failed" ]; then
+    echo "❌ DEPLOYMENT FAILED: the release command failed for $SHA8"
+    echo "   Read its output: heroku releases:output -a $APP"
+  elif [ "$MINE_SUCCEEDED" != "none" ] && [ "$CURRENT_VERSION" = "$PREVIOUS_VERSION" ]; then
+    echo "❌ DEPLOYMENT FAILED: Heroku already held $SHA8, so the push made no new release"
+    echo "   v$CURRENT_VERSION serves $SERVING8. To serve $SHA8 again: heroku rollback v$MINE_SUCCEEDED -a $APP"
+  else
+    echo "❌ DEPLOYMENT FAILED: the current release v$CURRENT_VERSION runs $SERVING8, not $SHA8"
+  fi
+  exit 1
+fi
+echo "   v$CURRENT_VERSION serves $SHA8"
 
 # Confirm the release command left no migration pending
 echo "✅ Checking migration status..."
-MIGRATION_STATUS=$(heroku run -x --no-tty -a "$APP" -- rails db:migrate:status:with_data 2>&1)
+if ! MIGRATION_STATUS=$(heroku run -x --no-tty -a "$APP" -- rails db:migrate:status:with_data 2>&1); then
+  echo "$MIGRATION_STATUS" | tail -20
+  fail_after_release "the migration status could not be read"
+fi
 echo "$MIGRATION_STATUS" | tail -20
 if echo "$MIGRATION_STATUS" | grep -qE '^[[:space:]]+down[[:space:]]'; then
-  echo "❌ DEPLOYMENT FAILED: a migration is still down after the release"
-  exit 1
+  fail_after_release "a migration is still down after the release"
 fi
 
-# Run data integrity checks
+# The integrity checks read the data as a whole, which a running sync can leave
+# briefly inconsistent, so a failure is reported and does not fail the deploy.
 echo "🔍 Running data integrity checks..."
 if heroku run -x --no-tty -a "$APP" -- rake ci:data_integrity; then
   echo "✅ Data integrity checks passed"
 else
-  echo "❌ DEPLOYMENT FAILED: data integrity issues detected - check the output above"
-  exit 1
+  echo "⚠️  Warning: data integrity issues detected - check the output above"
 fi
 
 # Restart to ensure all changes take effect
@@ -103,20 +203,15 @@ fail_if_crashed() {
   CRASHED_DYNOS=$(echo "$DYNO_STATUS" | grep -c "crashed" || true)
   if [ "$CRASHED_DYNOS" -gt 0 ]; then
     echo ""
-    echo "❌ DEPLOYMENT FAILED: $CRASHED_DYNOS dyno(s) crashed after restart!"
-    echo ""
     echo "📋 Recent logs:"
     heroku logs -n 100 -a "$APP"
-    echo ""
-    echo "⚠️  The app may be down. Check logs and consider rolling back:"
-    echo "   heroku rollback -a $APP"
-    exit 1
+    fail_after_release "$CRASHED_DYNOS dyno(s) crashed after restart"
   fi
 }
 
 # Check that dynos reached 'up' state
 echo "🏥 Checking dyno status..."
-DYNO_STATUS=$(heroku ps -a "$APP" 2>&1)
+DYNO_STATUS=$(heroku ps -a "$APP" 2>&1 || true)
 echo "$DYNO_STATUS"
 fail_if_crashed
 
@@ -124,7 +219,7 @@ STARTING_DYNOS=$(echo "$DYNO_STATUS" | grep -c "starting" || true)
 if [ "$STARTING_DYNOS" -gt 0 ]; then
   echo "⏳ Some dynos still starting, waiting another 15 seconds..."
   sleep 15
-  DYNO_STATUS=$(heroku ps -a "$APP" 2>&1)
+  DYNO_STATUS=$(heroku ps -a "$APP" 2>&1 || true)
   echo "$DYNO_STATUS"
   fail_if_crashed
 fi
@@ -132,17 +227,19 @@ fi
 # Hit the health endpoint to verify the app is actually serving requests
 APP_URL=$(heroku info --json -a "$APP" 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['app']['web_url'].rstrip('/'))" 2>/dev/null || echo "")
 if [ -z "$APP_URL" ]; then
-  echo "❌ DEPLOYMENT FAILED: could not determine the app URL for the health check"
-  exit 1
+  fail_after_release "could not determine the app URL for the health check"
 fi
 echo "🔍 Checking health endpoint..."
-HEALTH_RESPONSE=$(curl -sf "${APP_URL}/health" 2>&1 || true)
-if echo "$HEALTH_RESPONSE" | grep -q '"status":"ok"'; then
+if health_ok; then
   echo "✅ Health check passed: $HEALTH_RESPONSE"
 else
-  echo "❌ DEPLOYMENT FAILED: health check did not return ok: $HEALTH_RESPONSE"
-  echo "   Check manually: curl ${APP_URL}/health"
-  exit 1
+  fail_after_release "health check did not return ok: $HEALTH_RESPONSE"
+fi
+
+# The health check pings Redis from the web process; run one real job through
+# the worker as well.
+if ! HEROKU_APP="$APP" "$BIN_DIR/post-deploy-sync-check"; then
+  fail_after_release "the post-deploy sync check failed"
 fi
 
 echo ""
