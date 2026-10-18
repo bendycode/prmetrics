@@ -8,6 +8,7 @@ gem 'rails', '~> 7.2.3'
 gem 'sprockets-rails'
 
 gem 'bootstrap'
+gem 'faraday'
 gem 'faraday-retry'
 gem 'font-awesome-sass'
 gem 'jquery-rails'
