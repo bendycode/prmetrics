@@ -29,6 +29,13 @@ RSpec.describe ShortcutStoryHistory do
     )
   end
 
+  # A story moved straight to a done state never waited in the queue of committed work
+  it 'never marks a done state as at commitment' do
+    done = events('history_7001').reverse.find { |event| event[:kind] == :status_changed }
+
+    expect(done[:payload]['to']).to include('name' => 'Shipped', 'committed' => false)
+  end
+
   it 'records the state a story was created in' do
     created = events('history_created_ready', story_id: 7006).first
 

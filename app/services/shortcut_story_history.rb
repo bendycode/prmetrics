@@ -7,7 +7,8 @@
 # a state by its type or place rather than its ID. Commitment is the
 # workflow's last unstarted state, the queue of work ready to start: states
 # before it hold work nobody has committed to. With no unstarted state, it is
-# the first started one.
+# the first started one. A done state is never at commitment, since a story
+# moved straight into one never waited in that queue.
 class ShortcutStoryHistory
   LINK_KINDS = {
     'branch' => :branch_linked,
@@ -69,7 +70,12 @@ class ShortcutStoryHistory
       reference['entity_type'] == 'workflow-state' && reference['id'] == id
     end || {}
     { 'id' => id, 'name' => described['name'], 'type' => described['type'], 'position' => known&.dig('position'),
-      'committed' => known.present? && @commitment_position.present? && known['position'] >= @commitment_position }
+      'committed' => committed?(known) }
+  end
+
+  def committed?(known)
+    known.present? && known['type'] != 'done' && @commitment_position.present? &&
+      known['position'] >= @commitment_position
   end
 
   def commitment_position(states)
