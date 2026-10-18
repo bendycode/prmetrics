@@ -33,7 +33,8 @@ class Tracker < ApplicationRecord
         started: [StoryTrigger[:status_changed, 'to' => { 'type' => 'started' }],
                   StoryTrigger[:opened, 'state' => { 'type' => 'started' }],
                   StoryTrigger[:branch_linked], StoryTrigger[:commit_referenced], StoryTrigger[:pull_request_linked]],
-        done: { close: [StoryTrigger[:status_changed, 'to' => { 'type' => 'done' }]],
+        done: { close: [StoryTrigger[:status_changed, 'to' => { 'type' => 'done' }],
+                        StoryTrigger[:opened, 'state' => { 'type' => 'done' }]],
                 reopen: [StoryTrigger[:status_changed, 'from' => { 'type' => 'done' }]] }
       }
     }

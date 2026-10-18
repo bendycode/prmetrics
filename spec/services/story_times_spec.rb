@@ -187,6 +187,18 @@ RSpec.describe StoryTimes do
       expect(result).to have_attributes(committed_at: nil, done_at: at('2026-09-04T15:00:00Z'))
     end
 
+    # As when finished work is logged after the fact
+    it 'is done at creation for a story created in a done state' do
+      history = [{ 'id' => 'd1', 'changed_at' => '2026-09-02T15:00:00Z',
+                   'actions' => [{ 'id' => 9, 'entity_type' => 'story', 'action' => 'create', 'workflow_state_id' => 105 }] }]
+      events = ShortcutStoryHistory.new(story_id: 9, workflow: workflow, history: history).events
+
+      result = described_class.new(events: events.map { |attributes| StoryEvent.new(attributes) }, triggers: triggers,
+                                   state_reason: nil)
+
+      expect(result).to have_attributes(done_at: at('2026-09-02T15:00:00Z'), committed_at: nil)
+    end
+
     it 'is committed at creation for a story created past the first state' do
       expect(shortcut_times('history_created_ready', 7006)).to have_attributes(
         committed_at: at('2026-09-01T15:00:00Z'), committed_source: :opened, started_at: at('2026-09-02T15:00:00Z')
