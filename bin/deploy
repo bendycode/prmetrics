@@ -1,13 +1,32 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🚀 Starting deployment to Heroku..."
+# The app is named on every heroku call and pushed to by URL, so any clone can
+# deploy without a heroku git remote or a heroku.remote setting.
+APP="${HEROKU_APP:-prmetrics-production}"
+
+echo "🚀 Starting deployment of $APP to Heroku..."
 
 # Check if we're in the right directory
 if [ ! -f "Gemfile" ]; then
   echo "❌ Error: Must be run from the Rails root directory"
   exit 1
 fi
+
+# Ask before going on, or stop when no terminal can answer, so a deploy run by
+# a script never reads its answer from whatever stdin happens to hold.
+confirm() {
+  if [ ! -t 0 ]; then
+    echo "🛑 Deployment cancelled: stdin is not a terminal, so nobody can answer"
+    exit 1
+  fi
+  echo "Do you want to continue? (y/N)"
+  read -r response
+  if [[ ! "$response" =~ ^[Yy]$ ]]; then
+    echo "🛑 Deployment cancelled"
+    exit 1
+  fi
+}
 
 # Check for uncommitted changes. diff-index reads the index's cached file
 # stats, so refresh it first or a file rewritten with identical content
@@ -16,12 +35,7 @@ fi
 git update-index -q --refresh || true
 if ! git diff-index --quiet HEAD --; then
   echo "⚠️  Warning: You have uncommitted changes"
-  echo "Do you want to continue? (y/N)"
-  read -r response
-  if [[ ! "$response" =~ ^[Yy]$ ]]; then
-    echo "🛑 Deployment cancelled"
-    exit 1
-  fi
+  confirm
 fi
 
 # Get current branch
@@ -32,103 +46,106 @@ echo "📌 Current branch: $CURRENT_BRANCH"
 if [ "$CURRENT_BRANCH" != "main" ]; then
   echo "⚠️  Warning: You are deploying from branch '$CURRENT_BRANCH' instead of 'main'"
   echo "This will deploy $CURRENT_BRANCH to production."
-  echo "Are you sure you want to continue? (y/N)"
-  read -r response
-  if [[ ! "$response" =~ ^[Yy]$ ]]; then
-    echo "🛑 Deployment cancelled"
-    exit 1
-  fi
+  confirm
 fi
 
-# Push to Heroku
-echo "📤 Pushing to Heroku..."
-git push heroku $CURRENT_BRANCH:main
+SHA=$(git rev-parse HEAD)
 
-# Run migrations
-echo "🗄️  Running database migrations..."
-heroku run rails db:migrate
+# Push to Heroku. The Procfile's release command runs schema and data
+# migrations before the new release goes live.
+echo "📤 Pushing $SHA to Heroku..."
+git push "https://git.heroku.com/$APP.git" HEAD:main
 
-# Run data migrations
-echo "📊 Running data migrations..."
-heroku run rails db:migrate:with_data
+# A release command that fails leaves the old release serving, so confirm the
+# newest code release is this commit and that it succeeded. Config changes
+# (an add-on rotating its credentials) also create releases and are skipped.
+echo "🏷️  Checking the release..."
+RELEASE=$(heroku releases -a "$APP" --json | python3 -c "
+import sys, json
+releases = sorted(json.load(sys.stdin), key=lambda r: r['version'], reverse=True)
+code = [r for r in releases if r['description'].startswith(('Deploy ', 'Rollback'))]
+print('%(status)s %(description)s v%(version)s' % code[0] if code else 'no code release found')
+")
+echo "   $RELEASE"
+if [[ "$RELEASE" != "succeeded Deploy ${SHA:0:8} "* ]]; then
+  echo "❌ DEPLOYMENT FAILED: the newest release is not a succeeded deploy of ${SHA:0:8}"
+  echo "   Read the release command's output: heroku releases:output -a $APP"
+  exit 1
+fi
 
-# Check migration status
+# Confirm the release command left no migration pending
 echo "✅ Checking migration status..."
-heroku run rails db:migrate:status | tail -20
+MIGRATION_STATUS=$(heroku run -x --no-tty -a "$APP" -- rails db:migrate:status:with_data 2>&1)
+echo "$MIGRATION_STATUS" | tail -20
+if echo "$MIGRATION_STATUS" | grep -qE '^[[:space:]]+down[[:space:]]'; then
+  echo "❌ DEPLOYMENT FAILED: a migration is still down after the release"
+  exit 1
+fi
 
 # Run data integrity checks
 echo "🔍 Running data integrity checks..."
-if heroku run rake ci:data_integrity; then
+if heroku run -x --no-tty -a "$APP" -- rake ci:data_integrity; then
   echo "✅ Data integrity checks passed"
 else
-  echo "⚠️  Data integrity issues detected - check Heroku logs for details"
+  echo "❌ DEPLOYMENT FAILED: data integrity issues detected - check the output above"
+  exit 1
 fi
 
 # Restart to ensure all changes take effect
 echo "🔄 Restarting app..."
-heroku restart
+heroku restart -a "$APP"
 
 # Wait for dynos to settle after restart
 echo "⏳ Waiting for dynos to start..."
 sleep 15
 
-# Check that dynos reached 'up' state
-echo "🏥 Checking dyno status..."
-DYNO_STATUS=$(heroku ps 2>&1)
-echo "$DYNO_STATUS"
-
-CRASHED_DYNOS=$(echo "$DYNO_STATUS" | grep -c "crashed" || true)
-if [ "$CRASHED_DYNOS" -gt 0 ]; then
-  echo ""
-  echo "❌ DEPLOYMENT FAILED: $CRASHED_DYNOS dyno(s) crashed after restart!"
-  echo ""
-  echo "📋 Recent logs:"
-  heroku logs -n 100
-  echo ""
-  echo "⚠️  The app may be down. Check logs and consider rolling back:"
-  echo "   heroku rollback"
-  exit 1
-fi
-
-STARTING_DYNOS=$(echo "$DYNO_STATUS" | grep -c "starting" || true)
-if [ "$STARTING_DYNOS" -gt 0 ]; then
-  echo "⏳ Some dynos still starting, waiting another 15 seconds..."
-  sleep 15
-  DYNO_STATUS=$(heroku ps 2>&1)
-  echo "$DYNO_STATUS"
-
+fail_if_crashed() {
   CRASHED_DYNOS=$(echo "$DYNO_STATUS" | grep -c "crashed" || true)
   if [ "$CRASHED_DYNOS" -gt 0 ]; then
     echo ""
     echo "❌ DEPLOYMENT FAILED: $CRASHED_DYNOS dyno(s) crashed after restart!"
     echo ""
     echo "📋 Recent logs:"
-    heroku logs -n 100
+    heroku logs -n 100 -a "$APP"
     echo ""
     echo "⚠️  The app may be down. Check logs and consider rolling back:"
-    echo "   heroku rollback"
+    echo "   heroku rollback -a $APP"
     exit 1
   fi
+}
+
+# Check that dynos reached 'up' state
+echo "🏥 Checking dyno status..."
+DYNO_STATUS=$(heroku ps -a "$APP" 2>&1)
+echo "$DYNO_STATUS"
+fail_if_crashed
+
+STARTING_DYNOS=$(echo "$DYNO_STATUS" | grep -c "starting" || true)
+if [ "$STARTING_DYNOS" -gt 0 ]; then
+  echo "⏳ Some dynos still starting, waiting another 15 seconds..."
+  sleep 15
+  DYNO_STATUS=$(heroku ps -a "$APP" 2>&1)
+  echo "$DYNO_STATUS"
+  fail_if_crashed
 fi
 
 # Hit the health endpoint to verify the app is actually serving requests
-APP_URL=$(heroku info --json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['app']['web_url'].rstrip('/'))" 2>/dev/null || echo "")
-if [ -n "$APP_URL" ]; then
-  echo "🔍 Checking health endpoint..."
-  HEALTH_RESPONSE=$(curl -sf "${APP_URL}/health" 2>&1 || true)
-  if echo "$HEALTH_RESPONSE" | grep -q '"status":"ok"'; then
-    echo "✅ Health check passed: $HEALTH_RESPONSE"
-  else
-    echo "⚠️  Health check did not return ok: $HEALTH_RESPONSE"
-    echo "   The app may still be starting up. Check manually:"
-    echo "   curl ${APP_URL}/health"
-  fi
+APP_URL=$(heroku info --json -a "$APP" 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['app']['web_url'].rstrip('/'))" 2>/dev/null || echo "")
+if [ -z "$APP_URL" ]; then
+  echo "❌ DEPLOYMENT FAILED: could not determine the app URL for the health check"
+  exit 1
+fi
+echo "🔍 Checking health endpoint..."
+HEALTH_RESPONSE=$(curl -sf "${APP_URL}/health" 2>&1 || true)
+if echo "$HEALTH_RESPONSE" | grep -q '"status":"ok"'; then
+  echo "✅ Health check passed: $HEALTH_RESPONSE"
 else
-  echo "⚠️  Could not determine app URL for health check"
+  echo "❌ DEPLOYMENT FAILED: health check did not return ok: $HEALTH_RESPONSE"
+  echo "   Check manually: curl ${APP_URL}/health"
+  exit 1
 fi
 
 echo ""
 echo "✅ Deployment complete!"
 echo ""
-echo "📊 View logs: heroku logs --tail"
-echo "🚦 Check status: heroku ps"
+echo "📊 View logs: heroku logs --tail -a $APP"

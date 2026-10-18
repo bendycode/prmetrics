@@ -37,6 +37,7 @@ RSpec/DescribeClass:
     - 'spec/system/**/*'
     - 'spec/requests/**/*'
     - 'spec/lib/tasks/**/*'
+    - 'spec/bin/**/*'
     - 'spec/models/*_cascade_delete_spec.rb'
 
 # Allow negation matchers after visit in authorization specs
