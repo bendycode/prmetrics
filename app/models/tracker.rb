@@ -80,8 +80,8 @@ class Tracker < ApplicationRecord
     kind_details[:triggers]
   end
 
-  def sync!
-    kind_details[:sync].new(self).sync!
+  def sync!(full: false)
+    kind_details[:sync].new(self, full: full).sync!
   end
 
   def story_noun

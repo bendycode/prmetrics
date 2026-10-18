@@ -10,8 +10,11 @@ class ShortcutStorySync
   # stories in a row mean Shortcut is down, not one story is unreadable
   FAILURES_IN_A_ROW_LIMIT = 3
 
-  def initialize(tracker, shortcut: ShortcutService.new(tracker.api_token))
+  # full reads every story's history, unchanged ones included, as after a
+  # change in how events are read
+  def initialize(tracker, shortcut: ShortcutService.new(tracker.api_token), full: false)
     @tracker = tracker
+    @full = full
     @shortcut = shortcut
   end
 
@@ -37,7 +40,7 @@ class ShortcutStorySync
     failures = []
     in_a_row = 0
     stories.each do |story|
-      next if stored[story['id'].to_s] == Time.zone.parse(story['updated_at'])
+      next if !@full && stored[story['id'].to_s] == Time.zone.parse(story['updated_at'])
 
       store_story(story, workflow, done_states, listed_at)
       in_a_row = 0

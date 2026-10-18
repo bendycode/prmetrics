@@ -53,6 +53,14 @@ RSpec.describe ShortcutStorySync do
     expect(shortcut).to have_received(:history).with(7001).once
   end
 
+  it 'reads every story again when told to, changed or not' do
+    sync.sync!
+
+    described_class.new(tracker, shortcut: shortcut, full: true).sync!
+
+    expect(shortcut).to have_received(:history).with(7001).twice
+  end
+
   it 'reads a changed story again, storing each event once' do
     sync.sync!
     moved = shortcut_fixture('search_state_105').map { |story| story.merge('updated_at' => '2026-10-02T16:00:00Z') }

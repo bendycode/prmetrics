@@ -80,9 +80,19 @@ RSpec.describe Tracker do
     it 'syncs a GitHub issues tracker through the GitHub issue sync' do
       tracker = build(:tracker)
       sync = instance_double(GithubIssueSync, sync!: nil)
-      allow(GithubIssueSync).to receive(:new).with(tracker).and_return(sync)
+      allow(GithubIssueSync).to receive(:new).with(tracker, full: false).and_return(sync)
 
       tracker.sync!
+
+      expect(sync).to have_received(:sync!)
+    end
+
+    it 'asks the sync to read every story again when told to' do
+      tracker = build(:tracker, :shortcut)
+      sync = instance_double(ShortcutStorySync, sync!: nil)
+      allow(ShortcutStorySync).to receive(:new).with(tracker, full: true).and_return(sync)
+
+      tracker.sync!(full: true)
 
       expect(sync).to have_received(:sync!)
     end

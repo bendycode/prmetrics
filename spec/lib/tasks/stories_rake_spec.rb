@@ -19,8 +19,8 @@ RSpec.describe 'story rake tasks' do
     let(:second_sync) { instance_double(GithubIssueSync, sync!: nil) }
 
     before do
-      allow(GithubIssueSync).to receive(:new).with(first).and_return(first_sync)
-      allow(GithubIssueSync).to receive(:new).with(second).and_return(second_sync)
+      allow(GithubIssueSync).to receive(:new).with(first, full: false).and_return(first_sync)
+      allow(GithubIssueSync).to receive(:new).with(second, full: false).and_return(second_sync)
     end
 
     # The nightly workflow's log is public, and a tracker's repository may not be
@@ -49,9 +49,19 @@ RSpec.describe 'story rake tasks' do
       expect(Rails.logger).not_to have_received(:error).with(include(first.source_repository.name))
     end
 
+    it 'reads every story of every tracker again with FETCH_ALL=true' do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with('FETCH_ALL').and_return('true')
+      allow(GithubIssueSync).to receive(:new).with(first, full: true).and_return(first_sync)
+      allow(GithubIssueSync).to receive(:new).with(second, full: true).and_return(second_sync)
+
+      expect { Rake::Task['sync:stories'].invoke }.to output(/Synced 2 of 2 trackers/).to_stdout
+      expect([first_sync, second_sync]).to all(have_received(:sync!))
+    end
+
     # GithubIssueSync's own spec covers the token check that raises this
     it 'syncs the other trackers when one cannot start, then reports it' do
-      allow(GithubIssueSync).to receive(:new).with(first).and_raise(GithubIssueSync::MissingToken)
+      allow(GithubIssueSync).to receive(:new).with(first, full: false).and_raise(GithubIssueSync::MissingToken)
 
       expect { Rake::Task['sync:stories'].invoke }
         .to output(/tracker #{first.id}: GithubIssueSync::MissingToken.*Synced 1 of 2 trackers/m).to_stdout

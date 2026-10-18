@@ -12,8 +12,11 @@ class GithubIssueSync
     end
   end
 
-  def initialize(tracker, github: nil)
+  # full reads every issue's timeline, unchanged ones included, as after a
+  # change in how events are read
+  def initialize(tracker, github: nil, full: false)
     @tracker = tracker
+    @full = full
     @github = github || GithubService.new(ENV.fetch('GITHUB_ACCESS_TOKEN', nil).presence || raise(MissingToken))
     @repo_name = tracker.source_repository.name
   end
@@ -24,7 +27,7 @@ class GithubIssueSync
     stored = stored_updates(issues)
 
     failures = issues.filter_map do |issue|
-      store_issue(issue, listed_at) unless unchanged?(issue, stored)
+      store_issue(issue, listed_at) unless !@full && unchanged?(issue, stored)
       nil
     rescue StandardError => e
       # The class alone: production logs reach the nightly workflow's public

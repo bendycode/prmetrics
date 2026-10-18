@@ -134,6 +134,10 @@ rake trackers:set_token[tracker_id]
 
 # Sync every tracker's stories and recompute their cycle times
 rake sync:stories
+
+# Read every story's history again, unchanged ones included, after a change
+# in how events are read
+rake sync:stories FETCH_ALL=true
 ```
 
 ### Environment Setup
