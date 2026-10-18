@@ -129,4 +129,15 @@ Rails.application.configure do
 
   # Skip DNS rebinding protection for the default health check endpoint.
   config.host_authorization = { exclude: ->(request) { request.path.in?(['/up', '/health']) } }
+
+  # Keys for Active Record encryption, which keeps each tracker's API token
+  # unreadable in the database. Each is set only when its variable is, so keys
+  # kept in Rails credentials still apply. With neither, reading or writing a
+  # token raises; nothing else in the app needs them.
+  ENV['ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY'].presence&.then do |key|
+    config.active_record.encryption.primary_key = key
+  end
+  ENV['ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT'].presence&.then do |salt|
+    config.active_record.encryption.key_derivation_salt = salt
+  end
 end

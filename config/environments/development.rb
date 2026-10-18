@@ -83,9 +83,12 @@ Rails.application.configure do
 
   # Fixed encryption keys that protect nothing, so a fresh checkout reads and
   # writes tracker tokens with no setup; set the environment variables to use
-  # others.
-  config.active_record.encryption.primary_key =
-    ENV.fetch('ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY', 'development-primary-key-protects-nothing')
-  config.active_record.encryption.key_derivation_salt =
-    ENV.fetch('ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT', 'development-key-derivation-salt-protects-nothing')
+  # others. These keys are public, so a Heroku dyno (which sets DYNO) never
+  # takes them, even one that boots without RAILS_ENV and lands here.
+  unless ENV['DYNO']
+    config.active_record.encryption.primary_key =
+      ENV.fetch('ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY', 'development-primary-key-protects-nothing')
+    config.active_record.encryption.key_derivation_salt =
+      ENV.fetch('ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT', 'development-key-derivation-salt-protects-nothing')
+  end
 end
