@@ -6,7 +6,7 @@ namespace :sync do
     # tracker's repository may be private, and a GitHub error's message
     # quotes its URL. Each kind of sync checks for its own credentials, so a
     # tracker missing them fails alone.
-    trackers = Tracker.order(:id).to_a
+    trackers = Tracker.includes(:source_repository).order(:id).to_a
     synced = trackers.count do |tracker|
       tracker.sync!
       puts "  ✓ Synced stories for tracker #{tracker.id}"
