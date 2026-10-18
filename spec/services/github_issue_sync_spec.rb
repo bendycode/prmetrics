@@ -153,12 +153,14 @@ RSpec.describe GithubIssueSync do
   end
 
   describe 'without a GitHub token' do
-    it 'refuses to start, naming the variable it needs' do
-      allow(ENV).to receive(:fetch).and_call_original
-      allow(ENV).to receive(:fetch).with('GITHUB_ACCESS_TOKEN', nil).and_return(nil)
+    [nil, ''].each do |token|
+      it "refuses to start, naming the variable it needs, when the token is #{token.inspect}" do
+        allow(ENV).to receive(:fetch).and_call_original
+        allow(ENV).to receive(:fetch).with('GITHUB_ACCESS_TOKEN', nil).and_return(token)
 
-      expect { described_class.new(tracker) }
-        .to raise_error(described_class::MissingToken, /GITHUB_ACCESS_TOKEN/)
+        expect { described_class.new(tracker) }
+          .to raise_error(described_class::MissingToken, /GITHUB_ACCESS_TOKEN/)
+      end
     end
   end
 end

@@ -117,5 +117,11 @@ RSpec.describe StoryTimes do
 
       expect(result.done_at).to eq(day0 + 5.days)
     end
+
+    it 'is not reached while the kind\'s reopen is the last word' do
+      result = times([event(:opened, 0), event(:pull_request_linked, 2), event(:commit_referenced, 3), event(:closed, 4)])
+
+      expect(result.done_at).to be_nil
+    end
   end
 end

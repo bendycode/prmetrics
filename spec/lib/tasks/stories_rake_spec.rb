@@ -47,6 +47,7 @@ RSpec.describe 'story rake tasks' do
       expect(Rails.logger).not_to have_received(:error).with(include(first.source_repository.name))
     end
 
+    # GithubIssueSync's own spec covers the token check that raises this
     it 'syncs the other trackers when one cannot start, then reports it' do
       allow(GithubIssueSync).to receive(:new).with(first).and_raise(GithubIssueSync::MissingToken)
 
