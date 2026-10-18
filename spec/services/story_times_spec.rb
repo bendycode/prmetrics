@@ -124,4 +124,53 @@ RSpec.describe StoryTimes do
       expect(result.done_at).to be_nil
     end
   end
+
+  # Measured over story histories read the way the Shortcut sync reads them
+  context "with a Shortcut tracker's triggers" do
+    let(:triggers) { Tracker::KINDS.fetch('shortcut')[:triggers] }
+    let(:workflow) { shortcut_fixture('workflow') }
+
+    def shortcut_times(name, story_id)
+      events = ShortcutStoryHistory.new(story_id: story_id, workflow: workflow, history: shortcut_fixture(name)).events
+      described_class.new(events: events.map { |attributes| StoryEvent.new(attributes) }, triggers: triggers,
+                          state_reason: nil)
+    end
+
+    def at(time)
+      Time.zone.parse(time)
+    end
+
+    it 'is committed when the story leaves the first state, started when it reaches a started one, and done on the last move into a done one' do
+      expect(shortcut_times('history_7001', 7001)).to have_attributes(
+        committed_at: at('2026-09-03T15:00:00Z'), committed_source: :status_changed,
+        started_at: at('2026-09-05T15:00:00Z'), started_source: :status_changed,
+        done_at: at('2026-09-12T16:00:00Z')
+      )
+    end
+
+    it 'is done only at the last move into a done state after a move back to work' do
+      expect(shortcut_times('history_reopened', 7005).done_at).to eq(at('2026-09-09T15:00:00Z'))
+    end
+
+    it 'is committed at creation for a story created past the first state' do
+      expect(shortcut_times('history_created_ready', 7006)).to have_attributes(
+        committed_at: at('2026-09-01T15:00:00Z'), committed_source: :opened, started_at: at('2026-09-02T15:00:00Z')
+      )
+    end
+
+    it 'falls back to a commit for the start when no move reached a started state' do
+      expect(shortcut_times('history_code_only', 7007)).to have_attributes(
+        started_at: at('2026-09-02T15:00:00Z'), started_source: :commit_referenced,
+        done_at: at('2026-09-03T15:00:00Z')
+      )
+    end
+
+    it 'is not done while the story sits in a started state' do
+      history = shortcut_fixture('history_reopened').first(4)
+      events = ShortcutStoryHistory.new(story_id: 7005, workflow: workflow, history: history).events
+
+      expect(described_class.new(events: events.map { |attributes| StoryEvent.new(attributes) }, triggers: triggers,
+                                 state_reason: nil).done_at).to be_nil
+    end
+  end
 end
