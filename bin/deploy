@@ -6,6 +6,7 @@ set -e
 APP="${HEROKU_APP:-prmetrics-production}"
 BIN_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROLLBACK_BLOCKER=""
+NOTHING_TO_ROLL_BACK_TO=""
 APP_URL=""
 
 echo "🚀 Starting deployment of $APP to Heroku..."
@@ -37,7 +38,7 @@ confirm() {
 # such release's version (or "none"). A config change serves the code of the
 # succeeded release before it, and "Rollback to vN" serves vN's code.
 release_info() {
-  heroku releases -a "$APP" -n 50 --json | python3 -c '
+  heroku releases -a "$APP" -n 100 --json | python3 -c '
 import json, sys
 
 sha8 = sys.argv[1]
@@ -77,13 +78,16 @@ fail_after_release() {
   echo "❌ DEPLOYMENT FAILED: $1"
   if [ -n "$ROLLBACK_BLOCKER" ]; then
     echo "⚠️  Not rolling back: $ROLLBACK_BLOCKER"
-    echo "   To roll back by hand: heroku rollback v$PREVIOUS_VERSION -a $APP"
+    if [ -z "$NOTHING_TO_ROLL_BACK_TO" ]; then
+      echo "   To roll back by hand: heroku rollback v$PREVIOUS_VERSION -a $APP"
+    fi
     exit 1
   fi
   echo "⏪ Rolling back to v$PREVIOUS_VERSION..."
+  # A non-zero exit can follow a rollback Heroku has already made, so the
+  # releases are read afterwards either way.
   if ! heroku rollback "v$PREVIOUS_VERSION" -a "$APP"; then
-    echo "❌ ROLLBACK FAILED: the new release is still live. Read: heroku releases -a $APP"
-    exit 1
+    echo "⚠️  heroku rollback exited non-zero; reading which release serves now"
   fi
   sleep 15
   heroku ps -a "$APP" 2>&1 || true
@@ -94,8 +98,14 @@ fail_after_release() {
       echo "❌ Health check after the rollback did not return ok: $HEALTH_RESPONSE"
     fi
   fi
-  read -r ROLLED_VERSION ROLLED8 _ _ <<< "$(release_info "$SHA8" || echo unknown unknown)"
-  if [ "$ROLLED8" = "$LIVE8" ]; then
+  if ! ROLLED=$(release_info "$SHA8"); then
+    echo "⚠️  Could not read the releases after the rollback. Read: heroku releases -a $APP"
+    exit 1
+  fi
+  read -r ROLLED_VERSION ROLLED8 _ _ <<< "$ROLLED"
+  if [ "$ROLLED_VERSION" = "unknown" ]; then
+    echo "⚠️  Could not read the releases after the rollback: none is marked current. Read: heroku releases -a $APP"
+  elif [ "$ROLLED8" = "$LIVE8" ]; then
     echo "⏪ Rolled back: v$ROLLED_VERSION serves $ROLLED8"
   else
     echo "❌ ROLLBACK DID NOT TAKE: v$ROLLED_VERSION serves $ROLLED8, not $LIVE8. Read: heroku releases -a $APP"
@@ -148,6 +158,7 @@ fi
 echo "📌 Live before the deploy: v$PREVIOUS_VERSION, serving $LIVE8"
 if [ "$LIVE8" = "$SHA8" ]; then
   ROLLBACK_BLOCKER="$SHA8 was already live, so the release before it runs the same code"
+  NOTHING_TO_ROLL_BACK_TO=1
 elif LIVE=$(git rev-parse --verify -q "$LIVE8^{commit}"); then
   ADDED_MIGRATIONS=$(git diff --name-only --no-renames --diff-filter=A "$LIVE" HEAD -- db/migrate db/data)
   if [ -n "$ADDED_MIGRATIONS" ]; then
@@ -162,7 +173,12 @@ fi
 # Push to Heroku. The Procfile's release command runs schema and data
 # migrations before the new release goes live.
 echo "📤 Pushing $SHA to Heroku..."
-git push "https://git.heroku.com/$APP.git" HEAD:main
+# A push can exit non-zero after Heroku has made the release (a dropped
+# connection during a long release command), so the release check below runs
+# either way and decides.
+if ! git push "https://git.heroku.com/$APP.git" HEAD:main; then
+  echo "⚠️  git push exited non-zero; checking the release anyway"
+fi
 
 # A release command that fails leaves the old release serving, so confirm the
 # current release serves this commit. Until it does, nothing of this deploy is

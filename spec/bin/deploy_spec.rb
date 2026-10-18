@@ -30,7 +30,7 @@ RSpec.describe 'bin/deploy' do
         branch*) echo "${STUB_BRANCH:-main}" ;;
         diff-index*) exit "${STUB_DIRTY:-0}" ;;
         "diff --name-only"*) echo "$STUB_ADDED_FILES" ;;
-        push*) touch "$STUB_DIR/pushed" ;;
+        push*) touch "$STUB_DIR/pushed"; exit "${STUB_PUSH_EXIT:-0}" ;;
       esac
     BASH
     write_stub('heroku', <<~BASH)
@@ -242,6 +242,24 @@ RSpec.describe 'bin/deploy' do
     end
   end
 
+  describe 'a push that exits non-zero' do
+    it 'still checks the release and rolls back when the release went live' do
+      output, status = run_deploy('STUB_PUSH_EXIT' => '1', 'STUB_HEALTH' => '{"status":"error"}')
+
+      expect(status).not_to be_success, output
+      expect(output).to include('git push exited non-zero', 'v42 serves 01234567', 'DEPLOYMENT FAILED')
+      expect(rolled_back?).to be(true)
+    end
+
+    it 'fails without rolling back when no release was made' do
+      output, status = run_deploy('STUB_PUSH_EXIT' => '1', 'STUB_RELEASES_AFTER' => releases_before.to_json)
+
+      expect(status).not_to be_success, output
+      expect(output).to include('DEPLOYMENT FAILED')
+      expect(rolled_back?).to be(false)
+    end
+  end
+
   describe 'a check failing after the release goes live' do
     {
       'a migration is still down' => -> { { 'STUB_MIGRATE_STATUS' => migrate_status('up', 'down') } },
@@ -270,11 +288,20 @@ RSpec.describe 'bin/deploy' do
       expect(output).to include('ROLLBACK DID NOT TAKE', 'v42 serves 01234567')
     end
 
-    it 'says the rollback failed when heroku rollback fails' do
+    it 'reports which release serves after heroku rollback exits non-zero' do
       output, status = run_deploy('STUB_HEALTH' => '{"status":"error"}', 'STUB_ROLLBACK_EXIT' => '1')
 
       expect(status).not_to be_success, output
-      expect(output).to include('ROLLBACK FAILED')
+      expect(output).to include('heroku rollback exited non-zero', 'v43 serves aaaaaaaa')
+      expect(output).not_to include('the new release is still live')
+    end
+
+    it 'says it could not confirm the rollback when the releases cannot be read afterwards' do
+      output, status = run_deploy('STUB_HEALTH' => '{"status":"error"}', 'STUB_RELEASES_ROLLED' => 'not json')
+
+      expect(status).not_to be_success, output
+      expect(output).to include('Could not read the releases after the rollback')
+      expect(output).not_to include('ROLLBACK DID NOT TAKE')
     end
 
     it 'does not roll back to the same release when the commit was already live' do
@@ -284,6 +311,7 @@ RSpec.describe 'bin/deploy' do
 
       expect(status).not_to be_success, output
       expect(output).to include('Not rolling back', 'already live')
+      expect(output).not_to include('To roll back by hand')
       expect(rolled_back?).to be(false)
     end
 
