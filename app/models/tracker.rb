@@ -9,7 +9,7 @@ class Tracker < ApplicationRecord
   # meaning the same. Done is the last close with no reopen after it.
   KINDS = {
     'github_issues' => {
-      sync: 'GithubIssueSync',
+      sync: GithubIssueSync,
       story_noun: 'issue',
       story_url_prefix: 'https://github.com/',
       triggers: {
@@ -45,7 +45,7 @@ class Tracker < ApplicationRecord
   end
 
   def sync!
-    kind_details[:sync].constantize.new(self).sync!
+    kind_details[:sync].new(self).sync!
   end
 
   def story_noun
