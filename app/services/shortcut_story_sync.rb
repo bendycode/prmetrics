@@ -25,7 +25,6 @@ class ShortcutStorySync
     # Moving, adding, or retyping a state changes what stored moves mean, and
     # touches no story, so a changed set of states has every story read again
     @read_all = @full || states_digest != @tracker.workflow_digest
-    listed = @workflow['states'].flat_map { |state| @shortcut.stories_in_state(state['id']) }
     stories, other_teams = listed.partition { |story| @tracker.reads_team?(story['group_id']) }
 
     failures, stopped = store_changed(stories)
@@ -41,6 +40,14 @@ class ShortcutStorySync
   def states_digest
     Digest::SHA256.hexdigest(@workflow['states'].map { |state| state.values_at('id', 'type', 'position') }
                                                 .sort_by(&:first).to_json)
+  end
+
+  # A story moving while the listing runs can appear in two states; its
+  # newest update is the one stored
+  def listed
+    @workflow['states'].flat_map { |state| @shortcut.stories_in_state(state['id']) }
+                       .group_by { |story| story['id'] }
+                       .map { |_id, copies| copies.max_by { |story| Time.zone.parse(story['updated_at']) } }
   end
 
   # Only once every story was read: one that failed keeps the payload of the

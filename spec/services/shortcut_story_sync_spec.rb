@@ -87,6 +87,18 @@ RSpec.describe ShortcutStorySync do
     expect(Tracker.find(tracker.id).team_ids).to eq(['team-1'])
   end
 
+  # A story moving while the listing runs can appear in two states
+  it 'stores a story listed twice at its newest update' do
+    earlier = shortcut_fixture('search_state_105').first.merge('updated_at' => '2026-09-01T00:00:00Z')
+    allow(shortcut).to receive(:stories_in_state).with(103).and_return(shortcut_fixture('search_state_103') + [earlier])
+
+    sync.sync!
+
+    expect(tracker.stories.find_by(external_id: '7001').source_updated_at)
+      .to eq(Time.zone.parse(shortcut_fixture('search_state_105').first['updated_at']))
+    expect(shortcut).to have_received(:history).with(7001).once
+  end
+
   it 'reads every story again when told to, changed or not' do
     sync.sync!
 
