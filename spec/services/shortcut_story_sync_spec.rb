@@ -223,12 +223,25 @@ RSpec.describe ShortcutStorySync do
     end
 
     # The listing reads one state at a time, so a story moving between states can miss it
-    it 'stays when Shortcut still has it in the workflow' do
+    it 'stays when Shortcut still has it in the workflow, its history read only when every story is' do
       allow(shortcut).to receive(:story).with(7004).and_return(shortcut_fixture('story_7001').merge('id' => 7004))
+      allow(shortcut).to receive(:history).with(7004).and_return(history_for(7004))
 
       sync.sync!
+      described_class.new(tracker, shortcut: shortcut).sync!
 
       expect(unlisted.reload).not_to be_gone
+      expect(shortcut).to have_received(:history).with(7004).once
+    end
+
+    it 'has its history read again when every story is being read' do
+      allow(shortcut).to receive(:story).with(7004).and_return(shortcut_fixture('story_7001').merge('id' => 7004))
+      allow(shortcut).to receive(:history).with(7004).and_return(history_for(7004))
+
+      described_class.new(tracker, shortcut: shortcut, full: true).sync!
+
+      expect(shortcut).to have_received(:history).with(7004)
+      expect(unlisted.reload).to have_attributes(gone: false, title: 'Story 7001')
     end
 
     it 'is reported when it cannot be read, after every story is measured' do
