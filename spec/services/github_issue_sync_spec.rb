@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe StorySyncService do
+RSpec.describe GithubIssueSync do
   let(:repository) { create(:repository, name: 'bendycode/prmetrics') }
   let(:tracker) { create(:tracker, source_repository: repository, key_prefix: 'PRM') }
   let(:github) { instance_double(GithubService) }
@@ -42,7 +42,7 @@ RSpec.describe StorySyncService do
 
   context 'when an issue is stored at the update GitHub lists' do
     let!(:story) do
-      create(:story, tracker: tracker, external_id: '79', gh_updated_at: fixture.issue.updated_at,
+      create(:story, tracker: tracker, external_id: '79', source_updated_at: fixture.issue.updated_at,
                      listed_at: fixture.issue.updated_at + 1.hour)
     end
 
@@ -66,7 +66,7 @@ RSpec.describe StorySyncService do
   it 'reads an open issue\'s timeline on every sync' do
     open_issue = github_resource(fixture.issue.to_h.merge(state: 'open', state_reason: nil, closed_at: nil))
     allow(github).to receive(:issues).with('bendycode/prmetrics').and_return([open_issue])
-    create(:story, tracker: tracker, external_id: '79', gh_updated_at: open_issue.updated_at,
+    create(:story, tracker: tracker, external_id: '79', source_updated_at: open_issue.updated_at,
                    listed_at: open_issue.updated_at + 1.hour)
 
     sync.sync!
@@ -75,7 +75,7 @@ RSpec.describe StorySyncService do
   end
 
   it 'reads an issue again once it has changed since it was stored' do
-    create(:story, tracker: tracker, external_id: '79', gh_updated_at: fixture.issue.updated_at - 1.day,
+    create(:story, tracker: tracker, external_id: '79', source_updated_at: fixture.issue.updated_at - 1.day,
                    listed_at: fixture.issue.updated_at - 1.hour)
 
     sync.sync!
@@ -84,7 +84,7 @@ RSpec.describe StorySyncService do
   end
 
   it 'reads an issue again when it was stored before GitHub listed its update' do
-    create(:story, tracker: tracker, external_id: '79', gh_updated_at: fixture.issue.updated_at,
+    create(:story, tracker: tracker, external_id: '79', source_updated_at: fixture.issue.updated_at,
                    listed_at: fixture.issue.updated_at)
 
     sync.sync!
@@ -103,7 +103,7 @@ RSpec.describe StorySyncService do
     end
 
     it 'stores nothing for that issue, and names it once the others are synced' do
-      expect { sync.sync! }.to raise_error(StorySyncService::IssuesFailed, /#79/)
+      expect { sync.sync! }.to raise_error(GithubIssueSync::IssuesFailed, /#79/)
       expect(tracker.stories.pluck(:external_id)).to eq(['9002'])
     end
 
@@ -111,13 +111,13 @@ RSpec.describe StorySyncService do
     it 'logs the failure without the repository\'s name' do
       allow(Rails.logger).to receive(:error)
 
-      expect { sync.sync! }.to raise_error(StorySyncService::IssuesFailed)
+      expect { sync.sync! }.to raise_error(GithubIssueSync::IssuesFailed)
       expect(Rails.logger).to have_received(:error).with(include('#79'))
       expect(Rails.logger).not_to have_received(:error).with(include('bendycode/prmetrics'))
     end
 
     it 'still measures the issues it could read' do
-      expect { sync.sync! }.to raise_error(StorySyncService::IssuesFailed)
+      expect { sync.sync! }.to raise_error(GithubIssueSync::IssuesFailed)
       expect(tracker.stories.sole).to have_attributes(committed_source: 'opened', started_source: 'assigned', done_at: nil)
     end
   end
@@ -144,11 +144,23 @@ RSpec.describe StorySyncService do
 
     it 'is no longer gone once GitHub lists it again' do
       returned = create(:story, tracker: tracker, external_id: '79', gone: true,
-                                gh_updated_at: fixture.issue.updated_at, listed_at: fixture.issue.updated_at + 1.hour)
+                                source_updated_at: fixture.issue.updated_at, listed_at: fixture.issue.updated_at + 1.hour)
 
       sync.sync!
 
       expect(returned.reload.gone).to be(false)
+    end
+  end
+
+  describe 'without a GitHub token' do
+    [nil, ''].each do |token|
+      it "refuses to start, naming the variable it needs, when the token is #{token.inspect}" do
+        allow(ENV).to receive(:fetch).and_call_original
+        allow(ENV).to receive(:fetch).with('GITHUB_ACCESS_TOKEN', nil).and_return(token)
+
+        expect { described_class.new(tracker) }
+          .to raise_error(described_class::MissingToken, /GITHUB_ACCESS_TOKEN/)
+      end
     end
   end
 end

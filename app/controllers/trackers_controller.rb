@@ -3,6 +3,7 @@ class TrackersController < ApplicationController
     @tracker = policy_scope(Tracker).find(params[:id])
     authorize @tracker
     @report = CycleTimeReport.new(@tracker, clock: clock_param)
+    @repository_names = policy_scope(@tracker.repositories).order(:name).pluck(:name)
   end
 
   private

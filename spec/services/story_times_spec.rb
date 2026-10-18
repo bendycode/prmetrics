@@ -2,10 +2,10 @@ require 'rails_helper'
 
 RSpec.describe StoryTimes do
   let(:day0) { Time.zone.parse('2026-09-01 10:00') }
-  let(:triggers) { { committed: %i[opened], started: %i[assigned commit_referenced pull_request_linked] } }
+  let(:triggers) { Tracker::KINDS.fetch('github_issues')[:triggers] }
 
-  def event(kind, day)
-    StoryEvent.new(kind: kind, occurred_at: day0 + day.days)
+  def event(kind, day, payload = {})
+    StoryEvent.new(kind: kind, occurred_at: day0 + day.days, payload: payload)
   end
 
   def times(events, state_reason: 'completed')
@@ -87,6 +87,41 @@ RSpec.describe StoryTimes do
       result = times([event(:closed, 6), event(:reopened, 3), event(:closed, 2), event(:opened, 0)])
 
       expect(result.done_at).to eq(day0 + 6.days)
+    end
+  end
+
+  describe 'triggers with conditions on the payload' do
+    let(:triggers) do
+      { committed: [StoryTrigger[:opened]],
+        started: [StoryTrigger[:assigned, 'assignee' => { 'type' => 'User' }]],
+        done: { close: [StoryTrigger[:closed]], reopen: [StoryTrigger[:reopened]] } }
+    end
+
+    it 'starts at the first event whose payload matches' do
+      result = times([event(:opened, 0), event(:assigned, 1, 'assignee' => { 'type' => 'Bot' }),
+                      event(:assigned, 3, 'assignee' => { 'type' => 'User' }), event(:closed, 5)])
+
+      expect(result).to have_attributes(started_at: day0 + 3.days, started_source: :assigned)
+    end
+  end
+
+  describe 'done rules' do
+    let(:triggers) do
+      { committed: [StoryTrigger[:opened]], started: [StoryTrigger[:assigned]],
+        done: { close: [StoryTrigger[:pull_request_linked]], reopen: [StoryTrigger[:commit_referenced]] } }
+    end
+
+    it 'closes and reopens on the events the tracker kind names' do
+      result = times([event(:opened, 0), event(:pull_request_linked, 2), event(:commit_referenced, 3),
+                      event(:pull_request_linked, 5), event(:closed, 6)])
+
+      expect(result.done_at).to eq(day0 + 5.days)
+    end
+
+    it 'is not reached while the kind\'s reopen is the last word' do
+      result = times([event(:opened, 0), event(:pull_request_linked, 2), event(:commit_referenced, 3), event(:closed, 4)])
+
+      expect(result.done_at).to be_nil
     end
   end
 end

@@ -7,7 +7,7 @@ RSpec.describe Story do
   end
 
   describe 'validations' do
-    %i[key title url gh_created_at gh_updated_at listed_at].each do |attribute|
+    %i[key title url source_created_at source_updated_at listed_at].each do |attribute|
       it { is_expected.to validate_presence_of(attribute) }
     end
 
@@ -30,8 +30,8 @@ RSpec.describe Story do
     let(:updated) { Time.zone.parse('2026-09-20 17:26:04') }
 
     it 'takes a story listed at least a minute after its update' do
-      create(:story, external_id: '1', gh_updated_at: updated, listed_at: updated + 59.seconds)
-      listed_a_minute_later = create(:story, external_id: '2', gh_updated_at: updated, listed_at: updated + 1.minute)
+      create(:story, external_id: '1', source_updated_at: updated, listed_at: updated + 59.seconds)
+      listed_a_minute_later = create(:story, external_id: '2', source_updated_at: updated, listed_at: updated + 1.minute)
 
       expect(described_class.listed_after_last_update).to contain_exactly(listed_a_minute_later)
     end
@@ -40,8 +40,8 @@ RSpec.describe Story do
   describe '#record_events' do
     let(:story) { create(:story) }
     let(:attributes) do
-      [{ external_id: '1', kind: :assigned, occurred_at: story.gh_created_at, payload: { 'id' => 1 } },
-       { external_id: 'opened', kind: :opened, occurred_at: story.gh_created_at, payload: {} }]
+      [{ external_id: '1', kind: :assigned, occurred_at: story.source_created_at, payload: { 'id' => 1 } },
+       { external_id: 'opened', kind: :opened, occurred_at: story.source_created_at, payload: {} }]
     end
 
     it 'stores each event once however many reads have seen it' do

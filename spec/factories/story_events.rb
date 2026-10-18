@@ -3,6 +3,6 @@ FactoryBot.define do
     story
     sequence(:external_id, &:to_s)
     kind { :assigned }
-    occurred_at { story.gh_created_at }
+    occurred_at { story.source_created_at }
   end
 end
