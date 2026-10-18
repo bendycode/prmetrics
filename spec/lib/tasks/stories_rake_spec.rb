@@ -26,8 +26,8 @@ RSpec.describe 'story rake tasks' do
     # The nightly workflow's log is public, and a tracker's repository may not be
     it 'syncs every tracker, naming each by its ID alone' do
       expect { Rake::Task['sync:stories'].invoke }
-        .to output(/Synced stories for tracker #{first.id}.*Synced 2 of 2 trackers/m).to_stdout
-        .and(output(exclude(first.source_repository.name)).to_stdout)
+        .to output(a_string_matching(/Synced stories for tracker #{first.id}.*Synced 2 of 2 trackers/m)
+          .and(exclude(first.source_repository.name))).to_stdout
 
       expect([first_sync, second_sync]).to all(have_received(:sync!))
     end
@@ -121,6 +121,14 @@ RSpec.describe 'story rake tasks' do
       tracker = first_repository.reload.tracker
       expect(tracker).to have_attributes(kind: 'shortcut', workflow_id: '500', api_token: 'shortcut-secret')
       expect(second_repository.reload.tracker).to eq(tracker)
+      expect(TokenPrompt).to have_received(:read).with('SHORTCUT_API_TOKEN')
+    end
+
+    it 'covers a repository named twice once' do
+      expect { Rake::Task['trackers:create_shortcut'].invoke('500', 'owner/first', 'owner/first') }
+        .to output(%r{covering owner/first\. }).to_stdout
+
+      expect(first_repository.reload.tracker).to be_shortcut
     end
 
     it 'never prints the token' do
@@ -134,21 +142,32 @@ RSpec.describe 'story rake tasks' do
       expect { Rake::Task['trackers:create_shortcut'].invoke('500', 'owner/first') }
         .to output(/Api token can't be blank/).to_stdout.and raise_error(SystemExit)
       expect(Tracker.count).to be(0)
+      expect(first_repository.reload.tracker).to be_nil
     end
 
-    it 'refuses without a repository to cover' do
+    it 'refuses a workflow that is not a number, before asking for a token' do
+      expect { Rake::Task['trackers:create_shortcut'].invoke('owner/first', 'owner/second') }
+        .to output(/Workflow is invalid/).to_stdout.and raise_error(SystemExit)
+      expect(Tracker.count).to be(0)
+      expect(second_repository.reload.tracker).to be_nil
+      expect(TokenPrompt).not_to have_received(:read)
+    end
+
+    it 'refuses without a repository to cover, before asking for a token' do
       expect { Rake::Task['trackers:create_shortcut'].invoke('500') }
         .to output(/Name at least one repository/).to_stdout.and raise_error(SystemExit)
       expect(Tracker.count).to be(0)
+      expect(TokenPrompt).not_to have_received(:read)
     end
 
-    it 'refuses a repository that has not been added' do
+    it 'refuses a repository that has not been added, before asking for a token' do
       expect { Rake::Task['trackers:create_shortcut'].invoke('500', 'owner/first', 'owner/elsewhere') }
         .to output(%r{Repository owner/elsewhere not found}).to_stdout.and raise_error(SystemExit)
       expect(Tracker.count).to be(0)
+      expect(TokenPrompt).not_to have_received(:read)
     end
 
-    it 'refuses a repository another tracker already covers' do
+    it 'refuses a repository another tracker already covers, before asking for a token' do
       other = create(:tracker)
       second_repository.update!(tracker: other)
 
@@ -156,6 +175,20 @@ RSpec.describe 'story rake tasks' do
         .to output(%r{owner/second is already covered by tracker #{other.id}}).to_stdout.and raise_error(SystemExit)
       expect(first_repository.reload.tracker).to be_nil
       expect(Tracker.count).to be(1)
+      expect(TokenPrompt).not_to have_received(:read)
+    end
+
+    it 'refuses a repository another tracker covered while it waited for the token' do
+      other = create(:tracker)
+      allow(TokenPrompt).to receive(:read).with('SHORTCUT_API_TOKEN') do
+        second_repository.update!(tracker: other)
+        'shortcut-secret'
+      end
+
+      expect { Rake::Task['trackers:create_shortcut'].invoke('500', 'owner/first', 'owner/second') }
+        .to output(%r{owner/second is already covered by tracker #{other.id}}).to_stdout.and raise_error(SystemExit)
+      expect(first_repository.reload.tracker).to be_nil
+      expect(Tracker.shortcut.count).to be(0)
     end
   end
 
@@ -166,8 +199,8 @@ RSpec.describe 'story rake tasks' do
 
     it 'replaces the tracker\'s token without printing either one' do
       expect { Rake::Task['trackers:set_token'].invoke(tracker.id.to_s) }
-        .to output(/Replaced the token for tracker #{tracker.id}/).to_stdout
-        .and(output(exclude('new-secret').and(exclude('old-secret'))).to_stdout)
+        .to output(a_string_matching(/Replaced the token for tracker #{tracker.id}/)
+          .and(exclude('new-secret')).and(exclude('old-secret'))).to_stdout
 
       expect(tracker.reload.api_token).to eq('new-secret')
     end
@@ -180,17 +213,25 @@ RSpec.describe 'story rake tasks' do
       expect(tracker.reload.api_token).to eq('old-secret')
     end
 
-    it 'fails with a clear message for a tracker that does not exist' do
+    it 'fails with a clear message for a tracker that does not exist, before asking for a token' do
       expect { Rake::Task['trackers:set_token'].invoke('0') }
         .to output(/Tracker 0 not found/).to_stdout.and raise_error(SystemExit)
+      expect(TokenPrompt).not_to have_received(:read)
     end
 
-    it 'refuses a tracker of a kind that reads with no token of its own' do
+    it 'shows how to call it when no tracker is named' do
+      expect { Rake::Task['trackers:set_token'].invoke }
+        .to output(/Usage: rake trackers:set_token\[tracker_id\]/).to_stdout.and raise_error(SystemExit)
+      expect(TokenPrompt).not_to have_received(:read)
+    end
+
+    it 'refuses a tracker of a kind that reads with no token of its own, before asking for a token' do
       github = create(:tracker)
 
       expect { Rake::Task['trackers:set_token'].invoke(github.id.to_s) }
         .to output(/Tracker #{github.id} is a github_issues tracker, which reads with GITHUB_ACCESS_TOKEN/).to_stdout
         .and raise_error(SystemExit)
+      expect(TokenPrompt).not_to have_received(:read)
     end
   end
 end
