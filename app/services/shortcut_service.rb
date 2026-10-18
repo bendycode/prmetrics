@@ -5,24 +5,21 @@ class ShortcutService
   BASE_URL = 'https://api.app.shortcut.com/api/v3/'.freeze
   # Shortcut allows 200 requests a minute for each token
   MINIMUM_INTERVAL = 60.0 / 200
+  # Doubling from the interval, the waits add up to over two minutes, past
+  # the minute a rate limit counts over
+  RETRIES = 7
 
-  # Raised for any response the service cannot use. The message names the
-  # request and its status, never the token, which travels in a header.
+  # Raised for any response the service cannot use. It names the request and
+  # its status, never the token, and carries no cause: Faraday's errors can
+  # hold the request's headers, the token among them.
   class Error < StandardError; end
+  class NotFound < Error; end
 
   def initialize(token, adapter: Faraday.default_adapter, sleep: Kernel.method(:sleep),
-                 clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
+                 clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }, retry_interval: 1)
     @sleep = sleep
     @clock = clock
-    @connection = Faraday.new(url: BASE_URL, headers: { 'Shortcut-Token' => token }) do |faraday|
-      # Outermost, so it raises only for the response the retries end on
-      faraday.response :raise_error
-      faraday.request :json
-      # Story search is a POST that only reads, so it is retried like a GET
-      faraday.request :retry, max: 5, interval: 1, backoff_factor: 2, retry_statuses: [429], methods: %i[get post]
-      faraday.response :json
-      faraday.adapter(*Array(adapter))
-    end
+    @connection = connection(token, adapter, retry_interval)
   end
 
   def workflow(id)
@@ -31,13 +28,13 @@ class ShortcutService
 
   # Every story in a workflow state, archived ones included
   def stories_in_state(state_id)
-    request(:post, 'stories/search', workflow_state_id: state_id)
+    request(:post, 'stories/search', { workflow_state_id: state_id })
   end
 
   # A story, or nil once Shortcut no longer has it
   def story(id)
     request(:get, "stories/#{id}")
-  rescue Faraday::ResourceNotFound
+  rescue NotFound
     nil
   end
 
@@ -45,20 +42,43 @@ class ShortcutService
     request(:get, "stories/#{story_id}/history")
   end
 
+  def inspect
+    "#<#{self.class.name}>"
+  end
+
   private
+
+  def connection(token, adapter, retry_interval)
+    Faraday.new(url: BASE_URL, headers: { 'Shortcut-Token' => token }) do |faraday|
+      # Outermost, so it raises only for the response the retries end on
+      faraday.response :raise_error, include_request: false
+      faraday.request :json
+      # Story search is a POST that only reads, so it is retried like a GET
+      faraday.request :retry, max: RETRIES, interval: retry_interval, backoff_factor: 2,
+                              retry_statuses: [429], methods: %i[get post],
+                              exceptions: Faraday::Retry::Middleware::DEFAULT_EXCEPTIONS + [Faraday::ConnectionFailed],
+                              retry_block: method(:log_retry)
+      faraday.response :json
+      faraday.adapter(*Array(adapter))
+    end
+  end
 
   def request(method, path, body = nil)
     pace
-    @connection.public_send(method, path, body).body
-  rescue Faraday::ResourceNotFound
-    raise
+    @connection.run_request(method, path, body, nil).body
   rescue Faraday::Error => e
-    raise Error, "Shortcut answered #{e.response_status || 'nothing'} to #{method.upcase} #{path}"
+    raise (e.is_a?(Faraday::ResourceNotFound) ? NotFound : Error),
+          "Shortcut answered #{e.response_status || 'nothing'} to #{method.upcase} #{path}", cause: nil
   end
 
   def pace
     now = @clock.call
-    @sleep.call(MINIMUM_INTERVAL - (now - @last_request_at)) if @last_request_at && now - @last_request_at < MINIMUM_INTERVAL
+    elapsed = @last_request_at && (now - @last_request_at)
+    @sleep.call(MINIMUM_INTERVAL - elapsed) if elapsed && elapsed < MINIMUM_INTERVAL
     @last_request_at = @clock.call
+  end
+
+  def log_retry(env:, will_retry_in:, **)
+    Rails.logger.warn "Shortcut answered #{env.status || 'nothing'}; retrying in #{will_retry_in} seconds"
   end
 end
