@@ -16,6 +16,39 @@ RSpec.describe Tracker do
     it { is_expected.not_to allow_value('prm', 'PRM-', 'P M').for(:key_prefix) }
   end
 
+  describe 'a Shortcut tracker' do
+    subject(:tracker) { build(:tracker, :shortcut) }
+
+    it { is_expected.to validate_presence_of(:api_token) }
+    it { is_expected.to validate_presence_of(:workflow_id) }
+
+    it 'reads no source repository' do
+      tracker.source_repository = build(:repository)
+
+      expect(tracker).not_to be_valid
+    end
+
+    it 'is valid with a token and a workflow alone' do
+      expect(tracker).to be_valid
+    end
+
+    it 'keeps its token unreadable in the database' do
+      tracker.update!(api_token: 'shortcut-token-1234')
+
+      stored = described_class.connection.select_value(
+        described_class.where(id: tracker.id).select(:api_token).to_sql
+      )
+      expect(stored).not_to include('shortcut-token-1234')
+      expect(tracker.reload.api_token).to eq('shortcut-token-1234')
+    end
+
+    it 'leaves its token out of inspect' do
+      tracker.api_token = 'shortcut-token-1234'
+
+      expect(tracker.inspect).not_to include('shortcut-token-1234')
+    end
+  end
+
   describe '#story_key' do
     it 'uses the project\'s key prefix' do
       expect(build(:tracker, key_prefix: 'PRM').story_key(79)).to eq('PRM-79')

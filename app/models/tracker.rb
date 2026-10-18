@@ -17,6 +17,10 @@ class Tracker < ApplicationRecord
         started: [StoryTrigger[:assigned], StoryTrigger[:commit_referenced], StoryTrigger[:pull_request_linked]],
         done: { close: [StoryTrigger[:closed]], reopen: [StoryTrigger[:reopened]] }
       }
+    },
+    'shortcut' => {
+      story_noun: 'story',
+      story_url_prefix: 'https://app.shortcut.com/'
     }
   }.freeze
 
@@ -24,8 +28,9 @@ class Tracker < ApplicationRecord
   has_many :repositories, dependent: :nullify
   has_many :stories, dependent: :destroy
 
-  enum :kind, { github_issues: 0 }
-  store_accessor :config, :key_prefix
+  enum :kind, { github_issues: 0, shortcut: 1 }
+  store_accessor :config, :key_prefix, :workflow_id
+  encrypts :api_token
 
   # A user sees a tracker when they were granted any of the repositories it
   # covers, so a tracker shared by several repositories shows every story in
@@ -36,6 +41,8 @@ class Tracker < ApplicationRecord
 
   validates :kind, presence: true
   validates :source_repository, presence: true, if: :github_issues?
+  validates :source_repository, absence: true, if: :shortcut?
+  validates :api_token, :workflow_id, presence: true, if: :shortcut?
   validates :key_prefix, format: { with: /\A[A-Z][A-Z0-9]*\z/ },
                          allow_blank: true
   validates :source_repository_id, uniqueness: true, allow_nil: true
