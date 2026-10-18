@@ -160,10 +160,13 @@ namespace :sync do
     error_count = 0
     start_time = Time.current
 
+    # This output reaches the nightly workflow's log, which is public, so it
+    # names repositories by ID and errors by class: a repository may be
+    # private, and a GitHub error's message quotes its URL.
     repositories.each_with_index do |repository, index|
       repo_start_time = Time.current
 
-      puts "\n[#{index + 1}/#{total_repos}] Syncing #{repository.name}..."
+      puts "\n[#{index + 1}/#{total_repos}] Syncing repository #{repository.id}..."
 
       begin
         service = UnifiedSyncService.new(repository.name, fetch_all: fetch_all)
@@ -172,13 +175,13 @@ namespace :sync do
         repo_duration = Time.current - repo_start_time
         success_count += 1
 
-        puts "  ✓ Completed #{repository.name} in #{repo_duration.round(2)}s"
+        puts "  ✓ Completed repository #{repository.id} in #{repo_duration.round(2)}s"
       rescue StandardError => e
         repo_duration = Time.current - repo_start_time
         error_count += 1
 
-        puts "  ✗ Failed #{repository.name} after #{repo_duration.round(2)}s: #{e.message}"
-        Rails.logger.error "Sync failed for #{repository.name}: #{e.message}"
+        puts "  ✗ Failed repository #{repository.id} after #{repo_duration.round(2)}s: #{e.class}"
+        Rails.logger.error "Sync failed for repository #{repository.id}: #{e.class}"
         Rails.logger.error e.backtrace.join("\n")
 
         # Continue with next repository instead of exiting
