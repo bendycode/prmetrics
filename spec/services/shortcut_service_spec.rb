@@ -156,4 +156,32 @@ RSpec.describe ShortcutService do
 
     expect(pauses).to be_empty
   end
+
+  it 'paces by its own clock unless given one' do
+    stubs.get('/api/v3/stories/7001') { json_response('story_7001') }
+    stubs.get('/api/v3/stories/7001') { json_response('story_7001') }
+    default_clock = described_class.new('shortcut-test-token', adapter: [:test, stubs], sleep: ->(seconds) { pauses << seconds })
+
+    2.times { default_clock.story(7001) }
+
+    expect(pauses).to contain_exactly(be_between(0, described_class::MINIMUM_INTERVAL))
+  end
+
+  describe '.wait_for' do
+    it 'reads a count of seconds' do
+      expect(described_class.wait_for('5')).to eq(5.0)
+    end
+
+    it 'reads a Unix timestamp as the time until it' do
+      expect(described_class.wait_for((Time.current.to_i + 30).to_s)).to be_within(2).of(30)
+    end
+
+    it 'reads an HTTP date as the time until it' do
+      expect(described_class.wait_for((Time.current + 60).httpdate)).to be_within(2).of(60)
+    end
+
+    it 'answers nil for a missing or unreadable value, so the backoff applies' do
+      expect([described_class.wait_for(nil), described_class.wait_for('soon')]).to all(be_nil)
+    end
+  end
 end
