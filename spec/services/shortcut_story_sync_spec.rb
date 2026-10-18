@@ -142,6 +142,29 @@ RSpec.describe ShortcutStorySync do
     expect(tracker.stories.pluck(:external_id)).to include('7001', '7002')
   end
 
+  it 'skips unchanged stories on the next sync while another story keeps failing' do
+    allow(shortcut).to receive(:history).with(7002).and_raise(ShortcutService::Error, 'Shortcut answered 500')
+
+    2.times { expect { described_class.new(tracker, shortcut: shortcut).sync! }.to raise_error(described_class::StoriesFailed) }
+
+    expect(shortcut).to have_received(:history).with(7001).once
+  end
+
+  it 'reads a story again on the next sync when it failed while every story was read' do
+    sync.sync!
+    changed = shortcut_fixture('workflow')
+    changed['states'] += [changed['states'].last.merge('id' => 107, 'position' => 99)]
+    allow(shortcut).to receive(:workflow).with('100').and_return(changed)
+    allow(shortcut).to receive(:history).with(7002).and_raise(ShortcutService::Error, 'Shortcut answered 500')
+    expect { described_class.new(tracker, shortcut: shortcut).sync! }.to raise_error(described_class::StoriesFailed)
+    allow(shortcut).to receive(:history).with(7002).and_return(history_for(7002))
+
+    described_class.new(tracker, shortcut: shortcut).sync!
+
+    expect(shortcut).to have_received(:history).with(7002).exactly(3).times
+    expect(shortcut).to have_received(:history).with(7001).twice
+  end
+
   # Each request already retried for two minutes; an outage would otherwise cost that per story
   it 'stops after three stories in a row cannot be read' do
     many = (1..6).map { |n| shortcut_fixture('story_7001').merge('id' => 7100 + n) }

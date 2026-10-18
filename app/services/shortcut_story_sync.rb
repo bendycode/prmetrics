@@ -30,7 +30,7 @@ class ShortcutStorySync
     failures, stopped = store_changed(stories)
     failures += mark_gone(stories, other_teams) unless stopped
     @tracker.measure_stories
-    record_workflow if failures.empty?
+    record_workflow unless stopped
     report(failures, stopped)
   end
 
@@ -52,9 +52,9 @@ class ShortcutStorySync
                        .map { |_id, copies| copies.max_by { |story| story['updated_at'].to_s } }
   end
 
-  # Only once every story was read: one that failed keeps the payload of the
-  # workflow before. The lock reloads the tracker first, so a team limit set
-  # while the sync ran is kept.
+  # Unless the run stopped short, since a story that failed is marked to be
+  # read again. The lock reloads the tracker first, so a team limit set while
+  # the sync ran is kept.
   def record_workflow
     @tracker.with_lock { @tracker.update!(workflow_digest: states_digest) }
   end
@@ -73,10 +73,19 @@ class ShortcutStorySync
       in_a_row = 0
     rescue StandardError => e
       failures << failure(story['id'], e)
+      read_again(story['id'])
       in_a_row += 1
       return [failures, true] if in_a_row >= FAILURES_IN_A_ROW_LIMIT
     end
     [failures, false]
+  end
+
+  # A story stored before Shortcut listed its update is read again, as
+  # Story.listed_after_last_update says, so a story that failed keeps a
+  # payload no later sync trusts.
+  def read_again(story_id)
+    stored = @tracker.stories.find_by(external_id: story_id.to_s)
+    stored&.update!(listed_at: stored.source_updated_at)
   end
 
   # A story stored at the update Shortcut lists has nothing new to read,
@@ -142,6 +151,7 @@ class ShortcutStorySync
       end
       nil
     rescue StandardError => e
+      read_again(story.external_id)
       failure(story.external_id, e)
     end
   end
