@@ -1,0 +1,46 @@
+require 'rails_helper'
+
+RSpec.describe TrackerCoverage do
+  let(:first) { create(:repository, name: 'owner/first') }
+  let(:second) { create(:repository, name: 'owner/second') }
+  let(:tracker) { build(:tracker, :shortcut) }
+
+  it 'saves the tracker and covers every repository' do
+    described_class.cover!(tracker, [first, second])
+
+    expect([first.reload.tracker, second.reload.tracker]).to all(eq(tracker))
+  end
+
+  # Two runs naming the same repositories in different orders could otherwise deadlock
+  it 'locks repositories in ID order, whatever order they were named in' do
+    lower, higher = [first, second].sort_by(&:id)
+    [lower, higher].each { |repository| allow(repository).to receive(:lock!).and_call_original }
+
+    described_class.cover!(tracker, [higher, lower])
+
+    expect(lower).to have_received(:lock!).ordered
+    expect(higher).to have_received(:lock!).ordered
+  end
+
+  it 'reports a tracker the database refuses as a duplicate as already covered' do
+    create(:tracker, :shortcut, workflow_id: '500')
+    duplicate = build(:tracker, :shortcut, workflow_id: '500')
+    allow(duplicate).to receive(:valid?).and_return(true)
+
+    expect { described_class.cover!(duplicate, [first]) }
+      .to raise_error(described_class::AlreadyCovered, /created at the same time/)
+  end
+
+  # As when another run covered a repository while this one waited for its token
+  it 'refuses, writing nothing, when a repository was covered after it was read' do
+    stale = Repository.find(second.id)
+    other = create(:tracker)
+    second.update!(tracker: other)
+
+    expect { described_class.cover!(tracker, [first, stale]) }
+      .to raise_error(described_class::AlreadyCovered, %r{owner/second is already covered by tracker #{other.id}})
+    expect(Tracker.shortcut.count).to be(0)
+    expect(first.reload.tracker).to be_nil
+    expect(second.reload.tracker).to eq(other)
+  end
+end

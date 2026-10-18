@@ -64,4 +64,8 @@ Rails.application.configure do
 
   # Devise requires default URL options for tests
   config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
+
+  # Fixed encryption keys that protect nothing, for the tracker token specs
+  config.active_record.encryption.primary_key = 'test-primary-key-protects-nothing'
+  config.active_record.encryption.key_derivation_salt = 'test-key-derivation-salt-protects-nothing'
 end
