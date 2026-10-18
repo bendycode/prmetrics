@@ -1,6 +1,7 @@
 module TrackersHelper
   # Every event kind reads as its humanized name unless it has a shorter one
-  SHORTER_SOURCE_LABELS = { 'commit_referenced' => 'Commit', 'pull_request_linked' => 'Pull request' }.freeze
+  SHORTER_SOURCE_LABELS = { 'commit_referenced' => 'Commit', 'pull_request_linked' => 'Pull request',
+                            'branch_linked' => 'Branch', 'status_changed' => 'Status change' }.freeze
   STORY_SOURCE_LABELS = StoryEvent::KINDS.keys.to_h { |kind| [kind.to_s, kind.to_s.humanize] }
                                          .merge(SHORTER_SOURCE_LABELS).freeze
 
