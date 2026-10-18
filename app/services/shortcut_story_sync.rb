@@ -68,13 +68,16 @@ class ShortcutStorySync
     end
   end
 
+  # Archiving a story abandons it only while it is unfinished: teams also
+  # archive finished stories to tidy their board
   def story_attributes(story, done_states, listed_at)
+    done = done_states.include?(story['workflow_state_id'])
     {
       key: @tracker.story_key(story['id']),
       title: story['name'],
       url: story['app_url'],
-      state: done_states.include?(story['workflow_state_id']) ? 'closed' : 'open',
-      state_reason: story['archived'] ? 'archived' : nil,
+      state: done ? 'closed' : 'open',
+      state_reason: story['archived'] && !done ? 'archived' : nil,
       source_created_at: story['created_at'],
       source_updated_at: story['updated_at'],
       listed_at: listed_at,

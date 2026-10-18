@@ -23,8 +23,8 @@ RSpec.describe ShortcutStorySync do
   it 'stores every story in the workflow, keyed sc-NNNN, open or closed by the type of state it is in' do
     sync.sync!
 
-    expect(tracker.stories.order(:external_id).pluck(:external_id, :key, :state, :state_reason)).to eq(
-      [%w[7001 sc-7001 closed] + [nil], %w[7002 sc-7002 closed archived], %w[7003 sc-7003 open] + [nil]]
+    expect(tracker.stories.order(:external_id).pluck(:external_id, :key, :state)).to eq(
+      [%w[7001 sc-7001 closed], %w[7002 sc-7002 closed], %w[7003 sc-7003 open]]
     )
     expect(tracker.stories.find_by(external_id: '7001'))
       .to have_attributes(title: 'Story 7001', url: 'https://app.shortcut.com/example/story/7001')
@@ -39,10 +39,21 @@ RSpec.describe ShortcutStorySync do
     )
   end
 
-  it 'leaves an archived story out of the finished stories' do
+  # Teams archive finished stories to tidy their board
+  it 'counts a story archived after it was finished' do
     sync.sync!
 
-    expect(tracker.stories.finished.pluck(:external_id)).to eq(['7001'])
+    expect(tracker.stories.finished.pluck(:external_id)).to contain_exactly('7001', '7002')
+  end
+
+  it 'leaves out a story archived before it was finished' do
+    abandoned = shortcut_fixture('story_7001').merge('id' => 7009, 'workflow_state_id' => 103, 'archived' => true)
+    allow(shortcut).to receive(:stories_in_state).with(103).and_return([abandoned])
+    allow(shortcut).to receive(:history).with(7009).and_return(history_for(7009, 'history_reopened').first(4))
+
+    sync.sync!
+
+    expect(tracker.stories.find_by(external_id: '7009')).to have_attributes(state_reason: 'archived', done_at: nil)
   end
 
   it 'skips the history of a story stored at the update Shortcut lists, once listed after it' do
