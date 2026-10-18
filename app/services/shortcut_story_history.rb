@@ -3,8 +3,11 @@
 # with an ID that stays the same on every read so the event is stored once.
 #
 # A state is recorded as the workflow describes it when the history is read,
-# with whether it is the workflow's first state, since triggers name a state
-# by its type or place rather than its ID.
+# with whether it is at or past the workflow's commitment, since triggers name
+# a state by its type or place rather than its ID. Commitment is the
+# workflow's last unstarted state, the queue of work ready to start: states
+# before it hold work nobody has committed to. With no unstarted state, it is
+# the first started one.
 class ShortcutStoryHistory
   LINK_KINDS = {
     'branch' => :branch_linked,
@@ -15,7 +18,7 @@ class ShortcutStoryHistory
   def initialize(story_id:, workflow:, history:)
     @story_id = Integer(story_id)
     @states = workflow.fetch('states').index_by { |state| state['id'] }
-    @first_position = @states.values.pluck('position').min
+    @commitment_position = commitment_position(@states.values)
     @history = history
   end
 
@@ -58,14 +61,19 @@ class ShortcutStoryHistory
   end
 
   # A state another workflow holds, as when the story was moved there, is
-  # known only from the entry's own reference to it, and is never this
-  # workflow's first, whatever position its own workflow gives it.
+  # known only from the entry's own reference to it, and is never past this
+  # workflow's commitment, whatever position its own workflow gives it.
   def state(id, entry)
     known = @states[id]
     described = known || Array(entry['references']).find do |reference|
       reference['entity_type'] == 'workflow-state' && reference['id'] == id
     end || {}
     { 'id' => id, 'name' => described['name'], 'type' => described['type'], 'position' => known&.dig('position'),
-      'first' => known.present? && known['position'] == @first_position }
+      'committed' => known.present? && @commitment_position.present? && known['position'] >= @commitment_position }
+  end
+
+  def commitment_position(states)
+    unstarted = states.select { |state| state['type'] == 'unstarted' }.pluck('position')
+    unstarted.max || states.select { |state| state['type'] == 'started' }.pluck('position').min
   end
 end

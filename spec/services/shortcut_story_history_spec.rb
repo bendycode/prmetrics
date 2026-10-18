@@ -7,8 +7,8 @@ RSpec.describe ShortcutStoryHistory do
     described_class.new(story_id: story_id, workflow: workflow, history: shortcut_fixture(name)).events
   end
 
-  def state(id, name, type, position, first: false)
-    { 'id' => id, 'name' => name, 'type' => type, 'position' => position, 'first' => first }
+  def state(id, name, type, position, committed: false)
+    { 'id' => id, 'name' => name, 'type' => type, 'position' => position, 'committed' => committed }
   end
 
   it 'turns a finished story\'s history into the events cycle time is measured from, in order' do
@@ -20,11 +20,12 @@ RSpec.describe ShortcutStoryHistory do
     )
   end
 
-  it 'records a status move\'s states, with the workflow\'s first state marked' do
+  # The workflow's last unstarted state, Ready here, is where its work is committed to
+  it 'records a status move\'s states, each marked whether it is at or past commitment' do
     move = events('history_7001').find { |event| event[:kind] == :status_changed }
 
     expect(move[:payload]).to include(
-      'from' => state(101, 'Inbox', 'backlog', 0, first: true), 'to' => state(102, 'Ready', 'unstarted', 1)
+      'from' => state(101, 'Inbox', 'backlog', 0), 'to' => state(102, 'Ready', 'unstarted', 1, committed: true)
     )
   end
 
@@ -32,7 +33,7 @@ RSpec.describe ShortcutStoryHistory do
     created = events('history_created_ready', story_id: 7006).first
 
     expect(created).to include(kind: :opened)
-    expect(created[:payload]).to include('state' => state(102, 'Ready', 'unstarted', 1))
+    expect(created[:payload]).to include('state' => state(102, 'Ready', 'unstarted', 1, committed: true))
   end
 
   it 'reads a commit as a commit reference' do
@@ -58,8 +59,8 @@ RSpec.describe ShortcutStoryHistory do
     expect(to).to eq(state(301, 'Elsewhere', 'started', nil))
   end
 
-  # Positions are a workflow's own; a state in another workflow is never this one's first
-  it 'marks no state outside the workflow as its first, whatever position its reference gives' do
+  # Positions are a workflow's own; a state in another workflow is never past this one's commitment
+  it 'marks no state outside the workflow as committed, whatever position its reference gives' do
     history = [{ 'id' => 'x-2', 'changed_at' => '2026-09-10T15:00:00Z',
                  'actions' => [{ 'id' => 7001, 'entity_type' => 'story', 'action' => 'update',
                                  'changes' => { 'workflow_state_id' => { 'old' => 301, 'new' => 101 } } }],
@@ -69,7 +70,7 @@ RSpec.describe ShortcutStoryHistory do
 
     from = described_class.new(story_id: 7001, workflow: workflow, history: history).events.sole[:payload]['from']
 
-    expect(from).to include('name' => 'Elsewhere', 'first' => false)
+    expect(from).to include('name' => 'Elsewhere', 'committed' => false)
   end
 
   it 'keeps the action a status move came from, as Shortcut recorded it' do

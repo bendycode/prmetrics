@@ -18,8 +18,9 @@ class Tracker < ApplicationRecord
         done: { close: [StoryTrigger[:closed]], reopen: [StoryTrigger[:reopened]] }
       }
     },
-    # Committed when a story leaves the workflow's first state, or is created
-    # past it; started when it reaches a started state, or is created in one,
+    # Committed when a story reaches the workflow's commitment, its last
+    # unstarted state, or is created at or past it; started when it reaches a
+    # started state, or is created in one,
     # with code linked to it as the fallbacks; done on a move into a done
     # state, and undone by a move back out of one.
     'shortcut' => {
@@ -27,8 +28,8 @@ class Tracker < ApplicationRecord
       story_noun: 'story',
       story_url_prefix: 'https://app.shortcut.com/',
       triggers: {
-        committed: [StoryTrigger[:status_changed, 'from' => { 'first' => true }],
-                    StoryTrigger[:opened, 'state' => { 'first' => false }]],
+        committed: [StoryTrigger[:status_changed, 'to' => { 'committed' => true }],
+                    StoryTrigger[:opened, 'state' => { 'committed' => true }]],
         started: [StoryTrigger[:status_changed, 'to' => { 'type' => 'started' }],
                   StoryTrigger[:opened, 'state' => { 'type' => 'started' }],
                   StoryTrigger[:branch_linked], StoryTrigger[:commit_referenced], StoryTrigger[:pull_request_linked]],
