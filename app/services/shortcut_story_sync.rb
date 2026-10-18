@@ -19,21 +19,21 @@ class ShortcutStorySync
   end
 
   def sync!
-    listed_at = Time.current
-    workflow = @shortcut.workflow(@tracker.workflow_id)
+    @listed_at = Time.current
+    @workflow = @shortcut.workflow(@tracker.workflow_id)
+    @done_states = @workflow['states'].select { |state| state['type'] == 'done' }.pluck('id')
     # Moving or adding a state changes what stored moves mean, and touches no
     # story, so a changed workflow has every story read again
-    @read_all = @full || workflow['updated_at'] != @tracker.workflow_updated_at
-    done_states = workflow['states'].select { |state| state['type'] == 'done' }.pluck('id')
-    listed = workflow['states'].flat_map { |state| @shortcut.stories_in_state(state['id']) }
+    @read_all = @full || @workflow['updated_at'] != @tracker.workflow_updated_at
+    listed = @workflow['states'].flat_map { |state| @shortcut.stories_in_state(state['id']) }
     stories, other_teams = listed.partition { |story| @tracker.reads_team?(story['group_id']) }
 
-    failures, stopped = store_changed(stories, workflow, done_states, listed_at)
+    failures, stopped = store_changed(stories)
     failures += mark_gone(stories, other_teams) unless stopped
-    measure_stories
+    @tracker.measure_stories
     # Only once every story was read: one that failed keeps the payload of
     # the workflow before
-    @tracker.update!(workflow_updated_at: workflow['updated_at']) if failures.empty?
+    @tracker.update!(workflow_updated_at: @workflow['updated_at']) if failures.empty?
     report(failures, stopped)
   end
 
@@ -42,14 +42,14 @@ class ShortcutStorySync
   # Everything about a story is read from Shortcut before it is written, and
   # written in one transaction, since a story stored at its current update
   # is not read again.
-  def store_changed(stories, workflow, done_states, listed_at)
-    stored = stored_updates(stories)
+  def store_changed(stories)
+    stored = @tracker.stored_updates(stories.map { |story| story['id'].to_s })
     failures = []
     in_a_row = 0
     stories.each do |story|
-      next if !@read_all && stored[story['id'].to_s] == Time.zone.parse(story['updated_at'])
+      next if unchanged?(story, stored)
 
-      store_story(story, workflow, done_states, listed_at)
+      store_story(story)
       in_a_row = 0
     rescue StandardError => e
       failures << failure(story['id'], e)
@@ -59,21 +59,28 @@ class ShortcutStorySync
     [failures, false]
   end
 
-  def store_story(story, workflow, done_states, listed_at)
+  # A story stored at the update Shortcut lists has nothing new to read,
+  # unless every story is being read: linking code to a story moves its
+  # updated_at, as a status move does.
+  def unchanged?(story, stored)
+    !@read_all && stored[story['id'].to_s] == Time.zone.parse(story['updated_at'])
+  end
+
+  def store_story(story)
     history = @shortcut.history(story['id'])
-    events = ShortcutStoryHistory.new(story_id: story['id'], workflow: workflow, history: history).events
+    events = ShortcutStoryHistory.new(story_id: story['id'], workflow: @workflow, history: history).events
 
     ApplicationRecord.transaction do
       record = @tracker.stories.find_or_initialize_by(external_id: story['id'].to_s)
-      record.update!(story_attributes(story, done_states, listed_at))
+      record.update!(story_attributes(story))
       record.record_events(events)
     end
   end
 
   # Archiving a story abandons it only while it is unfinished: teams also
   # archive finished stories to tidy their board
-  def story_attributes(story, done_states, listed_at)
-    done = done_states.include?(story['workflow_state_id'])
+  def story_attributes(story)
+    done = @done_states.include?(story['workflow_state_id'])
     {
       key: @tracker.story_key(story['id']),
       title: story['name'],
@@ -82,16 +89,17 @@ class ShortcutStorySync
       state_reason: story['archived'] && !done ? 'archived' : nil,
       source_created_at: story['created_at'],
       source_updated_at: story['updated_at'],
-      listed_at: listed_at,
+      listed_at: @listed_at,
       gone: false
     }
   end
 
-  # The update each listed story is stored at, for stories listed after it
-  def stored_updates(stories)
-    @tracker.stories.where(external_id: stories.map { |story| story['id'].to_s }, gone: false)
-            .listed_after_last_update
-            .pluck(:external_id, :source_updated_at).to_h
+  # Logged by tracker and error class alone: production logs reach the
+  # nightly workflow's public log, and a story's number is the workspace's
+  # own. The failure named for the report keeps the story's key.
+  def failure(story_id, error)
+    Rails.logger.error "Story sync could not store a story of tracker #{@tracker.id}: #{error.class}"
+    "#{@tracker.story_key(story_id)} (#{error.class})"
   end
 
   # A story the listing shows in a team the tracker does not read is gone at
@@ -115,20 +123,6 @@ class ShortcutStorySync
 
   def read?(story)
     story['workflow_id'].to_s == @tracker.workflow_id.to_s && @tracker.reads_team?(story['group_id'])
-  end
-
-  def measure_stories
-    @tracker.stories.includes(:events).find_each do |story|
-      story.measure(@tracker.triggers)
-    end
-  end
-
-  # Logged by tracker and error class alone: production logs reach the
-  # nightly workflow's public log, and a story's number is the workspace's
-  # own. The failure named for the report keeps the story's key.
-  def failure(story_id, error)
-    Rails.logger.error "Story sync could not store a story of tracker #{@tracker.id}: #{error.class}"
-    "#{@tracker.story_key(story_id)} (#{error.class})"
   end
 
   def report(failures, stopped)
