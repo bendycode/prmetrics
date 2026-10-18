@@ -87,4 +87,43 @@ RSpec.describe ShortcutStorySync do
     expect { sync.sync! }.to raise_error(described_class::StoriesFailed)
     expect(Rails.logger).to have_received(:error).with('Story sync could not store story sc-7002: ShortcutService::Error')
   end
+
+  describe 'a stored story the listing leaves out' do
+    let!(:unlisted) { create(:story, tracker: tracker, external_id: '7004', key: 'sc-7004') }
+
+    it 'is gone once Shortcut no longer has it' do
+      allow(shortcut).to receive(:story).with(7004).and_return(nil)
+
+      sync.sync!
+
+      expect(unlisted.reload).to be_gone
+    end
+
+    it 'is gone once Shortcut has moved it to another workflow' do
+      allow(shortcut).to receive(:story).with(7004).and_return(shortcut_fixture('story_moved_away'))
+
+      sync.sync!
+
+      expect(unlisted.reload).to be_gone
+    end
+
+    # The listing reads one state at a time, so a story moving between states can miss it
+    it 'stays when Shortcut still has it in the workflow' do
+      allow(shortcut).to receive(:story).with(7004).and_return(shortcut_fixture('story_7001').merge('id' => 7004))
+
+      sync.sync!
+
+      expect(unlisted.reload).not_to be_gone
+    end
+
+    it 'is not read when the run stopped on failures, which an outage would also make' do
+      many = (1..3).map { |n| shortcut_fixture('story_7001').merge('id' => 7100 + n) }
+      allow(shortcut).to receive(:stories_in_state).with(105).and_return(many)
+      allow(shortcut).to receive(:history).and_raise(ShortcutService::Error, 'Shortcut answered 503')
+      allow(shortcut).to receive(:story)
+
+      expect { sync.sync! }.to raise_error(described_class::StoriesFailed)
+      expect(shortcut).not_to have_received(:story)
+    end
+  end
 end

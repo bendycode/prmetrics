@@ -22,6 +22,7 @@ class ShortcutStorySync
     stories = workflow['states'].flat_map { |state| @shortcut.stories_in_state(state['id']) }
 
     failures, stopped = store_changed(stories, workflow, done_states, listed_at)
+    mark_gone(stories) unless stopped
     measure_stories
     report(failures, stopped)
   end
@@ -82,6 +83,18 @@ class ShortcutStorySync
     @tracker.stories.where(external_id: stories.map { |story| story['id'].to_s }, gone: false)
             .listed_after_last_update
             .pluck(:external_id, :source_updated_at).to_h
+  end
+
+  # A story the workflow no longer lists was deleted, or moved to another
+  # workflow. The listing reads one state at a time, and a story moving
+  # between states can miss it, so a missing story is read on its own before
+  # it is marked gone.
+  def mark_gone(stories)
+    listed = stories.map { |story| story['id'].to_s }
+    @tracker.stories.where(gone: false).where.not(external_id: listed).find_each do |story|
+      found = @shortcut.story(story.external_id.to_i)
+      story.update!(gone: true) if found.nil? || found['workflow_id'].to_s != @tracker.workflow_id.to_s
+    end
   end
 
   def measure_stories
