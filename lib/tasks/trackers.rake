@@ -56,7 +56,13 @@ namespace :trackers do
       repository
     end
 
-    # Everything but the token is checked before a person is asked to paste one
+    # Everything but the token, the keys it is stored with included, is checked
+    # before a person is asked to paste one
+    unless Tracker.token_encryption_configured?
+      puts 'Error: The Active Record encryption keys are not set. CLAUDE.md says how to set them.'
+      exit 1
+    end
+
     tracker = Tracker.new(kind: :shortcut, workflow_id: args[:workflow_id])
     tracker.validate
     refused = tracker.errors.attribute_names - [:api_token]
@@ -96,6 +102,11 @@ namespace :trackers do
     end
     unless tracker.shortcut?
       puts "Error: Tracker #{tracker.id} is a #{tracker.kind} tracker, which reads with GITHUB_ACCESS_TOKEN."
+      exit 1
+    end
+
+    unless Tracker.token_encryption_configured?
+      puts 'Error: The Active Record encryption keys are not set. CLAUDE.md says how to set them.'
       exit 1
     end
 

@@ -178,6 +178,16 @@ RSpec.describe 'story rake tasks' do
       expect(TokenPrompt).not_to have_received(:read)
     end
 
+    it 'refuses before asking for a token when the encryption keys are not set' do
+      allow(ActiveRecord::Encryption.config).to receive(:primary_key)
+        .and_raise(ActiveRecord::Encryption::Errors::Configuration, 'Missing Active Record encryption credential')
+
+      expect { Rake::Task['trackers:create_shortcut'].invoke('500', 'owner/first') }
+        .to output(/encryption keys are not set/).to_stdout.and raise_error(SystemExit)
+      expect(TokenPrompt).not_to have_received(:read)
+      expect(Tracker.count).to be(0)
+    end
+
     it 'refuses a repository another tracker covered while it waited for the token' do
       other = create(:tracker)
       allow(TokenPrompt).to receive(:read).with('SHORTCUT_API_TOKEN') do
@@ -203,6 +213,15 @@ RSpec.describe 'story rake tasks' do
           .and(exclude('new-secret')).and(exclude('old-secret'))).to_stdout
 
       expect(tracker.reload.api_token).to eq('new-secret')
+    end
+
+    it 'refuses before asking for a token when the encryption keys are not set' do
+      allow(ActiveRecord::Encryption.config).to receive(:primary_key)
+        .and_raise(ActiveRecord::Encryption::Errors::Configuration, 'Missing Active Record encryption credential')
+
+      expect { Rake::Task['trackers:set_token'].invoke(tracker.id.to_s) }
+        .to output(/encryption keys are not set/).to_stdout.and raise_error(SystemExit)
+      expect(TokenPrompt).not_to have_received(:read)
     end
 
     it 'leaves the token alone when none is entered' do

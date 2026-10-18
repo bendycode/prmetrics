@@ -263,8 +263,10 @@ to the sign-in page on the Heroku hostname.
 ### Encryption Keys for Tracker Tokens
 A Shortcut tracker's API token is stored with Active Record encryption.
 Production reads its keys from `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` and
-`ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT`; without them, creating a
-Shortcut tracker or syncing one raises, and nothing else is affected. Generate
+`ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT`. Without them,
+`trackers:create_shortcut` and `trackers:set_token` refuse before asking for a
+token, reading or writing a stored token raises, and nothing else is affected.
+Generate
 them with `bin/rails db:encryption:init` in a terminal outside Claude Code and
 set them with `heroku config:set`, so they never enter a session transcript.
 Changing or losing them makes every stored token unreadable: keep a copy, and

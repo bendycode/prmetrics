@@ -51,6 +51,16 @@ class Tracker < ApplicationRecord
                          allow_blank: true
   validates :source_repository_id, uniqueness: true, allow_nil: true
 
+  # Whether a token can be written: Active Record encryption raises on a
+  # token, and only on one, when its keys are not set.
+  def self.token_encryption_configured?
+    ActiveRecord::Encryption.config.primary_key
+    ActiveRecord::Encryption.config.key_derivation_salt
+    true
+  rescue ActiveRecord::Encryption::Errors::Configuration
+    false
+  end
+
   def triggers
     kind_details[:triggers]
   end
