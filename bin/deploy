@@ -5,6 +5,8 @@ set -e
 # deploy without a heroku git remote or a heroku.remote setting.
 APP="${HEROKU_APP:-prmetrics-production}"
 BIN_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROLLBACK_BLOCKER=""
+APP_URL=""
 
 echo "🚀 Starting deployment of $APP to Heroku..."
 
@@ -79,7 +81,10 @@ fail_after_release() {
     exit 1
   fi
   echo "⏪ Rolling back to v$PREVIOUS_VERSION..."
-  heroku rollback "v$PREVIOUS_VERSION" -a "$APP"
+  if ! heroku rollback "v$PREVIOUS_VERSION" -a "$APP"; then
+    echo "❌ ROLLBACK FAILED: the new release is still live. Read: heroku releases -a $APP"
+    exit 1
+  fi
   sleep 15
   heroku ps -a "$APP" 2>&1 || true
   if [ -n "$APP_URL" ]; then
@@ -89,7 +94,12 @@ fail_after_release() {
       echo "❌ Health check after the rollback did not return ok: $HEALTH_RESPONSE"
     fi
   fi
-  echo "⏪ Rolled back to v$PREVIOUS_VERSION"
+  read -r ROLLED_VERSION ROLLED8 _ _ <<< "$(release_info "$SHA8" || echo unknown unknown)"
+  if [ "$ROLLED8" = "$LIVE8" ]; then
+    echo "⏪ Rolled back: v$ROLLED_VERSION serves $ROLLED8"
+  else
+    echo "❌ ROLLBACK DID NOT TAKE: v$ROLLED_VERSION serves $ROLLED8, not $LIVE8. Read: heroku releases -a $APP"
+  fi
   exit 1
 }
 
@@ -131,9 +141,15 @@ if ! RELEASES_BEFORE=$(release_info "$SHA8"); then
   exit 1
 fi
 read -r PREVIOUS_VERSION LIVE8 _ _ <<< "$RELEASES_BEFORE"
+if [ "$PREVIOUS_VERSION" = "unknown" ]; then
+  echo "❌ Error: no release of $APP is marked current, so there is no release to roll back to"
+  exit 1
+fi
 echo "📌 Live before the deploy: v$PREVIOUS_VERSION, serving $LIVE8"
-if LIVE=$(git rev-parse --verify -q "$LIVE8^{commit}"); then
-  ADDED_MIGRATIONS=$(git diff --name-only --diff-filter=A "$LIVE" HEAD -- db/migrate db/data)
+if [ "$LIVE8" = "$SHA8" ]; then
+  ROLLBACK_BLOCKER="$SHA8 was already live, so the release before it runs the same code"
+elif LIVE=$(git rev-parse --verify -q "$LIVE8^{commit}"); then
+  ADDED_MIGRATIONS=$(git diff --name-only --no-renames --diff-filter=A "$LIVE" HEAD -- db/migrate db/data)
   if [ -n "$ADDED_MIGRATIONS" ]; then
     ROLLBACK_BLOCKER="this release adds migrations, which a rollback does not reverse: $(echo $ADDED_MIGRATIONS)"
   fi
@@ -161,6 +177,7 @@ if [ "$SERVING8" != "$SHA8" ]; then
   if [ "$MINE_STATUS" = "failed" ]; then
     echo "❌ DEPLOYMENT FAILED: the release command failed for $SHA8"
     echo "   Read its output: heroku releases:output -a $APP"
+    echo "   Heroku now holds this commit, so to retry, push a new commit"
   elif [ "$MINE_SUCCEEDED" != "none" ] && [ "$CURRENT_VERSION" = "$PREVIOUS_VERSION" ]; then
     echo "❌ DEPLOYMENT FAILED: Heroku already held $SHA8, so the push made no new release"
     echo "   v$CURRENT_VERSION serves $SERVING8. To serve $SHA8 again: heroku rollback v$MINE_SUCCEEDED -a $APP"
@@ -193,7 +210,7 @@ fi
 
 # Restart to ensure all changes take effect
 echo "🔄 Restarting app..."
-heroku restart -a "$APP"
+heroku restart -a "$APP" || fail_after_release "the restart failed"
 
 # Wait for dynos to settle after restart
 echo "⏳ Waiting for dynos to start..."
@@ -204,7 +221,7 @@ fail_if_crashed() {
   if [ "$CRASHED_DYNOS" -gt 0 ]; then
     echo ""
     echo "📋 Recent logs:"
-    heroku logs -n 100 -a "$APP"
+    heroku logs -n 100 -a "$APP" || true
     fail_after_release "$CRASHED_DYNOS dyno(s) crashed after restart"
   fi
 }

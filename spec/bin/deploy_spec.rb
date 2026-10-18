@@ -36,7 +36,13 @@ RSpec.describe 'bin/deploy' do
     write_stub('heroku', <<~BASH)
       remote_exit() { if [[ " $* " == *" -x "* ]]; then exit "$1"; fi; exit 0; }
       case "$*" in
-        releases*) if [ -e "$STUB_DIR/pushed" ]; then echo "$STUB_RELEASES_AFTER"; else echo "$STUB_RELEASES_BEFORE"; fi ;;
+        releases*)
+          if [ -e "$STUB_DIR/rolled-back" ]; then echo "${STUB_RELEASES_ROLLED:-$STUB_RELEASES_AFTER}"
+          elif [ -e "$STUB_DIR/pushed" ]; then echo "$STUB_RELEASES_AFTER"
+          else echo "$STUB_RELEASES_BEFORE"; fi ;;
+        rollback*) touch "$STUB_DIR/rolled-back"; exit "${STUB_ROLLBACK_EXIT:-0}" ;;
+        restart*) exit "${STUB_RESTART_EXIT:-0}" ;;
+        "logs -n 100"*) exit "${STUB_LOGS_EXIT:-0}" ;;
         *db:migrate:status:with_data*) echo "$STUB_MIGRATE_STATUS"; remote_exit "${STUB_MIGRATE_EXIT:-0}" "$@" ;;
         *ci:data_integrity*) remote_exit "${STUB_INTEGRITY_EXIT:-0}" "$@" ;;
         *"rails runner"*) echo "post-deploy-sync-check jid=5c137ee5303ac4448f2532b7" ;;
@@ -66,6 +72,10 @@ RSpec.describe 'bin/deploy' do
     releases_before.map { |r| r.merge(current: false) } + newer
   end
 
+  def releases_rolled_back
+    releases_after.map { |r| r.merge(current: false) } + [release(43, 'Rollback to v41', current: true)]
+  end
+
   def migrate_status(*states)
     rows = states.map.with_index { |state, i| "   #{state}     schema  2026010100000#{i}  Migration #{i}" }
     (['', ' Status    Type    Migration ID   Migration Name', '-' * 60] + rows).join("\n")
@@ -79,6 +89,7 @@ RSpec.describe 'bin/deploy' do
       'STUB_DIR' => stub_dir,
       'STUB_RELEASES_BEFORE' => releases_before.to_json,
       'STUB_RELEASES_AFTER' => releases_after.to_json,
+      'STUB_RELEASES_ROLLED' => releases_rolled_back.to_json,
       'STUB_LIVE_FULL' => live_sha,
       'STUB_MIGRATE_STATUS' => migrate_status('up', 'up'),
       'SYNC_CHECK_TIMEOUT' => '30',
@@ -191,6 +202,14 @@ RSpec.describe 'bin/deploy' do
       expect(output).to include('is not origin/main', 'not a terminal')
       expect(pushed?).to be(false)
     end
+
+    it 'stops before pushing when no release is marked current' do
+      output, status = run_deploy('STUB_RELEASES_BEFORE' => [release(40, 'Deploy aaaaaaaa')].to_json)
+
+      expect(status).not_to be_success, output
+      expect(output).to include('no release of prmetrics-production is marked current')
+      expect(pushed?).to be(false)
+    end
   end
 
   describe 'a push that leaves the pushed commit not serving' do
@@ -200,7 +219,7 @@ RSpec.describe 'bin/deploy' do
       output, status = run_deploy('STUB_RELEASES_AFTER' => after.to_json)
 
       expect(status).not_to be_success, output
-      expect(output).to include('release command failed')
+      expect(output).to include('release command failed', 'push a new commit')
       expect(rolled_back?).to be(false)
     end
 
@@ -231,15 +250,50 @@ RSpec.describe 'bin/deploy' do
       'a dyno crashed while starting' => -> { { 'STUB_PS' => 'web.1: starting|web.1: crashed' } },
       'the app URL is unknown' => -> { { 'STUB_INFO' => '' } },
       'the health check does not answer ok' => -> { { 'STUB_HEALTH' => '{"status":"error"}' } },
+      'the restart fails' => -> { { 'STUB_RESTART_EXIT' => '1' } },
+      'a dyno crashed and printing its logs fails' => -> { { 'STUB_PS' => 'web.1: crashed', 'STUB_LOGS_EXIT' => '1' } },
       'the sync check fails' => -> { { 'STUB_SYNC_RESULT' => 'fail' } }
     }.each do |failure, env|
       it "rolls back to the release that was live before when #{failure}" do
         output, status = run_deploy(instance_exec(&env))
 
         expect(status).not_to be_success, output
-        expect(output).to include('DEPLOYMENT FAILED', 'Rolled back to v41')
+        expect(output).to include('DEPLOYMENT FAILED', 'v43 serves aaaaaaaa')
         expect(heroku_calls).to include('heroku rollback v41 -a prmetrics-production')
       end
+    end
+
+    it 'says the rollback did not take when the rolled-back release does not serve the old commit' do
+      output, status = run_deploy('STUB_HEALTH' => '{"status":"error"}', 'STUB_RELEASES_ROLLED' => releases_after.to_json)
+
+      expect(status).not_to be_success, output
+      expect(output).to include('ROLLBACK DID NOT TAKE', 'v42 serves 01234567')
+    end
+
+    it 'says the rollback failed when heroku rollback fails' do
+      output, status = run_deploy('STUB_HEALTH' => '{"status":"error"}', 'STUB_ROLLBACK_EXIT' => '1')
+
+      expect(status).not_to be_success, output
+      expect(output).to include('ROLLBACK FAILED')
+    end
+
+    it 'does not roll back to the same release when the commit was already live' do
+      before = [release(40, "Deploy #{sha[0, 8]}", current: true)]
+      output, status = run_deploy('STUB_RELEASES_BEFORE' => before.to_json, 'STUB_RELEASES_AFTER' => before.to_json,
+                                  'STUB_LIVE_FULL' => sha, 'STUB_HEALTH' => '{"status":"error"}')
+
+      expect(status).not_to be_success, output
+      expect(output).to include('Not rolling back', 'already live')
+      expect(rolled_back?).to be(false)
+    end
+
+    it 'rolls back whatever ROLLBACK_BLOCKER and APP_URL the environment holds' do
+      output, status = run_deploy('STUB_HEALTH' => '{"status":"error"}', 'ROLLBACK_BLOCKER' => 'from the shell',
+                                  'APP_URL' => 'https://elsewhere.example')
+
+      expect(status).not_to be_success, output
+      expect(rolled_back?).to be(true)
+      expect(calls.grep(/elsewhere/)).to be_empty
     end
 
     it 'prints the migration status output when the command fails on the dyno' do
@@ -281,7 +335,7 @@ RSpec.describe 'bin/deploy' do
     it 'checks the migrations added since the commit that was serving' do
       run_deploy
 
-      expect(calls).to include("git diff --name-only --diff-filter=A #{live_sha} HEAD -- db/migrate db/data")
+      expect(calls).to include("git diff --name-only --no-renames --diff-filter=A #{live_sha} HEAD -- db/migrate db/data")
     end
   end
 end
