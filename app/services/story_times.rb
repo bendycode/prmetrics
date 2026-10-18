@@ -32,7 +32,9 @@ class StoryTimes
   def done_time(rules, state_reason)
     return if ABANDONED.include?(state_reason)
 
-    last = @events.reverse.find { |event| matches_any?(rules[:close] + rules[:reopen], event) }
+    last = @events.reverse_each.find do |event|
+      matches_any?(rules[:close], event) || matches_any?(rules[:reopen], event)
+    end
     last.occurred_at if last && matches_any?(rules[:close], last)
   end
 
