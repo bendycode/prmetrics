@@ -15,7 +15,9 @@ class UnifiedSyncService
   end
 
   def sync!
-    log_progress("Starting unified sync for #{@repo_name}")
+    # Its progress reaches the nightly workflow's public log, so it names the
+    # repository by ID and errors by class.
+    log_progress("Starting unified sync for repository #{@repository.id}")
 
     begin
       @repository.update!(
@@ -50,7 +52,7 @@ class UnifiedSyncService
       log_progress('Sync completed successfully!')
       log_summary
     rescue StandardError => e
-      Rails.logger.error "Unified sync failed: #{e.message}"
+      Rails.logger.error "Unified sync failed: #{e.class}"
       Rails.logger.error e.backtrace.join("\n")
 
       # Skips validation so a repository row that no longer validates still
@@ -183,7 +185,7 @@ class UnifiedSyncService
       [days_since_sync * 2, 10].max
     end
   rescue StandardError => e
-    Rails.logger.warn "Could not estimate PR count: #{e.message}"
+    Rails.logger.warn "Could not estimate PR count: #{e.class}"
     FALLBACK_PR_ESTIMATE
   end
 

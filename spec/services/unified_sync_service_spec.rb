@@ -146,6 +146,16 @@ RSpec.describe UnifiedSyncService do
 
         expect(repository.reload).to have_attributes(sync_status: 'failed', last_sync_error: 'API error')
       end
+
+      # The nightly workflow streams the app's log into its public log, and
+      # GitHub's error messages quote the request URL
+      it 'logs the error\'s class without its message' do
+        allow(Rails.logger).to receive(:error)
+
+        expect { service.sync! }.to raise_error(StandardError)
+        expect(Rails.logger).to have_received(:error).with('Unified sync failed: StandardError')
+        expect(Rails.logger).not_to have_received(:error).with(include('API error'))
+      end
     end
 
     context 'when the repository row no longer validates' do
@@ -205,7 +215,9 @@ RSpec.describe UnifiedSyncService do
       it 'reports the start and the finish' do
         service.sync!
 
-        expect(progress_messages).to include("Starting unified sync for #{repo_name}", 'Sync completed successfully!')
+        expect(progress_messages).to include("Starting unified sync for repository #{Repository.find_by!(name: repo_name).id}",
+                                             'Sync completed successfully!')
+        expect(progress_messages).not_to include(include(repo_name))
       end
     end
   end

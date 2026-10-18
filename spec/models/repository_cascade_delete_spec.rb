@@ -75,6 +75,24 @@ RSpec.describe 'Repository cascade delete' do
       expect(Contributor.find_by(id: contributor1.id)).to be_present
     end
 
+    it 'deletes the issue tracker that reads its issues, with its stories and their events' do
+      tracker = create(:tracker, source_repository: repository)
+      story = create(:story, tracker: tracker)
+      create(:story_event, story: story)
+
+      expect { repository.destroy }
+        .to change(Tracker, :count).by(-1).and change(Story, :count).by(-1).and change(StoryEvent, :count).by(-1)
+    end
+
+    it 'leaves a tracker it shares with other repositories, without the deleted one' do
+      tracker = create(:tracker)
+      repository.update!(tracker: tracker)
+
+      repository.destroy
+
+      expect(tracker.reload.repositories).to be_empty
+    end
+
     it 'handles repositories with no associations gracefully' do
       empty_repo = create(:repository)
       expect { empty_repo.destroy }.not_to raise_error

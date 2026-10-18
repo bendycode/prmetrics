@@ -1,0 +1,95 @@
+<h1>Cycle Time: <%= @tracker.source_repository.name %></h1>
+
+<ul class="nav nav-pills mb-3">
+  <% CycleTimeReport::CLOCKS.each do |clock| %>
+    <li class="nav-item">
+      <% if clock == @report.clock %>
+        <span class="nav-link active" aria-current="page" data-clock-chosen><%= clock_label(clock) %></span>
+      <% else %>
+        <%= link_to clock_label(clock), tracker_path(@tracker, clock: clock), class: 'nav-link' %>
+      <% end %>
+    </li>
+  <% end %>
+</ul>
+
+<% if @report.stories.empty? %>
+  <% if @report.any_finished? %>
+    <p class="text-muted"><%= left_out_sentence(@report) %></p>
+  <% else %>
+    <p>No finished issues yet.</p>
+  <% end %>
+<% else %>
+  <div class="row mb-3">
+    <div class="col-md-3"><p>Median <strong><%= cycle_days(@report.median_days) %></strong></p></div>
+    <div class="col-md-3"><p>85th percentile <strong><%= cycle_days(@report.p85_days) %></strong></p></div>
+  </div>
+  <p class="text-muted"><%= coverage_sentence(@report) %></p>
+
+  <div class="chart-area mb-4">
+    <canvas id="cycleTimeChart" data-points="<%= cycle_time_points(@report).to_json %>"
+            data-time-zone="<%= Time.zone.tzinfo.name %>"></canvas>
+  </div>
+
+  <script>
+    // Each finished issue's cycle time in days against the date it was done.
+    // The time axis is linear, in milliseconds, with ticks written as dates,
+    // since the layout's Chart.js has no date adapter.
+    document.addEventListener('DOMContentLoaded', function() {
+      var canvas = document.getElementById('cycleTimeChart');
+      var timeZone = canvas.dataset.timeZone;
+      new Chart(canvas, {
+        type: 'scatter',
+        data: { datasets: [{ label: 'Cycle time (days)', data: JSON.parse(canvas.dataset.points) }] },
+        options: {
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              type: 'linear',
+              ticks: {
+                callback: function(value) {
+                  return new Date(value).toLocaleDateString('en-US', { timeZone: timeZone, year: 'numeric', month: '2-digit', day: '2-digit' });
+                }
+              }
+            },
+            y: { beginAtZero: true, title: { display: true, text: 'Days' } }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) { return context.raw.key + ': ' + context.raw.y + (context.raw.y === 1 ? ' day' : ' days'); }
+              }
+            }
+          }
+        }
+      });
+      // The system specs wait on this before reading the chart
+      canvas.dataset.drawn = 'true';
+    });
+  </script>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Issue</th>
+        <th>Title</th>
+        <th>Committed</th>
+        <th>Started</th>
+        <th>Done</th>
+        <th>Cycle time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @report.stories.each do |story| %>
+        <tr>
+          <td><%= story.key %></td>
+          <td><%= story_title_link(story) %></td>
+          <td><%= story_time(story.committed_at, story.committed_source) %></td>
+          <td><%= story_time(story.started_at, story.started_source) %></td>
+          <td><%= story_time(story.done_at) %></td>
+          <td><%= cycle_days(@report.days(story)) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>

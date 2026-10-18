@@ -2,6 +2,9 @@
   <div>
     <h1><%= @repository.name %></h1>
     <p>URL: <%= link_to @repository.url, @repository.url %></p>
+    <% if @repository.tracker %>
+      <p><%= link_to 'Cycle Time', tracker_path(@repository.tracker) %></p>
+    <% end %>
   </div>
   <div>
     <% if policy(@repository).destroy? %>

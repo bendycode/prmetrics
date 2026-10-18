@@ -1,6 +1,12 @@
 require 'rails_helper'
 
 RSpec.describe Repository do
+  describe 'associations' do
+    it { is_expected.to belong_to(:tracker).optional }
+
+    it { is_expected.to have_one(:issue_tracker).with_foreign_key(:source_repository_id).dependent(:destroy) }
+  end
+
   it 'is valid with valid attributes' do
     repository = Repository.new(name: 'test/repo', url: 'https://github.com/test/repo')
     expect(repository).to be_valid

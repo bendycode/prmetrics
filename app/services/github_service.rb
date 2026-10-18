@@ -1,6 +1,7 @@
 class GithubService
   include GithubRateLimiting
   include GithubMergedPullRequests
+  include GithubIssues
 
   def initialize(access_token)
     @client = Octokit::Client.new(access_token: access_token)
@@ -71,7 +72,7 @@ class GithubService
       page += 1
     end
 
-    Rails.logger.info "Processed #{total_processed} pull requests for #{repo_name}"
+    Rails.logger.info "Processed #{total_processed} pull requests for repository #{repository.id}"
     Rails.logger.info "Most recent update: #{most_recent_update}"
     most_recent_update
   end
@@ -150,8 +151,8 @@ class GithubService
     each_page { |page| @client.issue_events(repo_name, pr_number, page: page, per_page: 100) }
   end
 
-  # Everything GitHub serves for a pull request, page by page. Its endpoints
-  # answer 30 at a time by default, and the client does not paginate itself.
+  # Everything an endpoint serves, page by page. GitHub's endpoints answer 30
+  # at a time by default, and the client does not paginate itself.
   def each_page
     collected = []
     page = 1

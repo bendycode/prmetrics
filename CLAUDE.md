@@ -121,6 +121,12 @@ rake sync:list
 # Rebuild weeks and statistics
 rake weeks:generate
 rake weeks:update_stats
+
+# Measure cycle time from a repository's own GitHub issues, keyed PRM-NNN
+rake trackers:create_github_issues[owner/repo,PRM]
+
+# Sync every tracker's stories and recompute their cycle times
+rake sync:stories
 ```
 
 ### Environment Setup
@@ -141,10 +147,14 @@ rake weeks:update_stats
 - **User**: Generic user model for reviewers
 - **GithubUser**: GitHub-specific user data for PR authors
 - **PullRequestUser**: Join table linking users to PRs; the sync writes only the author row
+- **Tracker**: Where a project's stories live (GitHub issues for now); covers one or more repositories, and a GitHub issues tracker reads its source repository's issues
+- **Story**: One piece of work in a tracker, with its committed, started, and done times
+- **StoryEvent**: One event in a story's history, kept raw so the times can be derived again
 
 ### Key Services
 - **GithubService**: Handles GitHub API integration with Octokit, implements rate limiting and retry logic
 - **WeekStatsService**: Calculates weekly statistics and metrics
+- **StorySyncService**: Lists a tracker's GitHub issues, stores their timelines as story events, and recomputes every story's times with **StoryTimes**; `rake sync:stories` runs it nightly
 - **UnifiedSyncService**: Fetches a repository's pull requests and reviews, then refreshes the weeks they touch; the nightly rake task runs it directly, and the app's Sync buttons run it through **UnifiedSyncJob**
 
 ### Important Patterns
@@ -318,7 +328,7 @@ Revoking one of those signs the laptop out of Heroku; only the
 #### 2. Workflow Configuration
 The workflow is already configured in `.github/workflows/nightly-sync.yml`:
 - **Schedule**: Daily at 2 AM CT (7:00 UTC)
-- **Command**: `heroku run --app prmetrics-production bundle exec rake sync:all_repositories`
+- **Command**: `heroku run --app prmetrics-production bundle exec rake sync:all_repositories`, then `rake sync:stories` the same way, which runs even when the pull request sync fails
 - **Manual trigger**: Available from GitHub Actions UI
 
 #### 3. Manual Testing
@@ -427,6 +437,51 @@ apart from other projects' issues at a glance.
   to an issue in bendyworks/claude-skills the same way.
 - Keep `#83` where GitHub reads it as a machine token: `Closes #83` and
   `Refs: #83` trailers.
+
+## Issue Priorities
+An open issue carries exactly one priority label. The levels are
+`priority: high`, `priority: medium`, and `priority: low`, and
+`priority: untriaged` means nobody has judged the issue yet. The levels rank
+how soon an issue is worth taking on:
+
+- `priority: high`: waiting costs somebody now. A production page fails or
+  shows wrong figures in normal use, someone can see data they should not, the
+  nightly sync fails, `main` is red, or work in flight is blocked.
+- `priority: medium`: worth doing in the normal course of work. A new
+  capability, a platform or framework upgrade, a security layer the app lacks,
+  dead or duplicated code that misleads whoever reads it next, a figure that
+  misleads in an edge case, a slow page, or a manual step every deploy or story
+  repeats.
+- `priority: low`: a small irritant whose cost stays small. Cosmetic or layout
+  polish, a minor extra query, test hygiene, or a gap nothing can reach yet.
+- `priority: untriaged`: nobody has weighed the issue yet. It says nothing
+  about how much the issue matters.
+
+The labels page carries a short form of each, since GitHub caps a label's
+description at 100 characters.
+
+- Whoever drafts an issue proposes one level with a one-line reason, and the
+  maintainer confirms or changes it before the issue is filed. Propose high,
+  medium, or low, never `priority: untriaged`.
+- `priority: untriaged` goes on an issue only when the maintainer chooses not
+  to judge it yet. An issue with no priority label counts as waiting for one.
+- Changing a priority swaps the label in one command that names the label the
+  issue carries now, so it is never left with two:
+  `gh issue edit NNN --remove-label "priority: <current>" --add-label "priority: <new>"`.
+- To list the open issues waiting for a priority (untriaged, no priority
+  label, or more than one):
+
+  ```bash
+  gh issue list --state open --limit 500 --json number,labels \
+    --jq '.[] | [.labels[].name | select(startswith("priority: "))] as $p
+      | select(($p | length) != 1 or $p[0] == "priority: untriaged") | .number'
+  ```
+
+  A listed issue that carries one level and `priority: untriaged` has been
+  judged: offer to remove `priority: untriaged`, and keep the level. One that
+  carries two or more levels needs the maintainer to say which stands. Change
+  no label before the maintainer answers, then remove every other priority
+  label in one command, with one `--remove-label` for each.
 
 ## Housekeeping Commits
 
