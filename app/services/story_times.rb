@@ -1,7 +1,8 @@
 # The committed, started, and done times of a story, derived from its events.
-# For committed and started the triggers list event kinds in order of
-# preference; the earliest matching event wins whichever kind it is, and its
-# kind is recorded as the source of the time.
+# For committed and started the triggers list StoryTriggers in order of
+# preference; the earliest matching event wins whichever trigger it matched,
+# and its kind is recorded as the source of the time. The done rules name the
+# events that close a story and those that reopen it.
 class StoryTimes
   ABANDONED = %w[not_planned duplicate].freeze
 
@@ -11,7 +12,7 @@ class StoryTimes
     # GitHub's times are whole seconds, so events in the same second keep the
     # order they were given in: Ruby's sort does not promise to.
     @events = events.each_with_index.sort_by { |event, index| [event.occurred_at, index] }.map(&:first)
-    @done_at = done_time(state_reason)
+    @done_at = done_time(triggers[:done], state_reason)
     @started_at, @started_source = earliest(triggers[:started], before: @done_at)
     @committed_at, @committed_source = earliest(triggers[:committed])
     return unless @started_at && (@committed_at.nil? || @committed_at > @started_at)
@@ -28,17 +29,21 @@ class StoryTimes
   # issue was closed on the issue rather than on the close event, so only the
   # issue's current reason can say the close abandoned the work. Issues closed
   # before GitHub recorded reasons have none, and count as done.
-  def done_time(state_reason)
+  def done_time(rules, state_reason)
     return if ABANDONED.include?(state_reason)
 
-    last = @events.reverse.find { |event| event.closed? || event.reopened? }
-    last.occurred_at if last&.closed?
+    last = @events.reverse.find { |event| matches_any?(rules[:close] + rules[:reopen], event) }
+    last.occurred_at if last && matches_any?(rules[:close], last)
   end
 
-  def earliest(kinds, before: nil)
+  def earliest(triggers, before: nil)
     found = @events.find do |event|
-      kinds.include?(event.kind.to_sym) && (before.nil? || event.occurred_at <= before)
+      matches_any?(triggers, event) && (before.nil? || event.occurred_at <= before)
     end
     found ? [found.occurred_at, found.kind.to_sym] : [nil, nil]
+  end
+
+  def matches_any?(triggers, event)
+    triggers.any? { |trigger| trigger.matches?(event) }
   end
 end

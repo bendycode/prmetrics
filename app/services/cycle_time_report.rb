@@ -38,7 +38,7 @@ class CycleTimeReport
   # The event kind the tracker measures this clock from by choice; the rest
   # of its triggers are fallbacks.
   def trigger
-    @tracker.triggers.fetch(@clock.to_sym).first
+    @tracker.triggers.fetch(@clock.to_sym).first.kind
   end
 
   # How many of the clock's stories took their start from the tracker's

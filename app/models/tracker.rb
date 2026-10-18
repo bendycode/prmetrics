@@ -2,12 +2,14 @@
 # since one workspace can serve several; a GitHub issues tracker reads the
 # issues of its source repository.
 class Tracker < ApplicationRecord
-  # For committed and started, the first event kind is the trigger this kind
-  # of tracker is measured by and the rest are fallbacks meaning the same.
+  # For committed and started, the first trigger is the one this kind of
+  # tracker is measured by and the rest are fallbacks meaning the same. Done
+  # is the last close with no reopen after it.
   TRIGGERS = {
     'github_issues' => {
-      committed: %i[opened],
-      started: %i[assigned commit_referenced pull_request_linked]
+      committed: [StoryTrigger[:opened]],
+      started: [StoryTrigger[:assigned], StoryTrigger[:commit_referenced], StoryTrigger[:pull_request_linked]],
+      done: { close: [StoryTrigger[:closed]], reopen: [StoryTrigger[:reopened]] }
     }
   }.freeze
 
