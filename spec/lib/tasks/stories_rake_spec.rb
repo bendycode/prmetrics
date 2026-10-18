@@ -10,6 +10,7 @@ RSpec.describe 'story rake tasks' do
     Rake::Task['trackers:create_github_issues'].reenable
     Rake::Task['trackers:create_shortcut'].reenable
     Rake::Task['trackers:set_token'].reenable
+    Rake::Task['trackers:set_teams'].reenable
   end
 
   describe 'sync:stories' do
@@ -272,6 +273,34 @@ RSpec.describe 'story rake tasks' do
         .to output(/Tracker #{github.id} is a github_issues tracker, which reads with GITHUB_ACCESS_TOKEN/).to_stdout
         .and raise_error(SystemExit)
       expect(TokenPrompt).not_to have_received(:read)
+    end
+  end
+
+  describe 'trackers:set_teams' do
+    let!(:tracker) { create(:tracker, :shortcut) }
+
+    it 'limits a Shortcut tracker to the teams named' do
+      expect { Rake::Task['trackers:set_teams'].invoke(tracker.id.to_s, 'team-1', 'team-2') }
+        .to output(/Tracker #{tracker.id} now reads the stories of 2 teams/).to_stdout
+
+      expect(tracker.reload.team_ids).to eq(%w[team-1 team-2])
+    end
+
+    it 'reads every team again when none is named' do
+      tracker.update!(team_ids: ['team-1'])
+
+      expect { Rake::Task['trackers:set_teams'].invoke(tracker.id.to_s) }
+        .to output(/Tracker #{tracker.id} now reads the stories of every team/).to_stdout
+
+      expect(tracker.reload.team_ids).to be_blank
+    end
+
+    it 'refuses a tracker that is not a Shortcut tracker' do
+      github = create(:tracker)
+
+      expect { Rake::Task['trackers:set_teams'].invoke(github.id.to_s, 'team-1') }
+        .to output(/Tracker #{github.id} is a github_issues tracker, which has no teams/).to_stdout
+        .and raise_error(SystemExit)
     end
   end
 end

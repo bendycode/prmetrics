@@ -40,6 +40,14 @@ RSpec.describe Tracker do
       expect(tracker.errors[:workflow_id]).to include('is already read by another Shortcut tracker')
     end
 
+    it 'reads every team\'s stories unless limited to some' do
+      expect(tracker.reads_team?('team-9')).to be(true)
+
+      tracker.team_ids = ['team-1']
+
+      expect([tracker.reads_team?('team-1'), tracker.reads_team?('team-9')]).to eq([true, false])
+    end
+
     it 'is valid with a token and a workflow alone' do
       expect(tracker).to be_valid
     end

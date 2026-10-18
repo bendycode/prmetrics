@@ -132,6 +132,10 @@ rake trackers:create_shortcut[workflow_id,owner/repo,owner/other]
 # Replace a Shortcut tracker's token, the same way
 rake trackers:set_token[tracker_id]
 
+# Limit a Shortcut tracker to some of its workflow's teams, or name none to
+# read every team again
+rake trackers:set_teams[tracker_id,team_id,team_id]
+
 # Sync every tracker's stories and recompute their cycle times
 rake sync:stories
 

@@ -44,7 +44,7 @@ class Tracker < ApplicationRecord
   has_many :stories, dependent: :destroy
 
   enum :kind, { github_issues: 0, shortcut: 1 }
-  store_accessor :config, :key_prefix, :workflow_id
+  store_accessor :config, :key_prefix, :workflow_id, :team_ids
   encrypts :api_token
 
   scope :reading_workflow, ->(workflow_id) { shortcut.where("config->>'workflow_id' = ?", workflow_id.to_s) }
@@ -82,6 +82,12 @@ class Tracker < ApplicationRecord
 
   def sync!(full: false)
     kind_details[:sync].new(self, full: full).sync!
+  end
+
+  # A Shortcut tracker reads its workflow's stories from every team, unless
+  # its team_ids name the teams it is limited to
+  def reads_team?(team_id)
+    team_ids.blank? || team_ids.include?(team_id)
   end
 
   def story_noun
