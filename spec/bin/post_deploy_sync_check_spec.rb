@@ -111,7 +111,7 @@ RSpec.describe 'bin/post-deploy-sync-check' do
     output, status = run_check(results: %w[fail fail])
 
     expect(status).not_to be_success, output
-    expect(output).to include('SYNC CHECK FAILED after 2 attempts')
+    expect(output).to include('SYNC CHECK FAILED after 2 attempt(s)')
   end
 
   it 'fails when the job never finishes before the timeout' do
@@ -136,11 +136,13 @@ RSpec.describe 'bin/post-deploy-sync-check' do
     expect(output).to include('ActiveRecord::RecordNotFound', 'Queueing the job failed on the dyno')
   end
 
-  it 'says when reading the worker log fails' do
-    output, status = run_check(results: %w[start start], env: { 'STUB_LOGS_EXIT' => '1' })
+  it 'gives up without a second sync after three failed reads of the worker log' do
+    output, status = run_check(results: %w[start start], env: { 'STUB_LOGS_EXIT' => '1', 'SYNC_CHECK_TIMEOUT' => '300' })
 
     expect(status).not_to be_success, output
-    expect(output).to include('heroku logs failed')
+    expect(output.scan('heroku logs failed').size).to be(3)
+    expect(output).to include('could not read the worker log')
+    expect(queue_calls.size).to be(1)
   end
 
   it 'ignores a finished job whose ID only starts with the queued one' do

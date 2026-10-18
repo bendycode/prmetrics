@@ -12,7 +12,8 @@ ATTEMPTS=2
 INTERVAL=10
 
 # Queues one sync and waits for its result. Returns 0 when the worker logs the
-# job's done line, 1 on its fail line, a timeout, or no job ID.
+# job's done line, 1 on its fail line, a timeout, or no job ID, and 2 when the
+# worker log cannot be read three times running.
 check_once() {
   echo "📥 Queueing a sync of $REPOSITORY on $APP..."
   # The repository name reaches the dyno as an environment variable, never as
@@ -35,9 +36,17 @@ check_once() {
   # ": fail". Matching the job ID and the space after it keeps another job's
   # lines from counting.
   waited=0
+  log_failures=0
   while [ "$waited" -lt "$TIMEOUT" ]; do
-    if ! LOGS=$(heroku logs -a "$APP" --dyno worker -n 1500 2>&1); then
+    if LOGS=$(heroku logs -a "$APP" --dyno worker -n 1500 2>&1); then
+      log_failures=0
+    else
       echo "⚠️  heroku logs failed: $(echo "$LOGS" | tail -3)"
+      log_failures=$((log_failures + 1))
+      if [ "$log_failures" -ge 3 ]; then
+        echo "❌ Stopping: could not read the worker log three times running"
+        return 2
+      fi
     fi
     JOB_LINES=$(echo "$LOGS" | grep "jid=$JID " || true)
     if echo "$JOB_LINES" | grep -q ': fail$'; then
@@ -59,16 +68,22 @@ check_once() {
 
 # A second attempt rides out a failure on GitHub's side (an outage, a rate
 # limit) that says nothing about the worker.
+# A worker log that cannot be read is not GitHub's failure, so it gets no retry.
 for attempt in $(seq 1 "$ATTEMPTS"); do
-  if check_once; then
+  result=0
+  check_once || result=$?
+  if [ "$result" -eq 0 ]; then
     echo "✅ Sync check passed: the worker ran the job to completion"
     exit 0
+  fi
+  if [ "$result" -eq 2 ]; then
+    break
   fi
   if [ "$attempt" -lt "$ATTEMPTS" ]; then
     echo "🔁 Trying once more, in case the failure was GitHub's"
   fi
 done
 
-echo "❌ SYNC CHECK FAILED after $ATTEMPTS attempts"
+echo "❌ SYNC CHECK FAILED after $attempt attempt(s)"
 echo "   Read the worker log: heroku logs -a $APP --dyno worker -n 500"
 exit 1
