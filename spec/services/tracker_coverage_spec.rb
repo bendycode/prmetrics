@@ -11,6 +11,17 @@ RSpec.describe TrackerCoverage do
     expect([first.reload.tracker, second.reload.tracker]).to all(eq(tracker))
   end
 
+  # Two runs naming the same repositories in different orders could otherwise deadlock
+  it 'locks repositories in ID order, whatever order they were named in' do
+    lower, higher = [first, second].sort_by(&:id)
+    [lower, higher].each { |repository| allow(repository).to receive(:lock!).and_call_original }
+
+    described_class.cover!(tracker, [higher, lower])
+
+    expect(lower).to have_received(:lock!).ordered
+    expect(higher).to have_received(:lock!).ordered
+  end
+
   it 'reports a tracker the database refuses as a duplicate as already covered' do
     create(:tracker, :shortcut, workflow_id: '500')
     duplicate = build(:tracker, :shortcut, workflow_id: '500')

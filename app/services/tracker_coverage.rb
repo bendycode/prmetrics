@@ -8,7 +8,8 @@ module TrackerCoverage
   def self.cover!(tracker, repositories)
     ApplicationRecord.transaction do
       tracker.save!
-      repositories.each do |repository|
+      # In ID order, so two runs naming the same repositories cannot deadlock
+      repositories.sort_by(&:id).each do |repository|
         repository.lock!
         raise AlreadyCovered, "#{repository.name} is already covered by tracker #{repository.tracker_id}" if repository.tracker_id
 
