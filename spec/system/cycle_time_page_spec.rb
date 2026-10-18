@@ -20,6 +20,24 @@ RSpec.describe 'Cycle Time page' do
     sign_in user
   end
 
+  describe 'the title' do
+    it 'names every repository the tracker covers' do
+      grant_access(user, create(:repository, name: 'granted/second', tracker: tracker))
+
+      visit tracker_path(tracker)
+
+      expect(page).to have_css('h1', exact_text: 'Cycle Time: granted/second and granted/visible')
+    end
+
+    it 'leaves out a covered repository the user was not granted' do
+      create(:repository, name: 'ungranted/covered', tracker: tracker)
+
+      visit tracker_path(tracker)
+
+      expect(page).to have_css('h1', exact_text: 'Cycle Time: granted/visible')
+    end
+  end
+
   context 'with finished issues' do
     before do
       finished(1, 'Expire stale sessions', 2)
