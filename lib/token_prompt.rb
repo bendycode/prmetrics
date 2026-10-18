@@ -6,8 +6,12 @@ require 'io/console'
 # process list, so the tasks take it no other way.
 module TokenPrompt
   def self.read(variable, input: $stdin, output: $stdout)
-    from_environment = ENV.fetch(variable, nil).presence
-    return from_environment if from_environment
+    from_environment = ENV.fetch(variable, nil).to_s.strip.presence
+    if from_environment
+      # Said out loud, since a variable left exported would otherwise replace a token unannounced
+      output.puts "Using #{variable} from the environment."
+      return from_environment
+    end
 
     output.print 'Paste the token (input hidden), then press Enter: '
     line = input.tty? ? input.noecho(&:gets) : input.gets
