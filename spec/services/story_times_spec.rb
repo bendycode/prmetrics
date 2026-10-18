@@ -130,8 +130,9 @@ RSpec.describe StoryTimes do
     let(:triggers) { Tracker::KINDS.fetch('shortcut')[:triggers] }
     let(:workflow) { shortcut_fixture('workflow') }
 
-    def shortcut_times(name, story_id)
-      events = ShortcutStoryHistory.new(story_id: story_id, workflow: workflow, history: shortcut_fixture(name)).events
+    def shortcut_times(history, story_id, in_workflow: workflow)
+      history = shortcut_fixture(history) if history.is_a?(String)
+      events = ShortcutStoryHistory.new(story_id: story_id, workflow: in_workflow, history: history).events
       described_class.new(events: events.map { |attributes| StoryEvent.new(attributes) }, triggers: triggers,
                           state_reason: nil)
     end
@@ -165,12 +166,7 @@ RSpec.describe StoryTimes do
                           'changes' => { 'workflow_state_id' => { 'old' => from, 'new' => to } } }] }
       end
       history = [move.call('m1', 1, 1, 2), move.call('m2', 3, 2, 3), move.call('m3', 5, 3, 4), move.call('m4', 8, 4, 5)]
-      events = ShortcutStoryHistory.new(story_id: 9, workflow: workflow, history: history).events
-
-      result = described_class.new(events: events.map { |attributes| StoryEvent.new(attributes) }, triggers: triggers,
-                                   state_reason: nil)
-
-      expect(result.committed_at).to eq(at('2026-09-03T15:00:00Z'))
+      expect(shortcut_times(history, 9, in_workflow: workflow).committed_at).to eq(at('2026-09-03T15:00:00Z'))
     end
 
     it 'is never committed for a story that went straight to done' do
@@ -179,24 +175,14 @@ RSpec.describe StoryTimes do
                  { 'id' => 's2', 'changed_at' => '2026-09-04T15:00:00Z',
                    'actions' => [{ 'id' => 9, 'entity_type' => 'story', 'action' => 'update',
                                    'changes' => { 'workflow_state_id' => { 'old' => 101, 'new' => 105 } } }] }]
-      events = ShortcutStoryHistory.new(story_id: 9, workflow: workflow, history: history).events
-
-      result = described_class.new(events: events.map { |attributes| StoryEvent.new(attributes) }, triggers: triggers,
-                                   state_reason: nil)
-
-      expect(result).to have_attributes(committed_at: nil, done_at: at('2026-09-04T15:00:00Z'))
+      expect(shortcut_times(history, 9)).to have_attributes(committed_at: nil, done_at: at('2026-09-04T15:00:00Z'))
     end
 
     # As when finished work is logged after the fact
     it 'is done at creation for a story created in a done state' do
       history = [{ 'id' => 'd1', 'changed_at' => '2026-09-02T15:00:00Z',
                    'actions' => [{ 'id' => 9, 'entity_type' => 'story', 'action' => 'create', 'workflow_state_id' => 105 }] }]
-      events = ShortcutStoryHistory.new(story_id: 9, workflow: workflow, history: history).events
-
-      result = described_class.new(events: events.map { |attributes| StoryEvent.new(attributes) }, triggers: triggers,
-                                   state_reason: nil)
-
-      expect(result).to have_attributes(done_at: at('2026-09-02T15:00:00Z'), committed_at: nil)
+      expect(shortcut_times(history, 9)).to have_attributes(done_at: at('2026-09-02T15:00:00Z'), committed_at: nil)
     end
 
     it 'is committed at creation for a story created past the first state' do
@@ -213,11 +199,7 @@ RSpec.describe StoryTimes do
     end
 
     it 'is not done while the story sits in a started state' do
-      history = shortcut_fixture('history_reopened').first(4)
-      events = ShortcutStoryHistory.new(story_id: 7005, workflow: workflow, history: history).events
-
-      expect(described_class.new(events: events.map { |attributes| StoryEvent.new(attributes) }, triggers: triggers,
-                                 state_reason: nil).done_at).to be_nil
+      expect(shortcut_times(shortcut_fixture('history_reopened').first(4), 7005).done_at).to be_nil
     end
   end
 end

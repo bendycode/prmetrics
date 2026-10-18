@@ -101,7 +101,7 @@ RSpec.describe 'Ungranted repository data never renders' do
                      started_at: Time.zone.parse('2026-09-01 10:00'), done_at: Time.zone.parse('2026-09-02 10:00'))
       hidden_shortcut = create(:tracker, :shortcut, workflow_id: '900')
       create(:repository, name: "#{marker}/shortcut", tracker: hidden_shortcut)
-      create(:story, tracker: hidden_shortcut, key: 'sc-900', title: "#{marker} shortcut story",
+      create(:story, tracker: hidden_shortcut, key: "sc-#{marker}", title: "#{marker} shortcut story",
                      committed_at: Time.zone.parse('2026-09-01 10:00'), started_at: Time.zone.parse('2026-09-01 10:00'),
                      done_at: Time.zone.parse('2026-09-02 10:00'))
     end

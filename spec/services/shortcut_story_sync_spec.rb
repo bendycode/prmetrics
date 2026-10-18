@@ -83,6 +83,16 @@ RSpec.describe ShortcutStorySync do
     expect(shortcut).to have_received(:history).with(7001).twice
   end
 
+  # Shortcut's times are whole seconds, and its clock and this app's can drift
+  it 'reads a story again when it was stored before Shortcut listed its update' do
+    create(:story, tracker: tracker, external_id: '7001', source_updated_at: '2026-09-12T16:00:00Z',
+                   listed_at: '2026-09-12T16:00:00Z')
+
+    sync.sync!
+
+    expect(shortcut).to have_received(:history).with(7001)
+  end
+
   it 'reads a changed story again, storing each event once' do
     sync.sync!
     moved = shortcut_fixture('search_state_105').map { |story| story.merge('updated_at' => '2026-10-02T16:00:00Z') }
@@ -111,6 +121,20 @@ RSpec.describe ShortcutStorySync do
   end
 
   # The production log reaches the nightly workflow's public log, and a story's number is the workspace's own
+  it 'counts failures in a row again after a story is stored' do
+    many = (1..5).map { |n| shortcut_fixture('story_7001').merge('id' => 7100 + n) }
+    allow(shortcut).to receive(:stories_in_state).with(105).and_return(many)
+    allow(shortcut).to receive(:stories_in_state).with(103).and_return([])
+    allow(shortcut).to receive(:history).and_raise(ShortcutService::Error, 'Shortcut answered 503')
+    allow(shortcut).to receive(:history).with(7103).and_return(shortcut_fixture('history_7001'))
+    allow(shortcut).to receive(:story)
+
+    expect { sync.sync! }.to raise_error(described_class::StoriesFailed) { |error|
+      expect(error.message).not_to include('stopped')
+    }
+    expect(shortcut).to have_received(:history).exactly(5).times
+  end
+
   it 'logs a failure by tracker and error class, never the story or the message' do
     allow(Rails.logger).to receive(:error)
     allow(shortcut).to receive(:history).with(7002).and_raise(ShortcutService::Error, 'Shortcut answered 500 to GET x')

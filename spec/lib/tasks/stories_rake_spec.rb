@@ -57,7 +57,8 @@ RSpec.describe 'story rake tasks' do
       allow(GithubIssueSync).to receive(:new).with(second, full: true).and_return(second_sync)
 
       expect { Rake::Task['sync:stories'].invoke }.to output(/Synced 2 of 2 trackers/).to_stdout
-      expect([first_sync, second_sync]).to all(have_received(:sync!))
+      expect(GithubIssueSync).to have_received(:new).with(first, full: true)
+      expect(GithubIssueSync).to have_received(:new).with(second, full: true)
     end
 
     # GithubIssueSync's own spec covers the token check that raises this
