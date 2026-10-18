@@ -44,6 +44,16 @@ RSpec.describe Story do
        { external_id: 'opened', kind: :opened, occurred_at: story.source_created_at, payload: {} }]
     end
 
+    # A tracker can describe an event differently on a later read, as Shortcut does a renamed state
+    it 'keeps a stored event\'s payload as the latest read describes it' do
+      story.record_events(attributes)
+      changed = attributes.map { |event| event.merge(payload: event[:payload].merge('renamed' => true)) }
+
+      story.record_events(changed)
+
+      expect(story.events.reload.map(&:payload)).to all(include('renamed' => true))
+    end
+
     it 'stores each event once however many reads have seen it' do
       story.record_events(attributes)
 
