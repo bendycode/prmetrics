@@ -155,7 +155,8 @@ namespace :trackers do
       exit 1
     end
 
-    tracker.update!(team_ids: teams.presence)
+    # The lock reloads the tracker first, so a sync's write to its config is kept
+    tracker.with_lock { tracker.update!(team_ids: teams.presence) }
     reach = teams.empty? ? 'every team' : "#{teams.size} #{'team'.pluralize(teams.size)}"
     puts "Tracker #{tracker.id} now reads the stories of #{reach}. Run rake sync:stories to apply it."
   end

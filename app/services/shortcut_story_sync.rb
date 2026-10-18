@@ -44,9 +44,10 @@ class ShortcutStorySync
   end
 
   # Only once every story was read: one that failed keeps the payload of the
-  # workflow before
+  # workflow before. The lock reloads the tracker first, so a team limit set
+  # while the sync ran is kept.
   def record_workflow
-    @tracker.update!(workflow_digest: states_digest)
+    @tracker.with_lock { @tracker.update!(workflow_digest: states_digest) }
   end
 
   # Everything about a story is read from Shortcut before it is written, and

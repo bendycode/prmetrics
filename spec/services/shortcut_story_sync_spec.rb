@@ -76,6 +76,17 @@ RSpec.describe ShortcutStorySync do
     expect(shortcut).to have_received(:history).with(7001).twice
   end
 
+  it 'keeps a team limit set while the sync runs' do
+    allow(shortcut).to receive(:stories_in_state).with(105) do
+      Tracker.find(tracker.id).update!(team_ids: ['team-1'])
+      shortcut_fixture('search_state_105')
+    end
+
+    sync.sync!
+
+    expect(Tracker.find(tracker.id).team_ids).to eq(['team-1'])
+  end
+
   it 'reads every story again when told to, changed or not' do
     sync.sync!
 

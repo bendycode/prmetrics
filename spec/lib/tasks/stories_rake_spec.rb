@@ -290,6 +290,17 @@ RSpec.describe 'story rake tasks' do
       expect(tracker.reload.team_ids).to eq(%w[team-1 team-2])
     end
 
+    it 'keeps what a sync records about the workflow while the task runs' do
+      allow(shortcut).to receive(:groups) do
+        Tracker.find(tracker.id).update!(workflow_digest: 'recorded-by-a-sync')
+        shortcut_fixture('groups')
+      end
+
+      expect { Rake::Task['trackers:set_teams'].invoke(tracker.id.to_s, 'team-1') }.to output.to_stdout
+
+      expect(tracker.reload).to have_attributes(team_ids: ['team-1'], workflow_digest: 'recorded-by-a-sync')
+    end
+
     it 'reads every team again when none is named' do
       tracker.update!(team_ids: ['team-1'])
 
