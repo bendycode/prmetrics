@@ -63,9 +63,11 @@ the deploy, `merge_runtime_bumps: auto` ships a runtime dependency straight
 to production with no human in the loop, and Phase 5's verification runs
 only after that has happened; a team wanting the bumps merged but not
 shipped unattended should leave `deploy_after_batch` at `ask` and know that
-the merge dial alone already deploys. Whether one dial should stand between
-a green batch and production is open in
-[#83](https://github.com/bendyworks/claude-skills/issues/83).
+the merge dial alone already deploys. This project's answer to
+[rules-that-bend#83 Deploying unattended needs more than a
+dial](https://github.com/bendyworks/rules-that-bend/issues/83) is Phase 6:
+the deploy stays unattended, and `bin/deploy` runs the same checks on every
+one and rolls back on failure where a rollback is safe.
 
 ## Hard veto (policy, not a dial)
 
@@ -246,21 +248,55 @@ After the last PR merges:
    `gh pr merge --delete-branch` removes the local branch -- re-resolve
    `<remote>` as the remote whose URL matches the repo of record.
 2. Re-install dependencies with the ecosystem's standard command
-3. Run the verify command (same as Phase 4 step 4) -- must be clean and green
+3. Run the verify command (same as Phase 4 step 4) -- must be clean and green.
+   Put the commit it ran on, `git rev-parse --short HEAD`, in the log's name,
+   so Phase 6 compares against a written value.
 
 If verification fails here, stop. Do not deploy.
 
 ## Phase 6: Deploy
 
-If `deploy_after_batch: auto` and Phase 5 passed: run the project's deploy
-command. The dial `deploy_command` in `dependabot-autonomy.yml` defines what
-to run (e.g. `bin/deploy`, `npm run deploy`, `make deploy`); if unset and the
-user has not configured one, stop and ask rather than guessing. Do not ask
-when the dial is set.
+**On prmetrics the deploy at the end of a batch is pre-approved, for every
+batch, and the session runs it without asking.** The approval is the
+CLAUDE.md section "Dependabot Batches Deploy Unattended" together with
+`deploy_after_batch: auto` and `deploy_command: bin/deploy` in the
+project-local `dependabot-autonomy.yml`. Read both from the checked-in files
+at this step, as they stood when the batch began: a change to either made
+during the batch takes effect on the next one. With either missing, or any
+other dial value, ask before deploying.
 
-The deploy command is responsible for its own failure detection (health
-check, crashed-process detection, rollback hint). Surface its output. If it
-exits non-zero, surface the failure and do not treat the batch as complete.
+The deploy follows the batch's last merge, whoever merged each pull request:
+a below-floor or hard-veto bump the maintainer merged deploys the same way as
+one the session merged, and so does other merged work on the default branch
+that is not yet live. What stops a deploy is a failed check, never the
+batch's composition.
+
+1. **Deploy what Phase 5 verified.** Run `git fetch <remote>
+   <default-branch>`, then confirm that `git rev-parse HEAD` equals both
+   `<remote>/<default-branch>` and the commit Phase 5's suite ran on, as
+   recorded in its log's name or summary. If either differs, repeat Phase 5
+   first.
+2. **Run `bin/deploy`, capturing its output to a uniquely named log under
+   `/tmp` and reading its exit status directly, never through a pipe.** Do
+   not wait for an answer before starting it. The script lists the commits
+   it ships (when the commit that was serving is in the clone), pushes, and
+   checks that the current release serves this commit, that no migration is
+   still down, that no dyno crashed, that the health check answers ok, and
+   last that `bin/post-deploy-sync-check` runs a sync through the worker.
+   When a check after the release fails, it rolls back to the release that
+   was live before, except in three cases. When the release adds files under
+   `db/migrate` or `db/data`, which a rollback does not reverse, or the commit
+   that was serving is not in the clone, so added migrations cannot be ruled
+   out, it prints the rollback command instead. When the pushed commit was
+   already live, there is nothing to roll back to. After a rollback it reads
+   the releases again and says which commit serves. It exits non-zero on
+   every failure.
+3. **On a non-zero exit, stop:** the batch is not complete. Report what
+   failed, whether the script rolled back, and which release is live, all
+   from its output. Run nothing further against production.
+
+Report the release version, the commits shipped, the health line, the sync
+check's job ID and result, and any rollback or data integrity warning.
 
 ## Post-run summary
 
@@ -274,7 +310,7 @@ Close the session with a table:
 
 Plus:
 - Flake-fix PR (if any): number, status
-- Deploy: release identifier, health check result
+- Deploy: release version, health check result, sync check job ID and result, any rollback
 
 ## Escalation rules (short reference)
 
@@ -283,7 +319,7 @@ Plus:
 - Grouped-branch PR present -> refuse, point at config
 - CI failure with unknown fingerprint -> stop, surface trace, ask
 - Lint offense not cleanly fixable in one pass -> stop, ask
-- Deploy command non-zero exit -> stop, surface logs
+- `bin/deploy` non-zero exit -> stop, report what failed and whether it rolled back (Phase 6 step 3)
 
 ## Flake-registry upkeep
 
