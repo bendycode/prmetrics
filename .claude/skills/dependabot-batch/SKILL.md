@@ -67,7 +67,7 @@ the merge dial alone already deploys. This project's answer to
 [rules-that-bend#83 Deploying unattended needs more than a
 dial](https://github.com/bendyworks/rules-that-bend/issues/83) is Phase 6:
 the deploy stays unattended, and `bin/deploy` runs the same checks on every
-one and rolls back on failure.
+one and rolls back on failure where a rollback is safe.
 
 ## Hard veto (policy, not a dial)
 
@@ -279,13 +279,18 @@ batch's composition.
 2. **Run `bin/deploy`, capturing its output to a uniquely named log under
    `/tmp` and reading its exit status directly, never through a pipe.** Do
    not wait for an answer before starting it. The script lists the commits
-   it ships, pushes, and checks that the current release serves this commit,
-   that no migration is still down, that no dyno crashed, that the health
-   check answers ok, and that `bin/post-deploy-sync-check` runs a sync
-   through the worker. When a check after the release fails, it rolls back to
-   the release that was live before, unless the release adds files under
-   `db/migrate` or `db/data`, which a rollback does not reverse; then it
-   prints the rollback command instead. It exits non-zero on every failure.
+   it ships (when the commit that was serving is in the clone), pushes, and
+   checks that the current release serves this commit, that no migration is
+   still down, that no dyno crashed, that the health check answers ok, and
+   last that `bin/post-deploy-sync-check` runs a sync through the worker.
+   When a check after the release fails, it rolls back to the release that
+   was live before, except in three cases. When the release adds files under
+   `db/migrate` or `db/data`, which a rollback does not reverse, or the commit
+   that was serving is not in the clone, so added migrations cannot be ruled
+   out, it prints the rollback command instead. When the pushed commit was
+   already live, there is nothing to roll back to. After a rollback it reads
+   the releases again and says which commit serves. It exits non-zero on
+   every failure.
 3. **On a non-zero exit, stop:** the batch is not complete. Report what
    failed, whether the script rolled back, and which release is live, all
    from its output. Run nothing further against production.

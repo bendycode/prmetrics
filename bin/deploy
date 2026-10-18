@@ -71,8 +71,9 @@ health_ok() {
 }
 
 # A check failed after the new release went live. Roll back to the release
-# that was live before, unless the release added schema or data migrations,
-# which a rollback does not reverse.
+# that was live before, unless ROLLBACK_BLOCKER says why not: the release adds
+# schema or data migrations, which a rollback does not reverse, the commit
+# that was serving is not in this clone, or the pushed commit was already live.
 fail_after_release() {
   echo ""
   echo "❌ DEPLOYMENT FAILED: $1"
