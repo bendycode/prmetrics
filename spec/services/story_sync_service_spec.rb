@@ -42,7 +42,7 @@ RSpec.describe StorySyncService do
 
   context 'when an issue is stored at the update GitHub lists' do
     let!(:story) do
-      create(:story, tracker: tracker, external_id: '79', gh_updated_at: fixture.issue.updated_at,
+      create(:story, tracker: tracker, external_id: '79', source_updated_at: fixture.issue.updated_at,
                      listed_at: fixture.issue.updated_at + 1.hour)
     end
 
@@ -66,7 +66,7 @@ RSpec.describe StorySyncService do
   it 'reads an open issue\'s timeline on every sync' do
     open_issue = github_resource(fixture.issue.to_h.merge(state: 'open', state_reason: nil, closed_at: nil))
     allow(github).to receive(:issues).with('bendycode/prmetrics').and_return([open_issue])
-    create(:story, tracker: tracker, external_id: '79', gh_updated_at: open_issue.updated_at,
+    create(:story, tracker: tracker, external_id: '79', source_updated_at: open_issue.updated_at,
                    listed_at: open_issue.updated_at + 1.hour)
 
     sync.sync!
@@ -75,7 +75,7 @@ RSpec.describe StorySyncService do
   end
 
   it 'reads an issue again once it has changed since it was stored' do
-    create(:story, tracker: tracker, external_id: '79', gh_updated_at: fixture.issue.updated_at - 1.day,
+    create(:story, tracker: tracker, external_id: '79', source_updated_at: fixture.issue.updated_at - 1.day,
                    listed_at: fixture.issue.updated_at - 1.hour)
 
     sync.sync!
@@ -84,7 +84,7 @@ RSpec.describe StorySyncService do
   end
 
   it 'reads an issue again when it was stored before GitHub listed its update' do
-    create(:story, tracker: tracker, external_id: '79', gh_updated_at: fixture.issue.updated_at,
+    create(:story, tracker: tracker, external_id: '79', source_updated_at: fixture.issue.updated_at,
                    listed_at: fixture.issue.updated_at)
 
     sync.sync!
@@ -144,7 +144,7 @@ RSpec.describe StorySyncService do
 
     it 'is no longer gone once GitHub lists it again' do
       returned = create(:story, tracker: tracker, external_id: '79', gone: true,
-                                gh_updated_at: fixture.issue.updated_at, listed_at: fixture.issue.updated_at + 1.hour)
+                                source_updated_at: fixture.issue.updated_at, listed_at: fixture.issue.updated_at + 1.hour)
 
       sync.sync!
 

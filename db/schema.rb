@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_10_17_150003) do
+ActiveRecord::Schema[7.2].define(version: 2026_10_18_120001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -131,8 +131,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_17_150003) do
     t.string "url", null: false
     t.string "state", null: false
     t.string "state_reason"
-    t.datetime "gh_created_at", null: false
-    t.datetime "gh_updated_at", null: false
+    t.datetime "source_created_at", null: false
+    t.datetime "source_updated_at", null: false
     t.datetime "listed_at", null: false
     t.boolean "gone", default: false, null: false
     t.datetime "committed_at"

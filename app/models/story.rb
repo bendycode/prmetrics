@@ -7,7 +7,7 @@ class Story < ApplicationRecord
   enum :committed_source, StoryEvent::KINDS, prefix: :committed_by
   enum :started_source, StoryEvent::KINDS, prefix: :started_by
 
-  validates :key, :title, :url, :gh_created_at, :gh_updated_at, :listed_at, presence: true
+  validates :key, :title, :url, :source_created_at, :source_updated_at, :listed_at, presence: true
   validates :state, inclusion: { in: %w[open closed] }
   validates :external_id, uniqueness: { scope: :tracker_id }
 
@@ -17,7 +17,7 @@ class Story < ApplicationRecord
   # A story listed at least a minute after its stored update, which GitHub's
   # whole-second timestamps and clock drift between it and this app could
   # otherwise hide behind.
-  scope :listed_after_last_update, -> { where("listed_at >= gh_updated_at + interval '1 minute'") }
+  scope :listed_after_last_update, -> { where("listed_at >= source_updated_at + interval '1 minute'") }
 
   # Derives the committed, started, and done times from the story's events
   # and saves them, with the kind of event the committed and started times

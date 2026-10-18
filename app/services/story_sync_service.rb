@@ -45,7 +45,7 @@ class StorySyncService
   def stored_updates(issues)
     @tracker.stories.where(external_id: listed_ids(issues), gone: false)
             .listed_after_last_update
-            .pluck(:external_id, :gh_updated_at).to_h
+            .pluck(:external_id, :source_updated_at).to_h
   end
 
   # Everything is read from GitHub before anything is written, and written
@@ -70,8 +70,8 @@ class StorySyncService
       url: issue.html_url,
       state: issue.state,
       state_reason: issue.state_reason,
-      gh_created_at: issue.created_at,
-      gh_updated_at: issue.updated_at,
+      source_created_at: issue.created_at,
+      source_updated_at: issue.updated_at,
       listed_at: listed_at,
       gone: false
     }
