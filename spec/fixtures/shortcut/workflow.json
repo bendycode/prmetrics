@@ -1,0 +1,49 @@
+{
+  "id": 100,
+  "entity_type": "workflow",
+  "name": "Delivery",
+  "default_state_id": 101,
+  "team_id": 1,
+  "states": [
+    {
+      "id": 101,
+      "entity_type": "workflow-state",
+      "type": "backlog",
+      "position": 0,
+      "name": "Inbox",
+      "num_stories": 0
+    },
+    {
+      "id": 102,
+      "entity_type": "workflow-state",
+      "type": "unstarted",
+      "position": 1,
+      "name": "Ready",
+      "num_stories": 0
+    },
+    {
+      "id": 103,
+      "entity_type": "workflow-state",
+      "type": "started",
+      "position": 2,
+      "name": "In Progress",
+      "num_stories": 0
+    },
+    {
+      "id": 104,
+      "entity_type": "workflow-state",
+      "type": "started",
+      "position": 3,
+      "name": "In Review",
+      "num_stories": 0
+    },
+    {
+      "id": 105,
+      "entity_type": "workflow-state",
+      "type": "done",
+      "position": 4,
+      "name": "Shipped",
+      "num_stories": 0
+    }
+  ]
+}

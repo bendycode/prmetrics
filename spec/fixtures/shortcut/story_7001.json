@@ -1,0 +1,14 @@
+{
+  "id": 7001,
+  "entity_type": "story",
+  "name": "Story 7001",
+  "app_url": "https://app.shortcut.com/example/story/7001",
+  "archived": false,
+  "workflow_id": 100,
+  "workflow_state_id": 105,
+  "story_type": "feature",
+  "created_at": "2026-09-01T15:00:00Z",
+  "updated_at": "2026-09-12T16:00:00Z",
+  "moved_at": "2026-09-12T16:00:00Z",
+  "group_id": "team-1"
+}

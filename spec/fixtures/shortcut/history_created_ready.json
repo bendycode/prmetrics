@@ -1,0 +1,91 @@
+[
+  {
+    "id": "c-1",
+    "changed_at": "2026-09-01T15:00:00Z",
+    "version": "v1",
+    "member_id": "member-1",
+    "actions": [
+      {
+        "id": 7006,
+        "entity_type": "story",
+        "action": "create",
+        "name": "Story 7006",
+        "workflow_state_id": 102
+      }
+    ],
+    "references": [
+      {
+        "id": 102,
+        "entity_type": "workflow-state",
+        "name": "Ready",
+        "type": "unstarted"
+      }
+    ]
+  },
+  {
+    "id": "c-2",
+    "changed_at": "2026-09-02T15:00:00Z",
+    "version": "v1",
+    "member_id": "member-1",
+    "actions": [
+      {
+        "id": 7006,
+        "entity_type": "story",
+        "action": "update",
+        "changes": {
+          "workflow_state_id": {
+            "new": 103,
+            "old": 102
+          }
+        }
+      }
+    ],
+    "references": [
+      {
+        "id": 103,
+        "entity_type": "workflow-state",
+        "name": "In Progress",
+        "type": "started"
+      },
+      {
+        "id": 102,
+        "entity_type": "workflow-state",
+        "name": "Ready",
+        "type": "unstarted"
+      }
+    ]
+  },
+  {
+    "id": "c-3",
+    "changed_at": "2026-09-06T15:00:00Z",
+    "version": "v1",
+    "member_id": "member-1",
+    "actions": [
+      {
+        "id": 7006,
+        "entity_type": "story",
+        "action": "update",
+        "changes": {
+          "workflow_state_id": {
+            "new": 105,
+            "old": 103
+          }
+        }
+      }
+    ],
+    "references": [
+      {
+        "id": 105,
+        "entity_type": "workflow-state",
+        "name": "Shipped",
+        "type": "done"
+      },
+      {
+        "id": 103,
+        "entity_type": "workflow-state",
+        "name": "In Progress",
+        "type": "started"
+      }
+    ]
+  }
+]
