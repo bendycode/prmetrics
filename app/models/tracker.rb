@@ -2,19 +2,23 @@
 # since one workspace can serve several; a GitHub issues tracker reads the
 # issues of its source repository.
 class Tracker < ApplicationRecord
-  # For committed and started, the first trigger is the one this kind of
-  # tracker is measured by and the rest are fallbacks meaning the same. Done
-  # is the last close with no reopen after it.
-  TRIGGERS = {
+  # What differs between kinds of tracker: the service that reads its stories
+  # in, what it calls a story, where its stories' own pages live, and the
+  # events its times are measured from. For committed and started, the first
+  # trigger is the one the kind is measured by and the rest are fallbacks
+  # meaning the same. Done is the last close with no reopen after it.
+  KINDS = {
     'github_issues' => {
-      committed: [StoryTrigger[:opened]],
-      started: [StoryTrigger[:assigned], StoryTrigger[:commit_referenced], StoryTrigger[:pull_request_linked]],
-      done: { close: [StoryTrigger[:closed]], reopen: [StoryTrigger[:reopened]] }
+      sync: 'GithubIssueSync',
+      story_noun: 'issue',
+      story_url_prefix: 'https://github.com/',
+      triggers: {
+        committed: [StoryTrigger[:opened]],
+        started: [StoryTrigger[:assigned], StoryTrigger[:commit_referenced], StoryTrigger[:pull_request_linked]],
+        done: { close: [StoryTrigger[:closed]], reopen: [StoryTrigger[:reopened]] }
+      }
     }
   }.freeze
-
-  # The service that reads each kind of tracker's stories into prmetrics.
-  SYNCS = { 'github_issues' => 'GithubIssueSync' }.freeze
 
   belongs_to :source_repository, class_name: 'Repository', optional: true, inverse_of: :issue_tracker
   has_many :repositories, dependent: :nullify
@@ -37,16 +41,32 @@ class Tracker < ApplicationRecord
   validates :source_repository_id, uniqueness: true, allow_nil: true
 
   def triggers
-    TRIGGERS.fetch(kind)
+    kind_details[:triggers]
   end
 
   def sync!
-    SYNCS.fetch(kind).constantize.new(self).sync!
+    kind_details[:sync].constantize.new(self).sync!
+  end
+
+  def story_noun
+    kind_details[:story_noun]
+  end
+
+  # Whether a stored story URL is a page on this kind's own site, which is
+  # all the Cycle Time page will link to.
+  def story_url?(url)
+    url.to_s.start_with?(kind_details[:story_url_prefix])
   end
 
   # The project's own name for a story, PRJ-NNN where it declares a key
   # prefix, and GitHub's #NNN otherwise.
   def story_key(number)
     key_prefix.present? ? "#{key_prefix}-#{number}" : "##{number}"
+  end
+
+  private
+
+  def kind_details
+    KINDS.fetch(kind)
   end
 end

@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe StoryTimes do
   let(:day0) { Time.zone.parse('2026-09-01 10:00') }
-  let(:triggers) { Tracker::TRIGGERS.fetch('github_issues') }
+  let(:triggers) { Tracker::KINDS.fetch('github_issues')[:triggers] }
 
   def event(kind, day, payload = {})
     StoryEvent.new(kind: kind, occurred_at: day0 + day.days, payload: payload)

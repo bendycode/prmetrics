@@ -16,7 +16,7 @@
   <% if @report.any_finished? %>
     <p class="text-muted"><%= left_out_sentence(@report) %></p>
   <% else %>
-    <p>No finished issues yet.</p>
+    <p>No finished <%= @tracker.story_noun.pluralize %> yet.</p>
   <% end %>
 <% else %>
   <div class="row mb-3">
@@ -31,7 +31,7 @@
   </div>
 
   <script>
-    // Each finished issue's cycle time in days against the date it was done.
+    // Each finished story's cycle time in days against the date it was done.
     // The time axis is linear, in milliseconds, with ticks written as dates,
     // since the layout's Chart.js has no date adapter.
     document.addEventListener('DOMContentLoaded', function() {
@@ -71,7 +71,7 @@
   <table class="table">
     <thead>
       <tr>
-        <th>Issue</th>
+        <th><%= @tracker.story_noun.capitalize %></th>
         <th>Title</th>
         <th>Committed</th>
         <th>Started</th>
@@ -83,7 +83,7 @@
       <% @report.stories.each do |story| %>
         <tr>
           <td><%= story.key %></td>
-          <td><%= story_title_link(story) %></td>
+          <td><%= story_title_link(story, @tracker) %></td>
           <td><%= story_time(story.committed_at, story.committed_source) %></td>
           <td><%= story_time(story.started_at, story.started_source) %></td>
           <td><%= story_time(story.done_at) %></td>

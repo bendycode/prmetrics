@@ -18,10 +18,11 @@ module TrackersHelper
     DurationFormatter.format_hours(days && ((days * 1440).round / 60.0))
   end
 
-  # A story's URL is stored from GitHub's payload; only a GitHub URL becomes
-  # a link, so a stored value can never be a javascript: or other link.
-  def story_title_link(story)
-    return story.title unless story.url.to_s.start_with?('https://github.com/')
+  # A story's URL is stored from its tracker's payload; only a URL on the
+  # tracker's own site becomes a link, so a stored value can never be a
+  # javascript: or other link.
+  def story_title_link(story, tracker)
+    return story.title unless tracker.story_url?(story.url)
 
     link_to story.title, story.url
   end
@@ -44,13 +45,13 @@ module TrackersHelper
   # For a clock none of whose finished stories has a start
   def left_out_sentence(report)
     missing = report.coverage[:missing]
-    "#{pluralize(missing, 'finished issue')} had no start and #{missing == 1 ? 'is' : 'are'} left out."
+    "#{pluralize(missing, "finished #{report.tracker.story_noun}")} had no start and #{missing == 1 ? 'is' : 'are'} left out."
   end
 
   def coverage_sentence(report)
     coverage = report.coverage
     trigger = story_source_label(report.trigger)
-    sentence = "#{pluralize(coverage[:trigger], 'issue')} measured from #{trigger}, #{coverage[:fallback]} from a fallback."
+    sentence = "#{pluralize(coverage[:trigger], report.tracker.story_noun)} measured from #{trigger}, #{coverage[:fallback]} from a fallback."
     return sentence if coverage[:missing].zero?
 
     verb = coverage[:missing] == 1 ? 'had no start and is' : 'had no start and are'
