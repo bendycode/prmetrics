@@ -63,9 +63,11 @@ the deploy, `merge_runtime_bumps: auto` ships a runtime dependency straight
 to production with no human in the loop, and Phase 5's verification runs
 only after that has happened; a team wanting the bumps merged but not
 shipped unattended should leave `deploy_after_batch` at `ask` and know that
-the merge dial alone already deploys. Whether one dial should stand between
-a green batch and production is open in
-[#83](https://github.com/bendyworks/claude-skills/issues/83).
+the merge dial alone already deploys. This project's answer to
+[rules-that-bend#83 Deploying unattended needs more than a
+dial](https://github.com/bendyworks/rules-that-bend/issues/83) is Phase 6:
+the deploy stays unattended, and every one runs the same checks and rolls
+back on failure.
 
 ## Hard veto (policy, not a dial)
 
@@ -252,15 +254,54 @@ If verification fails here, stop. Do not deploy.
 
 ## Phase 6: Deploy
 
-If `deploy_after_batch: auto` and Phase 5 passed: run the project's deploy
-command. The dial `deploy_command` in `dependabot-autonomy.yml` defines what
-to run (e.g. `bin/deploy`, `npm run deploy`, `make deploy`); if unset and the
-user has not configured one, stop and ask rather than guessing. Do not ask
-when the dial is set.
+**On prmetrics the deploy at the end of a batch is pre-approved, for every
+batch, and the session runs it without asking.** The approval is the
+CLAUDE.md section "Dependabot Batches Deploy Unattended" together with
+`deploy_after_batch: auto` and `deploy_command: bin/deploy` in the
+project-local `dependabot-autonomy.yml`. Read both from the checked-in files
+at this step. With either missing, or any other dial value, ask before
+deploying.
 
-The deploy command is responsible for its own failure detection (health
-check, crashed-process detection, rollback hint). Surface its output. If it
-exits non-zero, surface the failure and do not treat the batch as complete.
+The deploy follows the batch's last merge, whoever merged each pull request:
+a below-floor or hard-veto bump the maintainer merged deploys the same way as
+one the session merged. What stops a deploy is a failed check below, never
+the batch's composition. In place of a question, every deploy runs these
+steps:
+
+1. **Deploy what Phase 5 verified.** On the default branch, confirm
+   `git rev-parse HEAD` equals `<remote>/<default-branch>` and that Phase 5's
+   suite ran on that commit. If either does not hold, repeat Phase 5 first.
+2. **Announce, then go on without waiting.** Find the live commit from the
+   newest succeeded `Deploy <sha>` entry in
+   `heroku releases -a prmetrics-production --json`, expanded with
+   `git rev-parse`. In one message, list what will ship:
+   `git log --oneline --no-merges <live-sha>..HEAD`, naming the batch's pull
+   requests and any other merged work riding along (merged work deploys too),
+   and the files
+   `git diff --name-only --diff-filter=A <live-sha>..HEAD -- db/migrate db/data`
+   adds. Note the live release's version for step 5.
+3. **Run `bin/deploy`, capturing its output to a uniquely named log under
+   `/tmp` and reading its exit status directly, never through a pipe.** The
+   Procfile's release command runs the migrations. The script exits non-zero
+   when the newest code release is not a succeeded deploy of this commit,
+   when a migration is still down, when the data integrity check fails, when
+   a dyno crashed, or when the health check does not answer ok.
+4. **Run `bin/post-deploy-sync-check` after every deploy,** whatever the batch
+   held. It queues a sync from a one-off dyno and passes only when the worker
+   logs that job's `done` line, so no browser or admin session is needed.
+5. **On a failure in step 3 or 4, roll back without asking, unless step 2
+   listed added migration files.** When the newest code release is not the
+   version step 2 noted, run `heroku rollback v<noted> -a prmetrics-production`,
+   then confirm `curl -s https://prmetrics.io/health` answers ok and
+   `heroku ps -a prmetrics-production` shows no crashed dyno. A rollback does
+   not reverse a schema or data migration, so with added files under
+   `db/migrate` or `db/data`, leave the release in place. In both cases stop:
+   the batch is not complete, and the report says what failed, what was rolled
+   back, and what is live. A failure before the push (`bin/deploy` refused to
+   start) made no release and needs no rollback.
+
+Report the release version, the health line, the sync check's job ID and
+result, and any rollback.
 
 ## Post-run summary
 
@@ -274,7 +315,7 @@ Close the session with a table:
 
 Plus:
 - Flake-fix PR (if any): number, status
-- Deploy: release identifier, health check result
+- Deploy: release version, health check result, sync check job ID and result, any rollback
 
 ## Escalation rules (short reference)
 
@@ -283,7 +324,7 @@ Plus:
 - Grouped-branch PR present -> refuse, point at config
 - CI failure with unknown fingerprint -> stop, surface trace, ask
 - Lint offense not cleanly fixable in one pass -> stop, ask
-- Deploy command non-zero exit -> stop, surface logs
+- `bin/deploy` or `bin/post-deploy-sync-check` non-zero exit -> roll back unless migration files were added (Phase 6 step 5), stop, surface logs
 
 ## Flake-registry upkeep
 

@@ -263,6 +263,12 @@ fails overnight, a day after the deploy.
 process, and the specs use the test queue adapter, so neither runs a job
 through the worker.
 
+`bin/post-deploy-sync-check` runs the check from the command line, with no
+browser and no admin session. It queues a sync of `bendycode/prmetrics` from a
+one-off dyno, then reads the worker log for that job's ID and exits 0 on its
+`done` line, non-zero on `fail` or after five minutes. Sessions use it; the
+steps below are the same check by hand.
+
 1. Sign in to https://prmetrics.io as an admin. The Sync buttons on the
    Repositories page render only where `RepositoryPolicy#sync?` allows, and a
    regular user's Actions column is empty.
@@ -424,6 +430,21 @@ Grouping stays fine for an ecosystem with no dominant framework gem, which is
 why `github-actions` keeps its group. Keep the top-level `ignore` rules for
 framework majors, but treat them as a second line rather than the mechanism
 that stops this.
+
+## Dependabot Batches Deploy Unattended
+A session running the dependabot-batch skill on this project deploys to
+production without asking once the batch's last pull request merges, and once
+the post-batch suite on `main` passes. The maintainer gave that approval for
+every future batch, not one at a time. It holds whoever merged each pull
+request, and whatever the batch held.
+
+The approval covers only the steps in Phase 6 of
+`.claude/skills/dependabot-batch/SKILL.md`: announcing what will ship and
+carrying on without waiting, `bin/deploy`, `bin/post-deploy-sync-check`, and
+`heroku rollback` to the release that was live before, when a check fails and
+the release added no file under `db/migrate` or `db/data`. It does not cover
+merging, which the merge dials in `.claude/dependabot-autonomy.yml` govern,
+or a deploy outside a Dependabot batch.
 
 ## Issue Keys
 Work is tracked in this repository's GitHub issues, and an issue's key is
