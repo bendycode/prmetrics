@@ -27,6 +27,12 @@ RSpec.describe ShortcutService do
     expect(service.stories_in_state(105).pluck('id', 'archived')).to eq([[7001, false], [7002, true]])
   end
 
+  it 'reads the workspace\'s teams' do
+    stubs.get('/api/v3/groups') { json_response('groups') }
+
+    expect(service.groups.pluck('id', 'workflow_ids')).to include(['team-1', [100]])
+  end
+
   it 'reads a story\'s history' do
     stubs.get('/api/v3/stories/7001/history') { json_response('history_7001') }
 

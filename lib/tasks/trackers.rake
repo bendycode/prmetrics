@@ -129,6 +129,11 @@ namespace :trackers do
   desc "Limit a Shortcut tracker to some of its workflow's teams: rake trackers:set_teams[tracker_id,team_id,...]; " \
        'name no team to read every team again'
   task :set_teams, %i[tracker_id] => :environment do |_t, args|
+    if args[:tracker_id].blank?
+      puts 'Usage: rake trackers:set_teams[tracker_id,team_id,...]'
+      exit 1
+    end
+
     tracker = Tracker.find_by(id: args[:tracker_id])
     unless tracker
       puts "Error: Tracker #{args[:tracker_id]} not found."
@@ -139,7 +144,17 @@ namespace :trackers do
       exit 1
     end
 
-    teams = args.extras.uniq
+    # A mistyped ID would leave the tracker reading no story at all
+    teams = args.extras.compact_blank.uniq
+    on_workflow = ShortcutService.new(tracker.api_token).groups
+                                 .select { |group| group['workflow_ids'].include?(tracker.workflow_id.to_i) }
+                                 .pluck('id')
+    unknown = teams - on_workflow
+    if unknown.any?
+      puts "Error: #{unknown.to_sentence} #{unknown.one? ? 'is not a team' : 'are not teams'} on workflow #{tracker.workflow_id}."
+      exit 1
+    end
+
     tracker.update!(team_ids: teams.presence)
     reach = teams.empty? ? 'every team' : "#{teams.size} #{'team'.pluralize(teams.size)}"
     puts "Tracker #{tracker.id} now reads the stories of #{reach}. Run rake sync:stories to apply it."

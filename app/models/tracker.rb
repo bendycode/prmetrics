@@ -63,6 +63,7 @@ class Tracker < ApplicationRecord
   validates :api_token, :workflow_id, presence: true, if: :shortcut?
   validates :workflow_id, format: { with: /\A[1-9]\d*\z/, allow_blank: true }, if: :shortcut?
   validate :workflow_read_once, if: :shortcut?
+  validate :team_ids_listed
   validates :key_prefix, format: { with: /\A[A-Z][A-Z0-9]*\z/ },
                          allow_blank: true
   validates :source_repository_id, uniqueness: true, allow_nil: true
@@ -117,6 +118,13 @@ class Tracker < ApplicationRecord
     return if workflow_id.blank? || !Tracker.reading_workflow(workflow_id).where.not(id: id).exists?
 
     errors.add(:workflow_id, 'is already read by another Shortcut tracker')
+  end
+
+  # A bare string would make reads_team? match any team whose ID contains it
+  def team_ids_listed
+    return if team_ids.nil? || (team_ids.is_a?(Array) && team_ids.all?(String))
+
+    errors.add(:team_ids, 'must be a list of team IDs')
   end
 
   def kind_details
