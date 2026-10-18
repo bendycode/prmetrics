@@ -40,7 +40,8 @@ RSpec.describe 'bin/post-deploy-sync-check' do
               [ "$result" = start ] || echo "pid=2 tid=a2a jid=$jid class=UnifiedSyncJob elapsed=2.9: $result"
             fi
             i=$((i + 1))
-          done ;;
+          done
+          exit "${STUB_LOGS_EXIT:-0}" ;;
       esac
     BASH
     write_stub('sleep', '')
@@ -133,6 +134,13 @@ RSpec.describe 'bin/post-deploy-sync-check' do
 
     expect(status).not_to be_success, output
     expect(output).to include('ActiveRecord::RecordNotFound', 'Queueing the job failed on the dyno')
+  end
+
+  it 'says when reading the worker log fails' do
+    output, status = run_check(results: %w[start start], env: { 'STUB_LOGS_EXIT' => '1' })
+
+    expect(status).not_to be_success, output
+    expect(output).to include('heroku logs failed')
   end
 
   it 'ignores a finished job whose ID only starts with the queued one' do

@@ -36,7 +36,10 @@ check_once() {
   # lines from counting.
   waited=0
   while [ "$waited" -lt "$TIMEOUT" ]; do
-    JOB_LINES=$(heroku logs -a "$APP" --dyno worker -n 1500 2>/dev/null | grep "jid=$JID " || true)
+    if ! LOGS=$(heroku logs -a "$APP" --dyno worker -n 1500 2>&1); then
+      echo "⚠️  heroku logs failed: $(echo "$LOGS" | tail -3)"
+    fi
+    JOB_LINES=$(echo "$LOGS" | grep "jid=$JID " || true)
     if echo "$JOB_LINES" | grep -q ': fail$'; then
       echo "$JOB_LINES"
       echo "❌ The worker logged job $JID failing"
