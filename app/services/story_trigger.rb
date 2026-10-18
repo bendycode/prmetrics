@@ -1,17 +1,15 @@
 # One kind of story event a tracker measures a time from, optionally only
 # when the event's payload holds the given values, as a status change counts
 # as a start only when it moves into a started state.
-class StoryTrigger
-  attr_reader :kind, :conditions
-
+StoryTrigger = Data.define(:kind, :conditions) do
   def self.[](kind, conditions = {})
-    new(kind, conditions)
+    new(kind: kind, conditions: conditions)
   end
 
-  def initialize(kind, conditions = {})
-    @kind = kind.to_sym
-    @conditions = conditions.deep_stringify_keys.freeze
-    freeze
+  def initialize(kind:, conditions: {})
+    raise ArgumentError, "Stories record no #{kind} events" unless StoryEvent::KINDS.key?(kind.to_sym)
+
+    super(kind: kind.to_sym, conditions: conditions.deep_stringify_keys.freeze)
   end
 
   def matches?(event)

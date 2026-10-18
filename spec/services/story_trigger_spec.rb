@@ -9,6 +9,14 @@ RSpec.describe StoryTrigger do
     expect(described_class[:assigned].matches?(event(:assigned))).to be(true)
   end
 
+  it 'refuses an event kind stories do not record' do
+    expect { described_class[:asigned] }.to raise_error(ArgumentError, /asigned/)
+  end
+
+  it 'equals another trigger for the same kind and conditions' do
+    expect(described_class[:assigned, 'a' => 1]).to eq(described_class[:assigned, a: 1])
+  end
+
   it 'does not match an event of another kind' do
     expect(described_class[:assigned].matches?(event(:opened))).to be(false)
   end

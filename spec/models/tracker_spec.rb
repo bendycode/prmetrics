@@ -26,6 +26,10 @@ RSpec.describe Tracker do
     end
   end
 
+  it 'describes every kind the kind enum allows' do
+    expect(described_class::KINDS.keys).to match_array(described_class.kinds.keys)
+  end
+
   describe '#sync!' do
     it 'syncs a GitHub issues tracker through the GitHub issue sync' do
       tracker = build(:tracker)
