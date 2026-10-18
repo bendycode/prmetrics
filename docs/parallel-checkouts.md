@@ -28,6 +28,10 @@ Postgres and Redis stay one shared server each; a checkout is isolated
 inside them by database name and Redis database number. Sidekiq is the only
 Redis role development and test use (Action Cable uses Redis only in
 production), so the stride is 1 and checkout N's Sidekiq database is N - 1.
+The Redis server is the one the original checkout's `REDIS_URL` names
+(`redis://localhost:6379` when it sets none), so a machine whose port 6379
+belongs to another project can point every checkout elsewhere from that one
+variable.
 
 The test suite pins no ports: Capybara picks a free port for its server and
 Selenium Manager starts chromedriver on one.
@@ -59,8 +63,12 @@ export PRM_PORT_OFFSET=$((200 * PRM_CHECKOUT_INDEX))
 export PRM_CHECKOUT_ROOT="$PWD"
 export PRM_APP_PORT=$((3000 + PRM_PORT_OFFSET))
 export PORT=$PRM_APP_PORT
-export PRM_JOBS_REDIS_URL="redis://localhost:6379/$((0 + PRM_CHECKOUT_INDEX))"
+export PRM_JOBS_REDIS_URL="${REDIS_URL:-redis://localhost:6379}"
+export PRM_JOBS_REDIS_URL="${PRM_JOBS_REDIS_URL%/[0-9]*}/$((0 + PRM_CHECKOUT_INDEX))"
 ```
+
+The last two lines keep the server from the `REDIS_URL` the copied `.envrc`
+carries and replace only its database number.
 
 ## Adding a checkout
 
@@ -72,9 +80,12 @@ export PRM_JOBS_REDIS_URL="redis://localhost:6379/$((0 + PRM_CHECKOUT_INDEX))"
    (`printf 'N\n' > "$(git rev-parse --path-format=absolute --git-common-dir)/parallel-checkout"`),
    and `direnv allow`.
 4. Check the block is free: no listener on its dev-server port
-   (`lsof -nP -iTCP:<port> -sTCP:LISTEN`), and its Redis database number
-   below the server's count and empty (`redis-cli -n <db> CONFIG GET databases`,
-   16 by default, and `redis-cli -n <db> DBSIZE`, 0).
+   (`lsof -nP -iTCP:<port> -sTCP:LISTEN`); its Redis server the one the
+   original checkout uses, and not a server another project on the machine
+   writes to (another project's Docker stack can publish its Redis on 6379);
+   and its Redis database number below the server's count and empty
+   (`direnv exec . sh -c 'redis-cli -u "$PRM_JOBS_REDIS_URL" CONFIG GET databases'`,
+   16 by default, and the same with `DBSIZE`, 0).
 5. `direnv exec . bundle install`, then check that
    `config/initializers/00_parallel_checkout_guard.rb` exists and that
    `direnv exec . bin/rails runner 'puts ActiveRecord::Base.connection_db_config.database'`
