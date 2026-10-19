@@ -82,7 +82,7 @@
     <tbody>
       <% @report.stories.each do |story| %>
         <tr>
-          <td><%= story.key %></td>
+          <td class="text-nowrap"><%= story.key %></td>
           <td><%= story_title_link(story, @tracker) %></td>
           <td><%= story_time(story.committed_at, story.committed_source) %></td>
           <td><%= story_time(story.started_at, story.started_source) %></td>

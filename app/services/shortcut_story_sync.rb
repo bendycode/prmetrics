@@ -10,8 +10,11 @@ class ShortcutStorySync
   # stories in a row mean Shortcut is down, not one story is unreadable
   FAILURES_IN_A_ROW_LIMIT = 3
 
-  def initialize(tracker, shortcut: ShortcutService.new(tracker.api_token))
+  # full reads every story's history, unchanged ones included, as after a
+  # change in how events are read
+  def initialize(tracker, shortcut: ShortcutService.new(tracker.api_token), full: false)
     @tracker = tracker
+    @full = full
     @shortcut = shortcut
   end
 
@@ -20,6 +23,7 @@ class ShortcutStorySync
     workflow = @shortcut.workflow(@tracker.workflow_id)
     done_states = workflow['states'].select { |state| state['type'] == 'done' }.pluck('id')
     stories = workflow['states'].flat_map { |state| @shortcut.stories_in_state(state['id']) }
+                                .select { |story| @tracker.reads_team?(story['group_id']) }
 
     failures, stopped = store_changed(stories, workflow, done_states, listed_at)
     mark_gone(stories) unless stopped
@@ -37,7 +41,7 @@ class ShortcutStorySync
     failures = []
     in_a_row = 0
     stories.each do |story|
-      next if stored[story['id'].to_s] == Time.zone.parse(story['updated_at'])
+      next if !@full && stored[story['id'].to_s] == Time.zone.parse(story['updated_at'])
 
       store_story(story, workflow, done_states, listed_at)
       in_a_row = 0
@@ -86,15 +90,19 @@ class ShortcutStorySync
   end
 
   # A story the workflow no longer lists was deleted, or moved to another
-  # workflow. The listing reads one state at a time, and a story moving
-  # between states can miss it, so a missing story is read on its own before
-  # it is marked gone.
+  # workflow or to a team the tracker does not read. The listing reads one
+  # state at a time, and a story moving between states can miss it, so a
+  # missing story is read on its own before it is marked gone.
   def mark_gone(stories)
     listed = stories.map { |story| story['id'].to_s }
     @tracker.stories.where(gone: false).where.not(external_id: listed).find_each do |story|
       found = @shortcut.story(story.external_id.to_i)
-      story.update!(gone: true) if found.nil? || found['workflow_id'].to_s != @tracker.workflow_id.to_s
+      story.update!(gone: true) unless found && read?(found)
     end
+  end
+
+  def read?(story)
+    story['workflow_id'].to_s == @tracker.workflow_id.to_s && @tracker.reads_team?(story['group_id'])
   end
 
   def measure_stories

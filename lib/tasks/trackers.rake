@@ -125,4 +125,23 @@ namespace :trackers do
     end
     puts "Replaced the token for tracker #{tracker.id}."
   end
+
+  desc "Limit a Shortcut tracker to some of its workflow's teams: rake trackers:set_teams[tracker_id,team_id,...]; " \
+       'name no team to read every team again'
+  task :set_teams, %i[tracker_id] => :environment do |_t, args|
+    tracker = Tracker.find_by(id: args[:tracker_id])
+    unless tracker
+      puts "Error: Tracker #{args[:tracker_id]} not found."
+      exit 1
+    end
+    unless tracker.shortcut?
+      puts "Error: Tracker #{tracker.id} is a #{tracker.kind} tracker, which has no teams."
+      exit 1
+    end
+
+    teams = args.extras.uniq
+    tracker.update!(team_ids: teams.presence)
+    reach = teams.empty? ? 'every team' : "#{teams.size} #{'team'.pluralize(teams.size)}"
+    puts "Tracker #{tracker.id} now reads the stories of #{reach}. Run rake sync:stories to apply it."
+  end
 end

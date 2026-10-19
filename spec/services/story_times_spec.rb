@@ -140,7 +140,7 @@ RSpec.describe StoryTimes do
       Time.zone.parse(time)
     end
 
-    it 'is committed when the story leaves the first state, started when it reaches a started one, and done on the last move into a done one' do
+    it 'is committed when the story reaches Ready, started when it reaches a started state, and done on the last move into a done one' do
       expect(shortcut_times('history_7001', 7001)).to have_attributes(
         committed_at: at('2026-09-03T15:00:00Z'), committed_source: :status_changed,
         started_at: at('2026-09-05T15:00:00Z'), started_source: :status_changed,
@@ -150,6 +150,41 @@ RSpec.describe StoryTimes do
 
     it 'is done only at the last move into a done state after a move back to work' do
       expect(shortcut_times('history_reopened', 7005).done_at).to eq(at('2026-09-09T15:00:00Z'))
+    end
+
+    # Work waiting in refinement was never committed to
+    it 'is committed on reaching the last unstarted state, not on leaving the first' do
+      workflow = { 'states' => [{ 'id' => 1, 'type' => 'backlog', 'position' => 0, 'name' => 'New' },
+                                { 'id' => 2, 'type' => 'unstarted', 'position' => 1, 'name' => 'Refining' },
+                                { 'id' => 3, 'type' => 'unstarted', 'position' => 2, 'name' => 'Ready' },
+                                { 'id' => 4, 'type' => 'started', 'position' => 3, 'name' => 'Doing' },
+                                { 'id' => 5, 'type' => 'done', 'position' => 4, 'name' => 'Done' }] }
+      move = lambda do |id, day, from, to|
+        { 'id' => id, 'changed_at' => "2026-09-0#{day}T15:00:00Z",
+          'actions' => [{ 'id' => 9, 'entity_type' => 'story', 'action' => 'update',
+                          'changes' => { 'workflow_state_id' => { 'old' => from, 'new' => to } } }] }
+      end
+      history = [move.call('m1', 1, 1, 2), move.call('m2', 3, 2, 3), move.call('m3', 5, 3, 4), move.call('m4', 8, 4, 5)]
+      events = ShortcutStoryHistory.new(story_id: 9, workflow: workflow, history: history).events
+
+      result = described_class.new(events: events.map { |attributes| StoryEvent.new(attributes) }, triggers: triggers,
+                                   state_reason: nil)
+
+      expect(result.committed_at).to eq(at('2026-09-03T15:00:00Z'))
+    end
+
+    it 'is never committed for a story that went straight to done' do
+      history = [{ 'id' => 's1', 'changed_at' => '2026-09-01T15:00:00Z',
+                   'actions' => [{ 'id' => 9, 'entity_type' => 'story', 'action' => 'create', 'workflow_state_id' => 101 }] },
+                 { 'id' => 's2', 'changed_at' => '2026-09-04T15:00:00Z',
+                   'actions' => [{ 'id' => 9, 'entity_type' => 'story', 'action' => 'update',
+                                   'changes' => { 'workflow_state_id' => { 'old' => 101, 'new' => 105 } } }] }]
+      events = ShortcutStoryHistory.new(story_id: 9, workflow: workflow, history: history).events
+
+      result = described_class.new(events: events.map { |attributes| StoryEvent.new(attributes) }, triggers: triggers,
+                                   state_reason: nil)
+
+      expect(result).to have_attributes(committed_at: nil, done_at: at('2026-09-04T15:00:00Z'))
     end
 
     it 'is committed at creation for a story created past the first state' do

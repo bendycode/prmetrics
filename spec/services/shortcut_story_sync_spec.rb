@@ -53,6 +53,14 @@ RSpec.describe ShortcutStorySync do
     expect(shortcut).to have_received(:history).with(7001).once
   end
 
+  it 'reads every story again when told to, changed or not' do
+    sync.sync!
+
+    described_class.new(tracker, shortcut: shortcut, full: true).sync!
+
+    expect(shortcut).to have_received(:history).with(7001).twice
+  end
+
   it 'reads a changed story again, storing each event once' do
     sync.sync!
     moved = shortcut_fixture('search_state_105').map { |story| story.merge('updated_at' => '2026-10-02T16:00:00Z') }
@@ -86,6 +94,30 @@ RSpec.describe ShortcutStorySync do
 
     expect { sync.sync! }.to raise_error(described_class::StoriesFailed)
     expect(Rails.logger).to have_received(:error).with('Story sync could not store story sc-7002: ShortcutService::Error')
+  end
+
+  describe 'for a tracker limited to some teams' do
+    let(:other_team) { shortcut_fixture('story_7001').merge('id' => 7008, 'group_id' => 'team-2') }
+
+    before do
+      tracker.update!(team_ids: ['team-1'])
+      allow(shortcut).to receive(:stories_in_state).with(105).and_return(shortcut_fixture('search_state_105') + [other_team])
+    end
+
+    it 'stores only the stories of those teams' do
+      sync.sync!
+
+      expect(tracker.stories.pluck(:external_id)).to contain_exactly('7001', '7002', '7003')
+    end
+
+    it 'marks a stored story gone once it belongs to another team' do
+      stored = create(:story, tracker: tracker, external_id: '7008', key: 'sc-7008')
+      allow(shortcut).to receive(:story).with(7008).and_return(other_team)
+
+      sync.sync!
+
+      expect(stored.reload).to be_gone
+    end
   end
 
   describe 'a stored story the listing leaves out' do

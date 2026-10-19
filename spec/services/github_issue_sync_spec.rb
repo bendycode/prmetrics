@@ -54,6 +54,12 @@ RSpec.describe GithubIssueSync do
       expect(github).not_to have_received(:issue_timeline)
     end
 
+    it 'reads its timeline again when told to read every issue' do
+      described_class.new(tracker, github: github, full: true).sync!
+
+      expect(github).to have_received(:issue_timeline).with('bendycode/prmetrics', 79)
+    end
+
     it 'still measures it again' do
       sync.sync!
 

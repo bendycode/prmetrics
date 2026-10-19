@@ -40,6 +40,14 @@ RSpec.describe Tracker do
       expect(tracker.errors[:workflow_id]).to include('is already read by another Shortcut tracker')
     end
 
+    it 'reads every team\'s stories unless limited to some' do
+      expect(tracker.reads_team?('team-9')).to be(true)
+
+      tracker.team_ids = ['team-1']
+
+      expect([tracker.reads_team?('team-1'), tracker.reads_team?('team-9')]).to eq([true, false])
+    end
+
     it 'is valid with a token and a workflow alone' do
       expect(tracker).to be_valid
     end
@@ -80,9 +88,19 @@ RSpec.describe Tracker do
     it 'syncs a GitHub issues tracker through the GitHub issue sync' do
       tracker = build(:tracker)
       sync = instance_double(GithubIssueSync, sync!: nil)
-      allow(GithubIssueSync).to receive(:new).with(tracker).and_return(sync)
+      allow(GithubIssueSync).to receive(:new).with(tracker, full: false).and_return(sync)
 
       tracker.sync!
+
+      expect(sync).to have_received(:sync!)
+    end
+
+    it 'asks the sync to read every story again when told to' do
+      tracker = build(:tracker, :shortcut)
+      sync = instance_double(ShortcutStorySync, sync!: nil)
+      allow(ShortcutStorySync).to receive(:new).with(tracker, full: true).and_return(sync)
+
+      tracker.sync!(full: true)
 
       expect(sync).to have_received(:sync!)
     end

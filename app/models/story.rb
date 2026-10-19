@@ -32,10 +32,17 @@ class Story < ApplicationRecord
   end
 
   # Stores the events not stored already. Each read of a timeline returns
-  # every event it has seen before, keyed by the same IDs.
+  # every event it has seen before, keyed by the same IDs; an event stored
+  # already takes the payload of the latest read, which describes it as the
+  # tracker does now.
   def record_events(attributes)
     unique = attributes.uniq { |event| event[:external_id] }
-    stored = events.where(external_id: unique.pluck(:external_id)).pluck(:external_id).to_set
-    unique.reject { |event| stored.include?(event[:external_id]) }.each { |event| events.create!(event) }
+    stored = events.where(external_id: unique.pluck(:external_id)).index_by(&:external_id)
+    unique.each do |event|
+      existing = stored[event[:external_id]]
+      next events.create!(event) unless existing
+
+      existing.update!(payload: event[:payload]) if existing.payload != event[:payload].as_json
+    end
   end
 end
