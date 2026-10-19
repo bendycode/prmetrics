@@ -50,7 +50,8 @@
       "Bash(heroku logs *)",
       "Bash(redis-cli ping)",
       "Bash(bundle exec rails routes *)",
-      "Bash(git hash-object --stdin)"
+      "Bash(git hash-object --stdin)",
+      "Bash(git cherry *)"
     ]
   }
 }
