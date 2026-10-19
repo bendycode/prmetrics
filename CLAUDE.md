@@ -288,6 +288,12 @@ access that can read the workflow; the sync only reads.
 Development uses fixed keys, which are public, unless the variables are set;
 test always does. A Heroku dyno never takes them.
 
+### One One-Off Dyno at a Time
+The production app's Heroku plan runs one one-off dyno at a time, so
+`heroku run` fails while a detached `rake sync:stories` or a console is up.
+Read production during such a run with
+`heroku pg:psql -a prmetrics-production -c '<select>'`.
+
 ### Run a Sync After a Deploy That Changes the Worker
 After a deploy that changes Sidekiq, redis-client, or the sync code, start a
 sync the same day and watch it finish. Do not leave that check to the nightly
