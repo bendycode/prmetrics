@@ -162,6 +162,7 @@ rake sync:stories
 - **GithubService**: Handles GitHub API integration with Octokit, implements rate limiting and retry logic
 - **WeekStatsService**: Calculates weekly statistics and metrics
 - **GithubIssueSync**: Lists a tracker's GitHub issues, stores their timelines as story events, and recomputes every story's times with **StoryTimes**; `rake sync:stories` runs it nightly
+- **ShortcutStorySync**: Lists every story in a Shortcut tracker's workflow, stores each changed story's history as story events through **ShortcutStoryHistory**, and recomputes every story's times; it reads Shortcut through **ShortcutService**, which paces and retries its requests, and `rake sync:stories` runs it nightly
 - **UnifiedSyncService**: Fetches a repository's pull requests and reviews, then refreshes the weeks they touch; the nightly rake task runs it directly, and the app's Sync buttons run it through **UnifiedSyncJob**
 
 ### Important Patterns

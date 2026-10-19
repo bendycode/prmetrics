@@ -18,9 +18,23 @@ class Tracker < ApplicationRecord
         done: { close: [StoryTrigger[:closed]], reopen: [StoryTrigger[:reopened]] }
       }
     },
+    # Committed when a story leaves the workflow's first state, or is created
+    # past it; started when it reaches a started state, or is created in one,
+    # with code linked to it as the fallbacks; done on a move into a done
+    # state, and undone by a move back out of one.
     'shortcut' => {
+      sync: ShortcutStorySync,
       story_noun: 'story',
-      story_url_prefix: 'https://app.shortcut.com/'
+      story_url_prefix: 'https://app.shortcut.com/',
+      triggers: {
+        committed: [StoryTrigger[:status_changed, 'from' => { 'first' => true }],
+                    StoryTrigger[:opened, 'state' => { 'first' => false }]],
+        started: [StoryTrigger[:status_changed, 'to' => { 'type' => 'started' }],
+                  StoryTrigger[:opened, 'state' => { 'type' => 'started' }],
+                  StoryTrigger[:branch_linked], StoryTrigger[:commit_referenced], StoryTrigger[:pull_request_linked]],
+        done: { close: [StoryTrigger[:status_changed, 'to' => { 'type' => 'done' }]],
+                reopen: [StoryTrigger[:status_changed, 'from' => { 'type' => 'done' }]] }
+      }
     }
   }.freeze
 
@@ -79,9 +93,12 @@ class Tracker < ApplicationRecord
     url.to_s.start_with?(kind_details[:story_url_prefix])
   end
 
-  # The project's own name for a story, PRJ-NNN where it declares a key
-  # prefix, and GitHub's #NNN otherwise.
+  # The project's own name for a story: Shortcut's sc-NNN for a Shortcut
+  # story, PRJ-NNN where a GitHub tracker declares a key prefix, and GitHub's
+  # #NNN otherwise.
   def story_key(number)
+    return "sc-#{number}" if shortcut?
+
     key_prefix.present? ? "#{key_prefix}-#{number}" : "##{number}"
   end
 

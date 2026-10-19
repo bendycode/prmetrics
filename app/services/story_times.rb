@@ -4,7 +4,9 @@
 # and its kind is recorded as the source of the time. The done rules name the
 # events that close a story and those that reopen it.
 class StoryTimes
-  ABANDONED = %w[not_planned duplicate].freeze
+  # GitHub's reasons for closing an issue without doing it, and a Shortcut
+  # story's archiving
+  ABANDONED = %w[not_planned duplicate archived].freeze
 
   attr_reader :committed_at, :committed_source, :started_at, :started_source, :done_at
 

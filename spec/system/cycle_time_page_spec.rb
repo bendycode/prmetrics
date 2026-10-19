@@ -127,4 +127,45 @@ RSpec.describe 'Cycle Time page' do
     expect(page).to have_text('No finished issues yet.')
     expect(page).to have_no_table
   end
+
+  context 'with a Shortcut tracker' do
+    let(:shortcut_tracker) { create(:tracker, :shortcut) }
+    let(:day0) { Time.zone.parse('2026-09-01 10:00') }
+
+    before do
+      repository.update!(tracker: shortcut_tracker)
+      create(:story, tracker: shortcut_tracker, external_id: '7001', key: 'sc-7001', title: 'Ship the export',
+                     url: 'https://app.shortcut.com/example/story/7001', state: 'closed',
+                     committed_at: day0, committed_source: :status_changed,
+                     started_at: day0 + 1.day, started_source: :branch_linked, done_at: day0 + 3.days)
+      create(:story, tracker: shortcut_tracker, external_id: '7002', key: 'sc-7002', title: 'Odd story link',
+                     url: 'https://github.com/granted/visible/issues/2', state: 'closed',
+                     committed_at: day0, committed_source: :opened,
+                     started_at: day0, started_source: :status_changed, done_at: day0 + 1.day)
+    end
+
+    it 'lists each finished story by its Shortcut ID, linked to the story, with each time\'s source' do
+      visit tracker_path(shortcut_tracker)
+
+      expect(page.find('tbody tr', text: 'sc-7001').all('td').map(&:text)).to eq(
+        ['sc-7001', 'Ship the export', '09/01/2026 (Status change)', '09/02/2026 (Branch)', '09/04/2026', '3 days']
+      )
+      expect(page).to have_link('Ship the export', href: 'https://app.shortcut.com/example/story/7001')
+      expect(page).to have_css('th', text: 'Story')
+    end
+
+    it 'says how many stories its chosen trigger measured' do
+      visit tracker_path(shortcut_tracker)
+
+      expect(page.find('p.text-muted').text).to eq('1 story measured from Status change, 1 from a fallback.')
+    end
+
+    # A Shortcut story's link is to Shortcut, never to another site
+    it 'shows a title without a link when its URL is not on Shortcut' do
+      visit tracker_path(shortcut_tracker)
+
+      expect(page).to have_text('Odd story link')
+      expect(page).to have_no_link('Odd story link')
+    end
+  end
 end
