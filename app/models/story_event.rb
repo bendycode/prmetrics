@@ -8,7 +8,9 @@ class StoryEvent < ApplicationRecord
     commit_referenced: 2,
     pull_request_linked: 3,
     closed: 4,
-    reopened: 5
+    reopened: 5,
+    status_changed: 6,
+    branch_linked: 7
   }.freeze
 
   belongs_to :story

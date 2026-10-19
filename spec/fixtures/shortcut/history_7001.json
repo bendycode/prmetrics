@@ -1,0 +1,208 @@
+[
+  {
+    "id": "h-1",
+    "changed_at": "2026-09-01T15:00:00Z",
+    "version": "v1",
+    "member_id": "member-1",
+    "actions": [
+      {
+        "id": 7001,
+        "entity_type": "story",
+        "action": "create",
+        "name": "Story 7001",
+        "workflow_state_id": 101
+      }
+    ],
+    "references": [
+      {
+        "id": 101,
+        "entity_type": "workflow-state",
+        "name": "Inbox",
+        "type": "backlog"
+      }
+    ]
+  },
+  {
+    "id": "h-2",
+    "changed_at": "2026-09-01T16:00:00Z",
+    "version": "v1",
+    "member_id": "member-1",
+    "actions": [
+      {
+        "id": 7001,
+        "entity_type": "story",
+        "action": "update",
+        "changes": {
+          "label_ids": {
+            "adds": [
+              9
+            ]
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "h-3",
+    "changed_at": "2026-09-03T15:00:00Z",
+    "version": "v1",
+    "member_id": "member-1",
+    "actions": [
+      {
+        "id": 7001,
+        "entity_type": "story",
+        "action": "update",
+        "changes": {
+          "workflow_state_id": {
+            "new": 102,
+            "old": 101
+          }
+        }
+      }
+    ],
+    "references": [
+      {
+        "id": 102,
+        "entity_type": "workflow-state",
+        "name": "Ready",
+        "type": "unstarted"
+      },
+      {
+        "id": 101,
+        "entity_type": "workflow-state",
+        "name": "Inbox",
+        "type": "backlog"
+      }
+    ]
+  },
+  {
+    "id": "h-4",
+    "changed_at": "2026-09-05T15:00:00Z",
+    "version": "v1",
+    "member_id": "member-1",
+    "actions": [
+      {
+        "id": 7001,
+        "entity_type": "story",
+        "action": "update",
+        "changes": {
+          "workflow_state_id": {
+            "new": 103,
+            "old": 102
+          }
+        }
+      }
+    ],
+    "references": [
+      {
+        "id": 103,
+        "entity_type": "workflow-state",
+        "name": "In Progress",
+        "type": "started"
+      },
+      {
+        "id": 102,
+        "entity_type": "workflow-state",
+        "name": "Ready",
+        "type": "unstarted"
+      }
+    ]
+  },
+  {
+    "id": "h-5",
+    "changed_at": "2026-09-05T17:00:00Z",
+    "version": "v1",
+    "member_id": "member-1",
+    "actions": [
+      {
+        "id": 8001,
+        "entity_type": "branch",
+        "action": "push"
+      },
+      {
+        "id": 7001,
+        "entity_type": "story",
+        "action": "update",
+        "changes": {
+          "branch_ids": {
+            "adds": [
+              8001
+            ]
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "h-6",
+    "changed_at": "2026-09-08T15:00:00Z",
+    "version": "v1",
+    "member_id": "github-user",
+    "actions": [
+      {
+        "id": 8101,
+        "entity_type": "pull-request",
+        "action": "update",
+        "number": 12
+      },
+      {
+        "id": 7001,
+        "entity_type": "story",
+        "action": "update",
+        "changes": {
+          "workflow_state_id": {
+            "new": 104,
+            "old": 103
+          }
+        }
+      }
+    ],
+    "references": [
+      {
+        "id": 104,
+        "entity_type": "workflow-state",
+        "name": "In Review",
+        "type": "started"
+      },
+      {
+        "id": 103,
+        "entity_type": "workflow-state",
+        "name": "In Progress",
+        "type": "started"
+      }
+    ]
+  },
+  {
+    "id": "h-7",
+    "changed_at": "2026-09-12T16:00:00Z",
+    "version": "v1",
+    "member_id": "member-1",
+    "actions": [
+      {
+        "id": 7001,
+        "entity_type": "story",
+        "action": "update",
+        "changes": {
+          "workflow_state_id": {
+            "new": 105,
+            "old": 104
+          }
+        }
+      }
+    ],
+    "references": [
+      {
+        "id": 105,
+        "entity_type": "workflow-state",
+        "name": "Shipped",
+        "type": "done"
+      },
+      {
+        "id": 104,
+        "entity_type": "workflow-state",
+        "name": "In Review",
+        "type": "started"
+      }
+    ]
+  }
+]

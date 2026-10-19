@@ -455,6 +455,7 @@ DEPENDENCIES
   devise_invitable (~> 2.0)
   factory_bot_rails
   faker
+  faraday
   faraday-retry
   font-awesome-sass
   foreman

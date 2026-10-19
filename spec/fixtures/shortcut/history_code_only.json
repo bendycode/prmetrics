@@ -1,0 +1,83 @@
+[
+  {
+    "id": "k-1",
+    "changed_at": "2026-09-01T15:00:00Z",
+    "version": "v1",
+    "member_id": "member-1",
+    "actions": [
+      {
+        "id": 7007,
+        "entity_type": "story",
+        "action": "create",
+        "name": "Story 7007",
+        "workflow_state_id": 101
+      }
+    ],
+    "references": [
+      {
+        "id": 101,
+        "entity_type": "workflow-state",
+        "name": "Inbox",
+        "type": "backlog"
+      }
+    ]
+  },
+  {
+    "id": "k-2",
+    "changed_at": "2026-09-02T15:00:00Z",
+    "version": "v1",
+    "member_id": "member-1",
+    "actions": [
+      {
+        "id": 8201,
+        "entity_type": "commit",
+        "action": "create"
+      },
+      {
+        "id": 7007,
+        "entity_type": "story",
+        "action": "update",
+        "changes": {
+          "commit_ids": {
+            "adds": [
+              8201
+            ]
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "k-3",
+    "changed_at": "2026-09-03T15:00:00Z",
+    "version": "v1",
+    "member_id": "member-1",
+    "actions": [
+      {
+        "id": 7007,
+        "entity_type": "story",
+        "action": "update",
+        "changes": {
+          "workflow_state_id": {
+            "new": 105,
+            "old": 101
+          }
+        }
+      }
+    ],
+    "references": [
+      {
+        "id": 105,
+        "entity_type": "workflow-state",
+        "name": "Shipped",
+        "type": "done"
+      },
+      {
+        "id": 101,
+        "entity_type": "workflow-state",
+        "name": "Inbox",
+        "type": "backlog"
+      }
+    ]
+  }
+]
