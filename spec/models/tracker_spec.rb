@@ -42,11 +42,18 @@ RSpec.describe Tracker do
 
     it 'reads every team\'s stories unless limited to some' do
       expect(tracker.reads_team?('team-9')).to be(true)
+    end
 
+    it 'reads only the named teams\' stories once limited to them' do
       tracker.team_ids = ['team-1']
 
-      expect([tracker.reads_team?('team-1'), tracker.reads_team?('team-9')]).to eq([true, false])
+      expect(tracker.reads_team?('team-1')).to be(true)
+      expect(tracker.reads_team?('team-9')).to be(false)
     end
+
+    # A team's ID as a bare string would match any team whose ID contains it
+    it { is_expected.not_to allow_value('team-1', [1]).for(:team_ids) }
+    it { is_expected.to allow_value(nil, ['team-1']).for(:team_ids) }
 
     it 'is valid with a token and a workflow alone' do
       expect(tracker).to be_valid

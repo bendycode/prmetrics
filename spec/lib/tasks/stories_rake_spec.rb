@@ -57,7 +57,8 @@ RSpec.describe 'story rake tasks' do
       allow(GithubIssueSync).to receive(:new).with(second, full: true).and_return(second_sync)
 
       expect { Rake::Task['sync:stories'].invoke }.to output(/Synced 2 of 2 trackers/).to_stdout
-      expect([first_sync, second_sync]).to all(have_received(:sync!))
+      expect(GithubIssueSync).to have_received(:new).with(first, full: true)
+      expect(GithubIssueSync).to have_received(:new).with(second, full: true)
     end
 
     # GithubIssueSync's own spec covers the token check that raises this
@@ -277,13 +278,27 @@ RSpec.describe 'story rake tasks' do
   end
 
   describe 'trackers:set_teams' do
-    let!(:tracker) { create(:tracker, :shortcut) }
+    let!(:tracker) { create(:tracker, :shortcut, workflow_id: '100') }
+    let(:shortcut) { instance_double(ShortcutService, groups: shortcut_fixture('groups')) }
 
-    it 'limits a Shortcut tracker to the teams named' do
-      expect { Rake::Task['trackers:set_teams'].invoke(tracker.id.to_s, 'team-1', 'team-2') }
+    before { allow(ShortcutService).to receive(:new).with(tracker.api_token).and_return(shortcut) }
+
+    it 'limits a Shortcut tracker to the teams named, once each' do
+      expect { Rake::Task['trackers:set_teams'].invoke(tracker.id.to_s, 'team-1', 'team-2', 'team-1') }
         .to output(/Tracker #{tracker.id} now reads the stories of 2 teams/).to_stdout
 
       expect(tracker.reload.team_ids).to eq(%w[team-1 team-2])
+    end
+
+    it 'keeps what a sync records about the workflow while the task runs' do
+      allow(shortcut).to receive(:groups) do
+        Tracker.find(tracker.id).update!(workflow_digest: 'recorded-by-a-sync')
+        shortcut_fixture('groups')
+      end
+
+      expect { Rake::Task['trackers:set_teams'].invoke(tracker.id.to_s, 'team-1') }.to output.to_stdout
+
+      expect(tracker.reload).to have_attributes(team_ids: ['team-1'], workflow_digest: 'recorded-by-a-sync')
     end
 
     it 'reads every team again when none is named' do
@@ -292,7 +307,31 @@ RSpec.describe 'story rake tasks' do
       expect { Rake::Task['trackers:set_teams'].invoke(tracker.id.to_s) }
         .to output(/Tracker #{tracker.id} now reads the stories of every team/).to_stdout
 
-      expect(tracker.reload.team_ids).to be_blank
+      expect(tracker.reload.team_ids).to be_nil
+    end
+
+    # A mistyped ID would leave the tracker reading no story at all
+    it 'refuses a team that does not use the tracker\'s workflow' do
+      expect { Rake::Task['trackers:set_teams'].invoke(tracker.id.to_s, 'team-1', 'team-3', 'team-x') }
+        .to output(/team-3 and team-x are not teams on workflow 100/).to_stdout.and raise_error(SystemExit)
+
+      expect(tracker.reload.team_ids).to be_nil
+    end
+
+    it 'ignores a blank team, as a trailing comma gives' do
+      expect { Rake::Task['trackers:set_teams'].invoke(tracker.id.to_s, 'team-1', '') }.to output.to_stdout
+
+      expect(tracker.reload.team_ids).to eq(['team-1'])
+    end
+
+    it 'shows how to call it when no tracker is named' do
+      expect { Rake::Task['trackers:set_teams'].invoke }
+        .to output(/Usage: rake trackers:set_teams\[tracker_id,team_id,\.\.\.\]/).to_stdout.and raise_error(SystemExit)
+    end
+
+    it 'fails with a clear message for a tracker that does not exist' do
+      expect { Rake::Task['trackers:set_teams'].invoke('0', 'team-1') }
+        .to output(/Tracker 0 not found/).to_stdout.and raise_error(SystemExit)
     end
 
     it 'refuses a tracker that is not a Shortcut tracker' do

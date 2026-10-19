@@ -24,10 +24,10 @@ class GithubIssueSync
   def sync!
     listed_at = Time.current
     issues = @github.issues(@repo_name)
-    stored = stored_updates(issues)
+    stored = @tracker.stored_updates(listed_ids(issues))
 
     failures = issues.filter_map do |issue|
-      store_issue(issue, listed_at) unless !@full && unchanged?(issue, stored)
+      store_issue(issue, listed_at) unless unchanged?(issue, stored)
       nil
     rescue StandardError => e
       # The class alone: production logs reach the nightly workflow's public
@@ -35,7 +35,7 @@ class GithubIssueSync
       Rails.logger.error "Story sync could not store issue ##{issue.number}: #{e.class}"
       "##{issue.number} (#{e.class})"
     end
-    measure_stories
+    @tracker.measure_stories
     mark_gone(issues)
     raise IssuesFailed, "Could not store issues #{failures.join(', ')}" if failures.any?
   end
@@ -43,19 +43,12 @@ class GithubIssueSync
   private
 
   # A closed issue stored at the update GitHub lists has nothing new to read,
-  # once GitHub is known to have listed it after that update. An open issue
-  # is always read: a commit or pull request that mentions it adds to its
-  # timeline without moving its updated_at, and closing it does move it.
+  # once GitHub is known to have listed it after that update, unless every
+  # issue is being read. An open issue is always read: a commit or pull
+  # request that mentions it adds to its timeline without moving its
+  # updated_at, and closing it does move it.
   def unchanged?(issue, stored)
-    issue.state == 'closed' && stored[issue.number.to_s] == issue.updated_at
-  end
-
-  # The update each listed issue is stored at. A gone story listed again is
-  # read again, which brings it back.
-  def stored_updates(issues)
-    @tracker.stories.where(external_id: listed_ids(issues), gone: false)
-            .listed_after_last_update
-            .pluck(:external_id, :source_updated_at).to_h
+    !@full && issue.state == 'closed' && stored[issue.number.to_s] == issue.updated_at
   end
 
   # Everything is read from GitHub before anything is written, and written
@@ -100,11 +93,5 @@ class GithubIssueSync
 
   def listed_ids(issues)
     issues.map { |issue| issue.number.to_s }
-  end
-
-  def measure_stories
-    @tracker.stories.includes(:events).find_each do |story|
-      story.measure(@tracker.triggers)
-    end
   end
 end

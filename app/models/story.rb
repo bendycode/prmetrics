@@ -42,7 +42,8 @@ class Story < ApplicationRecord
       existing = stored[event[:external_id]]
       next events.create!(event) unless existing
 
-      existing.update!(payload: event[:payload]) if existing.payload != event[:payload].as_json
+      existing.assign_attributes(payload: event[:payload])
+      existing.save! if existing.changed?
     end
   end
 end

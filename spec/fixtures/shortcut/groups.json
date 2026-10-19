@@ -1,0 +1,36 @@
+[
+  {
+    "id": "team-1",
+    "entity_type": "group",
+    "name": "Delivery",
+    "mention_name": "delivery",
+    "archived": false,
+    "workflow_ids": [
+      100
+    ],
+    "num_stories": 3
+  },
+  {
+    "id": "team-2",
+    "entity_type": "group",
+    "name": "Support",
+    "mention_name": "support",
+    "archived": false,
+    "workflow_ids": [
+      100,
+      200
+    ],
+    "num_stories": 1
+  },
+  {
+    "id": "team-3",
+    "entity_type": "group",
+    "name": "Elsewhere",
+    "mention_name": "elsewhere",
+    "archived": false,
+    "workflow_ids": [
+      200
+    ],
+    "num_stories": 0
+  }
+]

@@ -3,14 +3,16 @@
 # issues of its source repository.
 class Tracker < ApplicationRecord
   # What differs between kinds of tracker: the service that reads its stories
-  # in, what it calls a story, where its stories' own pages live, and the
-  # events its times are measured from. For committed and started, the first
+  # in, what it calls a story and how it keys one, where its stories' own
+  # pages live, and the events its times are measured from. For committed and started, the first
   # trigger is the one the kind is measured by and the rest are fallbacks
   # meaning the same. Done is the last close with no reopen after it.
   KINDS = {
     'github_issues' => {
       sync: GithubIssueSync,
       story_noun: 'issue',
+      # PRJ-NNN where the tracker declares a key prefix, GitHub's #NNN otherwise
+      story_key: ->(tracker, number) { tracker.key_prefix.present? ? "#{tracker.key_prefix}-#{number}" : "##{number}" },
       story_url_prefix: 'https://github.com/',
       triggers: {
         committed: [StoryTrigger[:opened]],
@@ -20,12 +22,13 @@ class Tracker < ApplicationRecord
     },
     # Committed when a story reaches the workflow's commitment, its last
     # unstarted state, or is created at or past it; started when it reaches a
-    # started state, or is created in one,
-    # with code linked to it as the fallbacks; done on a move into a done
-    # state, and undone by a move back out of one.
+    # started state, or is created in one, with code linked to it as the
+    # fallbacks; done on a move into a done state, or creation in one, and
+    # undone by a move back out of one.
     'shortcut' => {
       sync: ShortcutStorySync,
       story_noun: 'story',
+      story_key: ->(_tracker, number) { "sc-#{number}" },
       story_url_prefix: 'https://app.shortcut.com/',
       triggers: {
         committed: [StoryTrigger[:status_changed, 'to' => { 'committed' => true }],
@@ -33,7 +36,8 @@ class Tracker < ApplicationRecord
         started: [StoryTrigger[:status_changed, 'to' => { 'type' => 'started' }],
                   StoryTrigger[:opened, 'state' => { 'type' => 'started' }],
                   StoryTrigger[:branch_linked], StoryTrigger[:commit_referenced], StoryTrigger[:pull_request_linked]],
-        done: { close: [StoryTrigger[:status_changed, 'to' => { 'type' => 'done' }]],
+        done: { close: [StoryTrigger[:status_changed, 'to' => { 'type' => 'done' }],
+                        StoryTrigger[:opened, 'state' => { 'type' => 'done' }]],
                 reopen: [StoryTrigger[:status_changed, 'from' => { 'type' => 'done' }]] }
       }
     }
@@ -44,7 +48,7 @@ class Tracker < ApplicationRecord
   has_many :stories, dependent: :destroy
 
   enum :kind, { github_issues: 0, shortcut: 1 }
-  store_accessor :config, :key_prefix, :workflow_id, :team_ids
+  store_accessor :config, :key_prefix, :workflow_id, :team_ids, :workflow_digest
   encrypts :api_token
 
   scope :reading_workflow, ->(workflow_id) { shortcut.where("config->>'workflow_id' = ?", workflow_id.to_s) }
@@ -62,6 +66,7 @@ class Tracker < ApplicationRecord
   validates :api_token, :workflow_id, presence: true, if: :shortcut?
   validates :workflow_id, format: { with: /\A[1-9]\d*\z/, allow_blank: true }, if: :shortcut?
   validate :workflow_read_once, if: :shortcut?
+  validate :team_ids_listed
   validates :key_prefix, format: { with: /\A[A-Z][A-Z0-9]*\z/ },
                          allow_blank: true
   validates :source_repository_id, uniqueness: true, allow_nil: true
@@ -84,8 +89,21 @@ class Tracker < ApplicationRecord
     kind_details[:sync].new(self, full: full).sync!
   end
 
+  # Measures every story in the tracker again from its events
+  def measure_stories
+    stories.includes(:events).find_each { |story| story.measure(triggers) }
+  end
+
+  # The update each listed story is stored at, for stories listed after it.
+  # A gone story listed again is read again, which brings it back.
+  def stored_updates(external_ids)
+    stories.where(external_id: external_ids, gone: false).listed_after_last_update
+           .pluck(:external_id, :source_updated_at).to_h
+  end
+
   # A Shortcut tracker reads its workflow's stories from every team, unless
-  # its team_ids name the teams it is limited to
+  # its team_ids name the teams it is limited to; a story in no team is then
+  # left out.
   def reads_team?(team_id)
     team_ids.blank? || team_ids.include?(team_id)
   end
@@ -100,13 +118,9 @@ class Tracker < ApplicationRecord
     url.to_s.start_with?(kind_details[:story_url_prefix])
   end
 
-  # The project's own name for a story: Shortcut's sc-NNN for a Shortcut
-  # story, PRJ-NNN where a GitHub tracker declares a key prefix, and GitHub's
-  # #NNN otherwise.
+  # The project's own name for a story
   def story_key(number)
-    return "sc-#{number}" if shortcut?
-
-    key_prefix.present? ? "#{key_prefix}-#{number}" : "##{number}"
+    kind_details[:story_key].call(self, number)
   end
 
   private
@@ -116,6 +130,13 @@ class Tracker < ApplicationRecord
     return if workflow_id.blank? || !Tracker.reading_workflow(workflow_id).where.not(id: id).exists?
 
     errors.add(:workflow_id, 'is already read by another Shortcut tracker')
+  end
+
+  # A bare string would make reads_team? match any team whose ID contains it
+  def team_ids_listed
+    return if team_ids.nil? || (team_ids.is_a?(Array) && team_ids.all?(String))
+
+    errors.add(:team_ids, 'must be a list of team IDs')
   end
 
   def kind_details

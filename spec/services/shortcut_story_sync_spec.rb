@@ -23,8 +23,8 @@ RSpec.describe ShortcutStorySync do
   it 'stores every story in the workflow, keyed sc-NNNN, open or closed by the type of state it is in' do
     sync.sync!
 
-    expect(tracker.stories.order(:external_id).pluck(:external_id, :key, :state, :state_reason)).to eq(
-      [%w[7001 sc-7001 closed] + [nil], %w[7002 sc-7002 closed archived], %w[7003 sc-7003 open] + [nil]]
+    expect(tracker.stories.order(:external_id).pluck(:external_id, :key, :state)).to eq(
+      [%w[7001 sc-7001 closed], %w[7002 sc-7002 closed], %w[7003 sc-7003 open]]
     )
     expect(tracker.stories.find_by(external_id: '7001'))
       .to have_attributes(title: 'Story 7001', url: 'https://app.shortcut.com/example/story/7001')
@@ -39,10 +39,21 @@ RSpec.describe ShortcutStorySync do
     )
   end
 
-  it 'leaves an archived story out of the finished stories' do
+  # Teams archive finished stories to tidy their board
+  it 'counts a story archived after it was finished' do
     sync.sync!
 
-    expect(tracker.stories.finished.pluck(:external_id)).to eq(['7001'])
+    expect(tracker.stories.finished.pluck(:external_id)).to contain_exactly('7001', '7002')
+  end
+
+  it 'leaves out a story archived before it was finished' do
+    abandoned = shortcut_fixture('story_7001').merge('id' => 7009, 'workflow_state_id' => 103, 'archived' => true)
+    allow(shortcut).to receive(:stories_in_state).with(103).and_return([abandoned])
+    allow(shortcut).to receive(:history).with(7009).and_return(history_for(7009, 'history_reopened').first(4))
+
+    sync.sync!
+
+    expect(tracker.stories.find_by(external_id: '7009')).to have_attributes(state_reason: 'archived', done_at: nil)
   end
 
   it 'skips the history of a story stored at the update Shortcut lists, once listed after it' do
@@ -53,12 +64,57 @@ RSpec.describe ShortcutStorySync do
     expect(shortcut).to have_received(:history).with(7001).once
   end
 
+  # Moving or adding a state changes what a story's moves mean without touching the story
+  it "reads every story again once the workflow's states have changed" do
+    sync.sync!
+    changed = shortcut_fixture('workflow')
+    changed['states'] += [changed['states'].last.merge('id' => 107, 'position' => 99)]
+    allow(shortcut).to receive(:workflow).with('100').and_return(changed)
+
+    described_class.new(tracker, shortcut: shortcut).sync!
+
+    expect(shortcut).to have_received(:history).with(7001).twice
+  end
+
+  it 'keeps a team limit set while the sync runs' do
+    allow(shortcut).to receive(:stories_in_state).with(105) do
+      Tracker.find(tracker.id).update!(team_ids: ['team-1'])
+      shortcut_fixture('search_state_105')
+    end
+
+    sync.sync!
+
+    expect(Tracker.find(tracker.id).team_ids).to eq(['team-1'])
+  end
+
+  # A story moving while the listing runs can appear in two states
+  it 'stores a story listed twice at its newest update' do
+    earlier = shortcut_fixture('search_state_105').first.merge('updated_at' => '2026-09-01T00:00:00Z')
+    allow(shortcut).to receive(:stories_in_state).with(103).and_return(shortcut_fixture('search_state_103') + [earlier])
+
+    sync.sync!
+
+    expect(tracker.stories.find_by(external_id: '7001').source_updated_at)
+      .to eq(Time.zone.parse(shortcut_fixture('search_state_105').first['updated_at']))
+    expect(shortcut).to have_received(:history).with(7001).once
+  end
+
   it 'reads every story again when told to, changed or not' do
     sync.sync!
 
     described_class.new(tracker, shortcut: shortcut, full: true).sync!
 
     expect(shortcut).to have_received(:history).with(7001).twice
+  end
+
+  # Shortcut's times are whole seconds, and its clock and this app's can drift
+  it 'reads a story again when it was stored before Shortcut listed its update' do
+    create(:story, tracker: tracker, external_id: '7001', source_updated_at: '2026-09-12T16:00:00Z',
+                   listed_at: '2026-09-12T16:00:00Z')
+
+    sync.sync!
+
+    expect(shortcut).to have_received(:history).with(7001)
   end
 
   it 'reads a changed story again, storing each event once' do
@@ -77,6 +133,38 @@ RSpec.describe ShortcutStorySync do
     expect(tracker.stories.pluck(:external_id)).to contain_exactly('7001', '7003')
   end
 
+  it 'stores the other stories when one is listed with no update time, then reports it' do
+    broken = shortcut_fixture('story_7001').merge('id' => 7009, 'workflow_state_id' => 103, 'updated_at' => nil)
+    allow(shortcut).to receive(:stories_in_state).with(103).and_return([broken])
+    allow(shortcut).to receive(:history).with(7009).and_return(history_for(7009))
+
+    expect { sync.sync! }.to raise_error(described_class::StoriesFailed, /sc-7009/)
+    expect(tracker.stories.pluck(:external_id)).to include('7001', '7002')
+  end
+
+  it 'skips unchanged stories on the next sync while another story keeps failing' do
+    allow(shortcut).to receive(:history).with(7002).and_raise(ShortcutService::Error, 'Shortcut answered 500')
+
+    2.times { expect { described_class.new(tracker, shortcut: shortcut).sync! }.to raise_error(described_class::StoriesFailed) }
+
+    expect(shortcut).to have_received(:history).with(7001).once
+  end
+
+  it 'reads a story again on the next sync when it failed while every story was read' do
+    sync.sync!
+    changed = shortcut_fixture('workflow')
+    changed['states'] += [changed['states'].last.merge('id' => 107, 'position' => 99)]
+    allow(shortcut).to receive(:workflow).with('100').and_return(changed)
+    allow(shortcut).to receive(:history).with(7002).and_raise(ShortcutService::Error, 'Shortcut answered 500')
+    expect { described_class.new(tracker, shortcut: shortcut).sync! }.to raise_error(described_class::StoriesFailed)
+    allow(shortcut).to receive(:history).with(7002).and_return(history_for(7002))
+
+    described_class.new(tracker, shortcut: shortcut).sync!
+
+    expect(shortcut).to have_received(:history).with(7002).exactly(3).times
+    expect(shortcut).to have_received(:history).with(7001).twice
+  end
+
   # Each request already retried for two minutes; an outage would otherwise cost that per story
   it 'stops after three stories in a row cannot be read' do
     many = (1..6).map { |n| shortcut_fixture('story_7001').merge('id' => 7100 + n) }
@@ -88,12 +176,28 @@ RSpec.describe ShortcutStorySync do
     expect(shortcut).to have_received(:history).exactly(3).times
   end
 
-  it 'logs a failure by story key and error class, never the message' do
+  # The production log reaches the nightly workflow's public log, and a story's number is the workspace's own
+  it 'counts failures in a row again after a story is stored' do
+    many = (1..5).map { |n| shortcut_fixture('story_7001').merge('id' => 7100 + n) }
+    allow(shortcut).to receive(:stories_in_state).with(105).and_return(many)
+    allow(shortcut).to receive(:stories_in_state).with(103).and_return([])
+    allow(shortcut).to receive(:history).and_raise(ShortcutService::Error, 'Shortcut answered 503')
+    allow(shortcut).to receive(:history).with(7103).and_return(shortcut_fixture('history_7001'))
+    allow(shortcut).to receive(:story)
+
+    expect { sync.sync! }.to raise_error(described_class::StoriesFailed) { |error|
+      expect(error.message).not_to include('stopped')
+    }
+    expect(shortcut).to have_received(:history).exactly(5).times
+  end
+
+  it 'logs a failure by tracker and error class, never the story or the message' do
     allow(Rails.logger).to receive(:error)
     allow(shortcut).to receive(:history).with(7002).and_raise(ShortcutService::Error, 'Shortcut answered 500 to GET x')
 
     expect { sync.sync! }.to raise_error(described_class::StoriesFailed)
-    expect(Rails.logger).to have_received(:error).with('Story sync could not store story sc-7002: ShortcutService::Error')
+    expect(Rails.logger).to have_received(:error)
+      .with("Story sync could not store a story of tracker #{tracker.id}: ShortcutService::Error")
   end
 
   describe 'for a tracker limited to some teams' do
@@ -110,7 +214,18 @@ RSpec.describe ShortcutStorySync do
       expect(tracker.stories.pluck(:external_id)).to contain_exactly('7001', '7002', '7003')
     end
 
-    it 'marks a stored story gone once it belongs to another team' do
+    it 'marks a stored story gone once the listing shows it belongs to another team, without reading it again' do
+      stored = create(:story, tracker: tracker, external_id: '7008', key: 'sc-7008')
+      allow(shortcut).to receive(:story)
+
+      sync.sync!
+
+      expect(stored.reload).to be_gone
+      expect(shortcut).not_to have_received(:story)
+    end
+
+    it 'marks a stored story gone once a direct read finds it belongs to another team' do
+      allow(shortcut).to receive(:stories_in_state).with(105).and_return(shortcut_fixture('search_state_105'))
       stored = create(:story, tracker: tracker, external_id: '7008', key: 'sc-7008')
       allow(shortcut).to receive(:story).with(7008).and_return(other_team)
 
@@ -140,11 +255,44 @@ RSpec.describe ShortcutStorySync do
     end
 
     # The listing reads one state at a time, so a story moving between states can miss it
-    it 'stays when Shortcut still has it in the workflow' do
+    it 'stays when Shortcut still has it in the workflow, its history read only when every story is' do
       allow(shortcut).to receive(:story).with(7004).and_return(shortcut_fixture('story_7001').merge('id' => 7004))
+      allow(shortcut).to receive(:history).with(7004).and_return(history_for(7004))
 
       sync.sync!
+      described_class.new(tracker, shortcut: shortcut).sync!
 
+      expect(unlisted.reload).not_to be_gone
+      expect(shortcut).to have_received(:history).with(7004).once
+    end
+
+    it 'has its history read again when every story is being read' do
+      allow(shortcut).to receive(:story).with(7004).and_return(shortcut_fixture('story_7001').merge('id' => 7004))
+      allow(shortcut).to receive(:history).with(7004).and_return(history_for(7004))
+
+      described_class.new(tracker, shortcut: shortcut, full: true).sync!
+
+      expect(shortcut).to have_received(:history).with(7004)
+      expect(unlisted.reload).to have_attributes(gone: false, title: 'Story 7001')
+    end
+
+    it 'has its history read again once Shortcut shows it changed' do
+      found = shortcut_fixture('story_7001').merge('id' => 7004)
+      allow(shortcut).to receive(:story).with(7004).and_return(found)
+      allow(shortcut).to receive(:history).with(7004).and_return(history_for(7004))
+      sync.sync!
+      allow(shortcut).to receive(:story).with(7004).and_return(found.merge('updated_at' => '2026-10-02T16:00:00Z'))
+
+      described_class.new(tracker, shortcut: shortcut).sync!
+
+      expect(shortcut).to have_received(:history).with(7004).twice
+    end
+
+    it 'is reported when it cannot be read, after every story is measured' do
+      allow(shortcut).to receive(:story).with(7004).and_raise(ShortcutService::Error, 'Shortcut answered 500')
+
+      expect { sync.sync! }.to raise_error(described_class::StoriesFailed, /sc-7004/)
+      expect(tracker.stories.find_by(external_id: '7001').done_at).to eq(Time.zone.parse('2026-09-12T16:00:00Z'))
       expect(unlisted.reload).not_to be_gone
     end
 

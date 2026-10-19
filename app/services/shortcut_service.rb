@@ -33,6 +33,11 @@ class ShortcutService
     request(:get, "workflows/#{id}")
   end
 
+  # The workspace's teams, each with the workflows it uses
+  def groups
+    request(:get, 'groups')
+  end
+
   # Every story in a workflow state, archived ones included
   def stories_in_state(state_id)
     request(:post, 'stories/search', { workflow_state_id: state_id })
