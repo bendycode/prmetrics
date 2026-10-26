@@ -3,6 +3,7 @@
     "allow": [
       "Bash(bundle exec rspec *)",
       "Bash(bundle exec rubocop *)",
+      "Bash(bundle exec rubocop)",
       "Bash(heroku releases *)",
       "Bash(bundle exec rake)",
       "Bash(git fetch *)",
