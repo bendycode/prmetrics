@@ -476,21 +476,25 @@ framework majors, but treat them as a second line rather than the mechanism
 that stops this.
 
 ## Dependabot Batches Deploy Unattended
-A session running the dependabot-batch skill on this project deploys to
-production without asking once the batch's last pull request merges, and once
-the post-batch suite on `main` passes. The maintainer gave that approval for
-every future batch, not one at a time. It holds whoever merged each pull
-request, and whatever the batch held.
+A session running the
+[dependabot-batch skill](https://github.com/bendyworks/rules-that-bend/tree/main/skills/dependabot-batch)
+on this project deploys to production without asking once the batch's last
+pull request merges, and once the post-batch suite on `main` passes. The
+maintainer gave that approval for every future batch, not one at a time. It
+holds whoever merged each pull request. The skill's Deploy veto still comes
+first: a bump that is not routine, or other work on `main` that is not live
+yet, gets a question.
 
-The approval covers only the steps in Phase 6 of
-`.claude/skills/dependabot-batch/SKILL.md`: running `bin/deploy` on the commit
-the post-batch suite verified, without waiting for an answer. `bin/deploy`
-runs `bin/post-deploy-sync-check` and rolls back to the release that was live
-before when a check fails, where a rollback is safe: Phase 6 lists the cases
-it leaves alone. The approval does not cover merging, which the merge dials in
-`.claude/dependabot-autonomy.yml` govern, or a deploy outside a Dependabot
-batch. A change to this section, to Phase 6, or to `deploy_after_batch` or
-`deploy_command` made during a batch takes effect on the next batch.
+The approval covers only the skill's Phase 6: running `bin/deploy` on the
+commit the post-batch suite verified, without waiting for an answer, and
+confirming the commit it put live. `bin/deploy` runs
+`bin/post-deploy-sync-check` and rolls back to the release that was live before
+when a check fails, where a rollback is safe: `fail_after_release` in that
+script names the cases it leaves alone. The approval does not cover merging,
+which the merge dials in `.claude/dependabot-autonomy.yml` govern, or a deploy
+outside a Dependabot batch. A change to this section, or to
+`deploy_after_batch`, `deploy_command`, or `live_commit_command`, made during a
+batch takes effect on the next batch.
 
 ## Issue Keys
 Work is tracked in this repository's GitHub issues, and an issue's key is
