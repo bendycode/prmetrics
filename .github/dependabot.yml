@@ -21,6 +21,11 @@ updates:
       # app runs a Rails release that does.
       - dependency-name: "redis"
         versions: [">= 6"]
+      # The Gemfile holds json below 3, and its comment says why. Without
+      # this, Dependabot answers that constraint by widening it. Lift this
+      # with the Gemfile's constraint.
+      - dependency-name: "json"
+        versions: [">= 3"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
