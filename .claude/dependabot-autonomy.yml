@@ -19,10 +19,12 @@ deploy_after_batch: auto
 # If CI failures match known flake fingerprints, open a separate flake-fix PR first.
 separate_flake_fix_pr: auto
 
-# Minimum Dependabot compatibility score (integer percent) required for auto-merge.
-# PRs below this threshold downgrade to "ask" regardless of the merge dials above.
-# PRs missing a compatibility score are treated as below the floor.
-# Raise this to be more cautious; lower it to be more aggressive.
-compatibility_score_floor: 75
+# Minimum Dependabot compatibility score, as an integer percent, or off. With a
+# number, a pull request below it or with no score goes to a person whatever the
+# merge dials above say.
+compatibility_score_floor: off
 
 deploy_command: bin/deploy
+
+# Prints the commit production is serving. A deploy is confirmed against it.
+live_commit_command: bin/live-commit

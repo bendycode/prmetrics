@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Prints the commit production is serving, and exits non-zero with nothing on
+# stdout when it cannot tell.
+set -e
+
+BIN_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+INFO=$("$BIN_DIR/release-info")
+read -r _ SERVING _ _ <<< "$INFO"
+if [ -z "$SERVING" ] || [ "$SERVING" = "unknown" ]; then
+  echo "Could not tell which commit is live" >&2
+  exit 1
+fi
+echo "$SERVING"
