@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Prints four fields from the app's releases: the current release's version,
+# the 8-character commit it serves, the status of the newest "Deploy <sha8>"
+# release for the commit given as $1 (or "none"), and the newest succeeded
+# such release's version (or "none"). A config change serves the code of the
+# succeeded release before it, and "Rollback to vN" serves vN's code.
+set -o pipefail
+
+APP="${HEROKU_APP:-prmetrics-production}"
+
+heroku releases -a "$APP" -n 100 --json | python3 -c '
+import json, sys
+
+sha8 = sys.argv[1]
+releases = sorted(json.load(sys.stdin), key=lambda r: r["version"], reverse=True)
+by_version = {r["version"]: r for r in releases}
+
+def serving(release, depth=0):
+    if release is None or depth > 50:
+        return "unknown"
+    description = release["description"]
+    if description.startswith("Deploy "):
+        return description.split()[1][:8]
+    if description.startswith("Rollback to v"):
+        return serving(by_version.get(int(description.split("v")[1].split()[0])), depth + 1)
+    older = [r for r in releases if r["version"] < release["version"] and r["status"] == "succeeded"]
+    return serving(older[0] if older else None, depth + 1)
+
+current = next((r for r in releases if r.get("current")), None)
+mine = [r for r in releases if r["description"].startswith("Deploy " + sha8)]
+print(current["version"] if current else "unknown", serving(current),
+      mine[0]["status"] if mine else "none",
+      next((r["version"] for r in mine if r["status"] == "succeeded"), "none"))
+' "${1:-no-such-commit}"
