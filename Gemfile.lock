@@ -460,6 +460,7 @@ DEPENDENCIES
   foreman
   importmap-rails
   jquery-rails
+  json (< 3)
   kaminari
   letter_opener
   octokit

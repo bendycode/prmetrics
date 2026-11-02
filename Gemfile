@@ -12,6 +12,14 @@ gem 'faraday'
 gem 'faraday-retry'
 gem 'font-awesome-sass'
 gem 'jquery-rails'
+# TODO(PRM-134): Move to json 3 on purpose -- this constraint is what keeps a bump
+# of a gem depending on json from moving it. json 3 raises on two options gems pass:
+# - quirks_mode, from Active Support. Rails 7.2.4 drops it but cannot resolve with
+#   Sidekiq 8.1 (connection_pool), so Rails 8.1 is the first usable release.
+# - create_additions, from Sprockets before 4.3, when it reads a manifest already
+#   on disk. Specs pass while production asset lookup and a second
+#   assets:precompile raise, so move Sprockets before lifting this.
+gem 'json', '< 3'
 gem 'kaminari'
 gem 'octokit'
 gem 'sassc-rails'
