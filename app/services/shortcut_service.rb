@@ -78,7 +78,7 @@ class ShortcutService
   def connection(token, adapter, retry_interval)
     Faraday.new(url: BASE_URL, headers: { 'Shortcut-Token' => token }) do |faraday|
       # Outermost, so it raises only for the response the retries end on
-      faraday.response :raise_error, include_request: false
+      faraday.response :raise_error
       faraday.request :json
       # Story search is a POST that only reads, so it is retried like a GET
       faraday.request :retry, max: RETRIES, interval: retry_interval, backoff_factor: 2,
