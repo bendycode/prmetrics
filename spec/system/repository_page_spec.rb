@@ -100,8 +100,9 @@ RSpec.describe 'Repository page' do
     it 'says which weeks are on screen' do
       visit repository_path(repository)
 
-      # Kaminari separates the range with non-breaking spaces.
-      expect(page).to have_text('Displaying weeks 1 - 25 of 26 in total', normalize_ws: true)
+      # The separator between the range's ends is Kaminari's default wording;
+      # the figures are what this page answers for.
+      expect(page).to have_text(/Displaying weeks 1\W+25 of 26 in total/)
     end
   end
 
