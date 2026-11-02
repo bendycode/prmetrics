@@ -26,6 +26,11 @@ updates:
       # with the Gemfile's constraint.
       - dependency-name: "json"
         versions: [">= 3"]
+      # devise_invitable 3 moves invitations to their own table, with a migration
+      # that can't be reversed, so it needs a planned upgrade rather than a bump.
+      # Lift this with that upgrade.
+      - dependency-name: "devise_invitable"
+        versions: [">= 3"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
