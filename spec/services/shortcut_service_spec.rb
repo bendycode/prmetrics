@@ -108,7 +108,7 @@ RSpec.describe ShortcutService do
     stubs.get('/api/v3/workflows/100') { [500, {}, 'Internal Server Error'] }
 
     expect { service.workflow(100) }.to raise_error(described_class::Error) { |error|
-      expect(error.message).to match(%r{500 to GET workflows/100})
+      expect(error.message).to include('500 to GET workflows/100')
       expect(error.cause).to be_nil
       expect([error.inspect, error.full_message]).to all(exclude('shortcut-test-token'))
     }
